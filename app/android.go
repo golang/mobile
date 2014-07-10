@@ -4,6 +4,10 @@
 
 // +build android
 
+// Go runtime entry point for apps running on android.
+// Sets up everything the runtime needs and exposes
+// the entry point to JNI.
+
 package app
 
 /*
