@@ -1,9 +1,11 @@
 package go;
 
 import android.content.Context;
+import android.os.Looper;
+import android.util.Log;
 
 // Go is an entry point for libraries compiled in Go.
-// In an app's Activity.onCreate, call:
+// In an app's Application.onCreate, call:
 //
 // 	Go.init(getApplicationContext());
 //
@@ -12,6 +14,9 @@ import android.content.Context;
 public final class Go {
 	// init loads libgojni.so and starts the runtime.
 	public static void init(Context context) {
+		if (Looper.myLooper() != Looper.getMainLooper()) {
+			Log.wtf("Go", "Go.init must be called from main thread (looper="+Looper.myLooper().toString()+")");
+		}
 		if (running) {
 			return;
 		}
@@ -22,7 +27,7 @@ public final class Go {
 
 		System.loadLibrary("gojni");
 
-		new Thread() {
+		new Thread("GoMain") {
 			public void run() {
 				Go.run();
 			}
