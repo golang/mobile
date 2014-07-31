@@ -28,7 +28,17 @@ int go_started;
 
 static int (*_rt0_arm_linux1)(int argc, char** argv);
 
+// current_vm is stored to initialize other cgo packages.
+//
+// As all the Go packages in a program form a single shared library,
+// there can only be one JNI_OnLoad function for iniitialization. In
+// OpenJDK there is JNI_GetCreatedJavaVMs, but this is not available
+// on android.
+JavaVM* current_vm;
+
 jint JNI_OnLoad(JavaVM* vm, void* reserved) {
+	current_vm = vm;
+
 	JNIEnv* env;
 	if ((*vm)->GetEnv(vm, (void**)&env, JNI_VERSION_1_6) != JNI_OK) {
 		return -1;
@@ -104,7 +114,11 @@ Java_go_Go_waitForRun(JNIEnv* env, jclass clazz) {
 }
 */
 import "C"
-import "unsafe"
+import (
+	"unsafe"
+
+	"code.google.com/p/go.mobile/bind/java"
+)
 
 func run() {
 	// TODO(crawshaw): replace os.Stderr / os.Stdio.
@@ -114,6 +128,8 @@ func run() {
 	C.__android_log_write(C.ANDROID_LOG_INFO, ctag, cstr)
 	C.free(unsafe.Pointer(ctag))
 	C.free(unsafe.Pointer(cstr))
+
+	java.Init((unsafe.Pointer)(C.current_vm))
 
 	// Inform Java that the program is initialized.
 	C.pthread_mutex_lock(&C.go_started_mu)
