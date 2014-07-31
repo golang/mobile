@@ -34,6 +34,10 @@ public final class Go {
 		}.start();
 
 		Go.waitForRun();
+
+        new Thread("GoReceive") {
+            public void run() { Seq.receive(); }
+        }.start();
 	}
 
 	private static boolean running = false;
