@@ -15,8 +15,7 @@ import (
 	"go/token"
 
 	"code.google.com/p/go.mobile/bind"
-	_ "code.google.com/p/go.tools/go/gcimporter"
-	"code.google.com/p/go.tools/go/types"
+	"code.google.com/p/go.tools/go/loader"
 )
 
 func genPkg(pkg *build.Package) {
@@ -30,15 +29,20 @@ func genPkg(pkg *build.Package) {
 		return // some error has been reported
 	}
 
-	conf := types.Config{
-		Error: func(err error) {
-			errorf("%v", err)
-		},
+	conf := loader.Config{
+		SourceImports: true,
+		Fset:          fset,
 	}
-	p, err := conf.Check(pkg.ImportPath, fset, files, nil)
+	conf.TypeChecker.Error = func(err error) {
+		errorf("%v", err)
+	}
+	conf.CreateFromFiles(pkg.ImportPath, files...)
+	program, err := conf.Load()
 	if err != nil {
-		return // printed above
+		errorf("%v", err)
+		return
 	}
+	p := program.Created[0].Pkg
 
 	switch *lang {
 	case "java":
