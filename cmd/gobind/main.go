@@ -28,7 +28,7 @@ func main() {
 	for _, arg := range flag.Args() {
 		pkg, err := build.Import(arg, cwd, 0)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%s: %v", arg, err)
+			fmt.Fprintf(os.Stderr, "%s: %v\n", arg, err)
 			os.Exit(1)
 		}
 		genPkg(pkg)
@@ -40,5 +40,6 @@ var exitStatus = 0
 
 func errorf(format string, args ...interface{}) {
 	fmt.Fprintf(os.Stderr, format, args...)
+	fmt.Fprintln(os.Stderr)
 	exitStatus = 1
 }
