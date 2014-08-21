@@ -19,11 +19,24 @@ import "C"
 
 import (
 	"bufio"
+	"log"
 	"os"
 	"unsafe"
 )
 
-var ctag = C.CString("Go")
+var (
+	ctag    = C.CString("GoStdio")
+	ctagLog = C.CString("GoLog")
+)
+
+type infoWriter struct{}
+
+func (infoWriter) Write(p []byte) (n int, err error) {
+	cstr := C.CString(string(p))
+	C.__android_log_write(C.ANDROID_LOG_INFO, ctagLog, cstr)
+	C.free(unsafe.Pointer(cstr))
+	return len(p), nil
+}
 
 func lineLog(f *os.File, priority C.int) {
 	const logSize = 1024 // matches android/log.h.
@@ -44,6 +57,8 @@ func lineLog(f *os.File, priority C.int) {
 }
 
 func init() {
+	log.SetOutput(infoWriter{})
+
 	r, w, err := os.Pipe()
 	if err != nil {
 		panic(err)
