@@ -7,7 +7,7 @@ package main
 import (
 	"code.google.com/p/go.mobile/app"
 
-	_ "code.google.com/p/go.mobile/example/hello/hi/go_hi"
+	_ "code.google.com/p/go.mobile/example/libhello/hi/go_hi"
 )
 
 func main() {
