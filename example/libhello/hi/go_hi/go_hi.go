@@ -5,7 +5,7 @@ package go_hi
 
 import (
 	"code.google.com/p/go.mobile/bind/seq"
-	"code.google.com/p/go.mobile/example/hello/hi"
+	"code.google.com/p/go.mobile/example/libhello/hi"
 )
 
 func proxy_Hello(out, in *seq.Buffer) {
