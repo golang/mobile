@@ -2,21 +2,23 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package app hooks into the Android runtime via cgo/JNI.
-//
-// Typical use of this package is in a shared library loaded by
-// a mobile app:
-//
-//	package main
-//
-//	import "google.golang.org/mobile/app"
-//
-//	func main() {
-//		app.Run()
-//	}
 package app
 
 // Run starts the process.
 func Run() {
 	run()
 }
+
+// Draw is called by the render loop to draw the screen.
+//
+// Drawing is done into a framebuffer, which is then swapped onto the
+// screen when Draw returns. It is called 60 times a second.
+var Draw func()
+
+/*
+TODO(crawshaw): Implement.
+var Start func()
+var Stop func()
+var Resume func()
+var Pause func()
+*/

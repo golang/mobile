@@ -69,11 +69,10 @@ func init() {
 	res.out = make(map[int32]*seq.Buffer)
 }
 
-// Init initializes the seq JNI logic. This would usually be done in
-// JNI_OnLoad, but there can only be one per library and go.mobile/app
-// needs it first.
-func Init(javaVM unsafe.Pointer) {
-	C.init_seq(javaVM)
+func init() {
+	app.JavaInit = func(javaVM uintptr) {
+		C.init_seq(javaVM)
+	}
 }
 
 func seqToBuf(bufptr **C.uint8_t, lenptr *C.size_t, buf *seq.Buffer) {
