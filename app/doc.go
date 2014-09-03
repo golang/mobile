@@ -49,16 +49,24 @@ life, the Go runtime is initialized and the Go main function is called.
 (For Android, this is in ANativeActivity_onCreate, for iOS,
 application:willFinishLaunchingWithOptions.)
 
-An app is expected to call the Init function early in its main. When
-the main function exits, the app exits.
+An app is expected to call the Run function in its main. When the main
+function exits, the app exits.
 
 	package main
 
-	import "google.golang.org/mobile/app"
+	import (
+		"log"
+
+		"google.golang.org/mobile/app"
+	)
 
 	func main() {
-		app.Init()
-		select {}
+		app.Draw = draw
+		app.Run()
+	}
+
+	func draw() {
+		log.Print("In draw loop, can call OpenGL.")
 	}
 
 */
