@@ -30,7 +30,10 @@ int go_started;
 JavaVM* current_vm;
 */
 import "C"
-import "unsafe"
+import (
+	"runtime"
+	"unsafe"
+)
 
 //export onStart
 func onStart(activity *C.ANativeActivity) {
@@ -63,6 +66,7 @@ func onWindowFocusChanged(activity *C.ANativeActivity, hasFocus int) {
 
 //export onNativeWindowCreated
 func onNativeWindowCreated(activity *C.ANativeActivity, w *C.ANativeWindow) {
+	windowCreated <- w
 }
 
 //export onNativeWindowResized
@@ -75,6 +79,7 @@ func onNativeWindowRedrawNeeded(activity *C.ANativeActivity, window *C.ANativeWi
 
 //export onNativeWindowDestroyed
 func onNativeWindowDestroyed(activity *C.ANativeActivity, window *C.ANativeWindow) {
+	windowDestroyed <- true
 }
 
 //export onInputQueueCreated
@@ -102,7 +107,15 @@ func onLowMemory(activity *C.ANativeActivity) {
 // bindings access to the JNI *JavaVM object.
 var JavaInit func(javaVM uintptr)
 
-func run() {
+var (
+	windowDestroyed = make(chan bool)
+	windowCreated   = make(chan *C.ANativeWindow)
+)
+
+func run(cb Callbacks) {
+	// We want to keep the event loop on a consistent OS thread.
+	runtime.LockOSThread()
+
 	ctag := C.CString("Go")
 	cstr := C.CString("app.Run")
 	C.__android_log_write(C.ANDROID_LOG_INFO, ctag, cstr)
@@ -119,5 +132,10 @@ func run() {
 	C.pthread_cond_signal(&C.go_started_cond)
 	C.pthread_mutex_unlock(&C.go_started_mu)
 
-	select {}
+	for {
+		select {
+		case w := <-windowCreated:
+			windowDrawLoop(cb, w)
+		}
+	}
 }

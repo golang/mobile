@@ -4,16 +4,22 @@
 
 package app
 
-// Run starts the process.
-func Run() {
-	run()
+// Run starts the app.
+//
+// It must be called directly from from the main function and will
+// block until the app exits.
+func Run(cb Callbacks) {
+	run(cb)
 }
 
-// Draw is called by the render loop to draw the screen.
-//
-// Drawing is done into a framebuffer, which is then swapped onto the
-// screen when Draw returns. It is called 60 times a second.
-var Draw func()
+// Callbacks is the set of functions called by the app.
+type Callbacks struct {
+	// Draw is called by the render loop to draw the screen.
+	//
+	// Drawing is done into a framebuffer, which is then swapped onto the
+	// screen when Draw returns. It is called 60 times a second.
+	Draw func()
+}
 
 /*
 TODO(crawshaw): Implement.
