@@ -61,8 +61,9 @@ function exits, the app exits.
 	)
 
 	func main() {
-		app.Draw = draw
-		app.Run()
+		app.Run(app.Callbacks{
+			Draw: draw,
+		})
 	}
 
 	func draw() {
