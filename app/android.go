@@ -13,6 +13,7 @@ package app
 /*
 #cgo LDFLAGS: -llog -landroid
 #include <android/log.h>
+#include <android/configuration.h>
 #include <android/native_activity.h>
 #include <pthread.h>
 #include <jni.h>
@@ -31,9 +32,42 @@ JavaVM* current_vm;
 */
 import "C"
 import (
+	"log"
 	"runtime"
 	"unsafe"
+
+	"code.google.com/p/go.mobile/geom"
 )
+
+//export onCreate
+func onCreate(activity *C.ANativeActivity) {
+	config := C.AConfiguration_new()
+	C.AConfiguration_fromAssetManager(config, activity.assetManager)
+	density := C.AConfiguration_getDensity(config)
+	C.AConfiguration_delete(config)
+
+	var dpi int
+	switch density {
+	case C.ACONFIGURATION_DENSITY_DEFAULT:
+		dpi = 160
+	case C.ACONFIGURATION_DENSITY_LOW,
+		C.ACONFIGURATION_DENSITY_MEDIUM,
+		C.ACONFIGURATION_DENSITY_TV,
+		C.ACONFIGURATION_DENSITY_HIGH,
+		320, // ACONFIGURATION_DENSITY_XHIGH
+		480, // ACONFIGURATION_DENSITY_XXHIGH
+		640: // ACONFIGURATION_DENSITY_XXXHIGH
+		dpi = int(density)
+	case C.ACONFIGURATION_DENSITY_NONE:
+		log.Print("android device reports no screen density")
+		dpi = 72
+	default:
+		log.Print("android device reports unknown density: %d", density)
+		dpi = int(density) // This is a guess.
+	}
+
+	geom.Scale = float32(dpi) / 72
+}
 
 //export onStart
 func onStart(activity *C.ANativeActivity) {
@@ -82,12 +116,16 @@ func onNativeWindowDestroyed(activity *C.ANativeActivity, window *C.ANativeWindo
 	windowDestroyed <- true
 }
 
+var queue *C.AInputQueue
+
 //export onInputQueueCreated
-func onInputQueueCreated(activity *C.ANativeActivity, queue *C.AInputQueue) {
+func onInputQueueCreated(activity *C.ANativeActivity, q *C.AInputQueue) {
+	queue = q
 }
 
 //export onInputQueueDestroyed
 func onInputQueueDestroyed(activity *C.ANativeActivity, queue *C.AInputQueue) {
+	queue = nil
 }
 
 //export onContentRectChanged
@@ -135,7 +173,7 @@ func run(cb Callbacks) {
 	for {
 		select {
 		case w := <-windowCreated:
-			windowDrawLoop(cb, w)
+			windowDrawLoop(cb, w, queue)
 		}
 	}
 }
