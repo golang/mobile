@@ -8,6 +8,7 @@ package app
 #cgo android LDFLAGS: -llog -landroid -lEGL -lGLESv2
 #include <android/log.h>
 #include <android/native_activity.h>
+#include <android/input.h>
 #include <EGL/egl.h>
 #include <GLES/gl.h>
 
@@ -72,35 +73,85 @@ void createEGLWindow(ANativeWindow* window) {
 
 	eglQuerySurface(display, surface, EGL_WIDTH, &windowWidth);
 	eglQuerySurface(display, surface, EGL_HEIGHT, &windowHeight);
-
-	glDisable(GL_DEPTH_TEST);
-	glViewport(0, 0, windowWidth, windowHeight);
-	glClearColor(0, 0, 0, 1);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	eglSwapBuffers(display, surface);
-
-	GLenum err;
-	if ((err = glGetError()) != GL_NO_ERROR) {
-		LOG_ERROR("GL error in createEGLWindow: 0x%x", err);
-	}
 }
 
 #undef LOG_ERROR
 */
 import "C"
+import (
+	"log"
 
-// windowDrawLoop calls Draw at 60 FPS processes input queue events.
-func windowDrawLoop(cb Callbacks, window *C.ANativeWindow) {
-	C.createEGLWindow(window)
+	"code.google.com/p/go.mobile/event"
+	"code.google.com/p/go.mobile/geom"
+	"code.google.com/p/go.mobile/gl"
+)
+
+func windowDrawLoop(cb Callbacks, w *C.ANativeWindow, queue *C.AInputQueue) {
+	C.createEGLWindow(w)
+
+	gl.Enable(gl.CULL_FACE)
+	gl.ClearColor(0, 0, 0, 1)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+	C.eglSwapBuffers(C.display, C.surface)
+
+	if errv := gl.GetError(); errv != gl.NO_ERROR {
+		log.Printf("GL initialization error: %s", errv)
+	}
+
+	geom.Width = geom.Pt(float32(C.windowWidth) / geom.Scale)
+	geom.Height = geom.Pt(float32(C.windowHeight) / geom.Scale)
 
 	for {
+		processEvents(cb, queue)
 		select {
 		case <-windowDestroyed:
 			return
-		// TODO(crawshaw): Event processing goes here.
 		default:
 			cb.Draw()
 			C.eglSwapBuffers(C.display, C.surface)
 		}
+	}
+}
+
+func processEvents(cb Callbacks, queue *C.AInputQueue) {
+	var event *C.AInputEvent
+	for C.AInputQueue_getEvent(queue, &event) >= 0 {
+		if C.AInputQueue_preDispatchEvent(queue, event) != 0 {
+			continue
+		}
+		processEvent(cb, event)
+		C.AInputQueue_finishEvent(queue, event, 0)
+	}
+}
+
+func processEvent(cb Callbacks, e *C.AInputEvent) {
+	switch C.AInputEvent_getType(e) {
+	case C.AINPUT_EVENT_TYPE_KEY:
+		log.Printf("TODO input event: key")
+	case C.AINPUT_EVENT_TYPE_MOTION:
+		if cb.Touch == nil {
+			return
+		}
+		x := C.AMotionEvent_getX(e, 0)
+		y := C.AMotionEvent_getY(e, 0)
+
+		var ty event.TouchType
+		switch C.AMotionEvent_getAction(e) {
+		case C.AMOTION_EVENT_ACTION_DOWN:
+			ty = event.TouchStart
+		case C.AMOTION_EVENT_ACTION_MOVE:
+			ty = event.TouchMove
+		case C.AMOTION_EVENT_ACTION_UP:
+			ty = event.TouchEnd
+		}
+		cb.Touch(event.Touch{
+			Type: ty,
+			Loc: geom.Point{
+				X: geom.Pt(float32(x) / geom.Scale),
+				Y: geom.Pt(float32(y) / geom.Scale),
+			},
+		})
+	default:
+		log.Printf("unknown input event, type=%d", C.AInputEvent_getType(e))
 	}
 }

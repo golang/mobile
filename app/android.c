@@ -127,6 +127,8 @@ void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_
 	//activity->callbacks->onContentRectChanged = onContentRectChanged;
 	activity->callbacks->onConfigurationChanged = onConfigurationChanged;
 	activity->callbacks->onLowMemory = onLowMemory;
+
+	onCreate(activity);
 }
 
 // Runtime entry point when embedding Go in a Java App.

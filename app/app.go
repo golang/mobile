@@ -4,6 +4,8 @@
 
 package app
 
+import "code.google.com/p/go.mobile/event"
+
 // Run starts the app.
 //
 // It must be called directly from from the main function and will
@@ -19,6 +21,9 @@ type Callbacks struct {
 	// Drawing is done into a framebuffer, which is then swapped onto the
 	// screen when Draw returns. It is called 60 times a second.
 	Draw func()
+
+	// Touch is called by the app when a touch event occurs.
+	Touch func(event.Touch)
 }
 
 /*
