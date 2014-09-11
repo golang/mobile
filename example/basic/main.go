@@ -8,24 +8,30 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"log"
 
 	"code.google.com/p/go.mobile/app"
+	"code.google.com/p/go.mobile/event"
+	"code.google.com/p/go.mobile/geom"
 	"code.google.com/p/go.mobile/gl"
+	"code.google.com/p/go.mobile/gl/glutil"
 )
 
 var (
-	program   gl.Program
-	vPosition gl.Attrib
-	fColor    gl.Uniform
-	buf       gl.Buffer
-	green     float32
+	program  gl.Program
+	position gl.Attrib
+	offset   gl.Uniform
+	color    gl.Uniform
+	buf      gl.Buffer
+
+	green    float32
+	touchLoc geom.Point
 )
 
 func main() {
 	app.Run(app.Callbacks{
-		Draw: renderFrame,
+		Draw:  draw,
+		Touch: touch,
 	})
 }
 
@@ -33,7 +39,7 @@ func main() {
 
 func initGL() {
 	var err error
-	program, err = createProgram(vertexShader, fragmentShader)
+	program, err = glutil.CreateProgram(vertexShader, fragmentShader)
 	if err != nil {
 		log.Printf("error creating GL program: %v", err)
 		return
@@ -43,11 +49,17 @@ func initGL() {
 	gl.BindBuffer(gl.ARRAY_BUFFER, buf)
 	gl.BufferData(gl.ARRAY_BUFFER, gl.STATIC_DRAW, triangleData)
 
-	vPosition = gl.GetAttribLocation(program, "vPosition")
-	fColor = gl.GetUniformLocation(program, "fColor")
+	position = gl.GetAttribLocation(program, "position")
+	color = gl.GetUniformLocation(program, "color")
+	offset = gl.GetUniformLocation(program, "offset")
+	touchLoc = geom.Point{geom.Width / 2, geom.Height / 2}
 }
 
-func renderFrame() {
+func touch(t event.Touch) {
+	touchLoc = t.Loc
+}
+
+func draw() {
 	if program == 0 {
 		initGL()
 		log.Printf("example/basic rendering initialized")
@@ -62,13 +74,15 @@ func renderFrame() {
 	if green > 1 {
 		green = 0
 	}
-	gl.Uniform4f(fColor, 0, green, 0, 1)
+	gl.Uniform4f(color, 0, green, 0, 1)
+
+	gl.Uniform2f(offset, float32(touchLoc.X/geom.Width), float32(touchLoc.Y/geom.Height))
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, buf)
-	gl.EnableVertexAttribArray(vPosition)
-	gl.VertexAttribPointer(vPosition, coordsPerVertex, gl.FLOAT, false, 0, 0)
+	gl.EnableVertexAttribArray(position)
+	gl.VertexAttribPointer(position, coordsPerVertex, gl.FLOAT, false, 0, 0)
 	gl.DrawArrays(gl.TRIANGLES, 0, vertexCount)
-	gl.DisableVertexAttribArray(vPosition)
+	gl.DisableVertexAttribArray(position)
 }
 
 var triangleData []byte
@@ -84,69 +98,26 @@ func init() {
 const coordsPerVertex = 3
 
 var triangleCoords = []float32{
-	// in counterclockwise order:
-	0.0, 0.622008459, 0.0, // top
-	-0.5, -0.311004243, 0.0, // bottom left
-	0.5, -0.311004243, 0.0, // bottom right
+	0, 0.4, 0, // top left
+	0, 0, 0, // bottom left
+	0.4, 0, 0, // bottom right
 }
 var vertexCount = len(triangleCoords) / coordsPerVertex
 
 const vertexShader = `
-attribute vec4 vPosition;
+uniform vec2 offset;
+
+attribute vec4 position;
 void main() {
-  gl_Position = vPosition;
+	// offset comes in with x/y values between 0 and 1.
+	// position bounds are -1 to 1.
+	vec4 offset4 = vec4(2.0*offset.x-1.0, 1.0-2.0*offset.y, 0, 0);
+	gl_Position = position + offset4;
 }`
 
 const fragmentShader = `
 precision mediump float;
-uniform vec4 fColor;
+uniform vec4 color;
 void main() {
-  gl_FragColor = fColor;
+	gl_FragColor = color;
 }`
-
-func loadShader(shaderType gl.Enum, src string) (gl.Shader, error) {
-	shader := gl.CreateShader(shaderType)
-	if shader == 0 {
-		return 0, fmt.Errorf("could not create shader (type %v)", shaderType)
-	}
-	gl.ShaderSource(shader, src)
-	gl.CompileShader(shader)
-	if gl.GetShaderi(shader, gl.COMPILE_STATUS) == 0 {
-		defer gl.DeleteShader(shader)
-		return 0, fmt.Errorf("shader compile: %s", gl.GetShaderInfoLog(shader))
-	}
-	return shader, nil
-}
-
-// TODO(crawshaw): Consider moving createProgram to a utility package.
-
-func createProgram(vertexSrc, fragmentSrc string) (gl.Program, error) {
-	program := gl.CreateProgram()
-	if program == 0 {
-		return 0, fmt.Errorf("cannot create program")
-	}
-
-	vertexShader, err := loadShader(gl.VERTEX_SHADER, vertexSrc)
-	if err != nil {
-		return 0, err
-	}
-	fragmentShader, err := loadShader(gl.FRAGMENT_SHADER, fragmentSrc)
-	if err != nil {
-		gl.DeleteShader(vertexShader)
-		return 0, err
-	}
-
-	gl.AttachShader(program, vertexShader)
-	gl.AttachShader(program, fragmentShader)
-	gl.LinkProgram(program)
-
-	// Flag shaders for deletion when program is unlinked.
-	gl.DeleteShader(vertexShader)
-	gl.DeleteShader(fragmentShader)
-
-	if gl.GetProgrami(program, gl.LINK_STATUS) == 0 {
-		defer gl.DeleteProgram(program)
-		return 0, fmt.Errorf("program link: %s", gl.GetProgramInfoLog(program))
-	}
-	return program, nil
-}
