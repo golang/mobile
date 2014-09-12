@@ -15,6 +15,7 @@ import (
 	"sync"
 	"unsafe"
 
+	"code.google.com/p/go.mobile/app"
 	"code.google.com/p/go.mobile/bind/seq"
 )
 
@@ -71,7 +72,7 @@ func init() {
 
 func init() {
 	app.JavaInit = func(javaVM uintptr) {
-		C.init_seq(javaVM)
+		C.init_seq(unsafe.Pointer(javaVM))
 	}
 }
 
