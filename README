@@ -3,18 +3,63 @@ The go.mobile repository holds libraries and build tools for Go on Android.
 This is early stage work. The build system integration is not ready.
 For now,
 
-1. Install Android Studio.
+1. Install the Android SDK, either standalone or via Android Studio.
+
 2. Install the Android NDK.
+
 3. Pick a home for the standalone NDK toolchain and set an environment variable:
 	NDK_ROOT=$HOME/android/ndk-toolchain
+
 4. Confiure the NDK toolchain:
 	ndk/build/tools/make-standalone-toolchain.sh \
 		--platform=android-9 --install-dir=$NDK_ROOT
-5. Create an android App in studio, then set
+
+5. Install a Go cross-compiler from the unstable development branch:
+	hg clone https://code.google.com/p/go
+	cd go/src
+	CC_FOR_TARGET=$NDK_CC GOOS=android GOARCH=arm GOARM=7 ./make.bash
+
+   More details about installing from source are available at
+   https://golang.org/doc/install/source.
+
+6. Use the Go tool installed in the go/bin created above.
+   For simplicity, put it on your path.
+
+From here, there are two kinds of Android projects you can build,
+Android apps written in Java with Go libraries, and Android apps
+built entirely in Go. The first lets you use standard Android UI
+libraries from Java, the second gives you only OpenGL, but an
+entirely Go development environment.
+
+
+Go library in an Android app 
+-------------
+
+Apps are written in Java, developed using the standard Android
+tools, that include a Go library for added functionality. There is an
+example of such a library in go.mobile/example/libhello.
+
+To build the shared library, use the make.bash script in the example's
+directory. It requires an environment variable, ANDROID_APP, set to the
+location of your Android studio project. E.g.
+
 	ANDROID_APP=$HOME/android/studio/yourapp/app
 
-With these two environment variables, the make.bash script in
-go.mobile/example/hello_jni builds a .so file and symlinks in
-the necessary java files to the project.
+With this variable, make.bash builds the .so file and symlinks in the
+necessary java files to the project.
+
+
+Go Android apps (games)
+-------------
+
+Go Android apps are built on top of the NDK's NativeActivity. These apps
+are written entirely in Go. An example of such an app, with touch events
+and OpenGL, is in go.mobile/example/basic.
+
+To build and deploy the app to the device currently attached to adb,
+use the all.bash script in the example's directory. It requires
+ndk-build, ant, and adb on your PATH.
+
+APIs are currently very limited, but under active development.
 
 To submit changes to this repository, see http://golang.org/doc/contribute.html.
