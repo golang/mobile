@@ -2,14 +2,19 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// This is the Go entry point for the libhello app.
+// It is invoked from Java.
+//
+// See README for details.
 package main
 
 import (
 	"code.google.com/p/go.mobile/app"
 
+	_ "code.google.com/p/go.mobile/bind/java"
 	_ "code.google.com/p/go.mobile/example/libhello/hi/go_hi"
 )
 
 func main() {
-	app.Run()
+	app.Run(app.Callbacks{})
 }

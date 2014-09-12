@@ -9,17 +9,13 @@ if [ ! -f make.bash ]; then
 	echo 'make.bash must be run from $GOPATH/src/code.google.com/p/go.mobile/example/libhello'
 	exit 1
 fi
-if [ -z "$ANDROID_APP" ]; then
-	echo 'ERROR: Environment variable ANDROID_APP is unset.'
-	exit 1
-fi
-ANDROID_APP=$(cd $ANDROID_APP; pwd)
 
-mkdir -p $ANDROID_APP/src/main/jniLibs/armeabi \
-	$ANDROID_APP/src/main/java/go/hi
-(cd ../.. && ln -sf $PWD/app/*.java $ANDROID_APP/src/main/java/go)
-(cd ../.. && ln -sf $PWD/bind/java/*.java $ANDROID_APP/src/main/java/go)
-ln -sf $PWD/hi/*.java $ANDROID_APP/src/main/java/go/hi
+mkdir -p libs/armeabi-v7a src/go/hi
+ANDROID_APP=$PWD
+(cd ../.. && ln -sf $PWD/app/*.java $ANDROID_APP/src/go)
+(cd ../.. && ln -sf $PWD/bind/java/Seq.java $ANDROID_APP/src/go)
+ln -sf $PWD/hi/*.java src/go/hi
 CGO_ENABLED=1 GOOS=android GOARCH=arm GOARM=7 \
 	go build -ldflags="-shared" .
-mv -f libhello $ANDROID_APP/src/main/jniLibs/armeabi/libgojni.so
+mv -f libhello libs/armeabi-v7a/libgojni.so
+ant debug
