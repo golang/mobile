@@ -243,14 +243,14 @@ func CopyTexSubImage2D(target Enum, level, xoffset, yoffset, x, y, width, height
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glCreateProgram.xhtml
 func CreateProgram() Program {
-	return Program(C.glCreateProgram())
+	return Program{Value: uint32(C.glCreateProgram())}
 }
 
 // CreateShader creates a new empty shader object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glCreateShader.xhtml
 func CreateShader(ty Enum) Shader {
-	return Shader(C.glCreateShader(ty.c()))
+	return Shader{Value: uint32(C.glCreateShader(ty.c()))}
 }
 
 // CullFace specifies which polygons are candidates for culling.
@@ -262,18 +262,18 @@ func CullFace(mode Enum) {
 	C.glCullFace(mode.c())
 }
 
-// DeleteBuffers deletes the given buffer objects.
+// DeleteBuffer deletes the given buffer object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glDeleteBuffers.xhtml
-func DeleteBuffers(v []Buffer) {
-	C.glDeleteBuffers(C.GLsizei(len(v)), (*C.GLuint)(unsafe.Pointer(&v[0])))
+func DeleteBuffer(v Buffer) {
+	C.glDeleteBuffers(1, (*C.GLuint)(&v.Value))
 }
 
-// DeleteFramebuffers deletes the given framebuffer objects.
+// DeleteFramebuffer deletes the given framebuffer object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glDeleteFramebuffers.xhtml
-func DeleteFramebuffers(v []Framebuffer) {
-	C.glDeleteFramebuffers(C.GLsizei(len(v)), (*C.GLuint)(unsafe.Pointer(&v[0])))
+func DeleteFramebuffer(v Framebuffer) {
+	C.glDeleteFramebuffers(1, (*C.GLuint)(&v.Value))
 }
 
 // DeleteProgram deletes the given program object.
@@ -283,11 +283,11 @@ func DeleteProgram(p Program) {
 	C.glDeleteProgram(p.c())
 }
 
-// DeleteRenderbuffers deletes the given render buffer objects.
+// DeleteRenderbuffer deletes the given render buffer object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glDeleteRenderbuffers.xhtml
-func DeleteRenderbuffers(v []Renderbuffer) {
-	C.glDeleteRenderbuffers(C.GLsizei(len(v)), (*C.GLuint)(unsafe.Pointer(&v[0])))
+func DeleteRenderbuffer(v Renderbuffer) {
+	C.glDeleteRenderbuffers(1, (*C.GLuint)(&v.Value))
 }
 
 // DeleteShader deletes shader s.
@@ -297,11 +297,11 @@ func DeleteShader(s Shader) {
 	C.glDeleteShader(s.c())
 }
 
-// DeleteTextures deletes the given textures.
+// DeleteTexture deletes the given texture object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glDeleteTextures.xhtml
-func DeleteTextures(v []Texture) {
-	C.glDeleteTextures(C.GLsizei(len(v)), (*C.GLuint)(unsafe.Pointer(&v[0])))
+func DeleteTexture(v Texture) {
+	C.glDeleteTextures(1, (*C.GLuint)(&v.Value))
 }
 
 // DepthFunc sets the function used for depth buffer comparisons.
@@ -426,13 +426,13 @@ func FrontFace(mode Enum) {
 	C.glFrontFace(mode.c())
 }
 
-// GenBuffers creates n buffer objects.
+// GenBuffer creates a buffer object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGenBuffers.xhtml
-func GenBuffers(n int) []Buffer {
-	buf := make([]Buffer, n)
-	C.glGenBuffers(C.GLsizei(n), (*C.GLuint)(&buf[0]))
-	return buf
+func GenBuffer() Buffer {
+	var b Buffer
+	C.glGenBuffers(1, (*C.GLuint)(&b.Value))
+	return b
 }
 
 // GenerateMipmap generates mipmaps for the current texture.
@@ -442,31 +442,31 @@ func GenerateMipmap(target Enum) {
 	C.glGenerateMipmap(target.c())
 }
 
-// GenFramebuffers creates n framebuffer objects.
+// GenFramebuffer creates a framebuffer object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGenFramebuffers.xhtml
-func GenFramebuffers(n int) []Framebuffer {
-	buf := make([]Framebuffer, n)
-	C.glGenFramebuffers(C.GLsizei(n), (*C.GLuint)(&buf[0]))
-	return buf
+func GenFramebuffer() Framebuffer {
+	var b Framebuffer
+	C.glGenFramebuffers(1, (*C.GLuint)(&b.Value))
+	return b
 }
 
-// GenRenderbuffers creates n renderbuffer objects.
+// GenRenderbuffer create a renderbuffer object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGenRenderbuffers.xhtml
-func GenRenderbuffers(n int) []Renderbuffer {
-	buf := make([]Renderbuffer, n)
-	C.glGenRenderbuffers(C.GLsizei(n), (*C.GLuint)(&buf[0]))
-	return buf
+func GenRenderbuffer() Renderbuffer {
+	var b Renderbuffer
+	C.glGenRenderbuffers(1, (*C.GLuint)(&b.Value))
+	return b
 }
 
-// GenTextures creates n texture objects.
+// GenTexture creates a texture object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGenTextures.xhtml
-func GenTextures(n int) []Texture {
-	buf := make([]Texture, n)
-	C.glGenTextures(C.GLsizei(n), (*C.GLuint)(&buf[0]))
-	return buf
+func GenTexture() Texture {
+	var t Texture
+	C.glGenTextures(1, (*C.GLuint)(&t.Value))
+	return t
 }
 
 // GetActiveAttrib returns details about an attribute variable.
@@ -494,7 +494,7 @@ func GetActiveUniform(p Program, u Uniform) (name string, size int, ty Enum) {
 	var cSize C.GLint
 	var cType C.GLenum
 
-	C.glGetActiveUniform(p.c(), C.GLuint(u), C.GLsizei(bufSize), nil, &cSize, &cType, (*C.GLchar)(buf))
+	C.glGetActiveUniform(p.c(), C.GLuint(u.Value), C.GLsizei(bufSize), nil, &cSize, &cType, (*C.GLchar)(buf))
 	return C.GoString((*C.char)(buf)), int(cSize), Enum(cType)
 }
 
@@ -503,10 +503,15 @@ func GetActiveUniform(p Program, u Uniform) (name string, size int, ty Enum) {
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetAttachedShaders.xhtml
 func GetAttachedShaders(p Program) []Shader {
 	shadersLen := GetProgrami(p, ATTACHED_SHADERS)
-	buf := make([]Shader, shadersLen)
 	var n C.GLsizei
-	C.glGetAttachedShaders(p.c(), C.GLsizei(shadersLen), &n, (*C.GLuint)(&buf[0]))
-	return buf[:int(n)]
+	buf := make([]C.GLuint, shadersLen)
+	C.glGetAttachedShaders(p.c(), C.GLsizei(shadersLen), &n, &buf[0])
+	buf = buf[:int(n)]
+	shaders := make([]Shader, len(buf))
+	for i, s := range buf {
+		shaders[i] = Shader{Value: uint32(s)}
+	}
+	return shaders
 }
 
 // GetAttribLocation finds a program attribute variable by name.
@@ -515,7 +520,7 @@ func GetAttachedShaders(p Program) []Shader {
 func GetAttribLocation(p Program, name string) Attrib {
 	str := unsafe.Pointer(C.CString(name))
 	defer C.free(str)
-	return Attrib(C.glGetAttribLocation(p.c(), (*C.GLchar)(str)))
+	return Attrib{Value: uint(C.glGetAttribLocation(p.c(), (*C.GLchar)(str)))}
 }
 
 // GetBooleanv returns the boolean values of parameter pname.
@@ -712,7 +717,7 @@ func GetUniformiv(dst []int32, src Uniform, p Program) {
 func GetUniformLocation(p Program, name string) Uniform {
 	str := C.CString(name)
 	defer C.free((unsafe.Pointer)(str))
-	return Uniform(C.glGetUniformLocation(p.c(), (*C.GLchar)(str)))
+	return Uniform{Value: int32(C.glGetUniformLocation(p.c(), (*C.GLchar)(str)))}
 }
 
 // GetVertexAttribf reads the float value of a vertex attribute.

@@ -47,7 +47,7 @@ func typePrinterArg(t, name string) string {
 }
 
 func main() {
-	f, err := parser.ParseFile(fset, "types.go", nil, parser.ParseComments)
+	f, err := parser.ParseFile(fset, "consts.go", nil, parser.ParseComments)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, err.Error())
 		os.Exit(1)
@@ -148,6 +148,10 @@ func main() {
 		// Insert a defer block for tracing.
 		fmt.Fprintf(buf, "defer func() {\n")
 		fmt.Fprintf(buf, "\terrstr := errDrain()\n")
+		switch fn.Name.Name {
+		case "GetUniformLocation", "GetAttribLocation":
+			fmt.Fprintf(buf, "\tr0.name = name\n")
+		}
 		fmt.Fprintf(buf, "\tlog.Printf(\"gl.%s(", fn.Name.Name)
 		for i, p := range paramTypes {
 			if i > 0 {

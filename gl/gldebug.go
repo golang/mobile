@@ -873,7 +873,7 @@ func CreateProgram() (r0 Program) {
 		errstr := errDrain()
 		log.Printf("gl.CreateProgram() %v%v", r0, errstr)
 	}()
-	return Program(C.glCreateProgram())
+	return Program{Value: uint32(C.glCreateProgram())}
 }
 
 func CreateShader(ty Enum) (r0 Shader) {
@@ -881,7 +881,7 @@ func CreateShader(ty Enum) (r0 Shader) {
 		errstr := errDrain()
 		log.Printf("gl.CreateShader(%v) %v%v", ty, r0, errstr)
 	}()
-	return Shader(C.glCreateShader(ty.c()))
+	return Shader{Value: uint32(C.glCreateShader(ty.c()))}
 }
 
 func CullFace(mode Enum) {
@@ -892,20 +892,20 @@ func CullFace(mode Enum) {
 	C.glCullFace(mode.c())
 }
 
-func DeleteBuffers(v []Buffer) {
+func DeleteBuffer(v Buffer) {
 	defer func() {
 		errstr := errDrain()
-		log.Printf("gl.DeleteBuffers(%v) %v", v, errstr)
+		log.Printf("gl.DeleteBuffer(%v) %v", v, errstr)
 	}()
-	C.glDeleteBuffers(C.GLsizei(len(v)), (*C.GLuint)(unsafe.Pointer(&v[0])))
+	C.glDeleteBuffers(1, (*C.GLuint)(&v.Value))
 }
 
-func DeleteFramebuffers(v []Framebuffer) {
+func DeleteFramebuffer(v Framebuffer) {
 	defer func() {
 		errstr := errDrain()
-		log.Printf("gl.DeleteFramebuffers(%v) %v", v, errstr)
+		log.Printf("gl.DeleteFramebuffer(%v) %v", v, errstr)
 	}()
-	C.glDeleteFramebuffers(C.GLsizei(len(v)), (*C.GLuint)(unsafe.Pointer(&v[0])))
+	C.glDeleteFramebuffers(1, (*C.GLuint)(&v.Value))
 }
 
 func DeleteProgram(p Program) {
@@ -916,12 +916,12 @@ func DeleteProgram(p Program) {
 	C.glDeleteProgram(p.c())
 }
 
-func DeleteRenderbuffers(v []Renderbuffer) {
+func DeleteRenderbuffer(v Renderbuffer) {
 	defer func() {
 		errstr := errDrain()
-		log.Printf("gl.DeleteRenderbuffers(%v) %v", v, errstr)
+		log.Printf("gl.DeleteRenderbuffer(%v) %v", v, errstr)
 	}()
-	C.glDeleteRenderbuffers(C.GLsizei(len(v)), (*C.GLuint)(unsafe.Pointer(&v[0])))
+	C.glDeleteRenderbuffers(1, (*C.GLuint)(&v.Value))
 }
 
 func DeleteShader(s Shader) {
@@ -932,12 +932,12 @@ func DeleteShader(s Shader) {
 	C.glDeleteShader(s.c())
 }
 
-func DeleteTextures(v []Texture) {
+func DeleteTexture(v Texture) {
 	defer func() {
 		errstr := errDrain()
-		log.Printf("gl.DeleteTextures(%v) %v", v, errstr)
+		log.Printf("gl.DeleteTexture(%v) %v", v, errstr)
 	}()
-	C.glDeleteTextures(C.GLsizei(len(v)), (*C.GLuint)(unsafe.Pointer(&v[0])))
+	C.glDeleteTextures(1, (*C.GLuint)(&v.Value))
 }
 
 func DepthFunc(fn Enum) {
@@ -1060,14 +1060,14 @@ func FrontFace(mode Enum) {
 	C.glFrontFace(mode.c())
 }
 
-func GenBuffers(n int) (r0 []Buffer) {
+func GenBuffer() (r0 Buffer) {
 	defer func() {
 		errstr := errDrain()
-		log.Printf("gl.GenBuffers(%v) %v%v", n, r0, errstr)
+		log.Printf("gl.GenBuffer() %v%v", r0, errstr)
 	}()
-	buf := make([]Buffer, n)
-	C.glGenBuffers(C.GLsizei(n), (*C.GLuint)(&buf[0]))
-	return buf
+	var b Buffer
+	C.glGenBuffers(1, (*C.GLuint)(&b.Value))
+	return b
 }
 
 func GenerateMipmap(target Enum) {
@@ -1078,34 +1078,34 @@ func GenerateMipmap(target Enum) {
 	C.glGenerateMipmap(target.c())
 }
 
-func GenFramebuffers(n int) (r0 []Framebuffer) {
+func GenFramebuffer() (r0 Framebuffer) {
 	defer func() {
 		errstr := errDrain()
-		log.Printf("gl.GenFramebuffers(%v) %v%v", n, r0, errstr)
+		log.Printf("gl.GenFramebuffer() %v%v", r0, errstr)
 	}()
-	buf := make([]Framebuffer, n)
-	C.glGenFramebuffers(C.GLsizei(n), (*C.GLuint)(&buf[0]))
-	return buf
+	var b Framebuffer
+	C.glGenFramebuffers(1, (*C.GLuint)(&b.Value))
+	return b
 }
 
-func GenRenderbuffers(n int) (r0 []Renderbuffer) {
+func GenRenderbuffer() (r0 Renderbuffer) {
 	defer func() {
 		errstr := errDrain()
-		log.Printf("gl.GenRenderbuffers(%v) %v%v", n, r0, errstr)
+		log.Printf("gl.GenRenderbuffer() %v%v", r0, errstr)
 	}()
-	buf := make([]Renderbuffer, n)
-	C.glGenRenderbuffers(C.GLsizei(n), (*C.GLuint)(&buf[0]))
-	return buf
+	var b Renderbuffer
+	C.glGenRenderbuffers(1, (*C.GLuint)(&b.Value))
+	return b
 }
 
-func GenTextures(n int) (r0 []Texture) {
+func GenTexture() (r0 Texture) {
 	defer func() {
 		errstr := errDrain()
-		log.Printf("gl.GenTextures(%v) %v%v", n, r0, errstr)
+		log.Printf("gl.GenTexture() %v%v", r0, errstr)
 	}()
-	buf := make([]Texture, n)
-	C.glGenTextures(C.GLsizei(n), (*C.GLuint)(&buf[0]))
-	return buf
+	var t Texture
+	C.glGenTextures(1, (*C.GLuint)(&t.Value))
+	return t
 }
 
 func GetActiveAttrib(p Program, a Attrib) (name string, size int, ty Enum) {
@@ -1132,7 +1132,7 @@ func GetActiveUniform(p Program, u Uniform) (name string, size int, ty Enum) {
 	defer C.free(buf)
 	var cSize C.GLint
 	var cType C.GLenum
-	C.glGetActiveUniform(p.c(), C.GLuint(u), C.GLsizei(bufSize), nil, &cSize, &cType, (*C.GLchar)(buf))
+	C.glGetActiveUniform(p.c(), C.GLuint(u.Value), C.GLsizei(bufSize), nil, &cSize, &cType, (*C.GLchar)(buf))
 	return C.GoString((*C.char)(buf)), int(cSize), Enum(cType)
 }
 
@@ -1142,20 +1142,26 @@ func GetAttachedShaders(p Program) (r0 []Shader) {
 		log.Printf("gl.GetAttachedShaders(%v) %v%v", p, r0, errstr)
 	}()
 	shadersLen := GetProgrami(p, ATTACHED_SHADERS)
-	buf := make([]Shader, shadersLen)
 	var n C.GLsizei
-	C.glGetAttachedShaders(p.c(), C.GLsizei(shadersLen), &n, (*C.GLuint)(&buf[0]))
-	return buf[:int(n)]
+	buf := make([]C.GLuint, shadersLen)
+	C.glGetAttachedShaders(p.c(), C.GLsizei(shadersLen), &n, &buf[0])
+	buf = buf[:int(n)]
+	shaders := make([]Shader, len(buf))
+	for i, s := range buf {
+		shaders[i] = Shader{Value: uint32(s)}
+	}
+	return shaders
 }
 
 func GetAttribLocation(p Program, name string) (r0 Attrib) {
 	defer func() {
 		errstr := errDrain()
+		r0.name = name
 		log.Printf("gl.GetAttribLocation(%v, %v) %v%v", p, name, r0, errstr)
 	}()
 	str := unsafe.Pointer(C.CString(name))
 	defer C.free(str)
-	return Attrib(C.glGetAttribLocation(p.c(), (*C.GLchar)(str)))
+	return Attrib{Value: uint(C.glGetAttribLocation(p.c(), (*C.GLchar)(str)))}
 }
 
 func GetBooleanv(dst []bool, pname Enum) {
@@ -1352,11 +1358,12 @@ func GetUniformiv(dst []int32, src Uniform, p Program) {
 func GetUniformLocation(p Program, name string) (r0 Uniform) {
 	defer func() {
 		errstr := errDrain()
+		r0.name = name
 		log.Printf("gl.GetUniformLocation(%v, %v) %v%v", p, name, r0, errstr)
 	}()
 	str := C.CString(name)
 	defer C.free((unsafe.Pointer)(str))
-	return Uniform(C.glGetUniformLocation(p.c(), (*C.GLchar)(str)))
+	return Uniform{Value: int32(C.glGetUniformLocation(p.c(), (*C.GLchar)(str)))}
 }
 
 func GetVertexAttribf(src Attrib, pname Enum) (r0 float32) {
