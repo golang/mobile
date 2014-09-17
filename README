@@ -32,21 +32,25 @@ libraries from Java, the second gives you only OpenGL, but an
 entirely Go development environment.
 
 
-Go library in an Android app 
+Go library in an Android app - via ant/build.xml
 -------------
 
 Apps are written in Java, developed using the standard Android
 tools, that include a Go library for added functionality. There is an
 example of such a library in go.mobile/example/libhello.
 
-To build the shared library, use the make.bash script in the example's
-directory. It requires an environment variable, ANDROID_APP, set to the
-location of your Android studio project. E.g.
+Use the all.bash script in the libhello directory to build and run it.
+More details on the build process are in libhello/README.
 
-	ANDROID_APP=$HOME/android/studio/yourapp/app
 
-With this variable, make.bash builds the .so file and symlinks in the
-necessary java files to the project.
+Go library in an Android app - via gradle
+-------------
+
+Coming soon.
+
+For now, create an app in Android Studio, build the .so file in the
+same way it is in the ant/build.xml examples and copy it into
+YourApp/src/main/jniLibs/armeabi/libgojni.so.
 
 
 Go Android apps (games)
