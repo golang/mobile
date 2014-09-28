@@ -11,6 +11,7 @@ import (
 	"log"
 
 	"code.google.com/p/go.mobile/app"
+	"code.google.com/p/go.mobile/app/debug"
 	"code.google.com/p/go.mobile/event"
 	"code.google.com/p/go.mobile/geom"
 	"code.google.com/p/go.mobile/gl"
@@ -29,6 +30,7 @@ var (
 )
 
 func main() {
+	log.Printf("basic example starting")
 	app.Run(app.Callbacks{
 		Draw:  draw,
 		Touch: touch,
@@ -45,7 +47,7 @@ func initGL() {
 		return
 	}
 
-	buf = gl.GenBuffers(1)[0]
+	buf = gl.GenBuffer()
 	gl.BindBuffer(gl.ARRAY_BUFFER, buf)
 	gl.BufferData(gl.ARRAY_BUFFER, gl.STATIC_DRAW, triangleData)
 
@@ -60,7 +62,7 @@ func touch(t event.Touch) {
 }
 
 func draw() {
-	if program == 0 {
+	if program.Value == 0 {
 		initGL()
 		log.Printf("example/basic rendering initialized")
 	}
@@ -83,6 +85,8 @@ func draw() {
 	gl.VertexAttribPointer(position, coordsPerVertex, gl.FLOAT, false, 0, 0)
 	gl.DrawArrays(gl.TRIANGLES, 0, vertexCount)
 	gl.DisableVertexAttribArray(position)
+
+	debug.DrawFPS()
 }
 
 var triangleData []byte
@@ -104,7 +108,7 @@ var triangleCoords = []float32{
 }
 var vertexCount = len(triangleCoords) / coordsPerVertex
 
-const vertexShader = `
+const vertexShader = `#version 100 core
 uniform vec2 offset;
 
 attribute vec4 position;
@@ -115,7 +119,7 @@ void main() {
 	gl_Position = position + offset4;
 }`
 
-const fragmentShader = `
+const fragmentShader = `#version 100 core
 precision mediump float;
 uniform vec4 color;
 void main() {
