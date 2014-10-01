@@ -75,8 +75,8 @@ func (m *Mat4) Scale(src *Mat4, scale *Vec3) {
 	m[3] = src[3]
 }
 
-func (m *Mat4) Translate(src Mat4, v *Vec3) {
-	*m = src
+func (m *Mat4) Translate(src *Mat4, v *Vec3) {
+	*m = *src
 
 	m[3][0] = src[0][0]*v[0] + src[1][0]*v[1] + src[2][0]*v[2] + src[3][0]
 	m[3][1] = src[0][1]*v[0] + src[1][1]*v[1] + src[2][1]*v[2] + src[3][1]
