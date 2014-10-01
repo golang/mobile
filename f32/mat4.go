@@ -10,7 +10,7 @@ import "fmt"
 // Elements are indexed first by row then column, i.e. m[row][column].
 type Mat4 [4]Vec4
 
-func (m Mat4) String() string {
+func (m *Mat4) String() string {
 	return fmt.Sprintf(`Mat4[% 0.3f, % 0.3f, % 0.3f, % 0.3f,
      % 0.3f, % 0.3f, % 0.3f, % 0.3f,
      % 0.3f, % 0.3f, % 0.3f, % 0.3f,
@@ -19,6 +19,27 @@ func (m Mat4) String() string {
 		m[1][0], m[1][1], m[1][2], m[1][3],
 		m[2][0], m[2][1], m[2][2], m[2][3],
 		m[3][0], m[3][1], m[3][2], m[3][3])
+}
+
+func (m *Mat4) Identity() {
+	*m = Mat4{
+		{1, 0, 0, 0},
+		{0, 1, 0, 0},
+		{0, 0, 1, 0},
+		{0, 0, 0, 1},
+	}
+}
+
+func (m *Mat4) Eq(n *Mat4, epsilon float32) bool {
+	for i := range m {
+		for j := range m[i] {
+			diff := m[i][j] - n[i][j]
+			if diff < -epsilon || +epsilon < diff {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func (m *Mat4) Mul(m0, m1 *Mat4) {
@@ -107,25 +128,4 @@ func (m *Mat4) LookAt(eye, center, up *Vec3) {
 		{s[2], u[2], -f[2], 0},
 		{-s.Dot(eye), -u.Dot(eye), +f.Dot(eye), 1},
 	}
-}
-
-func (m *Mat4) Identity() {
-	*m = Mat4{
-		{1, 0, 0, 0},
-		{0, 1, 0, 0},
-		{0, 0, 1, 0},
-		{0, 0, 0, 1},
-	}
-}
-
-func (m *Mat4) Eq(n *Mat4, epsilon float32) bool {
-	for i := range m {
-		for j := range m[i] {
-			diff := m[i][j] - n[i][j]
-			if diff < -epsilon || +epsilon < diff {
-				return false
-			}
-		}
-	}
-	return true
 }
