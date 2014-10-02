@@ -31,7 +31,7 @@ var identity = Mat4{
 }
 
 func TestEq(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		m0, m1 Mat4
 		eq     bool
 	}{
@@ -49,7 +49,7 @@ func TestEq(t *testing.T) {
 }
 
 func TestMat4Mul(t *testing.T) {
-	var tests = []struct{ m0, m1, want Mat4 }{
+	tests := []struct{ m0, m1, want Mat4 }{
 		{x, identity, x},
 		{identity, x, x},
 		{x, x, xsq},
@@ -85,7 +85,7 @@ func TestMat4Mul(t *testing.T) {
 }
 
 func TestLookAt(t *testing.T) {
-	var tests = []struct {
+	tests := []struct {
 		eye, center, up Vec3
 		want            Mat4
 	}{
@@ -177,9 +177,27 @@ func TestTranslate(t *testing.T) {
 	}
 
 	got := new(Mat4)
-	got.Translate(x, &Vec3{0.1, 0.2, 0.3})
+	got.Translate(&x, &Vec3{0.1, 0.2, 0.3})
 
 	if !got.Eq(want, 0.01) {
 		t.Errorf("got\n%s\nwant\n%s", got, want)
+	}
+}
+
+func TestAffineTranslationsCommute(t *testing.T) {
+	a := &Affine{
+		{1, 0, 3},
+		{0, 1, 4},
+	}
+	b := &Affine{
+		{1, 0, 20},
+		{0, 1, 30},
+	}
+
+	var m0, m1 Affine
+	m0.Mul(a, b)
+	m1.Mul(b, a)
+	if !m0.Eq(&m1, 0) {
+		t.Errorf("m0, m1 differ.\nm0: %v\nm1: %v", &m0, &m1)
 	}
 }
