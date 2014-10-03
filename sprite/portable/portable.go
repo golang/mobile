@@ -8,8 +8,10 @@ package portable
 import (
 	"fmt"
 	"image"
+	"image/draw"
 
 	"code.google.com/p/go.mobile/f32"
+	"code.google.com/p/go.mobile/geom"
 	"code.google.com/p/go.mobile/sprite"
 )
 
@@ -17,19 +19,14 @@ func Engine(dst *image.RGBA) sprite.Engine {
 	return &engine{
 		dst:      dst,
 		nodes:    []*node{nil},
-		sheets:   []image.Image{nil},
-		textures: []*texture{nil},
+		sheets:   []*image.RGBA{nil},
+		textures: []*image.RGBA{nil},
 	}
 }
 
 type node struct {
 	// TODO: move this into package sprite as Node.EngineFields.RelTransform??
-	relTransform f32.Mat3
-}
-
-type texture struct {
-	img    image.Image
-	bounds image.Rectangle
+	relTransform f32.Affine
 }
 
 var _ sprite.Engine = (*engine)(nil)
@@ -37,9 +34,9 @@ var _ sprite.Engine = (*engine)(nil)
 type engine struct {
 	dst           *image.RGBA
 	nodes         []*node
-	sheets        []image.Image
-	textures      []*texture
-	absTransforms []f32.Mat3
+	sheets        []*image.RGBA
+	textures      []*image.RGBA
+	absTransforms []f32.Affine
 }
 
 func (e *engine) Register(n *sprite.Node) {
@@ -51,7 +48,7 @@ func (e *engine) Register(n *sprite.Node) {
 	o.relTransform.Identity()
 
 	e.nodes = append(e.nodes, o)
-	n.EngineFields.Index = int32(len(e.nodes))
+	n.EngineFields.Index = int32(len(e.nodes) - 1)
 }
 
 func (e *engine) Unregister(n *sprite.Node) {
@@ -59,19 +56,22 @@ func (e *engine) Unregister(n *sprite.Node) {
 }
 
 func (e *engine) LoadSheet(a image.Image) (sprite.Sheet, error) {
-	e.sheets = append(e.sheets, a)
-	return sprite.Sheet(len(e.sheets)), nil
+	rgba, ok := a.(*image.RGBA)
+	if !ok {
+		b := a.Bounds()
+		rgba = image.NewRGBA(b)
+		draw.Draw(rgba, b, a, b.Min, draw.Src)
+	}
+	e.sheets = append(e.sheets, rgba)
+	return sprite.Sheet(len(e.sheets) - 1), nil
 }
 
 func (e *engine) LoadTexture(s sprite.Sheet, bounds image.Rectangle) (sprite.Texture, error) {
 	if s < 0 || len(e.sheets) <= int(s) {
 		return 0, fmt.Errorf("portable: LoadTexture: sheet %d is out of bounds", s)
 	}
-	e.textures = append(e.textures, &texture{
-		img:    e.sheets[s],
-		bounds: bounds,
-	})
-	return sprite.Texture(len(e.textures)), nil
+	e.textures = append(e.textures, e.sheets[s].SubImage(bounds).(*image.RGBA))
+	return sprite.Texture(len(e.textures) - 1), nil
 }
 
 func (e *engine) UnloadSheet(s sprite.Sheet) error {
@@ -87,17 +87,23 @@ func (e *engine) SetTexture(n *sprite.Node, t sprite.Time, x sprite.Texture) {
 	n.EngineFields.Texture = x
 }
 
-func (e *engine) SetTransform(n *sprite.Node, t sprite.Time, m f32.Mat3) {
+func (e *engine) SetTransform(n *sprite.Node, t sprite.Time, m f32.Affine) {
 	n.EngineFields.Dirty = true // TODO: do we need to propagate dirtiness up/down the tree?
 	e.nodes[n.EngineFields.Index].relTransform = m
 }
 
 func (e *engine) Render(scene *sprite.Node, t sprite.Time) {
-	e.absTransforms = e.absTransforms[:0]
+	e.absTransforms = append(e.absTransforms[:0], f32.Affine{
+		{1 / geom.Scale, 0, 0},
+		{0, 1 / geom.Scale, 0},
+	})
 	e.render(scene, t)
 }
 
 func (e *engine) render(n *sprite.Node, t sprite.Time) {
+	if n.EngineFields.Index == 0 {
+		panic("portable: sprite.Node not registered")
+	}
 	if n.Arranger != nil {
 		n.Arranger.Arrange(e, n, t)
 	}
@@ -105,16 +111,12 @@ func (e *engine) render(n *sprite.Node, t sprite.Time) {
 	// Push absTransforms.
 	// TODO: cache absolute transforms and use EngineFields.Dirty?
 	rel := &e.nodes[n.EngineFields.Index].relTransform
-	if len(e.absTransforms) == 0 {
-		e.absTransforms = append(e.absTransforms, *rel)
-	} else {
-		m := f32.Mat3{}
-		m.Mul(rel, &e.absTransforms[len(e.absTransforms)-1]) // TODO: swap args order??
-		e.absTransforms = append(e.absTransforms, m)
-	}
+	m := f32.Affine{}
+	m.Mul(rel, &e.absTransforms[len(e.absTransforms)-1]) // TODO: swap args order??
+	e.absTransforms = append(e.absTransforms, m)
 
 	if x := e.textures[n.EngineFields.Texture]; x != nil {
-		// TODO: draw transformed image onto e.dst.
+		affine(e.dst, x, &m)
 	}
 
 	for c := n.FirstChild; c != nil; c = c.NextSibling {

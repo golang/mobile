@@ -41,7 +41,7 @@ type Engine interface {
 	UnloadTexture(x Texture) error
 
 	SetTexture(n *Node, t Time, x Texture)
-	SetTransform(n *Node, t Time, m f32.Mat3) // sets transform relative to parent.
+	SetTransform(n *Node, t Time, m f32.Affine) // sets transform relative to parent.
 
 	Render(scene *Node, t Time)
 }

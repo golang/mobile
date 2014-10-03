@@ -4,9 +4,13 @@
 
 package portable
 
-import "image"
+import (
+	"image"
 
-func affine(dst *image.RGBA, src *image.RGBA, a [3][3]float32) {
+	"code.google.com/p/go.mobile/f32"
+)
+
+func affine(dst *image.RGBA, src *image.RGBA, a *f32.Affine) {
 	srcb := src.Bounds()
 	b := dst.Bounds()
 
@@ -36,7 +40,7 @@ func inBounds(b image.Rectangle, x, y float32) bool {
 	return true
 }
 
-func pt(a [3][3]float32, x0, y0 int) (x1, y1 float32) {
+func pt(a *f32.Affine, x0, y0 int) (x1, y1 float32) {
 	fx := float32(x0) + 0.5
 	fy := float32(y0) + 0.5
 	x1 = fx*a[0][0] + fy*a[0][1] + a[0][2]
