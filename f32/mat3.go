@@ -39,15 +39,25 @@ func (m *Mat3) Eq(n *Mat3, epsilon float32) bool {
 	return true
 }
 
-// Mul stores m0 × m1 in m.
-func (m *Mat3) Mul(m0, m1 *Mat3) {
-	// If you intend to make this faster, skip the usual loop unrolling
-	// games and go straight to halide/renderscript/etc.
-	for i := 0; i < 3; i++ {
-		for j := 0; j < 3; j++ {
-			m[i][j] = m0[i][0]*m1[0][j] +
-				m0[i][1]*m1[1][j] +
-				m0[i][2]*m1[2][j]
-		}
-	}
+// Mul stores a × b in m.
+func (m *Mat3) Mul(a, b *Mat3) {
+	// Store the result in local variables, in case m == a || m == b.
+	m00 := a[0][0]*b[0][0] + a[0][1]*b[1][0] + a[0][2]*b[2][0]
+	m01 := a[0][0]*b[0][1] + a[0][1]*b[1][1] + a[0][2]*b[2][1]
+	m02 := a[0][0]*b[0][2] + a[0][1]*b[1][2] + a[0][2]*b[2][2]
+	m10 := a[1][0]*b[0][0] + a[1][1]*b[1][0] + a[1][2]*b[2][0]
+	m11 := a[1][0]*b[0][1] + a[1][1]*b[1][1] + a[1][2]*b[2][1]
+	m12 := a[1][0]*b[0][2] + a[1][1]*b[1][2] + a[1][2]*b[2][2]
+	m20 := a[2][0]*b[0][0] + a[2][1]*b[1][0] + a[2][2]*b[2][0]
+	m21 := a[2][0]*b[0][1] + a[2][1]*b[1][1] + a[2][2]*b[2][1]
+	m22 := a[2][0]*b[0][2] + a[2][1]*b[1][2] + a[2][2]*b[2][2]
+	m[0][0] = m00
+	m[0][1] = m01
+	m[0][2] = m02
+	m[1][0] = m10
+	m[1][1] = m11
+	m[1][2] = m12
+	m[2][0] = m20
+	m[2][1] = m21
+	m[2][2] = m22
 }
