@@ -23,7 +23,44 @@ func TestAffineTranslationsCommute(t *testing.T) {
 	m0.Mul(a, b)
 	m1.Mul(b, a)
 	if !m0.Eq(&m1, 0) {
-		t.Errorf("m0, m1 differ.\nm0: %v\nm1: %v", &m0, &m1)
+		t.Errorf("m0, m1 differ.\nm0: %v\nm1: %v", m0, m1)
+	}
+}
+
+func TestAffineMat3Equivalence(t *testing.T) {
+	a0 := Affine{
+		{13, 19, 37},
+		{101, 149, 311},
+	}
+	m0 := Mat3{
+		a0[0],
+		a0[1],
+		{0, 0, 1},
+	}
+
+	a1 := Affine{
+		{1009, 1051, 1087},
+		{563, 569, 571},
+	}
+	m1 := Mat3{
+		a1[0],
+		a1[1],
+		{0, 0, 1},
+	}
+
+	a2 := Affine{}
+	a2.Mul(&a0, &a1)
+	m2 := Mat3{
+		a2[0],
+		a2[1],
+		{0, 0, 1},
+	}
+
+	mm := Mat3{}
+	mm.Mul(&m0, &m1)
+
+	if !m2.Eq(&mm, 0) {
+		t.Errorf("m2, mm differ.\nm2: %v\nmm: %v", m2, mm)
 	}
 }
 
@@ -75,6 +112,14 @@ func TestMat3Mul(t *testing.T) {
 		if !got.Eq(&test.want, 0.01) {
 			t.Errorf("test #%d:\n%s *\n%s =\n%s, want\n%s", i, test.m0, test.m1, got, test.want)
 		}
+	}
+}
+
+func TestMat3SelfMul(t *testing.T) {
+	m := x3
+	m.Mul(&m, &m)
+	if !m.Eq(&x3sq, 0) {
+		t.Errorf("m, x3sq differ.\nm:    %v\nx3sq: %v", m, x3sq)
 	}
 }
 
