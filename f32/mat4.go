@@ -10,7 +10,7 @@ import "fmt"
 // Elements are indexed first by row then column, i.e. m[row][column].
 type Mat4 [4]Vec4
 
-func (m *Mat4) String() string {
+func (m Mat4) String() string {
 	return fmt.Sprintf(`Mat4[% 0.3f, % 0.3f, % 0.3f, % 0.3f,
      % 0.3f, % 0.3f, % 0.3f, % 0.3f,
      % 0.3f, % 0.3f, % 0.3f, % 0.3f,
@@ -42,15 +42,16 @@ func (m *Mat4) Eq(n *Mat4, epsilon float32) bool {
 	return true
 }
 
+// Mul stores m0 × m1 in m.
 func (m *Mat4) Mul(m0, m1 *Mat4) {
 	// If you intend to make this faster, skip the usual loop unrolling
 	// games and go straight to halide/renderscript/etc.
 	for i := 0; i < 4; i++ {
 		for j := 0; j < 4; j++ {
-			m[i][j] = m1[i][0]*m0[0][j] +
-				m1[i][1]*m0[1][j] +
-				m1[i][2]*m0[2][j] +
-				m1[i][3]*m0[3][j]
+			m[i][j] = m0[i][0]*m1[0][j] +
+				m0[i][1]*m1[1][j] +
+				m0[i][2]*m1[2][j] +
+				m0[i][3]*m1[3][j]
 		}
 	}
 }
