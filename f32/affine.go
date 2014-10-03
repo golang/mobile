@@ -11,7 +11,7 @@ import "fmt"
 // Elements are indexed first by row then column, i.e. m[row][column].
 type Affine [2]Vec3
 
-func (m *Affine) String() string {
+func (m Affine) String() string {
 	return fmt.Sprintf(`Affine[% 0.3f, % 0.3f, % 0.3f,
      % 0.3f, % 0.3f, % 0.3f]`,
 		m[0][0], m[0][1], m[0][2],
@@ -37,6 +37,7 @@ func (m *Affine) Eq(n *Affine, epsilon float32) bool {
 	return true
 }
 
+// Mul stores m0 × m1 in m.
 func (m *Affine) Mul(m0, m1 *Affine) {
 	m[0][0] = m0[0][0]*m1[0][0] + m0[0][1]*m1[1][0]
 	m[0][1] = m0[0][0]*m1[0][1] + m0[0][1]*m1[1][1]

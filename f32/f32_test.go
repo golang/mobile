@@ -9,35 +9,104 @@ import (
 	"testing"
 )
 
-var x = Mat4{
+func TestAffineTranslationsCommute(t *testing.T) {
+	a := &Affine{
+		{1, 0, 3},
+		{0, 1, 4},
+	}
+	b := &Affine{
+		{1, 0, 20},
+		{0, 1, 30},
+	}
+
+	var m0, m1 Affine
+	m0.Mul(a, b)
+	m1.Mul(b, a)
+	if !m0.Eq(&m1, 0) {
+		t.Errorf("m0, m1 differ.\nm0: %v\nm1: %v", &m0, &m1)
+	}
+}
+
+var x3 = Mat3{
+	{0, 1, 2},
+	{3, 4, 5},
+	{6, 7, 8},
+}
+
+var x3sq = Mat3{
+	{15, 18, 21},
+	{42, 54, 66},
+	{69, 90, 111},
+}
+
+var id3 = Mat3{
+	{1, 0, 0},
+	{0, 1, 0},
+	{0, 0, 1},
+}
+
+func TestMat3Mul(t *testing.T) {
+	tests := []struct{ m0, m1, want Mat3 }{
+		{x3, id3, x3},
+		{id3, x3, x3},
+		{x3, x3, x3sq},
+		{
+			Mat3{
+				{+1.811, +0.000, +0.000},
+				{+0.000, +2.414, +0.000},
+				{+0.000, +0.000, -1.010},
+			},
+			Mat3{
+				{+0.992, -0.015, +0.123},
+				{+0.000, +0.992, +0.123},
+				{-0.124, -0.122, +0.985},
+			},
+			Mat3{
+				{+1.797, -0.027, +0.223},
+				{+0.000, +2.395, +0.297},
+				{+0.125, +0.123, -0.995},
+			},
+		},
+	}
+
+	for i, test := range tests {
+		got := Mat3{}
+		got.Mul(&test.m0, &test.m1)
+		if !got.Eq(&test.want, 0.01) {
+			t.Errorf("test #%d:\n%s *\n%s =\n%s, want\n%s", i, test.m0, test.m1, got, test.want)
+		}
+	}
+}
+
+var x4 = Mat4{
 	{0, 1, 2, 3},
 	{4, 5, 6, 7},
 	{8, 9, 10, 11},
 	{12, 13, 14, 15},
 }
 
-var xsq = Mat4{
+var x4sq = Mat4{
 	{56, 62, 68, 74},
 	{152, 174, 196, 218},
 	{248, 286, 324, 362},
 	{344, 398, 452, 506},
 }
 
-var identity = Mat4{
+var id4 = Mat4{
 	{1, 0, 0, 0},
 	{0, 1, 0, 0},
 	{0, 0, 1, 0},
 	{0, 0, 0, 1},
 }
 
-func TestEq(t *testing.T) {
+func TestMat4Eq(t *testing.T) {
 	tests := []struct {
 		m0, m1 Mat4
 		eq     bool
 	}{
-		{x, x, true},
-		{identity, identity, true},
-		{x, identity, false},
+		{x4, x4, true},
+		{id4, id4, true},
+		{x4, id4, false},
 	}
 
 	for _, test := range tests {
@@ -50,41 +119,41 @@ func TestEq(t *testing.T) {
 
 func TestMat4Mul(t *testing.T) {
 	tests := []struct{ m0, m1, want Mat4 }{
-		{x, identity, x},
-		{identity, x, x},
-		{x, x, xsq},
+		{x4, id4, x4},
+		{id4, x4, x4},
+		{x4, x4, x4sq},
 		{
 			Mat4{
-				{1.811, 0.000, +0.000, +0.000},
-				{0.000, 2.414, +0.000, +0.000},
-				{0.000, 0.000, -1.010, -1.000},
-				{0.000, 0.000, -2.010, +0.000},
+				{+1.811, +0.000, +0.000, +0.000},
+				{+0.000, +2.414, +0.000, +0.000},
+				{+0.000, +0.000, -1.010, -1.000},
+				{+0.000, +0.000, -2.010, +0.000},
 			},
 			Mat4{
-				{+0.992, -0.015, +0.123, 0.000},
-				{+0.000, +0.992, +0.123, 0.000},
-				{-0.124, -0.122, +0.985, 0.000},
-				{-0.000, -0.000, -8.124, 1.000},
+				{+0.992, -0.015, +0.123, +0.000},
+				{+0.000, +0.992, +0.123, +0.000},
+				{-0.124, -0.122, +0.985, +0.000},
+				{-0.000, -0.000, -8.124, +1.000},
 			},
 			Mat4{
-				{+1.797, -0.037, -0.124, -0.123},
-				{+0.000, +2.396, -0.124, -0.123},
-				{-0.225, -0.295, -0.995, -0.985},
-				{+0.000, +0.000, +6.196, +8.124},
+				{+1.797, -0.027, +0.223, +0.000},
+				{+0.000, +2.395, +0.297, +0.000},
+				{+0.125, +0.123, +7.129, -1.000},
+				{+0.249, +0.245, -1.980, +0.000},
 			},
 		},
 	}
 
-	for _, test := range tests {
+	for i, test := range tests {
 		got := Mat4{}
 		got.Mul(&test.m0, &test.m1)
 		if !got.Eq(&test.want, 0.01) {
-			t.Errorf("%s *\n%s =\n%s, want\n%s", test.m0, test.m1, got, test.want)
+			t.Errorf("test #%d:\n%s *\n%s =\n%s, want\n%s", i, test.m0, test.m1, got, test.want)
 		}
 	}
 }
 
-func TestLookAt(t *testing.T) {
+func TestMat4LookAt(t *testing.T) {
 	tests := []struct {
 		eye, center, up Vec3
 		want            Mat4
@@ -119,7 +188,7 @@ func TestLookAt(t *testing.T) {
 
 }
 
-func TestPerspective(t *testing.T) {
+func TestMat4Perspective(t *testing.T) {
 	want := Mat4{
 		{1.811, 0.000, 0.000, 0.000},
 		{0.000, 2.414, 0.000, 0.000},
@@ -136,23 +205,23 @@ func TestPerspective(t *testing.T) {
 
 }
 
-func TestRotate(t *testing.T) {
+func TestMat4Rotate(t *testing.T) {
 	want := &Mat4{
-		{-8.000, -9.000, -10.000, -11.000},
-		{4.000, 5.000, 6.000, 7.000},
-		{-0.000, 1.000, 2.000, 3.000},
-		{12.000, 13.000, 14.000, 15.000},
+		{2.000, 1.000, -0.000, 3.000},
+		{6.000, 5.000, -4.000, 7.000},
+		{10.000, 9.000, -8.000, 11.000},
+		{14.000, 13.000, -12.000, 15.000},
 	}
 
 	got := new(Mat4)
-	got.Rotate(&x, Radian(math.Pi/2), &Vec3{0, 1, 0})
+	got.Rotate(&x4, Radian(math.Pi/2), &Vec3{0, 1, 0})
 
 	if !got.Eq(want, 0.01) {
 		t.Errorf("got\n%s\nwant\n%s", got, want)
 	}
 }
 
-func TestScale(t *testing.T) {
+func TestMat4Scale(t *testing.T) {
 	want := &Mat4{
 		{0.000, 2.000, 4.000, 6.000},
 		{12.000, 15.000, 18.000, 21.000},
@@ -161,14 +230,14 @@ func TestScale(t *testing.T) {
 	}
 
 	got := new(Mat4)
-	got.Scale(&x, &Vec3{2, 3, 4})
+	got.Scale(&x4, &Vec3{2, 3, 4})
 
 	if !got.Eq(want, 0.01) {
 		t.Errorf("got\n%s\nwant\n%s", got, want)
 	}
 }
 
-func TestTranslate(t *testing.T) {
+func TestMat4Translate(t *testing.T) {
 	want := &Mat4{
 		{0.000, 1.000, 2.000, 3.000},
 		{4.000, 5.000, 6.000, 7.000},
@@ -177,27 +246,9 @@ func TestTranslate(t *testing.T) {
 	}
 
 	got := new(Mat4)
-	got.Translate(&x, &Vec3{0.1, 0.2, 0.3})
+	got.Translate(&x4, &Vec3{0.1, 0.2, 0.3})
 
 	if !got.Eq(want, 0.01) {
 		t.Errorf("got\n%s\nwant\n%s", got, want)
-	}
-}
-
-func TestAffineTranslationsCommute(t *testing.T) {
-	a := &Affine{
-		{1, 0, 3},
-		{0, 1, 4},
-	}
-	b := &Affine{
-		{1, 0, 20},
-		{0, 1, 30},
-	}
-
-	var m0, m1 Affine
-	m0.Mul(a, b)
-	m1.Mul(b, a)
-	if !m0.Eq(&m1, 0) {
-		t.Errorf("m0, m1 differ.\nm0: %v\nm1: %v", &m0, &m1)
 	}
 }

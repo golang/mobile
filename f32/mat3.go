@@ -10,7 +10,7 @@ import "fmt"
 // Elements are indexed first by row then column, i.e. m[row][column].
 type Mat3 [3]Vec3
 
-func (m *Mat3) String() string {
+func (m Mat3) String() string {
 	return fmt.Sprintf(`Mat3[% 0.3f, % 0.3f, % 0.3f,
      % 0.3f, % 0.3f, % 0.3f,
      % 0.3f, % 0.3f, % 0.3f]`,
@@ -39,14 +39,15 @@ func (m *Mat3) Eq(n *Mat3, epsilon float32) bool {
 	return true
 }
 
+// Mul stores m0 × m1 in m.
 func (m *Mat3) Mul(m0, m1 *Mat3) {
 	// If you intend to make this faster, skip the usual loop unrolling
 	// games and go straight to halide/renderscript/etc.
 	for i := 0; i < 3; i++ {
 		for j := 0; j < 3; j++ {
-			m[i][j] = m1[i][0]*m0[0][j] +
-				m1[i][1]*m0[1][j] +
-				m1[i][2]*m0[2][j]
+			m[i][j] = m0[i][0]*m1[0][j] +
+				m0[i][1]*m1[1][j] +
+				m0[i][2]*m1[2][j]
 		}
 	}
 }

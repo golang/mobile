@@ -8,6 +8,10 @@ import "fmt"
 
 type Vec3 [3]float32
 
+func (v Vec3) String() string {
+	return fmt.Sprintf("Vec3[% 0.3f, % 0.3f, % 0.3f]", v[0], v[1], v[2])
+}
+
 func (v *Vec3) Normalize() {
 	sq := v.Dot(v)
 	inv := 1 / Sqrt(sq)
@@ -42,8 +46,4 @@ func (v *Vec3) Cross(v0, v1 *Vec3) {
 
 func (v *Vec3) Dot(v1 *Vec3) float32 {
 	return v[0]*v1[0] + v[1]*v1[1] + v[2]*v1[2]
-}
-
-func (v *Vec3) String() string {
-	return fmt.Sprintf("Vec3[% 0.3f, % 0.3f, % 0.3f]", v[0], v[1], v[2])
 }
