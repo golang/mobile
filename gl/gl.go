@@ -1103,8 +1103,10 @@ func Uniform4iv(dst Uniform, src []int32) {
 	C.glUniform4iv(dst.c(), C.GLsizei(len(src)/4), (*C.GLint)(&src[0]))
 }
 
-// UniformMatrix2fv writes 2x2 matricies. Each matrix uses four
-// float32 values, so the number of matricies written is len(src)/4.
+// UniformMatrix2fv writes 2x2 matrices. Each matrix uses four
+// float32 values, so the number of matrices written is len(src)/4.
+//
+// Each matrix must be supplied in column major order.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func UniformMatrix2fv(dst Uniform, src []float32) {
@@ -1112,16 +1114,20 @@ func UniformMatrix2fv(dst Uniform, src []float32) {
 	C.glUniformMatrix2fv(dst.c(), C.GLsizei(len(src)/4), 0, (*C.GLfloat)(&src[0]))
 }
 
-// UniformMatrix3fv writes 3x3 matricies. Each matrix uses nine
-// float32 values, so the number of matricies written is len(src)/9.
+// UniformMatrix3fv writes 3x3 matrices. Each matrix uses nine
+// float32 values, so the number of matrices written is len(src)/9.
+//
+// Each matrix must be supplied in column major order.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func UniformMatrix3fv(dst Uniform, src []float32) {
 	C.glUniformMatrix3fv(dst.c(), C.GLsizei(len(src)/9), 0, (*C.GLfloat)(&src[0]))
 }
 
-// UniformMatrix4fv writes 4x4 matricies. Each matrix uses 16
-// float32 values, so the number of matricies written is len(src)/16.
+// UniformMatrix4fv writes 4x4 matrices. Each matrix uses 16
+// float32 values, so the number of matrices written is len(src)/16.
+//
+// Each matrix must be supplied in column major order.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func UniformMatrix4fv(dst Uniform, src []float32) {
