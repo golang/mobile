@@ -18,6 +18,7 @@ func (m Affine) String() string {
 		m[1][0], m[1][1], m[1][2])
 }
 
+// Identity sets m to be the identity transform.
 func (m *Affine) Identity() {
 	*m = Affine{
 		{1, 0, 0},
@@ -25,6 +26,8 @@ func (m *Affine) Identity() {
 	}
 }
 
+// Eq reports whether each component of m is within epsilon of the same
+// component in n.
 func (m *Affine) Eq(n *Affine, epsilon float32) bool {
 	for i := range m {
 		for j := range m[i] {
@@ -37,19 +40,51 @@ func (m *Affine) Eq(n *Affine, epsilon float32) bool {
 	return true
 }
 
-// Mul stores a × b in m.
-func (m *Affine) Mul(a, b *Affine) {
+// Mul sets m to be p × q.
+func (m *Affine) Mul(p, q *Affine) {
 	// Store the result in local variables, in case m == a || m == b.
-	m00 := a[0][0]*b[0][0] + a[0][1]*b[1][0]
-	m01 := a[0][0]*b[0][1] + a[0][1]*b[1][1]
-	m02 := a[0][0]*b[0][2] + a[0][1]*b[1][2] + a[0][2]
-	m10 := a[1][0]*b[0][0] + a[1][1]*b[1][0]
-	m11 := a[1][0]*b[0][1] + a[1][1]*b[1][1]
-	m12 := a[1][0]*b[0][2] + a[1][1]*b[1][2] + a[1][2]
+	m00 := p[0][0]*q[0][0] + p[0][1]*q[1][0]
+	m01 := p[0][0]*q[0][1] + p[0][1]*q[1][1]
+	m02 := p[0][0]*q[0][2] + p[0][1]*q[1][2] + p[0][2]
+	m10 := p[1][0]*q[0][0] + p[1][1]*q[1][0]
+	m11 := p[1][0]*q[0][1] + p[1][1]*q[1][1]
+	m12 := p[1][0]*q[0][2] + p[1][1]*q[1][2] + p[1][2]
 	m[0][0] = m00
 	m[0][1] = m01
 	m[0][2] = m02
 	m[1][0] = m10
 	m[1][1] = m11
 	m[1][2] = m12
+}
+
+// Scale sets m to be a scale followed by p.
+// It is equivalent to m.Mul(p, &Affine{{x,0,0}, {0,y,0}}).
+func (m *Affine) Scale(p *Affine, x, y float32) {
+	m[0][0] = p[0][0] * x
+	m[0][1] = p[0][1] * y
+	m[0][2] = p[0][2]
+	m[1][0] = p[1][0] * x
+	m[1][1] = p[1][1] * y
+	m[1][2] = p[1][2]
+}
+
+// Translate sets m to be a translation followed by p.
+// It is equivalent to m.Mul(p, &Affine{{1,0,x}, {0,1,y}}).
+func (m *Affine) Translate(p *Affine, x, y float32) {
+	m[0][0] = p[0][0]
+	m[0][1] = p[0][1]
+	m[0][2] = p[0][0]*x + p[0][1]*y + p[0][2]
+	m[1][0] = p[1][0]
+	m[1][1] = p[1][1]
+	m[1][2] = p[1][0]*x + p[1][1]*y + p[1][2]
+}
+
+// Rotate sets m to a rotation in radians followed by p.
+// It is equivalent to m.Mul(p, affineRotation).
+func (m *Affine) Rotate(p *Affine, radians float32) {
+	s, c := Sin(radians), Cos(radians)
+	m.Mul(p, &Affine{
+		{+c, +s, 0},
+		{-s, +c, 0},
+	})
 }
