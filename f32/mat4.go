@@ -79,6 +79,7 @@ func (m *Mat4) Mul(a, b *Mat4) {
 	m[3][3] = m33
 }
 
+// Perspective sets m to be the GL perspective matrix.
 func (m *Mat4) Perspective(fov Radian, aspect, near, far float32) {
 	t := Tan(float32(fov) / 2)
 
@@ -89,33 +90,70 @@ func (m *Mat4) Perspective(fov Radian, aspect, near, far float32) {
 	m[3][2] = -2 * far * near / (far - near)
 }
 
-func (m *Mat4) Scale(src *Mat4, scale *Vec3) {
-	for i, s := range scale {
-		m[i][0] = src[i][0] * s
-		m[i][1] = src[i][1] * s
-		m[i][2] = src[i][2] * s
-		m[i][3] = src[i][3] * s
-	}
-	m[3] = src[3]
+// Scale sets m to be a scale followed by p.
+// It is equivalent to
+//	m.Mul(p, &Mat4{
+//		{x, 0, 0, 0},
+//		{0, y, 0, 0},
+//		{0, 0, z, 0},
+//		{0, 0, 0, 1},
+//	}).
+func (m *Mat4) Scale(p *Mat4, x, y, z float32) {
+	m[0][0] = p[0][0] * x
+	m[0][1] = p[0][1] * y
+	m[0][2] = p[0][2] * z
+	m[0][3] = p[0][3]
+	m[1][0] = p[1][0] * x
+	m[1][1] = p[1][1] * y
+	m[1][2] = p[1][2] * z
+	m[1][3] = p[1][3]
+	m[2][0] = p[2][0] * x
+	m[2][1] = p[2][1] * y
+	m[2][2] = p[2][2] * z
+	m[2][3] = p[2][3]
+	m[3][0] = p[3][0] * x
+	m[3][1] = p[3][1] * y
+	m[3][2] = p[3][2] * z
+	m[3][3] = p[3][3]
 }
 
-func (m *Mat4) Translate(src *Mat4, v *Vec3) {
-	*m = *src
-
-	m[3][0] = src[0][0]*v[0] + src[1][0]*v[1] + src[2][0]*v[2] + src[3][0]
-	m[3][1] = src[0][1]*v[0] + src[1][1]*v[1] + src[2][1]*v[2] + src[3][1]
-	m[3][2] = src[0][2]*v[0] + src[1][2]*v[1] + src[2][2]*v[2] + src[3][2]
-	m[3][3] = src[0][3]*v[0] + src[1][3]*v[1] + src[2][3]*v[2] + src[3][3]
+// Translate sets m to be a translation followed by p.
+// It is equivalent to
+//	m.Mul(p, &Mat4{
+//		{1, 0, 0, x},
+//		{0, 1, 0, y},
+//		{0, 0, 1, z},
+//		{0, 0, 0, 1},
+//	}).
+func (m *Mat4) Translate(p *Mat4, x, y, z float32) {
+	m[0][0] = p[0][0]
+	m[0][1] = p[0][1]
+	m[0][2] = p[0][2]
+	m[0][3] = p[0][0]*x + p[0][1]*y + p[0][2]*z + p[0][3]
+	m[1][0] = p[1][0]
+	m[1][1] = p[1][1]
+	m[1][2] = p[1][2]
+	m[1][3] = p[1][0]*x + p[1][1]*y + p[1][2]*z + p[1][3]
+	m[2][0] = p[2][0]
+	m[2][1] = p[2][1]
+	m[2][2] = p[2][2]
+	m[2][3] = p[2][0]*x + p[2][1]*y + p[2][2]*z + p[2][3]
+	m[3][0] = p[3][0]
+	m[3][1] = p[3][1]
+	m[3][2] = p[3][2]
+	m[3][3] = p[3][0]*x + p[3][1]*y + p[3][2]*z + p[3][3]
 }
 
-func (m *Mat4) Rotate(src *Mat4, angle Radian, axis *Vec3) {
+// Rotate sets m to a rotation in radians around a specified axis, followed by p.
+// It is equivalent to m.Mul(p, affineRotation).
+func (m *Mat4) Rotate(p *Mat4, angle Radian, axis *Vec3) {
 	a := *axis
 	a.Normalize()
 
 	c, s := Cos(float32(angle)), Sin(float32(angle))
 	d := 1 - c
 
-	m.Mul(src, &Mat4{{
+	m.Mul(p, &Mat4{{
 		c + d*a[0]*a[1],
 		0 + d*a[0]*a[1] + s*a[2],
 		0 + d*a[0]*a[1] - s*a[1],
