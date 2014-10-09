@@ -93,10 +93,8 @@ static void wait_go_runtime() {
 
 pthread_t nativeactivity_t;
 
-// Runtime entry point when using NativeActivity.
-void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_t savedStateSize) {
-	current_vm = activity->vm;
-
+// Runtime entry point when embedding Go in other libraries.
+void InitGoRuntime() {
         pthread_mutex_lock(&go_started_mu);
 	go_started = 0;
 	pthread_mutex_unlock(&go_started_mu);
@@ -107,6 +105,13 @@ void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 	pthread_create(&nativeactivity_t, NULL, init_go_runtime, NULL);
 	wait_go_runtime();
+}
+
+// Runtime entry point when using NativeActivity.
+void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_t savedStateSize) {
+	current_vm = activity->vm;
+
+	InitGoRuntime();
 
 	// These functions match the methods on Activity, described at
 	// http://developer.android.com/reference/android/app/Activity.html
