@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Simple on-screen app debugging for OS X. Not an officially supported
-// development target for apps, as screens with mice are very different
-// than screens with touch panels.
-
 // +build darwin
 
 package app
+
+// Simple on-screen app debugging for OS X. Not an officially supported
+// development target for apps, as screens with mice are very different
+// than screens with touch panels.
 
 /*
 #cgo CFLAGS: -x objective-c
@@ -26,7 +26,6 @@ double backingScaleFactor();
 */
 import "C"
 import (
-	"log"
 	"runtime"
 	"sync"
 
@@ -50,7 +49,6 @@ func setGeom(scale, width, height float64) {
 	geom.Scale = float32(scale)
 	geom.Width = geom.Pt(width)
 	geom.Height = geom.Pt(height)
-	log.Printf("geom: Scale=%.2f, Width=%v, Height=%v", geom.Scale, geom.Width, geom.Height)
 }
 
 func initGL() {
@@ -95,15 +93,20 @@ loop:
 	for {
 		select {
 		case e := <-events:
-			cb.Touch(e)
+			if cb.Touch != nil {
+				cb.Touch(e)
+			}
 		default:
 			break loop
 		}
 	}
 
+	// TODO: is the library or the app responsible for clearing the buffers?
 	gl.ClearColor(0, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	cb.Draw()
+	if cb.Draw != nil {
+		cb.Draw()
+	}
 
 	C.unlockContext(ctx)
 	runtime.UnlockOSThread()
