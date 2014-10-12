@@ -32,10 +32,18 @@ var fps struct {
 // TODO(crawshaw): The gldebug mode needs to complain loudly when GL functions
 //                 are called before init, because often they fail silently.
 func fpsInit() {
-	font := "/system/fonts/DroidSansMono.ttf"
-	if runtime.GOOS == "darwin" {
+	font := ""
+	switch runtime.GOOS {
+	case "android":
+		font = "/system/fonts/DroidSansMono.ttf"
+	case "darwin":
 		font = "/Library/Fonts/Andale Mono.ttf"
+	case "linux":
+		font = "/usr/share/fonts/truetype/droid/DroidSansMono.ttf"
+	default:
+		panic(fmt.Sprintf("go.mobile/app/debug: unsupported runtime.GOOS %q", runtime.GOOS))
 	}
+
 	b, err := ioutil.ReadFile(font)
 	if err != nil {
 		panic(err)
@@ -53,7 +61,6 @@ func fpsInit() {
 	monofont.SetClip(fps.Image.Bounds())
 	monofont.SetDPI(72 * float64(geom.Scale))
 	monofont.SetFontSize(12)
-	log.Printf("fps.Image bounds: %s", fps.Image.Bounds())
 }
 
 // DrawFPS draws the per second framerate in the bottom-left of the screen.
