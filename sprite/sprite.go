@@ -7,7 +7,7 @@
 // Typical main loop:
 //
 //	for each frame {
-//		quantize time.Now() to a sprite.Time
+//		quantize time.Now() to a clock.Time
 //		process UI events
 //		modify the scene's nodes and animations (Arranger values)
 //		e.Render(scene, t)
@@ -18,13 +18,11 @@ import (
 	"image"
 
 	"code.google.com/p/go.mobile/f32"
+	"code.google.com/p/go.mobile/sprite/clock"
 )
 
-// TODO: move this to a code.google.com/p/go.mobile/clock package?
-type Time int32
-
 type Arranger interface {
-	Arrange(e Engine, n *Node, t Time)
+	Arrange(e Engine, n *Node, t clock.Time)
 }
 
 type Sheet int32
@@ -40,10 +38,10 @@ type Engine interface {
 	UnloadSheet(s Sheet) error
 	UnloadTexture(x Texture) error
 
-	SetTexture(n *Node, t Time, x Texture)
-	SetTransform(n *Node, t Time, m f32.Affine) // sets transform relative to parent.
+	SetTexture(n *Node, t clock.Time, x Texture)
+	SetTransform(n *Node, t clock.Time, m f32.Affine) // sets transform relative to parent.
 
-	Render(scene *Node, t Time)
+	Render(scene *Node, t clock.Time)
 }
 
 type Node struct {

@@ -13,6 +13,7 @@ import (
 	"code.google.com/p/go.mobile/f32"
 	"code.google.com/p/go.mobile/geom"
 	"code.google.com/p/go.mobile/sprite"
+	"code.google.com/p/go.mobile/sprite/clock"
 )
 
 func Engine(dst *image.RGBA) sprite.Engine {
@@ -82,17 +83,17 @@ func (e *engine) UnloadTexture(x sprite.Texture) error {
 	panic("todo")
 }
 
-func (e *engine) SetTexture(n *sprite.Node, t sprite.Time, x sprite.Texture) {
+func (e *engine) SetTexture(n *sprite.Node, t clock.Time, x sprite.Texture) {
 	n.EngineFields.Dirty = true // TODO: do we need to propagate dirtiness up/down the tree?
 	n.EngineFields.Texture = x
 }
 
-func (e *engine) SetTransform(n *sprite.Node, t sprite.Time, m f32.Affine) {
+func (e *engine) SetTransform(n *sprite.Node, t clock.Time, m f32.Affine) {
 	n.EngineFields.Dirty = true // TODO: do we need to propagate dirtiness up/down the tree?
 	e.nodes[n.EngineFields.Index].relTransform = m
 }
 
-func (e *engine) Render(scene *sprite.Node, t sprite.Time) {
+func (e *engine) Render(scene *sprite.Node, t clock.Time) {
 	e.absTransforms = append(e.absTransforms[:0], f32.Affine{
 		{1 / geom.Scale, 0, 0},
 		{0, 1 / geom.Scale, 0},
@@ -100,7 +101,7 @@ func (e *engine) Render(scene *sprite.Node, t sprite.Time) {
 	e.render(scene, t)
 }
 
-func (e *engine) render(n *sprite.Node, t sprite.Time) {
+func (e *engine) render(n *sprite.Node, t clock.Time) {
 	if n.EngineFields.Index == 0 {
 		panic("portable: sprite.Node not registered")
 	}
