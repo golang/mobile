@@ -31,7 +31,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 		return -1;
 	}
 
-        pthread_mutex_lock(&go_started_mu);
+	pthread_mutex_lock(&go_started_mu);
 	go_started = 0;
 	pthread_mutex_unlock(&go_started_mu);
 	pthread_cond_init(&go_started_cond, NULL);
@@ -83,8 +83,8 @@ static void* init_go_runtime(void* unused) {
 	close(fd);
 	x.auxv[n] = NULL;
 
-        int32_t argc = 1;
-        _rt0_arm_linux1(argc, x.argv);
+	int32_t argc = 1;
+	_rt0_arm_linux1(argc, x.argv);
 	return NULL;
 }
 
@@ -101,7 +101,7 @@ pthread_t nativeactivity_t;
 
 // Runtime entry point when embedding Go in other libraries.
 void InitGoRuntime() {
-        pthread_mutex_lock(&go_started_mu);
+	pthread_mutex_lock(&go_started_mu);
 	go_started = 0;
 	pthread_mutex_unlock(&go_started_mu);
 	pthread_cond_init(&go_started_cond, NULL);
