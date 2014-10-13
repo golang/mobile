@@ -17,6 +17,7 @@ import (
 
 	"code.google.com/p/freetype-go/freetype"
 	"code.google.com/p/go.mobile/geom"
+	"code.google.com/p/go.mobile/gl/glutil"
 )
 
 var lastDraw = time.Now()
@@ -25,7 +26,7 @@ var monofont = freetype.NewContext()
 
 var fps struct {
 	sync.Once
-	*rgba
+	*glutil.Image
 }
 
 // TODO(crawshaw): It looks like we need a gl.RegisterInit feature.
@@ -56,9 +57,9 @@ func fpsInit() {
 	monofont.SetSrc(image.Black)
 	monofont.SetHinting(freetype.FullHinting)
 
-	fps.rgba = newRGBA(geom.Point{50, 12})
-	monofont.SetDst(fps.Image)
-	monofont.SetClip(fps.Image.Bounds())
+	fps.Image = glutil.NewImage(geom.Point{50, 12})
+	monofont.SetDst(fps.Image.RGBA)
+	monofont.SetClip(fps.Bounds())
 	monofont.SetDPI(72 * float64(geom.Scale))
 	monofont.SetFontSize(12)
 }
@@ -79,7 +80,10 @@ func DrawFPS() {
 	}
 
 	fps.Upload()
-	fps.Draw(geom.Point{0, geom.Height - 12})
+	fps.Draw(
+		geom.Rectangle{geom.Point{0, geom.Height - 12}, geom.Point{50, geom.Height}},
+		fps.Bounds(),
+	)
 
 	lastDraw = now
 }
