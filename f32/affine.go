@@ -57,6 +57,25 @@ func (m *Affine) Mul(p, q *Affine) {
 	m[1][2] = m12
 }
 
+// Inverse sets m to be the inverse of p.
+func (m *Affine) Inverse(p *Affine) {
+	m00 := p[1][1]
+	m01 := -p[0][1]
+	m02 := p[1][2]*p[0][1] - p[1][1]*p[0][2]
+	m10 := -p[1][0]
+	m11 := p[0][0]
+	m12 := p[1][0]*p[0][2] - p[1][2]*p[0][0]
+
+	det := m00*m11 - m10*m01
+
+	m[0][0] = m00 / det
+	m[0][1] = m01 / det
+	m[0][2] = m02 / det
+	m[1][0] = m10 / det
+	m[1][1] = m11 / det
+	m[1][2] = m12 / det
+}
+
 // Scale sets m to be a scale followed by p.
 // It is equivalent to m.Mul(p, &Affine{{x,0,0}, {0,y,0}}).
 func (m *Affine) Scale(p *Affine, x, y float32) {
