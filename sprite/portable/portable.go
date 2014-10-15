@@ -113,11 +113,12 @@ func (e *engine) render(n *sprite.Node, t clock.Time) {
 	// TODO: cache absolute transforms and use EngineFields.Dirty?
 	rel := &e.nodes[n.EngineFields.Index].relTransform
 	m := f32.Affine{}
-	m.Mul(rel, &e.absTransforms[len(e.absTransforms)-1]) // TODO: swap args order??
+	m.Mul(&e.absTransforms[len(e.absTransforms)-1], rel)
 	e.absTransforms = append(e.absTransforms, m)
 
 	if x := e.textures[n.EngineFields.Texture]; x != nil {
-		affine(e.dst, x, &m)
+		m.Inverse(&m)
+		affine(e.dst, x, &m, draw.Over)
 	}
 
 	for c := n.FirstChild; c != nil; c = c.NextSibling {

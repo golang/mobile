@@ -6,11 +6,26 @@ package portable
 
 import (
 	"image"
+	"image/draw"
 
 	"code.google.com/p/go.mobile/f32"
 )
 
-func affine(dst *image.RGBA, src *image.RGBA, a *f32.Affine) {
+// affine draws each pixel of dst using bilinear interpolation of the
+// affine-transformed position in src. This is equivalent to:
+//
+//	for each (x,y) in dst:
+//		dst(x,y) = bilinear interpolation of src(a*(x,y))
+//
+// While this is the simpler implementation, it can be counter-
+// intuitive as an affine transformation is usually described in terms
+// of the source, not the destination. For example, a scale transform
+//
+//	Affine{{2, 0, 0}, {0, 2, 0}}
+//
+// will produce a dst that is half the size of src. To perform a
+// traditional affine transform, use the inverse of the affine matrix.
+func affine(dst *image.RGBA, src *image.RGBA, a *f32.Affine, op draw.Op) {
 	srcb := src.Bounds()
 	b := dst.Bounds()
 
@@ -22,10 +37,39 @@ func affine(dst *image.RGBA, src *image.RGBA, a *f32.Affine) {
 			}
 			c := bilinear(src, sx, sy)
 			off := (y-dst.Rect.Min.Y)*dst.Stride + (x-dst.Rect.Min.X)*4
-			dst.Pix[off+0] = c.R
-			dst.Pix[off+1] = c.G
-			dst.Pix[off+2] = c.B
-			dst.Pix[off+3] = c.A
+			if op == draw.Over {
+				// This logic comes from drawCopyOver in the image/draw package.
+				sr := uint32(c.R) * 0x101
+				sg := uint32(c.G) * 0x101
+				sb := uint32(c.B) * 0x101
+				sa := uint32(c.A) * 0x101
+
+				dr := uint32(dst.Pix[off+0])
+				dg := uint32(dst.Pix[off+1])
+				db := uint32(dst.Pix[off+2])
+				da := uint32(dst.Pix[off+3])
+
+				// m is the maximum color value returned by image.Color.RGBA.
+				const m = 1<<16 - 1
+
+				// dr, dg, db and da are all 8-bit color at the moment, ranging in [0,255].
+				// We work in 16-bit color, and so would normally do:
+				// dr |= dr << 8
+				// and similarly for dg, db and da, but instead we multiply a
+				// (which is a 16-bit color, ranging in [0,65535]) by 0x101.
+				// This yields the same result, but is fewer arithmetic operations.
+				a := (m - sa) * 0x101
+
+				dst.Pix[off+0] = uint8((dr*a/m + sr) >> 8)
+				dst.Pix[off+1] = uint8((dg*a/m + sg) >> 8)
+				dst.Pix[off+2] = uint8((db*a/m + sb) >> 8)
+				dst.Pix[off+3] = uint8((da*a/m + sa) >> 8)
+			} else {
+				dst.Pix[off+0] = c.R
+				dst.Pix[off+1] = c.G
+				dst.Pix[off+2] = c.B
+				dst.Pix[off+3] = c.A
+			}
 		}
 	}
 }
