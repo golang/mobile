@@ -57,7 +57,7 @@ function exits, the app exits.
 	import (
 		"log"
 
-		"google.golang.org/mobile/app"
+		"code.google.com/p/go.mobile/app"
 	)
 
 	func main() {
