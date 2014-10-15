@@ -19,6 +19,29 @@ var a = Affine{
 	{6, 7, 8},
 }
 
+func TestInverse(t *testing.T) {
+	wantInv := Affine{
+		{-2.33333, 1.33333, 1},
+		{2, -1, -2},
+	}
+	var gotInv Affine
+	gotInv.Inverse(&a)
+	if !gotInv.Eq(&wantInv, 0.01) {
+		t.Errorf("Inverse: got %s want %s", gotInv, wantInv)
+	}
+
+	var wantId, gotId Affine
+	wantId.Identity()
+	gotId.Mul(&a, &wantInv)
+	if !gotId.Eq(&wantId, 0.01) {
+		t.Errorf("Identity #0: got %s want %s", gotId, wantId)
+	}
+	gotId.Mul(&wantInv, &a)
+	if !gotId.Eq(&wantId, 0.01) {
+		t.Errorf("Identity #1: got %s want %s", gotId, wantId)
+	}
+}
+
 func TestAffineScale(t *testing.T) {
 	for _, test := range xyTests {
 		want := a
