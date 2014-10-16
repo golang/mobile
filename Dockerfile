@@ -6,6 +6,7 @@ RUN echo "debconf shared/accepted-oracle-license-v1-1 select true" | debconf-set
 	echo "debconf shared/accepted-oracle-license-v1-1 seen true" | debconf-set-selections
 RUN apt-get update && \
 	apt-get -y install build-essential python-software-properties bzip2 curl \
+		git subversion mercurial bzr \
 		libncurses5:i386 libstdc++6:i386 zlib1g:i386 && \
 	add-apt-repository ppa:webupd8team/java && \
 	apt-get update && \
@@ -44,6 +45,7 @@ RUN curl https://go.googlecode.com/archive/default.tar.gz | tar xz -C / && \
 	./all.bash && \
 	CC_FOR_TARGET=$NDK_ROOT/bin/arm-linux-androideabi-gcc GOOS=android GOARCH=arm GOARM=7 ./make.bash
 
-# Add go.mobile to GOPATH.
-ADD . /gopath/src/code.google.com/p/go.mobile
+# Download go.mobile to GOPATH.
+RUN go get -d -t code.google.com/p/go.mobile/...
+
 WORKDIR /gopath/src/code.google.com/p/go.mobile
