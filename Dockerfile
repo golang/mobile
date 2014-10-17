@@ -1,3 +1,8 @@
+# Dockerfile to build an image with the local version of go.mobile.
+#
+#  > docker build -t mobile /path/to/go.mobile
+#  > docker run --rm mobile /bin/bash -c 'cd example/basic && ./make.bash'
+
 FROM ubuntu:12.04
 
 # Install system-level dependencies.
@@ -45,7 +50,10 @@ RUN curl https://go.googlecode.com/archive/default.tar.gz | tar xz -C / && \
 	./all.bash && \
 	CC_FOR_TARGET=$NDK_ROOT/bin/arm-linux-androideabi-gcc GOOS=android GOARCH=arm GOARM=7 ./make.bash
 
-# Download go.mobile to GOPATH.
+# Copy the local version of go.mobile to GOPATH.
+ADD . /gopath/src/code.google.com/p/go.mobile
+
+# Install dependencies. This will not overwrite the local copy.
 RUN go get -d -t code.google.com/p/go.mobile/...
 
 WORKDIR /gopath/src/code.google.com/p/go.mobile
