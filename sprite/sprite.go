@@ -2,7 +2,17 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package sprite blah blah blah TODO.
+// Package sprite provides a 2D scene graph for rendering and animation.
+//
+// A tree of nodes is drawn by a rendering Engine, provided by another
+// package. The OS-independent Go version based on the image package is:
+//
+//	code.google.com/p/go.mobile/sprite/portable
+//
+// An Engine draws a screen starting at a root Node. The tree is walked
+// depth-first, with affine transformations applied at each level.
+//
+// Nodes are rendered relative to their parent.
 //
 // Typical main loop:
 //
@@ -44,6 +54,7 @@ type Engine interface {
 	Render(scene *Node, t clock.Time)
 }
 
+// A Node is a renderable element and forms a tree of Nodes.
 type Node struct {
 	Parent, FirstChild, LastChild, PrevSibling, NextSibling *Node
 
@@ -60,4 +71,45 @@ type Node struct {
 	}
 }
 
-// TODO: Node parent/sibling/child-related methods.
+// AppendChild adds a node c as a child of n.
+//
+// It will panic if c already has a parent or siblings.
+func (n *Node) AppendChild(c *Node) {
+	if c.Parent != nil || c.PrevSibling != nil || c.NextSibling != nil {
+		panic("sprite: AppendChild called for an attached child Node")
+	}
+	last := n.LastChild
+	if last != nil {
+		last.NextSibling = c
+	} else {
+		n.FirstChild = c
+	}
+	n.LastChild = c
+	c.Parent = n
+	c.PrevSibling = last
+}
+
+// RemoveChild removes a node c that is a child of n. Afterwards, c will have
+// no parent and no siblings.
+//
+// It will panic if c's parent is not n.
+func (n *Node) RemoveChild(c *Node) {
+	if c.Parent != n {
+		panic("sprite: RemoveChild called for a non-child Node")
+	}
+	if n.FirstChild == c {
+		n.FirstChild = c.NextSibling
+	}
+	if c.NextSibling != nil {
+		c.NextSibling.PrevSibling = c.PrevSibling
+	}
+	if n.LastChild == c {
+		n.LastChild = c.PrevSibling
+	}
+	if c.PrevSibling != nil {
+		c.PrevSibling.NextSibling = c.NextSibling
+	}
+	c.Parent = nil
+	c.PrevSibling = nil
+	c.NextSibling = nil
+}
