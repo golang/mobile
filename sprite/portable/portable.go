@@ -94,9 +94,12 @@ func (e *engine) SetTransform(n *sprite.Node, t clock.Time, m f32.Affine) {
 }
 
 func (e *engine) Render(scene *sprite.Node, t clock.Time) {
+	// Affine transforms are done in geom.Pt. When finally drawing
+	// the geom.Pt onto an image.Image we need to convert to system
+	// pixels. We scale by geom.Scale to do this.
 	e.absTransforms = append(e.absTransforms[:0], f32.Affine{
-		{1 / geom.Scale, 0, 0},
-		{0, 1 / geom.Scale, 0},
+		{geom.Scale, 0, 0},
+		{0, geom.Scale, 0},
 	})
 	e.render(scene, t)
 }
@@ -117,7 +120,21 @@ func (e *engine) render(n *sprite.Node, t clock.Time) {
 	e.absTransforms = append(e.absTransforms, m)
 
 	if x := e.textures[n.EngineFields.Texture]; x != nil {
-		m.Inverse(&m)
+		b := x.Bounds()
+
+		// Affine transforms work in geom.Pt, which is entirely
+		// independent of the number of pixels in a texture. A texture
+		// of any image.Rectangle bounds rendered with
+		//
+		//	Affine{{1, 0, 0}, {0, 1, 0}}
+		//
+		// should have the dimensions (1pt, 1pt). To do this we divide
+		// by the pixel width and height, reducing the texture to
+		// (1px, 1px) of the destination image. Multiplying by geom.Scale
+		// makes it (1pt, 1pt).
+		m.Scale(&m, 1/float32(b.Dx()), 1/float32(b.Dy()))
+
+		m.Inverse(&m) // See the documentation on the affine function.
 		affine(e.dst, x, &m, draw.Over)
 	}
 
