@@ -98,7 +98,7 @@ runApp(void) {
 	eglBindAPI(EGL_OPENGL_ES_API);
 	EGLContext e_ctx;
 	EGLSurface e_surf;
-	Window win = new_window(x_dpy, e_dpy, 200, 200, &e_ctx, &e_surf);
+	Window win = new_window(x_dpy, e_dpy, 400, 400, &e_ctx, &e_surf);
 	XMapWindow(x_dpy, win);
 	if (!eglMakeCurrent(e_dpy, e_surf, e_surf, e_ctx)) {
 		fprintf(stderr, "eglMakeCurrent failed\n");
