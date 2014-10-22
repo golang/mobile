@@ -47,7 +47,7 @@ func TestImage(t *testing.T) {
 		ptW  = geom.Pt(150)
 		ptH  = geom.Pt(100)
 	)
-	geom.Scale = float32(pixW) / float32(ptW)
+	geom.PixelsPerPt = float32(pixW) / float32(ptW)
 	geom.Width = ptW
 	geom.Height = ptH
 

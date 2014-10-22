@@ -36,7 +36,7 @@ func run(callbacks Callbacks) {
 func onResize(w, h int) {
 	// TODO(nigeltao): don't assume 72 DPI. DisplayWidth / DisplayWidthMM
 	// is probably the best place to start looking.
-	geom.Scale = 1
+	geom.PixelsPerPt = 1
 	geom.Width = geom.Pt(w)
 	geom.Height = geom.Pt(h)
 }

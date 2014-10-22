@@ -98,8 +98,8 @@ func (e *engine) Render(scene *sprite.Node, t clock.Time) {
 	// the geom.Pt onto an image.Image we need to convert to system
 	// pixels. We scale by geom.Scale to do this.
 	e.absTransforms = append(e.absTransforms[:0], f32.Affine{
-		{geom.Scale, 0, 0},
-		{0, geom.Scale, 0},
+		{geom.PixelsPerPt, 0, 0},
+		{0, geom.PixelsPerPt, 0},
 	})
 	e.render(scene, t)
 }

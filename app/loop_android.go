@@ -99,8 +99,8 @@ func windowDrawLoop(cb Callbacks, w *C.ANativeWindow, queue *C.AInputQueue) {
 		log.Printf("GL initialization error: %s", errv)
 	}
 
-	geom.Width = geom.Pt(float32(C.windowWidth) / geom.Scale)
-	geom.Height = geom.Pt(float32(C.windowHeight) / geom.Scale)
+	geom.Width = geom.Pt(float32(C.windowWidth) / geom.PixelsPerPt)
+	geom.Height = geom.Pt(float32(C.windowHeight) / geom.PixelsPerPt)
 
 	for {
 		processEvents(cb, queue)
@@ -150,8 +150,8 @@ func processEvent(cb Callbacks, e *C.AInputEvent) {
 		cb.Touch(event.Touch{
 			Type: ty,
 			Loc: geom.Point{
-				X: geom.Pt(float32(x) / geom.Scale),
-				Y: geom.Pt(float32(y) / geom.Scale),
+				X: geom.Pt(float32(x) / geom.PixelsPerPt),
+				Y: geom.Pt(float32(y) / geom.PixelsPerPt),
 			},
 		})
 	default:

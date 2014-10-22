@@ -60,7 +60,7 @@ func fpsInit() {
 	fps.Image = glutil.NewImage(geom.Point{50, 12})
 	monofont.SetDst(fps.Image.RGBA)
 	monofont.SetClip(fps.Bounds())
-	monofont.SetDPI(72 * float64(geom.Scale))
+	monofont.SetDPI(72 * float64(geom.PixelsPerPt))
 	monofont.SetFontSize(12)
 }
 
@@ -73,7 +73,7 @@ func DrawFPS() {
 	str := fmt.Sprintf("%.0f FPS", float32(time.Second)/float32(diff))
 	draw.Draw(fps.Image, fps.Image.Rect, image.White, image.Point{}, draw.Src)
 
-	ftpt12 := freetype.Pt(0, int(12*geom.Scale))
+	ftpt12 := freetype.Pt(0, int(12*geom.PixelsPerPt))
 	if _, err := monofont.DrawString(str, ftpt12); err != nil {
 		log.Printf("DrawFPS: %v", err)
 		return
