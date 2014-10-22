@@ -66,7 +66,7 @@ func onCreate(activity *C.ANativeActivity) {
 		dpi = int(density) // This is a guess.
 	}
 
-	geom.Scale = float32(dpi) / 72
+	geom.PixelsPerPt = float32(dpi) / 72
 }
 
 //export onStart

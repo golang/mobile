@@ -44,9 +44,9 @@ func run(callbacks Callbacks) {
 }
 
 //export setGeom
-func setGeom(scale, width, height float64) {
+func setGeom(pixelsPerPt, width, height float64) {
 	// Macs default to 72 DPI, so scales are equivalent.
-	geom.Scale = float32(scale)
+	geom.PixelsPerPt = float32(pixelsPerPt)
 	geom.Width = geom.Pt(width)
 	geom.Height = geom.Pt(height)
 }
