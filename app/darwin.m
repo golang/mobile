@@ -5,6 +5,7 @@
 // +build darwin
 
 #include "_cgo_export.h"
+#include <pthread.h>
 #include <stdio.h>
 
 #import <Cocoa/Cocoa.h>
@@ -34,6 +35,14 @@ void unlockContext(GLintptr context) {
 
 }
 
+uint64 threadID() {
+	uint64 id;
+	if (pthread_threadid_np(pthread_self(), &id)) {
+		abort();
+	}
+	return id;
+}
+
 
 @interface MobileGLView : NSOpenGLView
 {
@@ -43,7 +52,7 @@ void unlockContext(GLintptr context) {
 
 @implementation MobileGLView
 - (void)prepareOpenGL {
-	[self setWantsBestResolutionOpenGLSurface:true];
+	[self setWantsBestResolutionOpenGLSurface:YES];
 	GLint swapInt = 1;
 	[[self openGLContext] setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
 
@@ -57,24 +66,52 @@ void unlockContext(GLintptr context) {
 }
 
 - (void)reshape {
+	// Calculate screen PPI.
+	//
+	// Note that the backingScaleFactor converts from logical
+	// pixels to actual pixels, but both of these units vary
+	// independently from real world size. E.g.
+	//
+	// 13" Retina Macbook Pro, 2560x1600, 227ppi, backingScaleFactor=2, scale=3.15
+	// 15" Retina Macbook Pro, 2880x1800, 220ppi, backingScaleFactor=2, scale=3.06
+	// 27" iMac,               2560x1440, 109ppi, backingScaleFactor=1, scale=1.51
+	// 27" Retina iMac,        5120x2880, 218ppi, backingScaleFactor=2, scale=3.03
+	NSScreen *screen = [NSScreen mainScreen];
+	double screenPixW = [screen frame].size.width * [screen backingScaleFactor];
+
+	CGDirectDisplayID display = (CGDirectDisplayID)[[[screen deviceDescription] valueForKey:@"NSScreenNumber"] intValue];
+	CGSize screenSizeMM = CGDisplayScreenSize(display); // in millimeters
+	float ppi = 25.4 * screenPixW / screenSizeMM.width;
+	float pixelsPerPt = ppi/72.0;
+
+	// The width and height reported to the geom package are the
+	// bounds of the OpenGL view. Several steps are necessary.
+	// First, [self bounds] gives us the number of logical pixels
+	// in the view. Multiplying this by the backingScaleFactor
+	// gives us the number of actual pixels.
 	NSRect r = [self bounds];
-	double scale = [[NSScreen mainScreen] backingScaleFactor];
-	setGeom(scale, r.size.width, r.size.height);
+	int w = r.size.width * [screen backingScaleFactor];
+	int h = r.size.height * [screen backingScaleFactor];
+
+	setGeom(pixelsPerPt, w, h);
 }
 
 - (void)mouseDown:(NSEvent *)theEvent {
+	double scale = [[NSScreen mainScreen] backingScaleFactor];
 	NSPoint p = [theEvent locationInWindow];
-	eventMouseDown(p.x, p.y);
+	eventMouseDown(p.x * scale, p.y * scale);
 }
 
 - (void)mouseUp:(NSEvent *)theEvent {
+	double scale = [[NSScreen mainScreen] backingScaleFactor];
 	NSPoint p = [theEvent locationInWindow];
-	eventMouseEnd(p.x, p.y);
+	eventMouseEnd(p.x * scale, p.y * scale);
 }
 
-- (void)mouseMoved:(NSEvent *)theEvent {
+- (void)mouseDragged:(NSEvent *)theEvent {
+	double scale = [[NSScreen mainScreen] backingScaleFactor];
 	NSPoint p = [theEvent locationInWindow];
-	eventMouseMove(p.x, p.y);
+	eventMouseDragged(p.x * scale, p.y * scale);
 }
 @end
 
@@ -97,7 +134,7 @@ runApp(void) {
 	[menu addItem:quitMenuItem];
 	[menuItem setSubmenu:menu];
 
-	NSRect rect = NSMakeRect(0, 0, 200, 200);
+	NSRect rect = NSMakeRect(0, 0, 400, 400);
 
 	id window = [[[NSWindow alloc] initWithContentRect:rect
 			styleMask:NSTitledWindowMask
