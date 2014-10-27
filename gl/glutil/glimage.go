@@ -19,8 +19,8 @@ import (
 
 var glimage struct {
 	sync.Once
-	square        gl.Buffer
-	squareUV      gl.Buffer
+	quadXY        gl.Buffer
+	quadUV        gl.Buffer
 	program       gl.Program
 	pos           gl.Attrib
 	mvp           gl.Uniform
@@ -36,13 +36,13 @@ func glInit() {
 		panic(err)
 	}
 
-	glimage.square = gl.GenBuffer()
-	glimage.squareUV = gl.GenBuffer()
+	glimage.quadXY = gl.GenBuffer()
+	glimage.quadUV = gl.GenBuffer()
 
-	gl.BindBuffer(gl.ARRAY_BUFFER, glimage.square)
-	gl.BufferData(gl.ARRAY_BUFFER, gl.STATIC_DRAW, squareCoords)
-	gl.BindBuffer(gl.ARRAY_BUFFER, glimage.squareUV)
-	gl.BufferData(gl.ARRAY_BUFFER, gl.STATIC_DRAW, squareUVCoords)
+	gl.BindBuffer(gl.ARRAY_BUFFER, glimage.quadXY)
+	gl.BufferData(gl.ARRAY_BUFFER, gl.STATIC_DRAW, quadXYCoords)
+	gl.BindBuffer(gl.ARRAY_BUFFER, glimage.quadUV)
+	gl.BufferData(gl.ARRAY_BUFFER, gl.STATIC_DRAW, quadUVCoords)
 
 	glimage.pos = gl.GetAttribLocation(glimage.program, "pos")
 	glimage.mvp = gl.GetUniformLocation(glimage.program, "mvp")
@@ -224,39 +224,32 @@ func (img *Image) Draw(dstBounds geom.Rectangle, srcBounds image.Rectangle) {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 	gl.Uniform1i(glimage.textureSample, 0)
 
-	gl.BindBuffer(gl.ARRAY_BUFFER, glimage.square)
+	gl.BindBuffer(gl.ARRAY_BUFFER, glimage.quadXY)
 	gl.EnableVertexAttribArray(glimage.pos)
 	gl.VertexAttribPointer(glimage.pos, 2, gl.FLOAT, false, 0, 0)
 
-	gl.BindBuffer(gl.ARRAY_BUFFER, glimage.squareUV)
+	gl.BindBuffer(gl.ARRAY_BUFFER, glimage.quadUV)
 	gl.EnableVertexAttribArray(glimage.inUV)
 	gl.VertexAttribPointer(glimage.inUV, 2, gl.FLOAT, false, 0, 0)
 
-	gl.DrawArrays(gl.TRIANGLES, 0, 6)
+	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
 	gl.DisableVertexAttribArray(glimage.pos)
 	gl.DisableVertexAttribArray(glimage.inUV)
 }
 
-// Vertices of two triangles.
-var squareCoords = toBytes([]float32{
-	-1, -1,
-	+1, -1,
-	+1, +1,
-
-	-1, -1,
-	+1, +1,
-	-1, +1,
+var quadXYCoords = toBytes([]float32{
+	-1, -1, // bottom left
+	+1, -1, // bottom right
+	-1, +1, // top left
+	+1, +1, // top right
 })
 
-var squareUVCoords = toBytes([]float32{
-	0, 1,
-	1, 1,
-	1, 0,
-
-	0, 1,
-	1, 0,
-	0, 0,
+var quadUVCoords = toBytes([]float32{
+	0, 1, // bottom left
+	1, 1, // bottom right
+	0, 0, // top left
+	1, 0, // top right
 })
 
 func toBytes(v []float32) []byte {
