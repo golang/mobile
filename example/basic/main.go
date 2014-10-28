@@ -108,7 +108,7 @@ var triangleCoords = []float32{
 }
 var vertexCount = len(triangleCoords) / coordsPerVertex
 
-const vertexShader = `#version 100 core
+const vertexShader = `#version 100
 uniform vec2 offset;
 
 attribute vec4 position;
@@ -119,7 +119,7 @@ void main() {
 	gl_Position = position + offset4;
 }`
 
-const fragmentShader = `#version 100 core
+const fragmentShader = `#version 100
 precision mediump float;
 uniform vec4 color;
 void main() {
