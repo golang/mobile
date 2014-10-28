@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:generate go run gen.go -output table.go
+
 // Package f32 implements some linear algebra and GL helpers for float32s.
 //
 // Types defined in this package have methods implementing common
@@ -28,11 +30,24 @@ import "math"
 type Radian float32
 
 func Cos(x float32) float32 {
-	return float32(math.Cos(float64(x)))
+	const n = sinTableLen
+	i := uint32(int32(x * (n / math.Pi)))
+	i += n / 2
+	i &= 2*n - 1
+	if i >= n {
+		return -sinTable[i&(n-1)]
+	}
+	return sinTable[i&(n-1)]
 }
 
 func Sin(x float32) float32 {
-	return float32(math.Sin(float64(x)))
+	const n = sinTableLen
+	i := uint32(int32(x * (n / math.Pi)))
+	i &= 2*n - 1
+	if i >= n {
+		return -sinTable[i&(n-1)]
+	}
+	return sinTable[i&(n-1)]
 }
 
 func Sqrt(x float32) float32 {

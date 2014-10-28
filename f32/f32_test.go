@@ -297,3 +297,34 @@ func TestMat4Translate(t *testing.T) {
 		t.Errorf("got\n%s\nwant\n%s", got, want)
 	}
 }
+
+func testTrig(t *testing.T, gotFunc func(float32) float32, wantFunc func(float64) float64) {
+	nBad := 0
+	for a := float32(-9); a < +9; a += .01 {
+		got := gotFunc(a)
+		want := float32(wantFunc(float64(a)))
+		diff := got - want
+		if diff < 0 {
+			diff = -diff
+		}
+		if diff > 0.001 {
+			if nBad++; nBad == 10 {
+				t.Errorf("too many failures")
+				break
+			}
+			t.Errorf("a=%+.2f: got %+.4f, want %+.4f, diff=%.4f", a, got, want, diff)
+		}
+	}
+}
+
+func TestCos(t *testing.T) { testTrig(t, Cos, math.Cos) }
+func TestSin(t *testing.T) { testTrig(t, Sin, math.Sin) }
+func TestTan(t *testing.T) { testTrig(t, Tan, math.Tan) }
+
+func BenchmarkSin(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		for a := 0; a < 3141; a++ {
+			Sin(float32(a) / 1000)
+		}
+	}
+}
