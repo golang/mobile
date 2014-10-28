@@ -6,9 +6,14 @@
 
 package app
 
-// Simple on-screen app debugging for X11. Not an officially supported
-// development target for apps, as screens with mice are very different
-// than screens with touch panels.
+/*
+Simple on-screen app debugging for X11. Not an officially supported
+development target for apps, as screens with mice are very different
+than screens with touch panels.
+
+On Ubuntu 14.04 'Trusty', you may have to install these libraries:
+sudo apt-get install libegl1-mesa-dev libgles2-mesa-dev libx11-dev
+*/
 
 /*
 #cgo LDFLAGS: -lEGL -lGLESv2 -lX11
