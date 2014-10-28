@@ -5,10 +5,8 @@
 package glutil
 
 import (
-	"bytes"
 	"encoding/binary"
 	"image"
-	"log"
 	"math"
 	"sync"
 
@@ -238,24 +236,16 @@ func (img *Image) Draw(dstBounds geom.Rectangle, srcBounds image.Rectangle) {
 	gl.DisableVertexAttribArray(glimage.inUV)
 }
 
-var quadXYCoords = toBytes([]float32{
+var quadXYCoords = f32.Bytes(binary.LittleEndian,
 	-1, -1, // bottom left
 	+1, -1, // bottom right
 	-1, +1, // top left
 	+1, +1, // top right
-})
+)
 
-var quadUVCoords = toBytes([]float32{
+var quadUVCoords = f32.Bytes(binary.LittleEndian,
 	0, 1, // bottom left
 	1, 1, // bottom right
 	0, 0, // top left
 	1, 0, // top right
-})
-
-func toBytes(v []float32) []byte {
-	buf := new(bytes.Buffer)
-	if err := binary.Write(buf, binary.LittleEndian, v); err != nil {
-		log.Fatal(err)
-	}
-	return buf.Bytes()
-}
+)

@@ -2,17 +2,17 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// An android app that draws a green triangle on a red background.
+// An app that draws a green triangle on a red background.
 package main
 
 import (
-	"bytes"
 	"encoding/binary"
 	"log"
 
 	"code.google.com/p/go.mobile/app"
 	"code.google.com/p/go.mobile/app/debug"
 	"code.google.com/p/go.mobile/event"
+	"code.google.com/p/go.mobile/f32"
 	"code.google.com/p/go.mobile/geom"
 	"code.google.com/p/go.mobile/gl"
 	"code.google.com/p/go.mobile/gl/glutil"
@@ -30,7 +30,6 @@ var (
 )
 
 func main() {
-	log.Printf("basic example starting")
 	app.Run(app.Callbacks{
 		Draw:  draw,
 		Touch: touch,
@@ -64,11 +63,10 @@ func touch(t event.Touch) {
 func draw() {
 	if program.Value == 0 {
 		initGL()
-		log.Printf("example/basic rendering initialized")
 	}
 
 	gl.ClearColor(1, 0, 0, 1)
-	gl.Clear(gl.DEPTH_BUFFER_BIT | gl.COLOR_BUFFER_BIT)
+	gl.Clear(gl.COLOR_BUFFER_BIT)
 
 	gl.UseProgram(program)
 
@@ -89,24 +87,16 @@ func draw() {
 	debug.DrawFPS()
 }
 
-var triangleData []byte
+var triangleData = f32.Bytes(binary.LittleEndian,
+	0.0, 0.4, 0.0, // top left
+	0.0, 0.0, 0.0, // bottom left
+	0.4, 0.0, 0.0, // bottom right
+)
 
-func init() {
-	buf := new(bytes.Buffer)
-	if err := binary.Write(buf, binary.LittleEndian, triangleCoords); err != nil {
-		log.Fatal(err)
-	}
-	triangleData = buf.Bytes()
-}
-
-const coordsPerVertex = 3
-
-var triangleCoords = []float32{
-	0, 0.4, 0, // top left
-	0, 0, 0, // bottom left
-	0.4, 0, 0, // bottom right
-}
-var vertexCount = len(triangleCoords) / coordsPerVertex
+const (
+	coordsPerVertex = 3
+	vertexCount     = 3
+)
 
 const vertexShader = `#version 100
 uniform vec2 offset;
