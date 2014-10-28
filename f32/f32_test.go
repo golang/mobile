@@ -5,6 +5,8 @@
 package f32
 
 import (
+	"bytes"
+	"encoding/binary"
 	"math"
 	"testing"
 )
@@ -325,6 +327,35 @@ func BenchmarkSin(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for a := 0; a < 3141; a++ {
 			Sin(float32(a) / 1000)
+		}
+	}
+}
+
+func TestBytes(t *testing.T) {
+	testCases := []struct {
+		byteOrder binary.ByteOrder
+		want      []byte
+	}{{
+		binary.BigEndian,
+		[]byte{
+			// The IEEE 754 binary32 format is 1 sign bit, 8 exponent bits and 23 fraction bits.
+			0x00, 0x00, 0x00, 0x00, // float32(+0.00) is 0 0000000_0 0000000_00000000_00000000
+			0x3f, 0xa0, 0x00, 0x00, // float32(+1.25) is 0 0111111_1 0100000_00000000_00000000
+			0xc0, 0x00, 0x00, 0x00, // float32(-2.00) is 1 1000000_0 0000000_00000000_00000000
+		},
+	}, {
+		binary.LittleEndian,
+		[]byte{
+			0x00, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0xa0, 0x3f,
+			0x00, 0x00, 0x00, 0xc0,
+		},
+	}}
+
+	for _, tc := range testCases {
+		got := Bytes(tc.byteOrder, +0.00, +1.25, -2.00)
+		if !bytes.Equal(got, tc.want) {
+			t.Errorf("%v:\ngot  % x\nwant % x", tc.byteOrder, got, tc.want)
 		}
 	}
 }

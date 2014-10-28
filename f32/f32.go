@@ -25,7 +25,11 @@
 // non-obvious. Be prepared for the package name to change.
 package f32
 
-import "math"
+import (
+	"encoding/binary"
+	"fmt"
+	"math"
+)
 
 type Radian float32
 
@@ -56,4 +60,34 @@ func Sqrt(x float32) float32 {
 
 func Tan(x float32) float32 {
 	return float32(math.Tan(float64(x))) // TODO(crawshaw): fast version
+}
+
+// Bytes returns the byte representation of float32 values in the given byte
+// order. byteOrder must be either binary.BigEndian or binary.LittleEndian.
+func Bytes(byteOrder binary.ByteOrder, values ...float32) []byte {
+	le := false
+	switch byteOrder {
+	case binary.BigEndian:
+	case binary.LittleEndian:
+		le = true
+	default:
+		panic(fmt.Sprintf("invalid byte order %v", byteOrder))
+	}
+
+	b := make([]byte, 4*len(values))
+	for i, v := range values {
+		u := math.Float32bits(v)
+		if le {
+			b[4*i+0] = byte(u >> 0)
+			b[4*i+1] = byte(u >> 8)
+			b[4*i+2] = byte(u >> 16)
+			b[4*i+3] = byte(u >> 24)
+		} else {
+			b[4*i+0] = byte(u >> 24)
+			b[4*i+1] = byte(u >> 16)
+			b[4*i+2] = byte(u >> 8)
+			b[4*i+3] = byte(u >> 0)
+		}
+	}
+	return b
 }
