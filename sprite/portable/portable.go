@@ -2,7 +2,11 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package portable blah blah blah TODO.
+// Package portable implements a sprite Engine using the image package.
+//
+// It is intended to serve as a reference implementation for testing
+// other sprite Engines written against OpenGL, or other more exotic
+// modern hardware interfaces.
 package portable
 
 import (
@@ -16,6 +20,7 @@ import (
 	"code.google.com/p/go.mobile/sprite/clock"
 )
 
+// Engine builds a sprite Engine that renders onto dst.
 func Engine(dst *image.RGBA) sprite.Engine {
 	return &engine{
 		dst:      dst,
