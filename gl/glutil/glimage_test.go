@@ -28,7 +28,7 @@ func TestImage(t *testing.T) {
 	//	4. Copy GL texture back into system memory.
 	//	5. Compare to a pre-computed image.
 
-	f, err := os.Open("../../testdata/gophercolor.png")
+	f, err := os.Open("../../testdata/testpattern.png")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,10 +42,10 @@ func TestImage(t *testing.T) {
 	defer ctxGL.destroy()
 
 	const (
-		pixW = 300
-		pixH = 200
-		ptW  = geom.Pt(150)
-		ptH  = geom.Pt(100)
+		pixW = 100
+		pixH = 100
+		ptW  = geom.Pt(50)
+		ptH  = geom.Pt(50)
 	)
 	geom.PixelsPerPt = float32(pixW) / float32(ptW)
 	geom.Width = ptW
@@ -68,14 +68,14 @@ func TestImage(t *testing.T) {
 	gl.Viewport(0, 0, pixW, pixH)
 
 	m := NewImage(geom.Point{ptW, ptH})
-	draw.Draw(m.RGBA, src.Bounds(), src, src.Bounds().Min, draw.Src)
+	b := m.RGBA.Bounds()
+	draw.Draw(m.RGBA, b, src, src.Bounds().Min, draw.Src)
 	m.Upload()
-	b := src.Bounds()
 	b.Min.X += 10
 	b.Max.Y /= 2
 
-	ptTopLeft := geom.Point{5, 30}
-	ptBottomRight := geom.Point{120, 80}
+	ptTopLeft := geom.Point{3, 15}
+	ptBottomRight := geom.Point{48, 46}
 	m.Draw(geom.Rectangle{ptTopLeft, ptBottomRight}, b)
 
 	// For unknown reasons, a windowless OpenGL context on darwin
@@ -103,7 +103,7 @@ func TestImage(t *testing.T) {
 	drawCross(got, int(ptBottomRight.X.Px()), int(ptBottomRight.Y.Px()))
 	drawCross(got, pixW-1, pixH-1)
 
-	const wantPath = "../../testdata/gopherwindow.png"
+	const wantPath = "../../testdata/testpattern-window.png"
 	f, err = os.Open(wantPath)
 	if err != nil {
 		t.Fatal(err)
@@ -122,7 +122,7 @@ func TestImage(t *testing.T) {
 
 	if !imageEq(got, want) {
 		// Write out the image we got.
-		f, err = ioutil.TempFile("", "gopherwindow-got")
+		f, err = ioutil.TempFile("", "testpattern-window-got")
 		if err != nil {
 			t.Fatal(err)
 		}
