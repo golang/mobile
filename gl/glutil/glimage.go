@@ -90,7 +90,6 @@ func NewImage(size geom.Point) *Image {
 	// runtime.SetFinalizer(img, func(img *Image) { gl.DeleteTexture(img.Texture) })
 	gl.BindTexture(gl.TEXTURE_2D, img.Texture)
 	gl.TexImage2D(gl.TEXTURE_2D, 0, dx, dy, gl.RGBA, gl.UNSIGNED_BYTE, nil)
-
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
@@ -206,8 +205,8 @@ func (img *Image) Draw(dstBounds geom.Rectangle, srcBounds image.Rectangle) {
 	a.Identity()
 	a.Translate(
 		&a,
-		float32(srcBounds.Min.X)/float32(img.Rect.Dx()),
-		float32(srcBounds.Min.Y)/float32(img.Rect.Dy()),
+		float32(srcBounds.Min.X)/float32(img.texWidth),
+		float32(srcBounds.Min.Y)/float32(img.texHeight),
 	)
 	a.Scale(
 		&a,
@@ -218,8 +217,6 @@ func (img *Image) Draw(dstBounds geom.Rectangle, srcBounds image.Rectangle) {
 
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, img.Texture)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
 	gl.Uniform1i(glimage.textureSample, 0)
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, glimage.quadXY)
