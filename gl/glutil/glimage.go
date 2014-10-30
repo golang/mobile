@@ -7,7 +7,6 @@ package glutil
 import (
 	"encoding/binary"
 	"image"
-	"math"
 	"sync"
 
 	"code.google.com/p/go.mobile/f32"
@@ -67,11 +66,9 @@ type Image struct {
 // NewImage creates an Image of the given size.
 //
 // Both a host-memory *image.RGBA and a GL texture are created.
-func NewImage(size geom.Point) *Image {
-	realx := int(math.Ceil(float64(size.X.Px())))
-	realy := int(math.Ceil(float64(size.Y.Px())))
-	dx := roundToPower2(realx)
-	dy := roundToPower2(realy)
+func NewImage(w, h int) *Image {
+	dx := roundToPower2(w)
+	dy := roundToPower2(h)
 
 	// TODO(crawshaw): Using VertexAttribPointer we can pass texture
 	// data with a stride, which would let us use the exact number of
@@ -81,7 +78,7 @@ func NewImage(size geom.Point) *Image {
 	glimage.Do(glInit)
 
 	img := &Image{
-		RGBA:      m.SubImage(image.Rect(0, 0, realx, realy)).(*image.RGBA),
+		RGBA:      m.SubImage(image.Rect(0, 0, w, h)).(*image.RGBA),
 		Texture:   gl.GenTexture(),
 		texWidth:  dx,
 		texHeight: dy,
