@@ -67,7 +67,7 @@ func TestImage(t *testing.T) {
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 	gl.Viewport(0, 0, pixW, pixH)
 
-	m := NewImage(geom.Point{ptW, ptH})
+	m := NewImage(src.Bounds().Dx(), src.Bounds().Dy())
 	b := m.RGBA.Bounds()
 	draw.Draw(m.RGBA, b, src, src.Bounds().Min, draw.Src)
 	m.Upload()

@@ -11,6 +11,7 @@ import (
 	"image/draw"
 	"io/ioutil"
 	"log"
+	"math"
 	"runtime"
 	"sync"
 	"time"
@@ -57,7 +58,8 @@ func fpsInit() {
 	monofont.SetSrc(image.Black)
 	monofont.SetHinting(freetype.FullHinting)
 
-	fps.Image = glutil.NewImage(geom.Point{50, 12})
+	toPx := func(x geom.Pt) int { return int(math.Ceil(float64(geom.Pt(x).Px()))) }
+	fps.Image = glutil.NewImage(toPx(50), toPx(12))
 	monofont.SetDst(fps.Image.RGBA)
 	monofont.SetClip(fps.Bounds())
 	monofont.SetDPI(72 * float64(geom.PixelsPerPt))
