@@ -83,7 +83,9 @@ func DrawFPS() {
 
 	fps.Upload()
 	fps.Draw(
-		geom.Rectangle{geom.Point{0, geom.Height - 12}, geom.Point{50, geom.Height}},
+		geom.Point{0, geom.Height - 12},
+		geom.Point{50, geom.Height - 12},
+		geom.Point{0, geom.Height},
 		fps.Bounds(),
 	)
 
