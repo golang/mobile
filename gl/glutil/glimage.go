@@ -109,108 +109,112 @@ func (img *Image) Upload() {
 	gl.TexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, img.texWidth, img.texHeight, gl.RGBA, gl.UNSIGNED_BYTE, img.Pix)
 }
 
-// Draw draws the image onto the current GL framebuffer.
-func (img *Image) Draw(dstBounds geom.Rectangle, srcBounds image.Rectangle) {
+// Draw draws the srcBounds part of the image onto a parallelogram, defined by
+// three of its corners, in the current GL framebuffer.
+func (img *Image) Draw(topLeft, topRight, bottomLeft geom.Point, srcBounds image.Rectangle) {
 	// TODO(crawshaw): Adjust viewport for the top bar on android?
 	gl.UseProgram(glimage.program)
 
-	// We are drawing a sub-image of dst, defined by dstBounds. Let ABCD
-	// be the image, and PQRS be the sub-image. The two images may actually
-	// be equal, but in the general case, PQRS can be smaller:
-	//
-	//	       M
-	//	A +----+----------+ B
-	//	  |               |
-	//	N +  P +-----+ Q  |
-	//	  |    |     |    |
-	//	  |  S +-----+ R  |
-	//	  |               |
-	//	D +---------------+ C
-	//
-	// There are two co-ordinate spaces: geom space and framebuffer space.
-	// In geom space, the ABCD rectangle is:
-	//
-	//	(0, 0)           (geom.Width, 0)
-	//	(0, geom.Height) (geom.Width, geom.Height)
-	//
-	// and the PQRS rectangle is:
-	//
-	//	(dstBounds.Min.X, dstBounds.Min.Y) (dstBounds.Max.X, dstBounds.Min.Y)
-	//	(dstBounds.Min.X, dstBounds.Max.Y) (dstBounds.Max.X, dstBounds.Max.Y)
-	//
-	// In framebuffer space, the ABCD rectangle is:
-	//
-	//	(-1, +1) (+1, +1)
-	//	(-1, -1) (+1, -1)
-	//
-	// We need to solve for PQRS' co-ordinates in framebuffer space, and
-	// calculate the MVP matrix that transforms the -1/+1 ABCD co-ordinates
-	// to PQRS co-ordinates.
-	//
-	// To solve for PQRS, note that PQ / AB must match in both spaces. Call
-	// this ratio fracX, and likewise for fracY.
-	//
-	//	[EQ1]   fracX = (dstBounds.Max.X - dstBounds.Min.X) / geom.Width
-	//
-	// Similarly, the AM / AB ratio must match:
-	//
-	//	(P.x - -1) / (1 - -1) = dstBounds.Min.X / geom.Width
-	//
-	// where the LHS is in framebuffer space and the RHS in geom space. This
-	// equation is equivalent to:
-	//
-	//	[EQ2]   P.x = -1 + 2 * dstBounds.Min.X / geom.Width
-	//
-	// This MVP matrix is a scale followed by a translate. The scale is by
-	// (fracX, fracY). After this, our corners have been transformed to:
-	//
-	//	(-fracX, +fracY) (+fracX, +fracY)
-	//	(-fracX, -fracY) (+fracX, -fracY)
-	//
-	// so the translate is by (P.x + fracX) in the X direction, and
-	// likewise for Y. Combining equations EQ1 and EQ2 simplifies the
-	// translate to be:
-	//
-	//	-1 + (dstBounds.Max.X + dstBounds.Min.X) / geom.Width
-	//	+1 - (dstBounds.Max.Y + dstBounds.Min.Y) / geom.Height
-	var a f32.Affine
-	a.Identity()
-	a.Translate(
-		&a,
-		-1+float32((dstBounds.Max.X+dstBounds.Min.X)/geom.Width),
-		+1-float32((dstBounds.Max.Y+dstBounds.Min.Y)/geom.Height),
-	)
-	a.Scale(
-		&a,
-		float32((dstBounds.Max.X-dstBounds.Min.X)/geom.Width),
-		float32((dstBounds.Max.Y-dstBounds.Min.Y)/geom.Height),
-	)
-	glimage.mvp.WriteAffine(&a)
+	{
+		// We are drawing a parallelogram PQRS, defined by three of its
+		// corners, onto the entire GL framebuffer ABCD. The two quads may
+		// actually be equal, but in the general case, PQRS can be smaller,
+		// and PQRS is not necessarily axis-aligned.
+		//
+		//	A +---------------+ B
+		//	  |  P +-----+ Q  |
+		//	  |    |     |    |
+		//	  |  S +-----+ R  |
+		//	D +---------------+ C
+		//
+		// There are two co-ordinate spaces: geom space and framebuffer space.
+		// In geom space, the ABCD rectangle is:
+		//
+		//	(0, 0)           (geom.Width, 0)
+		//	(0, geom.Height) (geom.Width, geom.Height)
+		//
+		// and the PQRS quad is:
+		//
+		//	(topLeft.X,    topLeft.Y)    (topRight.X, topRight.Y)
+		//	(bottomLeft.X, bottomLeft.Y) (implicit,   implicit)
+		//
+		// In framebuffer space, the ABCD rectangle is:
+		//
+		//	(-1, +1) (+1, +1)
+		//	(-1, -1) (+1, -1)
+		//
+		// First of all, convert from geom space to framebuffer space. For
+		// later convenience, we divide everything by 2 here: px2 is half of
+		// the P.X co-ordinate (in framebuffer space).
+		px2 := -0.5 + float32(topLeft.X/geom.Width)
+		py2 := +0.5 - float32(topLeft.Y/geom.Height)
+		qx2 := -0.5 + float32(topRight.X/geom.Width)
+		qy2 := +0.5 - float32(topRight.Y/geom.Height)
+		sx2 := -0.5 + float32(bottomLeft.X/geom.Width)
+		sy2 := +0.5 - float32(bottomLeft.Y/geom.Height)
+		// Next, solve for the affine transformation matrix
+		//	    [ a00 a01 a02 ]
+		//	a = [ a10 a11 a12 ]
+		//	    [   0   0   1 ]
+		// that maps A to P:
+		//	a × [ -1 +1 1 ]' = [ 2*px2 2*py2 1 ]'
+		// and likewise maps B to Q and D to S. Solving those three constraints
+		// implies that C maps to R, since affine transformations keep parallel
+		// lines parallel. This gives 6 equations in 6 unknowns:
+		//	-a00 + a01 + a02 = 2*px2
+		//	-a10 + a11 + a12 = 2*py2
+		//	+a00 + a01 + a02 = 2*qx2
+		//	+a10 + a11 + a12 = 2*qy2
+		//	-a00 - a01 + a02 = 2*sx2
+		//	-a10 - a11 + a12 = 2*sy2
+		// which gives:
+		//	a00 = (2*qx2 - 2*px2) / 2 = qx2 - px2
+		// and similarly for the other elements of a.
+		glimage.mvp.WriteAffine(&f32.Affine{{
+			qx2 - px2,
+			px2 - sx2,
+			qx2 + sx2,
+		}, {
+			qy2 - py2,
+			py2 - sy2,
+			qy2 + sy2,
+		}})
+	}
 
-	// Texture UV co-ordinates start out as:
-	//
-	//	(0,0) (1,0)
-	//	(0,1) (1,1)
-	//
-	// These co-ordinates need to be scaled to texWidth/Height,
-	// which may be less than 1 as the source image may not have
-	// power-of-2 dimensions. Then it is scaled and translated
-	// to represent the srcBounds rectangle of the source texture.
-	//
-	// The math is simpler here because in both co-ordinate spaces,
-	// the top-left corner is (0, 0).
-	a.Identity()
-	a.Translate(
-		&a,
-		float32(srcBounds.Min.X)/float32(img.texWidth),
-		float32(srcBounds.Min.Y)/float32(img.texHeight),
-	)
-	a.Scale(
-		&a,
-		float32(srcBounds.Dx())/float32(img.texWidth),
-		float32(srcBounds.Dy())/float32(img.texHeight),
-	)
-	glimage.uvp.WriteAffine(&a)
+	{
+		// Mapping texture co-ordinates is similar, except that in texture
+		// space, the ABCD rectangle is:
+		//
+		//	(0,0) (1,0)
+		//	(0,1) (1,1)
+		//
+		// and the PQRS quad is always axis-aligned. First of all, convert
+		// from pixel space to texture space.
+		w := float32(img.texWidth)
+		h := float32(img.texHeight)
+		px := float32(srcBounds.Min.X-img.Rect.Min.X) / w
+		py := float32(srcBounds.Min.Y-img.Rect.Min.Y) / h
+		qx := float32(srcBounds.Max.X-img.Rect.Min.X) / w
+		sy := float32(srcBounds.Max.Y-img.Rect.Min.Y) / h
+		// Due to axis alignment, qy = py and sx = px.
+		//
+		// The simultaneous equations are:
+		//	  0 +   0 + a02 = px
+		//	  0 +   0 + a12 = py
+		//	a00 +   0 + a02 = qx
+		//	a10 +   0 + a12 = qy = py
+		//	  0 + a01 + a02 = sx = px
+		//	  0 + a11 + a12 = sy
+		glimage.uvp.WriteAffine(&f32.Affine{{
+			qx - px,
+			0,
+			px,
+		}, {
+			0,
+			sy - py,
+			py,
+		}})
+	}
 
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, img.Texture)
@@ -231,15 +235,38 @@ func (img *Image) Draw(dstBounds geom.Rectangle, srcBounds image.Rectangle) {
 }
 
 var quadXYCoords = f32.Bytes(binary.LittleEndian,
-	-1, -1, // bottom left
-	+1, -1, // bottom right
 	-1, +1, // top left
 	+1, +1, // top right
+	-1, -1, // bottom left
+	+1, -1, // bottom right
 )
 
 var quadUVCoords = f32.Bytes(binary.LittleEndian,
-	0, 1, // bottom left
-	1, 1, // bottom right
 	0, 0, // top left
 	1, 0, // top right
+	0, 1, // bottom left
+	1, 1, // bottom right
 )
+
+const vertexShader = `#version 100
+uniform mat3 mvp;
+uniform mat3 uvp;
+attribute vec3 pos;
+attribute vec2 inUV;
+varying vec2 UV;
+void main() {
+	vec3 p = pos;
+	p.z = 1.0;
+	gl_Position = vec4(mvp * p, 1);
+	UV = (uvp * vec3(inUV, 1)).xy;
+}
+`
+
+const fragmentShader = `#version 100
+precision mediump float;
+varying vec2 UV;
+uniform sampler2D textureSample;
+void main(){
+	gl_FragColor = texture2D(textureSample, UV);
+}
+`

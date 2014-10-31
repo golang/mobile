@@ -75,8 +75,10 @@ func TestImage(t *testing.T) {
 	b.Max.Y /= 2
 
 	ptTopLeft := geom.Point{3, 15}
+	ptTopRight := geom.Point{48, 15}
+	ptBottomLeft := geom.Point{3, 46}
 	ptBottomRight := geom.Point{48, 46}
-	m.Draw(geom.Rectangle{ptTopLeft, ptBottomRight}, b)
+	m.Draw(ptTopLeft, ptTopRight, ptBottomLeft, b)
 
 	// For unknown reasons, a windowless OpenGL context on darwin
 	// renders upside down. That is, a quad covering the initial
