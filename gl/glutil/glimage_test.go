@@ -74,10 +74,12 @@ func TestImage(t *testing.T) {
 	b.Min.X += 10
 	b.Max.Y /= 2
 
-	ptTopLeft := geom.Point{3, 15}
-	ptTopRight := geom.Point{48, 15}
-	ptBottomLeft := geom.Point{3, 46}
-	ptBottomRight := geom.Point{48, 46}
+	// All-integer right-angled triangles offsetting the
+	// box: 24-32-40, 12-16-20.
+	ptTopLeft := geom.Point{0, 24}
+	ptTopRight := geom.Point{32, 0}
+	ptBottomLeft := geom.Point{12, 24 + 16}
+	ptBottomRight := geom.Point{12 + 32, 16}
 	m.Draw(ptTopLeft, ptTopRight, ptBottomLeft, b)
 
 	// For unknown reasons, a windowless OpenGL context on darwin
@@ -158,7 +160,7 @@ func drawCross(m *image.RGBA, x, y int) {
 }
 
 func eqEpsilon(x, y uint8) bool {
-	const epsilon = 5
+	const epsilon = 8
 	return x-y < epsilon || y-x < epsilon
 }
 
@@ -172,13 +174,15 @@ func imageEq(m0, m1 *image.RGBA) bool {
 	if b0 != b1 {
 		return false
 	}
+	badPx := 0
 	for y := b0.Min.Y; y < b0.Max.Y; y++ {
 		for x := b0.Min.X; x < b0.Max.X; x++ {
 			c0, c1 := m0.At(x, y).(color.RGBA), m1.At(x, y).(color.RGBA)
 			if !colorEq(c0, c1) {
-				return false
+				badPx++
 			}
 		}
 	}
-	return true
+	badFrac := float64(badPx) / float64(b0.Dx()*b0.Dy())
+	return badFrac < 0.01
 }
