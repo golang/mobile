@@ -8,26 +8,143 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	"image/png"
+	"io/ioutil"
+	"math"
+	"os"
 	"testing"
+
+	"code.google.com/p/go.mobile/f32"
+	"code.google.com/p/go.mobile/geom"
 )
 
 func TestAffine(t *testing.T) {
-	red := color.RGBA{0xff, 0, 0, 0xff}
-	dst := image.NewRGBA(image.Rect(0, 0, 30, 30))
-	src := image.NewRGBA(dst.Bounds())
-	draw.Draw(src, src.Bounds(), image.NewUniform(red), image.Point{}, draw.Src)
+	f, err := os.Open("../../testdata/testpattern.png")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	srcOrig, _, err := image.Decode(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	src := image.NewRGBA(srcOrig.Bounds())
+	draw.Draw(src, src.Rect, srcOrig, srcOrig.Bounds().Min, draw.Src)
 
-	affine(dst, src, [3][3]float32{
-		{1, 0, 0},
-		{0, 1, 0},
-		{0, 0, 1},
-	})
+	const (
+		pixW = 100
+		pixH = 100
+		ptW  = geom.Pt(50)
+		ptH  = geom.Pt(50)
+	)
+	geom.PixelsPerPt = float32(pixW) / float32(ptW)
+	geom.Width = ptW
+	geom.Height = ptH
 
-	for y := 0; y < dst.Bounds().Dy(); y++ {
-		for x := 0; x < dst.Bounds().Dx(); x++ {
-			if c := dst.At(x, y); c != red {
-				t.Fatalf("At(%d, %d) = %v, want red", x, y, c)
+	got := image.NewRGBA(image.Rect(0, 0, pixW, pixH))
+	blue := image.NewUniform(color.RGBA{B: 0xff, A: 0xff})
+	draw.Draw(got, got.Bounds(), blue, image.Point{}, draw.Src)
+
+	b := src.Bounds()
+	b.Min.X += 10
+	b.Max.Y /= 2
+	src = src.SubImage(b).(*image.RGBA)
+
+	var a f32.Affine
+	a.Identity()
+	a.Scale(&a, geom.PixelsPerPt, geom.PixelsPerPt)
+	a.Translate(&a, 0, 24)
+	a.Rotate(&a, float32(math.Asin(12./20)))
+	// See commentary in the render method defined in portable.go.
+	a.Scale(&a, 40/float32(src.Rect.Dx()), 20/float32(src.Rect.Dy()))
+	a.Inverse(&a)
+
+	affine(got, src, &a, draw.Over)
+
+	ptTopLeft := geom.Point{0, 24}
+	ptBottomRight := geom.Point{12 + 32, 16}
+
+	drawCross(got, 0, 0)
+	drawCross(got, int(ptTopLeft.X.Px()), int(ptTopLeft.Y.Px()))
+	drawCross(got, int(ptBottomRight.X.Px()), int(ptBottomRight.Y.Px()))
+	drawCross(got, pixW-1, pixH-1)
+
+	const wantPath = "../../testdata/testpattern-window.png"
+	f, err = os.Open(wantPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	wantSrc, _, err := image.Decode(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want, ok := wantSrc.(*image.RGBA)
+	if !ok {
+		b := wantSrc.Bounds()
+		want = image.NewRGBA(b)
+		draw.Draw(want, b, wantSrc, b.Min, draw.Src)
+	}
+
+	if !imageEq(got, want) {
+		// Write out the image we got.
+		f, err = ioutil.TempFile("", "testpattern-window-got")
+		if err != nil {
+			t.Fatal(err)
+		}
+		f.Close()
+		gotPath := f.Name() + ".png"
+		f, err = os.Create(gotPath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := png.Encode(f, got); err != nil {
+			t.Fatal(err)
+		}
+		if err := f.Close(); err != nil {
+			t.Fatal(err)
+		}
+		t.Errorf("got\n%s\nwant\n%s", gotPath, wantPath)
+	}
+}
+
+func drawCross(m *image.RGBA, x, y int) {
+	c := color.RGBA{0xff, 0, 0, 0xff} // red
+	m.SetRGBA(x+0, y-2, c)
+	m.SetRGBA(x+0, y-1, c)
+	m.SetRGBA(x-2, y+0, c)
+	m.SetRGBA(x-1, y+0, c)
+	m.SetRGBA(x+0, y+0, c)
+	m.SetRGBA(x+1, y+0, c)
+	m.SetRGBA(x+2, y+0, c)
+	m.SetRGBA(x+0, y+1, c)
+	m.SetRGBA(x+0, y+2, c)
+}
+
+func eqEpsilon(x, y uint8) bool {
+	const epsilon = 8
+	return x-y < epsilon || y-x < epsilon
+}
+
+func colorEq(c0, c1 color.RGBA) bool {
+	return eqEpsilon(c0.R, c1.R) && eqEpsilon(c0.G, c1.G) && eqEpsilon(c0.B, c1.B) && eqEpsilon(c0.A, c1.A)
+}
+
+func imageEq(m0, m1 *image.RGBA) bool {
+	b0 := m0.Bounds()
+	b1 := m1.Bounds()
+	if b0 != b1 {
+		return false
+	}
+	badPx := 0
+	for y := b0.Min.Y; y < b0.Max.Y; y++ {
+		for x := b0.Min.X; x < b0.Max.X; x++ {
+			c0, c1 := m0.At(x, y).(color.RGBA), m1.At(x, y).(color.RGBA)
+			if !colorEq(c0, c1) {
+				badPx++
 			}
 		}
 	}
+	badFrac := float64(badPx) / float64(b0.Dx()*b0.Dy())
+	return badFrac < 0.01
 }
