@@ -31,10 +31,15 @@ func affine(dst *image.RGBA, src *image.RGBA, a *f32.Affine, op draw.Op) {
 
 	for y := b.Min.Y; y < b.Max.Y; y++ {
 		for x := b.Min.X; x < b.Max.X; x++ {
-			sx, sy := pt(a, x, y)
+			// Interpolate from the bounds of the src sub-image
+			// to the bounds of the dst sub-image.
+			sx, sy := pt(a, x-b.Min.X, y-b.Min.Y)
+			sx += float32(srcb.Min.X)
+			sy += float32(srcb.Min.Y)
 			if !inBounds(srcb, sx, sy) {
 				continue
 			}
+
 			c := bilinear(src, sx, sy)
 			off := (y-dst.Rect.Min.Y)*dst.Stride + (x-dst.Rect.Min.X)*4
 			if op == draw.Over {
