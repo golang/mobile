@@ -8,7 +8,7 @@ package glutil
 
 // TODO(crawshaw): Only used in glutil tests for now (cgo is not support in _test.go files).
 // TODO(crawshaw): Export some kind of Context. Work out what we can offer, where. Maybe just for tests.
-// TODO(crawshaw): Support for linux/android/windows.
+// TODO(crawshaw): Support android and windows.
 
 /*
 #cgo LDFLAGS: -framework OpenGL
