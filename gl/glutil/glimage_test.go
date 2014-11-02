@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build darwin
+// +build darwin linux,!android
+
 // TODO(crawshaw): Run tests on other OSs when more contexts are supported.
 
 package glutil
@@ -51,12 +52,14 @@ func TestImage(t *testing.T) {
 	geom.Width = ptW
 	geom.Height = ptH
 
-	fb := gl.GenFramebuffer()
-	gl.BindFramebuffer(gl.FRAMEBUFFER, fb)
-
+	fBuf := gl.GenFramebuffer()
+	gl.BindFramebuffer(gl.FRAMEBUFFER, fBuf)
 	colorBuf := gl.GenRenderbuffer()
 	gl.BindRenderbuffer(gl.RENDERBUFFER, colorBuf)
-	gl.RenderbufferStorage(gl.RENDERBUFFER, gl.RGBA, pixW, pixH)
+	// https://www.khronos.org/opengles/sdk/docs/man/xhtml/glRenderbufferStorage.xml
+	// says that the internalFormat "must be one of the following symbolic constants:
+	// GL_RGBA4, GL_RGB565, GL_RGB5_A1, GL_DEPTH_COMPONENT16, or GL_STENCIL_INDEX8".
+	gl.RenderbufferStorage(gl.RENDERBUFFER, gl.RGB565, pixW, pixH)
 	gl.FramebufferRenderbuffer(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.RENDERBUFFER, colorBuf)
 
 	if status := gl.CheckFramebufferStatus(gl.FRAMEBUFFER); status != gl.FRAMEBUFFER_COMPLETE {
@@ -82,9 +85,8 @@ func TestImage(t *testing.T) {
 	ptBottomRight := geom.Point{12 + 32, 16}
 	m.Draw(ptTopLeft, ptTopRight, ptBottomLeft, b)
 
-	// For unknown reasons, a windowless OpenGL context on darwin
-	// renders upside down. That is, a quad covering the initial
-	// viewport spans:
+	// For unknown reasons, a windowless OpenGL context renders upside-
+	// down. That is, a quad covering the initial viewport spans:
 	//
 	//	(-1, -1) ( 1, -1)
 	//	(-1,  1) ( 1,  1)
@@ -160,7 +162,7 @@ func drawCross(m *image.RGBA, x, y int) {
 }
 
 func eqEpsilon(x, y uint8) bool {
-	const epsilon = 8
+	const epsilon = 9
 	return x-y < epsilon || y-x < epsilon
 }
 

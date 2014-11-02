@@ -122,7 +122,7 @@ func drawCross(m *image.RGBA, x, y int) {
 }
 
 func eqEpsilon(x, y uint8) bool {
-	const epsilon = 8
+	const epsilon = 9
 	return x-y < epsilon || y-x < epsilon
 }
 
