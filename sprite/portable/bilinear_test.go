@@ -84,14 +84,40 @@ func TestBilinear(t *testing.T) {
 	for _, p := range interpTests {
 		src := p.newSrc()
 
-		// Fast path.
-		c := bilinear(src, p.x, p.y)
-		if c.R != c.G || c.R != c.B || c.A != 0xff {
-			t.Errorf("expect channels to match, got %v", c)
+		c0 := bilinearGeneral(src, p.x, p.y)
+		c0R, c0G, c0B, c0A := c0.RGBA()
+		r := uint8(c0R >> 8)
+		g := uint8(c0G >> 8)
+		b := uint8(c0B >> 8)
+		a := uint8(c0A >> 8)
+
+		if r != g || r != b || a != 0xff {
+			t.Errorf("expect channels to match, got %v", c0)
 			continue
 		}
-		if c.R != p.expect {
-			t.Errorf("%s: got 0x%02x want 0x%02x", p.desc, c.R, p.expect)
+		if r != p.expect {
+			t.Errorf("%s: got 0x%02x want 0x%02x", p.desc, r, p.expect)
+			continue
+		}
+
+		// fast path for *image.RGBA
+		c1 := bilinearRGBA(src, p.x, p.y)
+		if r != c1.R || g != c1.G || b != c1.B || a != c1.A {
+			t.Errorf("%s: RGBA fast path mismatch got %v want %v", p.desc, c1, c0)
+			continue
+		}
+
+		// fast path for *image.Alpha
+		alpha := image.NewAlpha(src.Bounds())
+		for y := src.Bounds().Min.Y; y < src.Bounds().Max.Y; y++ {
+			for x := src.Bounds().Min.X; x < src.Bounds().Max.X; x++ {
+				r, _, _, _ := src.At(x, y).RGBA()
+				alpha.Set(x, y, color.Alpha{A: uint8(r >> 8)})
+			}
+		}
+		c2 := bilinearAlpha(alpha, p.x, p.y)
+		if c2.A != r {
+			t.Errorf("%s: Alpha fast path mismatch got %v want %v", p.desc, c2, c0)
 			continue
 		}
 	}
@@ -109,7 +135,7 @@ func TestBilinearSubImage(t *testing.T) {
 
 	tests := []struct {
 		x, y float32
-		want uint8
+		want uint32
 	}{
 		{1, 1, 0x11},
 		{3, 1, 0x22},
@@ -119,9 +145,10 @@ func TestBilinearSubImage(t *testing.T) {
 	}
 
 	for _, p := range tests {
-		c := bilinear(src1, p.x, p.y)
-		if c.R != p.want {
-			t.Errorf("(%.0f, %.0f): got 0x%02x want 0x%02x", p.x, p.y, c.R, p.want)
+		r, _, _, _ := bilinear(src1, p.x, p.y).RGBA()
+		r >>= 8
+		if r != p.want {
+			t.Errorf("(%.0f, %.0f): got 0x%02x want 0x%02x", p.x, p.y, r, p.want)
 		}
 	}
 }

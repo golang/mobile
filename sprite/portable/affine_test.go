@@ -59,7 +59,7 @@ func TestAffine(t *testing.T) {
 	a.Scale(&a, 40/float32(src.Rect.Dx()), 20/float32(src.Rect.Dy()))
 	a.Inverse(&a)
 
-	affine(got, src, &a, draw.Over)
+	affine(got, src, &a, nil, draw.Over)
 
 	ptTopLeft := geom.Point{0, 24}
 	ptBottomRight := geom.Point{12 + 32, 16}
@@ -87,25 +87,70 @@ func TestAffine(t *testing.T) {
 	}
 
 	if !imageEq(got, want) {
-		// Write out the image we got.
-		f, err = ioutil.TempFile("", "testpattern-window-got")
+		gotPath, err := writeTempPNG("testpattern-window-got", got)
 		if err != nil {
-			t.Fatal(err)
-		}
-		f.Close()
-		gotPath := f.Name() + ".png"
-		f, err = os.Create(gotPath)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := png.Encode(f, got); err != nil {
-			t.Fatal(err)
-		}
-		if err := f.Close(); err != nil {
 			t.Fatal(err)
 		}
 		t.Errorf("got\n%s\nwant\n%s", gotPath, wantPath)
 	}
+}
+
+func TestAffineMask(t *testing.T) {
+	f, err := os.Open("../../testdata/testpattern.png")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	srcOrig, _, err := image.Decode(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b := srcOrig.Bounds()
+	src := image.NewRGBA(b)
+	draw.Draw(src, src.Rect, srcOrig, b.Min, draw.Src)
+	mask := image.NewAlpha(b)
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			mask.Set(x, y, color.Alpha{A: uint8(x - b.Min.X)})
+		}
+	}
+	want := image.NewRGBA(b)
+	draw.DrawMask(want, want.Rect, src, b.Min, mask, b.Min, draw.Src)
+
+	a := new(f32.Affine)
+	a.Identity()
+	got := image.NewRGBA(b)
+	affine(got, src, a, mask, draw.Src)
+
+	if !imageEq(got, want) {
+		gotPath, err := writeTempPNG("testpattern-mask-got", got)
+		if err != nil {
+			t.Fatal(err)
+		}
+		wantPath, err := writeTempPNG("testpattern-mask-want", want)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Errorf("got\n%s\nwant\n%s", gotPath, wantPath)
+	}
+}
+
+func writeTempPNG(prefix string, m image.Image) (string, error) {
+	f, err := ioutil.TempFile("", prefix+"-")
+	if err != nil {
+		return "", err
+	}
+	f.Close()
+	path := f.Name() + ".png"
+	f, err = os.Create(path)
+	if err != nil {
+		return "", err
+	}
+	if err := png.Encode(f, m); err != nil {
+		f.Close()
+		return "", err
+	}
+	return path, f.Close()
 }
 
 func drawCross(m *image.RGBA, x, y int) {
