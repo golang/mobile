@@ -10,14 +10,61 @@ import (
 	"math"
 )
 
-func bilinear(src *image.RGBA, x, y float32) color.RGBA {
+func bilinear(src image.Image, x, y float32) color.Color {
+	switch src := src.(type) {
+	case *image.RGBA:
+		return bilinearRGBA(src, x, y)
+	case *image.Alpha:
+		return bilinearAlpha(src, x, y)
+	default:
+		return bilinearGeneral(src, x, y)
+	}
+}
+
+func bilinearGeneral(src image.Image, x, y float32) color.RGBA64 {
 	p := findLinearSrc(src.Bounds(), x, y)
 
-	// Array offsets for the surrounding pixels.
-	off00 := offRGBA(src, p.low.X, p.low.Y)
-	off01 := offRGBA(src, p.high.X, p.low.Y)
-	off10 := offRGBA(src, p.low.X, p.high.Y)
-	off11 := offRGBA(src, p.high.X, p.high.Y)
+	r00, g00, b00, a00 := src.At(p.low.X, p.low.Y).RGBA()
+	r01, g01, b01, a01 := src.At(p.high.X, p.low.Y).RGBA()
+	r10, g10, b10, a10 := src.At(p.low.X, p.high.Y).RGBA()
+	r11, g11, b11, a11 := src.At(p.high.X, p.high.Y).RGBA()
+
+	fr := float32(r00) * p.frac00
+	fg := float32(g00) * p.frac00
+	fb := float32(b00) * p.frac00
+	fa := float32(a00) * p.frac00
+
+	fr += float32(r01) * p.frac01
+	fg += float32(g01) * p.frac01
+	fb += float32(b01) * p.frac01
+	fa += float32(a01) * p.frac01
+
+	fr += float32(r10) * p.frac10
+	fg += float32(g10) * p.frac10
+	fb += float32(b10) * p.frac10
+	fa += float32(a10) * p.frac10
+
+	fr += float32(r11) * p.frac11
+	fg += float32(g11) * p.frac11
+	fb += float32(b11) * p.frac11
+	fa += float32(a11) * p.frac11
+
+	return color.RGBA64{
+		R: uint16(fr + 0.5),
+		G: uint16(fg + 0.5),
+		B: uint16(fb + 0.5),
+		A: uint16(fa + 0.5),
+	}
+}
+
+func bilinearRGBA(src *image.RGBA, x, y float32) color.RGBA {
+	p := findLinearSrc(src.Bounds(), x, y)
+
+	// Slice offsets for the surrounding pixels.
+	off00 := src.PixOffset(p.low.X, p.low.Y)
+	off01 := src.PixOffset(p.high.X, p.low.Y)
+	off10 := src.PixOffset(p.low.X, p.high.Y)
+	off11 := src.PixOffset(p.high.X, p.high.Y)
 
 	fr := float32(src.Pix[off00+0]) * p.frac00
 	fg := float32(src.Pix[off00+1]) * p.frac00
@@ -45,6 +92,23 @@ func bilinear(src *image.RGBA, x, y float32) color.RGBA {
 		B: uint8(fb + 0.5),
 		A: uint8(fa + 0.5),
 	}
+}
+
+func bilinearAlpha(src *image.Alpha, x, y float32) color.Alpha {
+	p := findLinearSrc(src.Bounds(), x, y)
+
+	// Slice offsets for the surrounding pixels.
+	off00 := src.PixOffset(p.low.X, p.low.Y)
+	off01 := src.PixOffset(p.high.X, p.low.Y)
+	off10 := src.PixOffset(p.low.X, p.high.Y)
+	off11 := src.PixOffset(p.high.X, p.high.Y)
+
+	fa := float32(src.Pix[off00]) * p.frac00
+	fa += float32(src.Pix[off01]) * p.frac01
+	fa += float32(src.Pix[off10]) * p.frac10
+	fa += float32(src.Pix[off11]) * p.frac11
+
+	return color.Alpha{A: uint8(fa + 0.5)}
 }
 
 type bilinearSrc struct {
@@ -127,8 +191,4 @@ func findLinearSrc(b image.Rectangle, sx, sy float32) bilinearSrc {
 	}
 
 	return p
-}
-
-func offRGBA(src *image.RGBA, x, y int) int {
-	return (y-src.Rect.Min.Y)*src.Stride + (x-src.Rect.Min.X)*4
 }
