@@ -9,7 +9,7 @@ set -e
 
 ./make.bash
 
-adb install -r bin/hello-debug.apk
+adb install -r bin/Hello-debug.apk
 
 adb shell am start -a android.intent.action.MAIN \
 	-n com.example.hello/com.example.hello.MainActivity
