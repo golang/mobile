@@ -13,5 +13,5 @@ import (
 )
 
 func main() {
-	app.Run()
+	app.Run(app.Callbacks{})
 }
