@@ -16,6 +16,8 @@ func bilinear(src image.Image, x, y float32) color.Color {
 		return bilinearRGBA(src, x, y)
 	case *image.Alpha:
 		return bilinearAlpha(src, x, y)
+	case *image.Uniform:
+		return src.C
 	default:
 		return bilinearGeneral(src, x, y)
 	}
