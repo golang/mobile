@@ -25,17 +25,21 @@ import (
 //
 // will produce a dst that is half the size of src. To perform a
 // traditional affine transform, use the inverse of the affine matrix.
-func affine(dst *image.RGBA, src *image.RGBA, a *f32.Affine, mask image.Image, op draw.Op) {
+func affine(dst *image.RGBA, src image.Image, a *f32.Affine, mask image.Image, op draw.Op) {
 	srcb := src.Bounds()
 	b := dst.Bounds()
+	var maskb image.Rectangle
+	if mask != nil {
+		maskb = mask.Bounds()
+	}
 
 	for y := b.Min.Y; y < b.Max.Y; y++ {
 		for x := b.Min.X; x < b.Max.X; x++ {
 			// Interpolate from the bounds of the src sub-image
 			// to the bounds of the dst sub-image.
-			sx, sy := pt(a, x-b.Min.X, y-b.Min.Y)
-			sx += float32(srcb.Min.X)
-			sy += float32(srcb.Min.Y)
+			ix, iy := pt(a, x-b.Min.X, y-b.Min.Y)
+			sx := ix + float32(srcb.Min.X)
+			sy := iy + float32(srcb.Min.Y)
 			if !inBounds(srcb, sx, sy) {
 				continue
 			}
@@ -45,24 +49,16 @@ func affine(dst *image.RGBA, src *image.RGBA, a *f32.Affine, mask image.Image, o
 
 			ma := uint32(m)
 			if mask != nil {
-				_, _, _, ma = bilinear(mask, sx, sy).RGBA()
+				mx := ix + float32(maskb.Min.X)
+				my := iy + float32(maskb.Min.Y)
+				if !inBounds(maskb, mx, my) {
+					continue
+				}
+				_, _, _, ma = bilinear(mask, mx, my).RGBA()
 			}
 
-			c := bilinearRGBA(src, sx, sy)
+			sr, sg, sb, sa := bilinear(src, sx, sy).RGBA()
 			off := (y-dst.Rect.Min.Y)*dst.Stride + (x-dst.Rect.Min.X)*4
-
-			// c.R, c.G, c.B, c.A, dr, dg, db, and da are all 8-bit color at the moment,
-			// ranging in [0,255]. We work in 16-bit color, and so would normally do:
-			//	dr |= dr << 8
-			// and similarly for the other values, but instead we multiply by 0x101
-			// to shift these to 16-bit colors, ranging in [0,65535].
-			// This yields the same result, but is fewer arithmetic operations.
-			//
-			// This logic comes from drawCopyOver in the image/draw package.
-			sr := uint32(c.R) * 0x101
-			sg := uint32(c.G) * 0x101
-			sb := uint32(c.B) * 0x101
-			sa := uint32(c.A) * 0x101
 
 			if op == draw.Over {
 				dr := uint32(dst.Pix[off+0])
@@ -70,6 +66,14 @@ func affine(dst *image.RGBA, src *image.RGBA, a *f32.Affine, mask image.Image, o
 				db := uint32(dst.Pix[off+2])
 				da := uint32(dst.Pix[off+3])
 
+				// dr, dg, db, and da are all 8-bit color at the moment, ranging
+				// in [0,255]. We work in 16-bit color, and so would normally do:
+				//	dr |= dr << 8
+				// and similarly for the other values, but instead we multiply by 0x101
+				// to shift these to 16-bit colors, ranging in [0,65535].
+				// This yields the same result, but is fewer arithmetic operations.
+				//
+				// This logic comes from drawCopyOver in the image/draw package.
 				a := m - (sa * ma / m)
 				a *= 0x101
 
