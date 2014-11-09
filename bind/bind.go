@@ -16,7 +16,7 @@ import (
 	"go/token"
 	"io"
 
-	"code.google.com/p/go.tools/go/types"
+	"golang.org/x/tools/go/types"
 )
 
 // GenJava generates a Java API from a Go package.

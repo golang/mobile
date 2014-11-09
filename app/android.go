@@ -36,7 +36,7 @@ import (
 	"runtime"
 	"unsafe"
 
-	"code.google.com/p/go.mobile/geom"
+	"golang.org/x/mobile/geom"
 )
 
 //export onCreate

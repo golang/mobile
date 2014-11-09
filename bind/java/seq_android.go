@@ -15,8 +15,8 @@ import (
 	"sync"
 	"unsafe"
 
-	"code.google.com/p/go.mobile/app"
-	"code.google.com/p/go.mobile/bind/seq"
+	"golang.org/x/mobile/app"
+	"golang.org/x/mobile/bind/seq"
 )
 
 const maxSliceLen = 1<<31 - 1
