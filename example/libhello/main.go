@@ -9,10 +9,10 @@
 package main
 
 import (
-	"code.google.com/p/go.mobile/app"
+	"golang.org/x/mobile/app"
 
-	_ "code.google.com/p/go.mobile/bind/java"
-	_ "code.google.com/p/go.mobile/example/libhello/hi/go_hi"
+	_ "golang.org/x/mobile/bind/java"
+	_ "golang.org/x/mobile/example/libhello/hi/go_hi"
 )
 
 func main() {

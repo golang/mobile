@@ -15,7 +15,7 @@ https://developer.apple.com/library/ios/documentation/EventHandling/Conceptual/E
 import (
 	"fmt"
 
-	"code.google.com/p/go.mobile/geom"
+	"golang.org/x/mobile/geom"
 )
 
 // Touch is a user touch event.

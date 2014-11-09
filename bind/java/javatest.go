@@ -7,9 +7,9 @@
 package main
 
 import (
-	"code.google.com/p/go.mobile/app"
+	"golang.org/x/mobile/app"
 
-	_ "code.google.com/p/go.mobile/bind/java/testpkg/go_testpkg"
+	_ "golang.org/x/mobile/bind/java/testpkg/go_testpkg"
 )
 
 func main() {

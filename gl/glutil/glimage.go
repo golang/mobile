@@ -9,9 +9,9 @@ import (
 	"image"
 	"sync"
 
-	"code.google.com/p/go.mobile/f32"
-	"code.google.com/p/go.mobile/geom"
-	"code.google.com/p/go.mobile/gl"
+	"golang.org/x/mobile/f32"
+	"golang.org/x/mobile/geom"
+	"golang.org/x/mobile/gl"
 )
 
 var glimage struct {

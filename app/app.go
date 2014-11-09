@@ -4,7 +4,7 @@
 
 package app
 
-import "code.google.com/p/go.mobile/event"
+import "golang.org/x/mobile/event"
 
 // Run starts the app.
 //

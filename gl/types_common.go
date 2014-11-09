@@ -7,7 +7,7 @@ package gl
 // This file contains GL Types and their methods that are independent of the
 // "gldebug" build tag.
 
-import "code.google.com/p/go.mobile/f32"
+import "golang.org/x/mobile/f32"
 
 // WriteAffine writes the contents of an Affine to a 3x3 matrix GL uniform.
 func (u Uniform) WriteAffine(a *f32.Affine) {

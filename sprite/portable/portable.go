@@ -14,10 +14,10 @@ import (
 	"image"
 	"image/draw"
 
-	"code.google.com/p/go.mobile/f32"
-	"code.google.com/p/go.mobile/geom"
-	"code.google.com/p/go.mobile/sprite"
-	"code.google.com/p/go.mobile/sprite/clock"
+	"golang.org/x/mobile/f32"
+	"golang.org/x/mobile/geom"
+	"golang.org/x/mobile/sprite"
+	"golang.org/x/mobile/sprite/clock"
 )
 
 // Engine builds a sprite Engine that renders onto dst.

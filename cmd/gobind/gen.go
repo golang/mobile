@@ -14,8 +14,8 @@ import (
 	"go/scanner"
 	"go/token"
 
-	"code.google.com/p/go.mobile/bind"
-	"code.google.com/p/go.tools/go/loader"
+	"golang.org/x/mobile/bind"
+	"golang.org/x/tools/go/loader"
 )
 
 func genPkg(pkg *build.Package) {

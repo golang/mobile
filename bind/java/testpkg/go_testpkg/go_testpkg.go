@@ -5,8 +5,8 @@
 package go_testpkg
 
 import (
-	"code.google.com/p/go.mobile/bind/java/testpkg"
-	"code.google.com/p/go.mobile/bind/seq"
+	"golang.org/x/mobile/bind/java/testpkg"
+	"golang.org/x/mobile/bind/seq"
 )
 
 func proxy_Add(out, in *seq.Buffer) {

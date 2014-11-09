@@ -8,7 +8,7 @@ package glutil
 import (
 	"fmt"
 
-	"code.google.com/p/go.mobile/gl"
+	"golang.org/x/mobile/gl"
 )
 
 // CreateProgram creates, compiles, and links a gl.Program.

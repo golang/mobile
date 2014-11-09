@@ -3,7 +3,7 @@ package bind
 import (
 	"fmt"
 
-	"code.google.com/p/go.tools/go/types"
+	"golang.org/x/tools/go/types"
 )
 
 // seqType returns a string that can be used for reading and writing a

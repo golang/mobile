@@ -27,8 +27,8 @@ package sprite
 import (
 	"image"
 
-	"code.google.com/p/go.mobile/f32"
-	"code.google.com/p/go.mobile/sprite/clock"
+	"golang.org/x/mobile/f32"
+	"golang.org/x/mobile/sprite/clock"
 )
 
 type Arranger interface {

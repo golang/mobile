@@ -17,8 +17,8 @@ import (
 	"time"
 
 	"code.google.com/p/freetype-go/freetype"
-	"code.google.com/p/go.mobile/geom"
-	"code.google.com/p/go.mobile/gl/glutil"
+	"golang.org/x/mobile/geom"
+	"golang.org/x/mobile/gl/glutil"
 )
 
 var lastDraw = time.Now()

@@ -23,7 +23,7 @@ The result will be no make.bash, and no need to write C.
 */
 package main
 
-import "code.google.com/p/go.mobile/app"
+import "golang.org/x/mobile/app"
 
 func main() {
 	app.Run()
