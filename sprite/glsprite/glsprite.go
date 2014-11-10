@@ -2,52 +2,56 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package portable implements a sprite Engine using the image package.
-//
-// It is intended to serve as a reference implementation for testing
-// other sprite Engines written against OpenGL, or other more exotic
-// modern hardware interfaces.
-package portable
+// Package glsprite blah blah blah TODO.
+package glsprite
 
 import (
-	"fmt"
 	"image"
 	"image/draw"
 
 	"golang.org/x/mobile/f32"
 	"golang.org/x/mobile/geom"
+	"golang.org/x/mobile/gl/glutil"
 	"golang.org/x/mobile/sprite"
 	"golang.org/x/mobile/sprite/clock"
 )
-
-// Engine builds a sprite Engine that renders onto dst.
-func Engine(dst *image.RGBA) sprite.Engine {
-	return &engine{
-		dst:      dst,
-		nodes:    []*node{nil},
-		sheets:   []*image.RGBA{nil},
-		textures: []*image.RGBA{nil},
-	}
-}
 
 type node struct {
 	// TODO: move this into package sprite as Node.EngineFields.RelTransform??
 	relTransform f32.Affine
 }
 
+type sheet struct {
+	glImage *glutil.Image
+	b       image.Rectangle
+}
+
+type texture struct {
+	sheet sprite.Sheet
+	b     image.Rectangle
+}
+
+func Engine() sprite.Engine {
+	return &engine{
+		nodes:    []*node{nil},
+		sheets:   []sheet{{}},
+		textures: []texture{{}},
+	}
+}
+
 type engine struct {
-	dst           *image.RGBA
-	nodes         []*node
-	sheets        []*image.RGBA
-	textures      []*image.RGBA
+	glImages map[sprite.Texture]*glutil.Image
+	nodes    []*node
+	sheets   []sheet
+	textures []texture
+
 	absTransforms []f32.Affine
 }
 
 func (e *engine) Register(n *sprite.Node) {
 	if n.EngineFields.Index != 0 {
-		panic("portable: sprite.Node already registered")
+		panic("glsprite: sprite.Node already registered")
 	}
-
 	o := &node{}
 	o.relTransform.Identity()
 
@@ -60,21 +64,23 @@ func (e *engine) Unregister(n *sprite.Node) {
 }
 
 func (e *engine) LoadSheet(a image.Image) (sprite.Sheet, error) {
-	rgba, ok := a.(*image.RGBA)
-	if !ok {
-		b := a.Bounds()
-		rgba = image.NewRGBA(b)
-		draw.Draw(rgba, b, a, b.Min, draw.Src)
-	}
-	e.sheets = append(e.sheets, rgba)
+	b := a.Bounds()
+	glImage := glutil.NewImage(b.Dx(), b.Dy())
+	draw.Draw(glImage.RGBA, glImage.Bounds(), a, b.Min, draw.Src)
+	glImage.Upload()
+	// TODO: set "glImage.Pix = nil"?? We don't need the CPU-side image any more.
+	e.sheets = append(e.sheets, sheet{
+		glImage: glImage,
+		b:       b,
+	})
 	return sprite.Sheet(len(e.sheets) - 1), nil
 }
 
 func (e *engine) LoadTexture(s sprite.Sheet, bounds image.Rectangle) (sprite.Texture, error) {
-	if s < 0 || len(e.sheets) <= int(s) {
-		return 0, fmt.Errorf("portable: LoadTexture: sheet %d is out of bounds", s)
-	}
-	e.textures = append(e.textures, e.sheets[s].SubImage(bounds).(*image.RGBA))
+	e.textures = append(e.textures, texture{
+		sheet: s,
+		b:     bounds,
+	})
 	return sprite.Texture(len(e.textures) - 1), nil
 }
 
@@ -97,19 +103,16 @@ func (e *engine) SetTransform(n *sprite.Node, t clock.Time, m f32.Affine) {
 }
 
 func (e *engine) Render(scene *sprite.Node, t clock.Time) {
-	// Affine transforms are done in geom.Pt. When finally drawing
-	// the geom.Pt onto an image.Image we need to convert to system
-	// pixels. We scale by geom.PixelsPerPt to do this.
 	e.absTransforms = append(e.absTransforms[:0], f32.Affine{
-		{geom.PixelsPerPt, 0, 0},
-		{0, geom.PixelsPerPt, 0},
+		{1, 0, 0},
+		{0, 1, 0},
 	})
 	e.render(scene, t)
 }
 
 func (e *engine) render(n *sprite.Node, t clock.Time) {
 	if n.EngineFields.Index == 0 {
-		panic("portable: sprite.Node not registered")
+		panic("glsprite: sprite.Node not registered")
 	}
 	if n.Arranger != nil {
 		n.Arranger.Arrange(e, n, t)
@@ -122,23 +125,24 @@ func (e *engine) render(n *sprite.Node, t clock.Time) {
 	m.Mul(&e.absTransforms[len(e.absTransforms)-1], rel)
 	e.absTransforms = append(e.absTransforms, m)
 
-	if x := e.textures[n.EngineFields.Texture]; x != nil {
-		b := x.Bounds()
-
-		// Affine transforms work in geom.Pt, which is entirely
-		// independent of the number of pixels in a texture. A texture
-		// of any image.Rectangle bounds rendered with
-		//
-		//	Affine{{1, 0, 0}, {0, 1, 0}}
-		//
-		// should have the dimensions (1pt, 1pt). To do this we divide
-		// by the pixel width and height, reducing the texture to
-		// (1px, 1px) of the destination image. Multiplying by
-		// geom.PixelsPerPt, done in Render above, makes it (1pt, 1pt).
-		m.Scale(&m, 1/float32(b.Dx()), 1/float32(b.Dy()))
-
-		m.Inverse(&m) // See the documentation on the affine function.
-		affine(e.dst, x, &m, nil, draw.Over)
+	if x := e.textures[n.EngineFields.Texture]; x.sheet != 0 {
+		if 0 < x.sheet && int(x.sheet) < len(e.sheets) {
+			e.sheets[x.sheet].glImage.Draw(
+				geom.Point{
+					geom.Pt(m[0][2]),
+					geom.Pt(m[1][2]),
+				},
+				geom.Point{
+					geom.Pt(m[0][2] + m[0][0]),
+					geom.Pt(m[1][2] + m[1][0]),
+				},
+				geom.Point{
+					geom.Pt(m[0][2] + m[0][1]),
+					geom.Pt(m[1][2] + m[1][1]),
+				},
+				x.b,
+			)
+		}
 	}
 
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
