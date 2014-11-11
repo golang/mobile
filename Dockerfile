@@ -51,9 +51,9 @@ RUN curl https://go.googlecode.com/archive/default.tar.gz | tar xz -C / && \
 	CC_FOR_TARGET=$NDK_ROOT/bin/arm-linux-androideabi-gcc GOOS=android GOARCH=arm GOARM=7 ./make.bash
 
 # Copy the local version of go.mobile to GOPATH.
-ADD . /gopath/src/code.google.com/p/go.mobile
+ADD . /gopath/src/golang.org/x/mobile
 
 # Install dependencies. This will not overwrite the local copy.
-RUN go get -d -t code.google.com/p/go.mobile/...
+RUN go get -d -t golang.org/x/mobile/...
 
-WORKDIR /gopath/src/code.google.com/p/go.mobile
+WORKDIR /gopath/src/golang.org/x/mobile
