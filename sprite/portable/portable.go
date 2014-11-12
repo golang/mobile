@@ -10,7 +10,6 @@
 package portable
 
 import (
-	"fmt"
 	"image"
 	"image/draw"
 
@@ -23,10 +22,8 @@ import (
 // Engine builds a sprite Engine that renders onto dst.
 func Engine(dst *image.RGBA) sprite.Engine {
 	return &engine{
-		dst:      dst,
-		nodes:    []*node{nil},
-		sheets:   []*image.RGBA{nil},
-		textures: []*image.RGBA{nil},
+		dst:   dst,
+		nodes: []*node{nil},
 	}
 }
 
@@ -35,11 +32,28 @@ type node struct {
 	relTransform f32.Affine
 }
 
+type texture struct {
+	m *image.RGBA
+}
+
+func (t *texture) Bounds() (w, h int) {
+	b := t.m.Bounds()
+	return b.Dx(), b.Dy()
+}
+
+func (t *texture) Download(r image.Rectangle, dst draw.Image) {
+	draw.Draw(dst, r, t.m, t.m.Bounds().Min, draw.Src)
+}
+
+func (t *texture) Upload(r image.Rectangle, src image.Image) {
+	draw.Draw(t.m, r, src, src.Bounds().Min, draw.Src)
+}
+
+func (t *texture) Unload() { panic("TODO") }
+
 type engine struct {
 	dst           *image.RGBA
 	nodes         []*node
-	sheets        []*image.RGBA
-	textures      []*image.RGBA
 	absTransforms []f32.Affine
 }
 
@@ -59,39 +73,21 @@ func (e *engine) Unregister(n *sprite.Node) {
 	panic("todo")
 }
 
-func (e *engine) LoadSheet(a image.Image) (sprite.Sheet, error) {
-	rgba, ok := a.(*image.RGBA)
-	if !ok {
-		b := a.Bounds()
-		rgba = image.NewRGBA(b)
-		draw.Draw(rgba, b, a, b.Min, draw.Src)
-	}
-	e.sheets = append(e.sheets, rgba)
-	return sprite.Sheet(len(e.sheets) - 1), nil
+func (e *engine) LoadTexture(m image.Image) (sprite.Texture, error) {
+	b := m.Bounds()
+	w, h := b.Dx(), b.Dy()
+
+	t := &texture{m: image.NewRGBA(image.Rect(0, 0, w, h))}
+	t.Upload(b, m)
+	return t, nil
 }
 
-func (e *engine) LoadTexture(s sprite.Sheet, bounds image.Rectangle) (sprite.Texture, error) {
-	if s < 0 || len(e.sheets) <= int(s) {
-		return 0, fmt.Errorf("portable: LoadTexture: sheet %d is out of bounds", s)
-	}
-	e.textures = append(e.textures, e.sheets[s].SubImage(bounds).(*image.RGBA))
-	return sprite.Texture(len(e.textures) - 1), nil
-}
-
-func (e *engine) UnloadSheet(s sprite.Sheet) error {
-	panic("todo")
-}
-
-func (e *engine) UnloadTexture(x sprite.Texture) error {
-	panic("todo")
-}
-
-func (e *engine) SetTexture(n *sprite.Node, t clock.Time, x sprite.Texture) {
+func (e *engine) SetSubTex(n *sprite.Node, x sprite.SubTex) {
 	n.EngineFields.Dirty = true // TODO: do we need to propagate dirtiness up/down the tree?
-	n.EngineFields.Texture = x
+	n.EngineFields.SubTex = x
 }
 
-func (e *engine) SetTransform(n *sprite.Node, t clock.Time, m f32.Affine) {
+func (e *engine) SetTransform(n *sprite.Node, m f32.Affine) {
 	n.EngineFields.Dirty = true // TODO: do we need to propagate dirtiness up/down the tree?
 	e.nodes[n.EngineFields.Index].relTransform = m
 }
@@ -122,9 +118,7 @@ func (e *engine) render(n *sprite.Node, t clock.Time) {
 	m.Mul(&e.absTransforms[len(e.absTransforms)-1], rel)
 	e.absTransforms = append(e.absTransforms, m)
 
-	if x := e.textures[n.EngineFields.Texture]; x != nil {
-		b := x.Bounds()
-
+	if x := n.EngineFields.SubTex; x.T != nil {
 		// Affine transforms work in geom.Pt, which is entirely
 		// independent of the number of pixels in a texture. A texture
 		// of any image.Rectangle bounds rendered with
@@ -135,10 +129,12 @@ func (e *engine) render(n *sprite.Node, t clock.Time) {
 		// by the pixel width and height, reducing the texture to
 		// (1px, 1px) of the destination image. Multiplying by
 		// geom.PixelsPerPt, done in Render above, makes it (1pt, 1pt).
-		m.Scale(&m, 1/float32(b.Dx()), 1/float32(b.Dy()))
-
-		m.Inverse(&m) // See the documentation on the affine function.
-		affine(e.dst, x, &m, nil, draw.Over)
+		dx, dy := x.R.Dx(), x.R.Dy()
+		if dx > 0 && dy > 0 {
+			m.Scale(&m, 1/float32(dx), 1/float32(dy))
+			m.Inverse(&m) // See the documentation on the affine function.
+			affine(e.dst, x.T.(*texture).m, x.R, nil, &m, draw.Over)
+		}
 	}
 
 	for c := n.FirstChild; c != nil; c = c.NextSibling {

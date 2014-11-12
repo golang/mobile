@@ -48,7 +48,6 @@ func TestAffine(t *testing.T) {
 	b := src.Bounds()
 	b.Min.X += 10
 	b.Max.Y /= 2
-	src = src.SubImage(b).(*image.RGBA)
 
 	var a f32.Affine
 	a.Identity()
@@ -56,10 +55,10 @@ func TestAffine(t *testing.T) {
 	a.Translate(&a, 0, 24)
 	a.Rotate(&a, float32(math.Asin(12./20)))
 	// See commentary in the render method defined in portable.go.
-	a.Scale(&a, 40/float32(src.Rect.Dx()), 20/float32(src.Rect.Dy()))
+	a.Scale(&a, 40/float32(b.Dx()), 20/float32(b.Dy()))
 	a.Inverse(&a)
 
-	affine(got, src, &a, nil, draw.Over)
+	affine(got, src, b, nil, &a, draw.Over)
 
 	ptTopLeft := geom.Point{0, 24}
 	ptBottomRight := geom.Point{12 + 32, 16}
@@ -120,7 +119,7 @@ func TestAffineMask(t *testing.T) {
 	a := new(f32.Affine)
 	a.Identity()
 	got := image.NewRGBA(b)
-	affine(got, src, a, mask, draw.Src)
+	affine(got, src, b, mask, a, draw.Src)
 
 	if !imageEq(got, want) {
 		gotPath, err := writeTempPNG("testpattern-mask-got", got)

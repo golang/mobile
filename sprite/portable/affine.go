@@ -25,12 +25,11 @@ import (
 //
 // will produce a dst that is half the size of src. To perform a
 // traditional affine transform, use the inverse of the affine matrix.
-func affine(dst *image.RGBA, src image.Image, a *f32.Affine, mask image.Image, op draw.Op) {
-	srcb := src.Bounds()
+func affine(dst *image.RGBA, src image.Image, srcb image.Rectangle, mask image.Image, a *f32.Affine, op draw.Op) {
 	b := dst.Bounds()
 	var maskb image.Rectangle
 	if mask != nil {
-		maskb = mask.Bounds()
+		maskb = mask.Bounds().Add(srcb.Min)
 	}
 
 	for y := b.Min.Y; y < b.Max.Y; y++ {
