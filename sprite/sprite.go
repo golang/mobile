@@ -26,6 +26,7 @@ package sprite
 
 import (
 	"image"
+	"image/draw"
 
 	"golang.org/x/mobile/f32"
 	"golang.org/x/mobile/sprite/clock"
@@ -35,21 +36,26 @@ type Arranger interface {
 	Arrange(e Engine, n *Node, t clock.Time)
 }
 
-type Sheet int32
+type Texture interface {
+	Bounds() (w, h int)
+	Download(r image.Rectangle, dst draw.Image)
+	Upload(r image.Rectangle, src image.Image)
+	Unload()
+}
 
-type Texture int32
+type SubTex struct {
+	T Texture
+	R image.Rectangle
+}
 
 type Engine interface {
 	Register(n *Node)
 	Unregister(n *Node)
 
-	LoadSheet(a image.Image) (Sheet, error)
-	LoadTexture(s Sheet, bounds image.Rectangle) (Texture, error)
-	UnloadSheet(s Sheet) error
-	UnloadTexture(x Texture) error
+	LoadTexture(a image.Image) (Texture, error)
 
-	SetTexture(n *Node, t clock.Time, x Texture)
-	SetTransform(n *Node, t clock.Time, m f32.Affine) // sets transform relative to parent.
+	SetSubTex(n *Node, x SubTex)
+	SetTransform(n *Node, m f32.Affine) // sets transform relative to parent.
 
 	Render(scene *Node, t clock.Time)
 }
@@ -65,9 +71,9 @@ type Node struct {
 	// in other packages.
 	EngineFields struct {
 		// TODO: separate TexDirty and TransformDirty bits?
-		Dirty   bool
-		Index   int32
-		Texture Texture
+		Dirty  bool
+		Index  int32
+		SubTex SubTex
 	}
 }
 

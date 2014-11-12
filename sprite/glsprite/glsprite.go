@@ -21,29 +21,35 @@ type node struct {
 	relTransform f32.Affine
 }
 
-type sheet struct {
+type texture struct {
 	glImage *glutil.Image
 	b       image.Rectangle
 }
 
-type texture struct {
-	sheet sprite.Sheet
-	b     image.Rectangle
+func (t *texture) Bounds() (w, h int) { return t.b.Dx(), t.b.Dy() }
+
+func (t *texture) Download(r image.Rectangle, dst draw.Image) {
+	panic("TODO")
+}
+
+func (t *texture) Upload(r image.Rectangle, src image.Image) {
+	draw.Draw(t.glImage.RGBA, r, src, src.Bounds().Min, draw.Src)
+	t.glImage.Upload()
+}
+
+func (t *texture) Unload() {
+	panic("TODO")
 }
 
 func Engine() sprite.Engine {
 	return &engine{
-		nodes:    []*node{nil},
-		sheets:   []sheet{{}},
-		textures: []texture{{}},
+		nodes: []*node{nil},
 	}
 }
 
 type engine struct {
 	glImages map[sprite.Texture]*glutil.Image
 	nodes    []*node
-	sheets   []sheet
-	textures []texture
 
 	absTransforms []f32.Affine
 }
@@ -63,41 +69,20 @@ func (e *engine) Unregister(n *sprite.Node) {
 	panic("todo")
 }
 
-func (e *engine) LoadSheet(a image.Image) (sprite.Sheet, error) {
-	b := a.Bounds()
-	glImage := glutil.NewImage(b.Dx(), b.Dy())
-	draw.Draw(glImage.RGBA, glImage.Bounds(), a, b.Min, draw.Src)
-	glImage.Upload()
+func (e *engine) LoadTexture(src image.Image) (sprite.Texture, error) {
+	b := src.Bounds()
+	t := &texture{glutil.NewImage(b.Dx(), b.Dy()), b}
+	t.Upload(b, src)
 	// TODO: set "glImage.Pix = nil"?? We don't need the CPU-side image any more.
-	e.sheets = append(e.sheets, sheet{
-		glImage: glImage,
-		b:       b,
-	})
-	return sprite.Sheet(len(e.sheets) - 1), nil
+	return t, nil
 }
 
-func (e *engine) LoadTexture(s sprite.Sheet, bounds image.Rectangle) (sprite.Texture, error) {
-	e.textures = append(e.textures, texture{
-		sheet: s,
-		b:     bounds,
-	})
-	return sprite.Texture(len(e.textures) - 1), nil
-}
-
-func (e *engine) UnloadSheet(s sprite.Sheet) error {
-	panic("todo")
-}
-
-func (e *engine) UnloadTexture(x sprite.Texture) error {
-	panic("todo")
-}
-
-func (e *engine) SetTexture(n *sprite.Node, t clock.Time, x sprite.Texture) {
+func (e *engine) SetSubTex(n *sprite.Node, x sprite.SubTex) {
 	n.EngineFields.Dirty = true // TODO: do we need to propagate dirtiness up/down the tree?
-	n.EngineFields.Texture = x
+	n.EngineFields.SubTex = x
 }
 
-func (e *engine) SetTransform(n *sprite.Node, t clock.Time, m f32.Affine) {
+func (e *engine) SetTransform(n *sprite.Node, m f32.Affine) {
 	n.EngineFields.Dirty = true // TODO: do we need to propagate dirtiness up/down the tree?
 	e.nodes[n.EngineFields.Index].relTransform = m
 }
@@ -125,24 +110,22 @@ func (e *engine) render(n *sprite.Node, t clock.Time) {
 	m.Mul(&e.absTransforms[len(e.absTransforms)-1], rel)
 	e.absTransforms = append(e.absTransforms, m)
 
-	if x := e.textures[n.EngineFields.Texture]; x.sheet != 0 {
-		if 0 < x.sheet && int(x.sheet) < len(e.sheets) {
-			e.sheets[x.sheet].glImage.Draw(
-				geom.Point{
-					geom.Pt(m[0][2]),
-					geom.Pt(m[1][2]),
-				},
-				geom.Point{
-					geom.Pt(m[0][2] + m[0][0]),
-					geom.Pt(m[1][2] + m[1][0]),
-				},
-				geom.Point{
-					geom.Pt(m[0][2] + m[0][1]),
-					geom.Pt(m[1][2] + m[1][1]),
-				},
-				x.b,
-			)
-		}
+	if x := n.EngineFields.SubTex; x.T != nil {
+		x.T.(*texture).glImage.Draw(
+			geom.Point{
+				geom.Pt(m[0][2]),
+				geom.Pt(m[1][2]),
+			},
+			geom.Point{
+				geom.Pt(m[0][2] + m[0][0]),
+				geom.Pt(m[1][2] + m[1][0]),
+			},
+			geom.Point{
+				geom.Pt(m[0][2] + m[0][1]),
+				geom.Pt(m[1][2] + m[1][1]),
+			},
+			x.R,
+		)
 	}
 
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
