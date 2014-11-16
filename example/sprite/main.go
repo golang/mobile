@@ -72,7 +72,7 @@ func loadScene() {
 	texs := loadTextures()
 	scene = &sprite.Node{}
 	eng.Register(scene)
-	eng.SetTransform(scene, 0, f32.Affine{
+	eng.SetTransform(scene, f32.Affine{
 		{1, 0, 0},
 		{0, 1, 0},
 	})
@@ -80,15 +80,15 @@ func loadScene() {
 	var n *sprite.Node
 
 	n = newNode()
-	eng.SetTexture(n, 0, texs[texBooks])
-	eng.SetTransform(n, 0, f32.Affine{
+	eng.SetSubTex(n, texs[texBooks])
+	eng.SetTransform(n, f32.Affine{
 		{36, 0, 0},
 		{0, 36, 0},
 	})
 
 	n = newNode()
-	eng.SetTexture(n, 0, texs[texFire])
-	eng.SetTransform(n, 0, f32.Affine{
+	eng.SetSubTex(n, texs[texFire])
+	eng.SetTransform(n, f32.Affine{
 		{72, 0, 144},
 		{0, 72, 144},
 	})
@@ -98,9 +98,9 @@ func loadScene() {
 		// TODO: use a tweening library instead of manually arranging.
 		t0 := uint32(t) % 120
 		if t0 < 60 {
-			eng.SetTexture(n, t, texs[texGopherR])
+			eng.SetSubTex(n, texs[texGopherR])
 		} else {
-			eng.SetTexture(n, t, texs[texGopherL])
+			eng.SetSubTex(n, texs[texGopherL])
 		}
 
 		u := float32(t0) / 120
@@ -110,7 +110,7 @@ func loadScene() {
 		ty := 36 + u*108
 		sx := 36 + u*36
 		sy := 36 + u*36
-		eng.SetTransform(n, t, f32.Affine{
+		eng.SetTransform(n, f32.Affine{
 			{sx, 0, tx},
 			{0, sy, ty},
 		})
@@ -124,7 +124,7 @@ const (
 	texGopherL
 )
 
-func loadTextures() (ret []sprite.Texture) {
+func loadTextures() []sprite.SubTex {
 	f, err := os.Open("../../testdata/waza-gophers.jpeg")
 	if err != nil {
 		log.Fatal(err)
@@ -134,26 +134,17 @@ func loadTextures() (ret []sprite.Texture) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	sheet, err := eng.LoadSheet(img)
+	t, err := eng.LoadTexture(img)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	bounds := []image.Rectangle{
-		texBooks:   image.Rect(4, 71, 132, 182),
-		texFire:    image.Rect(330, 56, 440, 155),
-		texGopherR: image.Rect(152, 10, 152+140, 10+90),
-		texGopherL: image.Rect(162, 120, 162+140, 120+90),
+	return []sprite.SubTex{
+		texBooks:   sprite.SubTex{t, image.Rect(4, 71, 132, 182)},
+		texFire:    sprite.SubTex{t, image.Rect(330, 56, 440, 155)},
+		texGopherR: sprite.SubTex{t, image.Rect(152, 10, 152+140, 10+90)},
+		texGopherL: sprite.SubTex{t, image.Rect(162, 120, 162+140, 120+90)},
 	}
-
-	for _, b := range bounds {
-		tex, err := eng.LoadTexture(sheet, b)
-		if err != nil {
-			log.Fatal(err)
-		}
-		ret = append(ret, tex)
-	}
-	return ret
 }
 
 type arrangerFunc func(e sprite.Engine, n *sprite.Node, t clock.Time)
