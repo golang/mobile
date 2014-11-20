@@ -14,9 +14,13 @@ var (
 	EaseInOut = CubicBezier(0.42, 0, 0.58, 1)
 )
 
+// Linear computes the fraction [0,1] that t lies between [t0,t1].
 func Linear(t0, t1, t Time) float32 {
-	if t0 == t1 {
+	if t >= t1 {
 		return 1
+	}
+	if t <= t0 {
+		return 0
 	}
 	return float32(t-t0) / float32(t1-t0)
 }
