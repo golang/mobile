@@ -14,7 +14,6 @@ mkdir -p libs/armeabi-v7a src/go/hi
 ANDROID_APP=$PWD
 (cd ../.. && ln -sf $PWD/app/*.java $ANDROID_APP/src/go)
 (cd ../.. && ln -sf $PWD/bind/java/Seq.java $ANDROID_APP/src/go)
-ln -sf $PWD/hi/*.java src/go/hi
 CGO_ENABLED=1 GOOS=android GOARCH=arm GOARM=7 \
 	go build -ldflags="-shared" .
 mv -f libhello libs/armeabi-v7a/libgojni.so
