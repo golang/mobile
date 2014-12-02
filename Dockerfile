@@ -10,7 +10,7 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN echo "debconf shared/accepted-oracle-license-v1-1 select true" | debconf-set-selections && \
 	echo "debconf shared/accepted-oracle-license-v1-1 seen true" | debconf-set-selections
 RUN apt-get update && \
-	apt-get -y install build-essential python-software-properties bzip2 curl \
+	apt-get -y install build-essential python-software-properties bzip2 unzip curl \
 		git subversion mercurial bzr \
 		libncurses5:i386 libstdc++6:i386 zlib1g:i386 && \
 	add-apt-repository ppa:webupd8team/java && \
@@ -33,11 +33,18 @@ RUN curl -L http://dl.google.com/android/ndk/android-ndk-r9d-linux-x86_64.tar.bz
 ENV NDK_ROOT /usr/local/android-ndk-r9d
 RUN $NDK_ROOT/build/tools/make-standalone-toolchain.sh --platform=android-9 --install-dir=$NDK_ROOT --system=linux-x86_64
 
+# Install Gradle 2.1
+# : android-gradle compatibility
+#   http://tools.android.com/tech-docs/new-build-system/version-compatibility
+RUN curl -L http://services.gradle.org/distributions/gradle-2.1-all.zip -o /tmp/gradle-2.1-all.zip && unzip /tmp/gradle-2.1-all.zip -d /usr/local && rm /tmp/gradle-2.1-all.zip
+ENV GRADLE_HOME /usr/local/gradle-2.1
+
 # Update PATH for the above.
 ENV PATH $PATH:$ANDROID_HOME/tools
 ENV PATH $PATH:$ANDROID_HOME/platform-tools
 ENV PATH $PATH:$NDK_ROOT
 ENV PATH $PATH:$ANT_HOME/bin
+ENV PATH $PATH:$GRADLE_HOME/bin
 
 # Install Go.
 ENV GOROOT /go
