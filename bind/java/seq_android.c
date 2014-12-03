@@ -55,6 +55,9 @@ static mem *mem_get(JNIEnv *env, jobject obj) {
 }
 
 static uint8_t *mem_read(JNIEnv *env, jobject obj, uint32_t size) {
+	if (size == 0) {
+		return NULL;
+	}
 	mem *m = mem_get(env, obj);
 	if (m == NULL) {
 		LOG_FATAL("mem_read on NULL mem");
@@ -101,8 +104,15 @@ static jfieldID find_field(JNIEnv *env, const char *class_name, const char *fiel
 void init_seq(void *javavm) {
 	JavaVM *vm = (JavaVM*)javavm;
 	JNIEnv *env;
-	if ((*vm)->GetEnv(vm, (void**)&env, JNI_VERSION_1_6) != JNI_OK) {
-		LOG_FATAL("bad vm env");
+	int res = (*vm)->GetEnv(vm, (void**)&env, JNI_VERSION_1_6);
+	if (res == JNI_EDETACHED) {
+		JavaVMAttachArgs args;
+		args.version = JNI_VERSION_1_6;
+		if ((*vm)->AttachCurrentThread(vm, &env, &args) != 0) {
+			LOG_FATAL("cannot attach to current_vm");
+		}
+	} else if (res != 0) {
+		LOG_FATAL("bad vm env: %d", res);
 	}
 
 	memptr_id = find_field(env, "go/Seq", "memptr", "J");
@@ -111,6 +121,10 @@ void init_seq(void *javavm) {
 	receive_code_id = find_field(env, "go/Seq$Receive", "code", "I");
 
 	LOG_INFO("loaded go/Seq");
+
+	if (res == JNI_EDETACHED) {
+		(*vm)->DetachCurrentThread(vm);
+	}
 }
 
 JNIEXPORT void JNICALL
