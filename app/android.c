@@ -81,7 +81,7 @@ static void* init_go_runtime(void* unused) {
 		__android_log_print(ANDROID_LOG_FATAL, "Go", "/proc/self/auxv too big");
 	}
 	close(fd);
-	x.auxv[n] = NULL;
+	x.auxv[n / sizeof(char*)] = NULL;
 
 	int32_t argc = 1;
 	_rt0_arm_linux1(argc, x.argv);
