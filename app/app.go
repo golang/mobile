@@ -4,7 +4,11 @@
 
 package app
 
-import "golang.org/x/mobile/event"
+import (
+	"io"
+
+	"golang.org/x/mobile/event"
+)
 
 // Run starts the app.
 //
@@ -26,10 +30,24 @@ type Callbacks struct {
 	Touch func(event.Touch)
 }
 
-/*
-TODO(crawshaw): Implement.
-var Start func()
-var Stop func()
-var Resume func()
-var Pause func()
-*/
+// Open opens a named asset.
+//
+// On Android, assets are accessed via android.content.res.AssetManager.
+// These files are stored in the assets/ directory of the app. Any raw asset
+// can be accessed by its direct relative name. For example assets/img.png
+// can be opened with Open("img.png").
+//
+// On iOS an asset is a resource stored in the application bundle.
+// Resources can be loaded using the same relative paths.
+//
+// For consistency when debugging on a desktop, assets are read from a
+// directoy named assets under the current working directory.
+func Open(name string) (ReadSeekCloser, error) {
+	return openAsset(name)
+}
+
+// ReadSeekCloser is an io.ReadSeeker and io.Closer.
+type ReadSeekCloser interface {
+	io.ReadSeeker
+	io.Closer
+}
