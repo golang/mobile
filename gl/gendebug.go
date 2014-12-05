@@ -205,16 +205,28 @@ const preamble = `// Copyright 2014 The Go Authors.  All rights reserved.
 // license that can be found in the LICENSE file.
 
 // Generated from gl.go. DO NOT EDIT.
-// See doc.org for details.
+// See doc.go for details.
 
 // +build gldebug
 
 package gl
 
-//#cgo darwin  LDFLAGS: -framework OpenGL
-//#cgo linux   LDFLAGS: -lGLESv2
-//#include <stdlib.h>
-//#include "gl2.h"
+/*
+#cgo darwin  LDFLAGS: -framework OpenGL
+#cgo linux   LDFLAGS: -lGLESv2
+#cgo darwin  CFLAGS: -DGOOS_darwin
+#cgo linux   CFLAGS: -DGOOS_linux
+
+#include <stdlib.h>
+
+#ifdef GOOS_linux
+#include <GLES2/gl2.h>
+#endif
+
+#ifdef GOOS_darwin
+#include <OpenGL/gl3.h>
+#endif
+*/
 import "C"
 
 import (
@@ -222,33 +234,6 @@ import (
 	"log"
 	"unsafe"
 )
-
-/*
-Partially generated from the Khronos OpenGL API specification in XML
-format, which is covered by the license:
-
-	Copyright (c) 2013-2014 The Khronos Group Inc.
-
-	Permission is hereby granted, free of charge, to any person obtaining a
-	copy of this software and/or associated documentation files (the
-	"Materials"), to deal in the Materials without restriction, including
-	without limitation the rights to use, copy, modify, merge, publish,
-	distribute, sublicense, and/or sell copies of the Materials, and to
-	permit persons to whom the Materials are furnished to do so, subject to
-	the following conditions:
-
-	The above copyright notice and this permission notice shall be included
-	in all copies or substantial portions of the Materials.
-
-	THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-	EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-	MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-	IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-	CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-	TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-	MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
-
-*/
 
 func errDrain() string {
 	var errs []Enum
