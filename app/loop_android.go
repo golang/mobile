@@ -89,7 +89,6 @@ import (
 func windowDrawLoop(cb Callbacks, w *C.ANativeWindow, queue *C.AInputQueue) {
 	C.createEGLWindow(w)
 
-	gl.Enable(gl.CULL_FACE)
 	// TODO: is the library or the app responsible for clearing the buffers?
 	gl.ClearColor(0, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
