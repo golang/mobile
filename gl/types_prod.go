@@ -6,9 +6,20 @@
 
 package gl
 
-//#cgo darwin  LDFLAGS: -framework OpenGL
-//#cgo linux   LDFLAGS: -lGLESv2
-//#include "gl2.h"
+/*
+#cgo darwin  LDFLAGS: -framework OpenGL
+#cgo linux   LDFLAGS: -lGLESv2
+#cgo darwin  CFLAGS: -DGOOS_darwin
+#cgo linux   CFLAGS: -DGOOS_linux
+
+#ifdef GOOS_linux
+#include <GLES2/gl2.h>
+#endif
+
+#ifdef GOOS_darwin
+#include <OpenGL/gl3.h>
+#endif
+*/
 import "C"
 import "fmt"
 
