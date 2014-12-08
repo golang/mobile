@@ -33,13 +33,6 @@ import "C"
 
 import "unsafe"
 
-// Desktop OpenGL and the ES 2/3 APIs have a very slight difference
-// that is imperceptible to C programmers: some function parameters
-// use the type Glclampf and some use GLfloat. These two types are
-// equivalent in size and bit layout (both are single-precision
-// floats), but it plays havoc with cgo. We adjust the types by using
-// C wrappers for the problematic functions in gl_GOOS.go.
-
 // ActiveTexture sets the active texture unit.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glActiveTexture.xhtml

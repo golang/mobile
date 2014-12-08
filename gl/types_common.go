@@ -7,6 +7,27 @@ package gl
 // This file contains GL Types and their methods that are independent of the
 // "gldebug" build tag.
 
+/*
+#cgo darwin  LDFLAGS: -framework OpenGL
+#cgo linux   LDFLAGS: -lGLESv2
+#cgo darwin  CFLAGS: -DGOOS_darwin
+#cgo linux   CFLAGS: -DGOOS_linux
+
+#ifdef GOOS_linux
+#include <GLES2/gl2.h>
+#endif
+
+#ifdef GOOS_darwin
+#include <OpenGL/gl3.h>
+#endif
+
+void blendColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a) { glBlendColor(r, g, b, a); }
+void clearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a) { glClearColor(r, g, b, a); }
+void clearDepthf(GLfloat d)                                 { glClearDepthf(d); }
+void depthRangef(GLfloat n, GLfloat f)                      { glDepthRangef(n, f); }
+void sampleCoverage(GLfloat v, GLboolean invert)            { glSampleCoverage(v, invert); }
+*/
+import "C"
 import "golang.org/x/mobile/f32"
 
 // WriteAffine writes the contents of an Affine to a 3x3 matrix GL uniform.
@@ -50,3 +71,20 @@ func (u Uniform) WriteMat4(p *f32.Mat4) {
 func (u Uniform) WriteVec4(v *f32.Vec4) {
 	Uniform4f(u, v[0], v[1], v[2], v[3])
 }
+
+// Desktop OpenGL and the ES 2/3 APIs have a very slight difference
+// that is imperceptible to C programmers: some function parameters
+// use the type Glclampf and some use GLfloat. These two types are
+// equivalent in size and bit layout (both are single-precision
+// floats), but it plays havoc with cgo. We adjust the types by using
+// C wrappers for the problematic functions.
+
+func blendColor(r, g, b, a float32) {
+	C.blendColor(C.GLfloat(r), C.GLfloat(g), C.GLfloat(b), C.GLfloat(a))
+}
+func clearColor(r, g, b, a float32) {
+	C.clearColor(C.GLfloat(r), C.GLfloat(g), C.GLfloat(b), C.GLfloat(a))
+}
+func clearDepthf(d float32)            { C.clearDepthf(C.GLfloat(d)) }
+func depthRangef(n, f float32)         { C.depthRangef(C.GLfloat(n), C.GLfloat(f)) }
+func sampleCoverage(v float32, i bool) { C.sampleCoverage(C.GLfloat(v), glBoolean(i)) }
