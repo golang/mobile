@@ -37,12 +37,8 @@ import "unsafe"
 // that is imperceptible to C programmers: some function parameters
 // use the type Glclampf and some use GLfloat. These two types are
 // equivalent in size and bit layout (both are single-precision
-// floats), but it plays havoc with cgo. We adjust the types using
-// conversion functions defined in gl_GOOS.go.
-//
-//	f32All always returns a C.GLfloat
-//	f32None always returns a C.GLclampf
-//	f32GL4 returns a C.GLfloat for GL4 headers, otherwise a C.GLclampf.
+// floats), but it plays havoc with cgo. We adjust the types by using
+// C wrappers for the problematic functions in gl_GOOS.go.
 
 // ActiveTexture sets the active texture unit.
 //
@@ -100,7 +96,7 @@ func BindTexture(target Enum, t Texture) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glBlendColor.xhtml
 func BlendColor(red, green, blue, alpha float32) {
-	C.glBlendColor(f32GL4(red), f32GL4(green), f32GL4(blue), f32GL4(alpha))
+	blendColor(red, green, blue, alpha)
 }
 
 // BlendEquation sets both RGB and alpha blend equations.
@@ -174,14 +170,14 @@ func Clear(mask Enum) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glClearColor.xhtml
 func ClearColor(red, green, blue, alpha float32) {
-	C.glClearColor(f32GL4(red), f32GL4(green), f32GL4(blue), f32GL4(alpha))
+	clearColor(red, green, blue, alpha)
 }
 
 // ClearDepthf sets the depth value used to clear the depth buffer.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glClearDepthf.xhtml
 func ClearDepthf(d float32) {
-	C.glClearDepthf(f32None(d))
+	clearDepthf(d)
 }
 
 // ClearStencil sets the index used to clear the stencil buffer.
@@ -329,7 +325,7 @@ func DepthMask(flag bool) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glDepthRangef.xhtml
 func DepthRangef(n, f float32) {
-	C.glDepthRangef(f32None(n), f32None(f))
+	depthRangef(n, f)
 }
 
 // DetachShader detaches the shader s from the program p.
@@ -810,7 +806,7 @@ func IsTexture(t Texture) bool {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glLineWidth.xhtml
 func LineWidth(width float32) {
-	C.glLineWidth(f32All(width))
+	C.glLineWidth(C.GLfloat(width))
 }
 
 // LinkProgram links the specified program.
@@ -831,7 +827,7 @@ func PixelStorei(pname Enum, param int32) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glPolygonOffset.xhtml
 func PolygonOffset(factor, units float32) {
-	C.glPolygonOffset(f32All(factor), f32All(units))
+	C.glPolygonOffset(C.GLfloat(factor), C.GLfloat(units))
 }
 
 // ReadPixels returns pixel data from a buffer.
@@ -863,7 +859,7 @@ func RenderbufferStorage(target, internalFormat Enum, width, height int) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glSampleCoverage.xhtml
 func SampleCoverage(value float32, invert bool) {
-	C.glSampleCoverage(f32None(value), glBoolean(invert))
+	sampleCoverage(value, invert)
 }
 
 func glBoolean(b bool) C.GLboolean {
@@ -955,7 +951,7 @@ func TexSubImage2D(target Enum, level int, x, y, width, height int, format, ty E
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glTexParameter.xhtml
 func TexParameterf(target, pname Enum, param float32) {
-	C.glTexParameterf(target.c(), pname.c(), f32All(param))
+	C.glTexParameterf(target.c(), pname.c(), C.GLfloat(param))
 }
 
 // TexParameterfv sets a float texture parameter array.
@@ -983,7 +979,7 @@ func TexParameteriv(target, pname Enum, params []int32) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func Uniform1f(dst Uniform, v float32) {
-	C.glUniform1f(dst.c(), f32All(v))
+	C.glUniform1f(dst.c(), C.GLfloat(v))
 }
 
 // Uniform1fv writes a [len(src)]float uniform array.
@@ -1019,7 +1015,7 @@ func Uniform1iv(dst Uniform, src []int32) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func Uniform2f(dst Uniform, v0, v1 float32) {
-	C.glUniform2f(dst.c(), f32All(v0), f32All(v1))
+	C.glUniform2f(dst.c(), C.GLfloat(v0), C.GLfloat(v1))
 }
 
 // Uniform2fv writes a vec2 uniform array of len(src)/2 elements.
@@ -1047,7 +1043,7 @@ func Uniform2iv(dst Uniform, src []int32) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func Uniform3f(dst Uniform, v0, v1, v2 float32) {
-	C.glUniform3f(dst.c(), f32All(v0), f32All(v1), f32All(v2))
+	C.glUniform3f(dst.c(), C.GLfloat(v0), C.GLfloat(v1), C.GLfloat(v2))
 }
 
 // Uniform3fv writes a vec3 uniform array of len(src)/3 elements.
@@ -1075,7 +1071,7 @@ func Uniform3iv(dst Uniform, src []int32) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func Uniform4f(dst Uniform, v0, v1, v2, v3 float32) {
-	C.glUniform4f(dst.c(), f32All(v0), f32All(v1), f32All(v2), f32All(v3))
+	C.glUniform4f(dst.c(), C.GLfloat(v0), C.GLfloat(v1), C.GLfloat(v2), C.GLfloat(v3))
 }
 
 // Uniform4fv writes a vec4 uniform array of len(src)/4 elements.
@@ -1151,7 +1147,7 @@ func ValidateProgram(p Program) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glVertexAttrib.xhtml
 func VertexAttrib1f(dst Attrib, x float32) {
-	C.glVertexAttrib1f(dst.c(), f32All(x))
+	C.glVertexAttrib1f(dst.c(), C.GLfloat(x))
 }
 
 // VertexAttrib1fv writes a float vertex attribute.
@@ -1165,7 +1161,7 @@ func VertexAttrib1fv(dst Attrib, src []float32) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glVertexAttrib.xhtml
 func VertexAttrib2f(dst Attrib, x, y float32) {
-	C.glVertexAttrib2f(dst.c(), f32All(x), f32All(y))
+	C.glVertexAttrib2f(dst.c(), C.GLfloat(x), C.GLfloat(y))
 }
 
 // VertexAttrib2fv writes a vec2 vertex attribute.
@@ -1179,7 +1175,7 @@ func VertexAttrib2fv(dst Attrib, src []float32) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glVertexAttrib.xhtml
 func VertexAttrib3f(dst Attrib, x, y, z float32) {
-	C.glVertexAttrib3f(dst.c(), f32All(x), f32All(y), f32All(z))
+	C.glVertexAttrib3f(dst.c(), C.GLfloat(x), C.GLfloat(y), C.GLfloat(z))
 }
 
 // VertexAttrib3fv writes a vec3 vertex attribute.
@@ -1193,7 +1189,7 @@ func VertexAttrib3fv(dst Attrib, src []float32) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glVertexAttrib.xhtml
 func VertexAttrib4f(dst Attrib, x, y, z, w float32) {
-	C.glVertexAttrib4f(dst.c(), f32All(x), f32All(y), f32All(z), f32All(w))
+	C.glVertexAttrib4f(dst.c(), C.GLfloat(x), C.GLfloat(y), C.GLfloat(z), C.GLfloat(w))
 }
 
 // VertexAttrib4fv writes a vec4 vertex attribute.
