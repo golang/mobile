@@ -706,7 +706,7 @@ func BlendColor(red, green, blue, alpha float32) {
 		errstr := errDrain()
 		log.Printf("gl.BlendColor(%v, %v, %v, %v) %v", red, green, blue, alpha, errstr)
 	}()
-	C.glBlendColor(f32GL4(red), f32GL4(green), f32GL4(blue), f32GL4(alpha))
+	blendColor(red, green, blue, alpha)
 }
 
 func BlendEquation(mode Enum) {
@@ -786,7 +786,7 @@ func ClearColor(red, green, blue, alpha float32) {
 		errstr := errDrain()
 		log.Printf("gl.ClearColor(%v, %v, %v, %v) %v", red, green, blue, alpha, errstr)
 	}()
-	C.glClearColor(f32GL4(red), f32GL4(green), f32GL4(blue), f32GL4(alpha))
+	clearColor(red, green, blue, alpha)
 }
 
 func ClearDepthf(d float32) {
@@ -794,7 +794,7 @@ func ClearDepthf(d float32) {
 		errstr := errDrain()
 		log.Printf("gl.ClearDepthf(%v) %v", d, errstr)
 	}()
-	C.glClearDepthf(f32None(d))
+	clearDepthf(d)
 }
 
 func ClearStencil(s int) {
@@ -946,7 +946,7 @@ func DepthRangef(n, f float32) {
 		errstr := errDrain()
 		log.Printf("gl.DepthRangef(%v, %v) %v", n, f, errstr)
 	}()
-	C.glDepthRangef(f32None(n), f32None(f))
+	depthRangef(n, f)
 }
 
 func DetachShader(p Program, s Shader) {
@@ -1456,7 +1456,7 @@ func LineWidth(width float32) {
 		errstr := errDrain()
 		log.Printf("gl.LineWidth(%v) %v", width, errstr)
 	}()
-	C.glLineWidth(f32All(width))
+	C.glLineWidth(C.GLfloat(width))
 }
 
 func LinkProgram(p Program) {
@@ -1480,7 +1480,7 @@ func PolygonOffset(factor, units float32) {
 		errstr := errDrain()
 		log.Printf("gl.PolygonOffset(%v, %v) %v", factor, units, errstr)
 	}()
-	C.glPolygonOffset(f32All(factor), f32All(units))
+	C.glPolygonOffset(C.GLfloat(factor), C.GLfloat(units))
 }
 
 func ReadPixels(dst []byte, x, y, width, height int, format, ty Enum) {
@@ -1512,18 +1512,7 @@ func SampleCoverage(value float32, invert bool) {
 		errstr := errDrain()
 		log.Printf("gl.SampleCoverage(%v, %v) %v", value, invert, errstr)
 	}()
-	C.glSampleCoverage(f32None(value), glBoolean(invert))
-}
-
-func glBoolean(b bool) (r0 C.GLboolean) {
-	defer func() {
-		errstr := errDrain()
-		log.Printf("gl.glBoolean(%v) %v%v", b, r0, errstr)
-	}()
-	if b {
-		return 0
-	}
-	return 1
+	sampleCoverage(value, invert)
 }
 
 func Scissor(x, y, width, height int32) {
@@ -1617,7 +1606,7 @@ func TexParameterf(target, pname Enum, param float32) {
 		errstr := errDrain()
 		log.Printf("gl.TexParameterf(%v, %v, %v) %v", target, pname, param, errstr)
 	}()
-	C.glTexParameterf(target.c(), pname.c(), f32All(param))
+	C.glTexParameterf(target.c(), pname.c(), C.GLfloat(param))
 }
 
 func TexParameterfv(target, pname Enum, params []float32) {
@@ -1649,7 +1638,7 @@ func Uniform1f(dst Uniform, v float32) {
 		errstr := errDrain()
 		log.Printf("gl.Uniform1f(%v, %v) %v", dst, v, errstr)
 	}()
-	C.glUniform1f(dst.c(), f32All(v))
+	C.glUniform1f(dst.c(), C.GLfloat(v))
 }
 
 func Uniform1fv(dst Uniform, src []float32) {
@@ -1681,7 +1670,7 @@ func Uniform2f(dst Uniform, v0, v1 float32) {
 		errstr := errDrain()
 		log.Printf("gl.Uniform2f(%v, %v, %v) %v", dst, v0, v1, errstr)
 	}()
-	C.glUniform2f(dst.c(), f32All(v0), f32All(v1))
+	C.glUniform2f(dst.c(), C.GLfloat(v0), C.GLfloat(v1))
 }
 
 func Uniform2fv(dst Uniform, src []float32) {
@@ -1713,7 +1702,7 @@ func Uniform3f(dst Uniform, v0, v1, v2 float32) {
 		errstr := errDrain()
 		log.Printf("gl.Uniform3f(%v, %v, %v, %v) %v", dst, v0, v1, v2, errstr)
 	}()
-	C.glUniform3f(dst.c(), f32All(v0), f32All(v1), f32All(v2))
+	C.glUniform3f(dst.c(), C.GLfloat(v0), C.GLfloat(v1), C.GLfloat(v2))
 }
 
 func Uniform3fv(dst Uniform, src []float32) {
@@ -1745,7 +1734,7 @@ func Uniform4f(dst Uniform, v0, v1, v2, v3 float32) {
 		errstr := errDrain()
 		log.Printf("gl.Uniform4f(%v, %v, %v, %v, %v) %v", dst, v0, v1, v2, v3, errstr)
 	}()
-	C.glUniform4f(dst.c(), f32All(v0), f32All(v1), f32All(v2), f32All(v3))
+	C.glUniform4f(dst.c(), C.GLfloat(v0), C.GLfloat(v1), C.GLfloat(v2), C.GLfloat(v3))
 }
 
 func Uniform4fv(dst Uniform, src []float32) {
@@ -1817,7 +1806,7 @@ func VertexAttrib1f(dst Attrib, x float32) {
 		errstr := errDrain()
 		log.Printf("gl.VertexAttrib1f(%v, %v) %v", dst, x, errstr)
 	}()
-	C.glVertexAttrib1f(dst.c(), f32All(x))
+	C.glVertexAttrib1f(dst.c(), C.GLfloat(x))
 }
 
 func VertexAttrib1fv(dst Attrib, src []float32) {
@@ -1833,7 +1822,7 @@ func VertexAttrib2f(dst Attrib, x, y float32) {
 		errstr := errDrain()
 		log.Printf("gl.VertexAttrib2f(%v, %v, %v) %v", dst, x, y, errstr)
 	}()
-	C.glVertexAttrib2f(dst.c(), f32All(x), f32All(y))
+	C.glVertexAttrib2f(dst.c(), C.GLfloat(x), C.GLfloat(y))
 }
 
 func VertexAttrib2fv(dst Attrib, src []float32) {
@@ -1849,7 +1838,7 @@ func VertexAttrib3f(dst Attrib, x, y, z float32) {
 		errstr := errDrain()
 		log.Printf("gl.VertexAttrib3f(%v, %v, %v, %v) %v", dst, x, y, z, errstr)
 	}()
-	C.glVertexAttrib3f(dst.c(), f32All(x), f32All(y), f32All(z))
+	C.glVertexAttrib3f(dst.c(), C.GLfloat(x), C.GLfloat(y), C.GLfloat(z))
 }
 
 func VertexAttrib3fv(dst Attrib, src []float32) {
@@ -1865,7 +1854,7 @@ func VertexAttrib4f(dst Attrib, x, y, z, w float32) {
 		errstr := errDrain()
 		log.Printf("gl.VertexAttrib4f(%v, %v, %v, %v, %v) %v", dst, x, y, z, w, errstr)
 	}()
-	C.glVertexAttrib4f(dst.c(), f32All(x), f32All(y), f32All(z), f32All(w))
+	C.glVertexAttrib4f(dst.c(), C.GLfloat(x), C.GLfloat(y), C.GLfloat(z), C.GLfloat(w))
 }
 
 func VertexAttrib4fv(dst Attrib, src []float32) {
