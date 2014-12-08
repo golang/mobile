@@ -855,13 +855,6 @@ func SampleCoverage(value float32, invert bool) {
 	sampleCoverage(value, invert)
 }
 
-func glBoolean(b bool) C.GLboolean {
-	if b {
-		return 0
-	}
-	return 1
-}
-
 // Scissor defines the scissor box rectangle, in window coordinates.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glScissor.xhtml

@@ -72,6 +72,13 @@ func (u Uniform) WriteVec4(v *f32.Vec4) {
 	Uniform4f(u, v[0], v[1], v[2], v[3])
 }
 
+func glBoolean(b bool) C.GLboolean {
+	if b {
+		return 0
+	}
+	return 1
+}
+
 // Desktop OpenGL and the ES 2/3 APIs have a very slight difference
 // that is imperceptible to C programmers: some function parameters
 // use the type Glclampf and some use GLfloat. These two types are
