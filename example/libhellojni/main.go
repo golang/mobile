@@ -26,5 +26,5 @@ package main
 import "golang.org/x/mobile/app"
 
 func main() {
-	app.Run()
+	app.Run(app.Callbacks{})
 }
