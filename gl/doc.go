@@ -33,3 +33,5 @@ The gldebug tracing has very high overhead, so make sure to remove
 the build tag before deploying any binaries.
 */
 package gl
+
+//go:generate go run gendebug.go -o gldebug.go

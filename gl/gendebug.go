@@ -12,15 +12,19 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"flag"
 	"go/ast"
 	"go/format"
 	"go/parser"
 	"go/printer"
 	"go/token"
+	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
 )
+
+var outfile = flag.String("o", "", "result will be written to the file instead of stdout.")
 
 var fset = new(token.FileSet)
 
@@ -46,18 +50,23 @@ func typePrinterArg(t, name string) string {
 	return name
 }
 
+func die(err error) {
+	fmt.Fprintf(os.Stderr, err.Error())
+	os.Exit(1)
+}
+
 func main() {
+	flag.Parse()
+
 	f, err := parser.ParseFile(fset, "consts.go", nil, parser.ParseComments)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, err.Error())
-		os.Exit(1)
+		die(err)
 	}
 	entries := enum(f)
 
 	f, err = parser.ParseFile(fset, "gl.go", nil, parser.ParseComments)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, err.Error())
-		os.Exit(1)
+		die(err)
 	}
 
 	buf := new(bytes.Buffer)
@@ -193,18 +202,23 @@ func main() {
 	b, err := format.Source(buf.Bytes())
 	if err != nil {
 		os.Stdout.Write(buf.Bytes())
-		fmt.Fprintf(os.Stderr, err.Error())
-		os.Exit(1)
+		die(err)
 	}
 
-	os.Stdout.Write(b)
+	if *outfile == "" {
+		os.Stdout.Write(b)
+		return
+	}
+	if err := ioutil.WriteFile(*outfile, b, 0666); err != nil {
+		die(err)
+	}
 }
 
 const preamble = `// Copyright 2014 The Go Authors.  All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Generated from gl.go. DO NOT EDIT.
+// Generated from gl.go using go generate. DO NOT EDIT.
 // See doc.go for details.
 
 // +build gldebug
