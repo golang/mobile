@@ -71,4 +71,4 @@ function exits, the app exits.
 	}
 
 */
-package app
+package app // import "golang.org/x/mobile/app"

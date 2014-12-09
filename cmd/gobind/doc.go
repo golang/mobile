@@ -169,4 +169,4 @@ Examples can be found in http://code.google.com/p/go.mobile/example.
 
 Design doc: http://golang.org/s/gobind
 */
-package main
+package main // import "golang.org/x/mobile/cmd/gobind"

@@ -22,7 +22,7 @@
 //		modify the scene's nodes and animations (Arranger values)
 //		e.Render(scene, t)
 //	}
-package sprite
+package sprite // import "golang.org/x/mobile/sprite"
 
 import (
 	"image"

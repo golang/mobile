@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // Package event defines user input events.
-package event
+package event // import "golang.org/x/mobile/event"
 
 /*
 The best source on android input events is the NDK: include/android/input.h
