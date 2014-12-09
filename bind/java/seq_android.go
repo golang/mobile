@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package java
+package java // import "golang.org/x/mobile/bind/java"
 
 //#cgo LDFLAGS: -llog
 //#include <android/log.h>
