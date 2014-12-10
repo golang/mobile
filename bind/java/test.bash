@@ -19,7 +19,7 @@ function cleanup() {
 }
 
 if [ -z "$ANDROID_APP" ]; then
-	ANDROID_APP=`mktemp -d` || die 'failed to create a temporary directory'
+	ANDROID_APP=`mktemp -d /tmp/android-java.XXXXX` || die 'failed to create a temporary directory'
 	echo "Temporary directory for test: $ANDROID_APP"
 	trap cleanup EXIT
 fi
