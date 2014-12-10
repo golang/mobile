@@ -33,6 +33,21 @@ int go_started;
 // OpenJDK there is JNI_GetCreatedJavaVMs, but this is not available
 // on android.
 JavaVM* current_vm;
+
+// build_auxv builds an ELF auxiliary vector for initializing the Go
+// runtime. While there does not appear to be any spec for this
+// format, there are some notes in
+//
+// Phrack, V. 0x0b, Issue 0x3a, P. 0x05.
+// http://phrack.org/issues/58/5.html
+//
+// Much of the time on linux the real auxv can be read from the file
+// /proc/self/auxv, however there are several conditions under which
+// Android apps cannot read this file (see a note to this effect in
+// sources/android/cpufeatures/cpu-features.c). So we construct a
+// fake one, working backwards from what the Go runtime wants to see
+// as defined by the code in src/runtime/os_linux_GOARCH.c.
+void build_auxv(uint32_t *auxv, size_t len);
 */
 import "C"
 import (

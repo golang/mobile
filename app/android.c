@@ -48,41 +48,18 @@ static void* init_go_runtime(void* unused) {
 	// Defensively heap-allocate argv0, for setenv.
 	char* argv0 = strdup("gojni");
 
-	// Build argv, including the ELF auxiliary vector, which is loaded
-	// from /proc/self/auxv. While there does not appear to be any
-	// spec for this format, there are some notes in
-	//
-	// Phrack, V. 0x0b, Issue 0x3a, P. 0x05.
-	// http://phrack.org/issues/58/5.html
-	//
-	// For our needs, we don't need to know the format beyond the fact
-	// that argv is followed by a meaningless envp, then a series of
-	// NUL terminated bytes that make up auxv.
-
+	// Build argv, including the ELF auxiliary vector.
 	struct {
 		char* argv[2];
 		char* envp[2];
-		char* auxv[1024];
+		uint32_t auxv[64];
 	} x;
 	x.argv[0] = argv0;
 	x.argv[1] = NULL;
 	x.envp[0] = argv0;
 	x.envp[1] = NULL;
 
-	int fd = open("/proc/self/auxv", O_RDONLY, 0);
-	if (fd == -1) {
-		__android_log_print(ANDROID_LOG_FATAL, "Go", "cannot open /proc/self/auxv: %s", strerror(errno));
-	}
-	int n = read(fd, &x.auxv, sizeof x.auxv - 1);
-	if (n < 0) {
-		__android_log_print(ANDROID_LOG_FATAL, "Go", "error reading /proc/self/auxv: %s", strerror(errno));
-	}
-	if (n == sizeof x.auxv - 1) { // x.auxv should be more than plenty.
-		__android_log_print(ANDROID_LOG_FATAL, "Go", "/proc/self/auxv too big");
-	}
-	close(fd);
-	x.auxv[n / sizeof(char*)] = NULL;
-
+	build_auxv(x.auxv, sizeof(x.auxv)/sizeof(uint32_t));
 	int32_t argc = 1;
 	_rt0_arm_linux1(argc, x.argv);
 	return NULL;
