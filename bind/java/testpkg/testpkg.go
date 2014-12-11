@@ -56,3 +56,7 @@ func Add(x, y int) int {
 func NumSCollected() int {
 	return numSCollected
 }
+
+func StrDup(s string) string {
+	return s
+}

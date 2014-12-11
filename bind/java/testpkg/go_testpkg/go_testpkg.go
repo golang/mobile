@@ -81,6 +81,12 @@ func init() {
 	seq.Register(proxySDescriptor, proxySFCode, proxySF)
 }
 
+func proxy_StrDup(out, in *seq.Buffer) {
+	param_s := in.ReadUTF16()
+	res := testpkg.StrDup(param_s)
+	out.WriteUTF16(res)
+}
+
 func init() {
 	seq.Register("testpkg", 1, proxy_Add)
 	seq.Register("testpkg", 2, proxy_Call)
@@ -88,4 +94,5 @@ func init() {
 	seq.Register("testpkg", 4, proxy_Keep)
 	seq.Register("testpkg", 5, proxy_New)
 	seq.Register("testpkg", 6, proxy_NumSCollected)
+	seq.Register("testpkg", 7, proxy_StrDup)
 }
