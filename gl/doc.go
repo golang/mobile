@@ -9,7 +9,7 @@ The bindings are deliberately minimal, staying as close the C API as
 possible. The semantics of each function maps onto functions
 described in the Khronos documentation:
 
-http://www.khronos.org/opengles/sdk/docs/man3/html/
+https://www.khronos.org/opengles/sdk/docs/man/
 
 One notable departure from the C API is the introduction of types
 to represent common uses of GLint: Texture, Surface, Buffer, etc.
