@@ -16,6 +16,28 @@ public class SeqTest extends TestCase {
     assertEquals("Unexpected arithmetic failure", 7, res);
   }
 
+  public void testShortString() {
+    String want = "a short string";
+    String got = Testpkg.StrDup(want);
+    assertEquals("Strings should match", want, got);
+  }
+
+  public void testLongString() {
+    StringBuilder b = new StringBuilder();
+    for (int i = 0; i < 128*1024; i++) {
+      b.append("0123456789");
+    }
+    String want = b.toString();
+    String got = Testpkg.StrDup(want);
+    assertEquals("Strings should match", want, got);
+  }
+
+  public void testUnicode() {
+    String want = "Hello, 世界";
+    String got = Testpkg.StrDup(want);
+    assertEquals("Strings should match", want, got);
+  }
+
   public void testGoRefGC() {
     Testpkg.S s = Testpkg.New();
     runGC();

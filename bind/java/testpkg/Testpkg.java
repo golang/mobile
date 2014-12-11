@@ -23,7 +23,6 @@ public abstract class Testpkg {
     public static void Call(I i) {
         go.Seq _in = new go.Seq();
         go.Seq _out = new go.Seq();
-        System.out.println("Call!");
         _in.writeRef(i.ref());
         Seq.send(DESCRIPTOR, CALL_Call, _in, _out);
     }
@@ -150,11 +149,22 @@ public abstract class Testpkg {
         
     }
     
+    public static String StrDup(String s) {
+        go.Seq _in = new go.Seq();
+        go.Seq _out = new go.Seq();
+        String _result;
+        _in.writeUTF16(s);
+        Seq.send(DESCRIPTOR, CALL_StrDup, _in, _out);
+        _result = _out.readUTF16();
+        return _result;
+    }
+    
     private static final int CALL_Add = 1;
     private static final int CALL_Call = 2;
     private static final int CALL_GC = 3;
     private static final int CALL_Keep = 4;
     private static final int CALL_New = 5;
     private static final int CALL_NumSCollected = 6;
+    private static final int CALL_StrDup = 7;
     private static final String DESCRIPTOR = "testpkg";
 }

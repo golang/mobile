@@ -30,21 +30,27 @@ typedef struct mem {
 	uint32_t cap;
 } mem;
 
-static mem *mem_resize(mem *m, uint32_t size) {
+// mem_ensure ensures that m has at least size bytes free.
+// If m is NULL, it is created.
+static mem *mem_ensure(mem *m, uint32_t size) {
 	if (m == NULL) {
 		m = (mem*)malloc(sizeof(mem));
 		if (m == NULL) {
-			LOG_FATAL("mem_resize malloc failed");
+			LOG_FATAL("mem_ensure malloc failed");
 		}
+		m->cap = 0;
 		m->off = 0;
 		m->len = 0;
 		m->buf = NULL;
 	}
-	m->buf = (uint8_t*)realloc((void*)m->buf, size);
-	if (m->buf == NULL) {
-		LOG_FATAL("mem_resize realloc failed, size=%d", size);
+	if (m->cap > m->off+size) {
+		return m;
 	}
-	m->cap = size;
+	m->buf = (uint8_t*)realloc((void*)m->buf, m->off+size);
+	if (m->buf == NULL) {
+		LOG_FATAL("mem_ensure realloc failed, off=%d, size=%d", m->off, size);
+	}
+	m->cap = m->off+size;
 	return m;
 }
 
@@ -78,9 +84,11 @@ uint8_t *mem_write(JNIEnv *env, jobject obj, uint32_t size) {
 	if (m->off != m->len) {
 		LOG_FATAL("write can only append to seq, size: (off=%d, len=%d, size=%d", m->off, m->len, size);
 	}
-	if (m->off+size > m->cap) {
-		m = mem_resize(m, 2*m->cap);
+	uint32_t cap = m->cap;
+	while (m->off+size > cap) {
+		cap *= 2;
 	}
+	m = mem_ensure(m, cap);
 	uint8_t *res = m->buf+m->off;
 	m->off += size;
 	m->len += size;
@@ -130,8 +138,8 @@ void init_seq(void *javavm) {
 JNIEXPORT void JNICALL
 Java_go_Seq_ensure(JNIEnv *env, jobject obj, jint size) {
 	mem *m = mem_get(env, obj);
-	if (m == NULL || size > m->cap - m->off) {
-		m = mem_resize(m, size);
+	if (m == NULL || m->off+size > m->cap) {
+		m = mem_ensure(m, size);
 		(*env)->SetLongField(env, obj, memptr_id, (jlong)(uintptr_t)m);
 	}
 }
