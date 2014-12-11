@@ -21,7 +21,7 @@ contains the function Hello:
 Java language bindings are generated for this package using the gobind
 tool. There is a user guide for gobind at 
 
-	http://godoc.org/code.google.com/p/go.mobile/cmd/gobind
+	http://golang.org/x/mobile/cmd/gobind
 
 The generated source has been included in the distribution. If you
 modify the exported interface of package hi, you have to run gobind

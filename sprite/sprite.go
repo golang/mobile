@@ -7,7 +7,7 @@
 // A tree of nodes is drawn by a rendering Engine, provided by another
 // package. The OS-independent Go version based on the image package is:
 //
-//	code.google.com/p/go.mobile/sprite/portable
+//	golang.org/x/mobile/sprite/portable
 //
 // An Engine draws a screen starting at a root Node. The tree is walked
 // depth-first, with affine transformations applied at each level.
