@@ -13,7 +13,7 @@ Shared Library
 
 A Go program can be compiled for Android as a shared library. JNI
 methods can be implemented via cgo, or generated automatically with
-gobind: http://godoc.org/code.google.com/p/go.mobile/cmd/gobind
+gobind: http://golang.org/x/mobile/cmd/gobind
 
 The library must include a package main and a main function that does
 not return until the process exits. Libraries can be cross-compiled
@@ -22,7 +22,7 @@ using the Android NDK and the Go tool:
 	GOOS=android GOARCH=arm GOARM=7 CGO_ENABLED=1 \
 	go build -ldflags="-shared" .
 
-See code.google.com/p/go.mobile/example/libhello for an example of
+See http://golang.org/x/mobile/example/libhello for an example of
 calling into a Go shared library from a Java Android app.
 
 Native App
@@ -40,7 +40,7 @@ on iOS, a single UIWindow. Touch events will be accessible via this
 package. When Android support is out of preview, all APIs supported by
 the Android NDK will be exposed via a Go package.
 
-See code.google.com/p/go.mobile/example/apphello for an example app.
+See http://golang.org/x/mobile/example/sprite for an example app.
 
 Lifecycle in Native Apps
 

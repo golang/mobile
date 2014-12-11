@@ -167,7 +167,7 @@ func onLowMemory(activity *C.ANativeActivity) {
 }
 
 // JavaInit is an initialization function registered by the package
-// code.google.com/p/go.mobile/bind/java. It gives the Java language
+// golang.org/x/mobile/bind/java. It gives the Java language
 // bindings access to the JNI *JavaVM object.
 var JavaInit func(javaVM uintptr)
 

@@ -8,7 +8,7 @@
 set -e
 
 if [ ! -f make.bash ]; then
-	echo 'make.bash must be run from $GOPATH/src/code.google.com/p/go.mobile/example/libhellojni'
+	echo 'make.bash must be run from $GOPATH/src/golang.org/x/mobile/example/libhellojni'
 	exit 1
 fi
 if [ -z "$ANDROID_APP" ]; then
