@@ -27,6 +27,17 @@ public abstract class Testpkg {
         Seq.send(DESCRIPTOR, CALL_Call, _in, _out);
     }
     
+    public static void Err(String s) throws Exception {
+        go.Seq _in = new go.Seq();
+        go.Seq _out = new go.Seq();
+        _in.writeUTF16(s);
+        Seq.send(DESCRIPTOR, CALL_Err, _in, _out);
+        String _err = _out.readUTF16();
+        if (_err != null) {
+            throw new Exception(_err);
+        }
+    }
+    
     public static void GC() {
         go.Seq _in = new go.Seq();
         go.Seq _out = new go.Seq();
@@ -161,10 +172,11 @@ public abstract class Testpkg {
     
     private static final int CALL_Add = 1;
     private static final int CALL_Call = 2;
-    private static final int CALL_GC = 3;
-    private static final int CALL_Keep = 4;
-    private static final int CALL_New = 5;
-    private static final int CALL_NumSCollected = 6;
-    private static final int CALL_StrDup = 7;
+    private static final int CALL_Err = 3;
+    private static final int CALL_GC = 4;
+    private static final int CALL_Keep = 5;
+    private static final int CALL_New = 6;
+    private static final int CALL_NumSCollected = 7;
+    private static final int CALL_StrDup = 8;
     private static final String DESCRIPTOR = "testpkg";
 }

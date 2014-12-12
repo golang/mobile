@@ -27,6 +27,16 @@ func proxy_Call(out, in *seq.Buffer) {
 	testpkg.Call(param_i)
 }
 
+func proxy_Err(out, in *seq.Buffer) {
+	param_s := in.ReadUTF16()
+	err := testpkg.Err(param_s)
+	if err == nil {
+		out.WriteUTF16("")
+	} else {
+		out.WriteUTF16(err.Error())
+	}
+}
+
 func proxy_GC(out, in *seq.Buffer) {
 	testpkg.GC()
 }
@@ -90,9 +100,10 @@ func proxy_StrDup(out, in *seq.Buffer) {
 func init() {
 	seq.Register("testpkg", 1, proxy_Add)
 	seq.Register("testpkg", 2, proxy_Call)
-	seq.Register("testpkg", 3, proxy_GC)
-	seq.Register("testpkg", 4, proxy_Keep)
-	seq.Register("testpkg", 5, proxy_New)
-	seq.Register("testpkg", 6, proxy_NumSCollected)
-	seq.Register("testpkg", 7, proxy_StrDup)
+	seq.Register("testpkg", 3, proxy_Err)
+	seq.Register("testpkg", 4, proxy_GC)
+	seq.Register("testpkg", 5, proxy_Keep)
+	seq.Register("testpkg", 6, proxy_New)
+	seq.Register("testpkg", 7, proxy_NumSCollected)
+	seq.Register("testpkg", 8, proxy_StrDup)
 }

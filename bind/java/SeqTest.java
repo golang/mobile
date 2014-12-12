@@ -38,6 +38,20 @@ public class SeqTest extends TestCase {
     assertEquals("Strings should match", want, got);
   }
 
+  public void testNilErr() throws Exception {
+    Testpkg.Err(null); // returns nil, no exception
+  }
+
+  public void testErr() {
+    String msg = "Go errors are dropped into the confusing space of exceptions";
+    try {
+      Testpkg.Err(msg);
+      fail("expected non-nil error to be turned into an exception");
+    } catch (Exception e) {
+      assertEquals("messages should match", msg, e.getMessage());
+    }
+  }
+
   public void testGoRefGC() {
     Testpkg.S s = Testpkg.New();
     runGC();

@@ -197,6 +197,9 @@ Java_go_Seq_readFloat64(JNIEnv *env, jobject obj) {
 JNIEXPORT jstring JNICALL
 Java_go_Seq_readUTF16(JNIEnv *env, jobject obj) {
 	int32_t size = *MEM_READ(obj, int32_t);
+	if (size == 0) {
+		return NULL;
+	}
 	return (*env)->NewString(env, (jchar*)mem_read(env, obj, 2*size), size);
 }
 
