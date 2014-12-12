@@ -2,7 +2,10 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package glsprite blah blah blah TODO.
+// Package glsprite implements a sprite Engine using OpenGL ES 2.
+//
+// Each sprite.Texture is loaded as a GL texture object and drawn
+// to the screen via an affine transform done in a simple shader.
 package glsprite // import "golang.org/x/mobile/sprite/glsprite"
 
 import (
