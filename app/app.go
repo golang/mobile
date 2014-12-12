@@ -12,7 +12,7 @@ import (
 
 // Run starts the app.
 //
-// It must be called directly from from the main function and will
+// It must be called directly from the main function and will
 // block until the app exits.
 func Run(cb Callbacks) {
 	run(cb)
