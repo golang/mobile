@@ -35,9 +35,8 @@ func writeUint16(b []byte, v rune) {
 func (b *Buffer) WriteUTF16(s string) {
 	// first 4 bytes is the length, as int32. written last.
 	// next n bytes is utf-16 string.
-
-	if len(b.Data)-b.Offset < 4*len(s) {
-		b.grow(4 * len(s)) // worst case estimate, everything is surrogate pair
+	if len(b.Data)-b.Offset < 4+4*len(s) {
+		b.grow(4 + 4*len(s)) // worst case estimate, everything is surrogate pair
 	}
 	data := b.Data[b.Offset+4:]
 	n := 0

@@ -2,6 +2,7 @@
 package testpkg
 
 import (
+	"errors"
 	"fmt"
 	"runtime"
 	"time"
@@ -59,4 +60,11 @@ func NumSCollected() int {
 
 func StrDup(s string) string {
 	return s
+}
+
+func Err(s string) error {
+	if s != "" {
+		return errors.New(s)
+	}
+	return nil
 }
