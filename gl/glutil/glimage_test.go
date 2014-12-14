@@ -17,8 +17,8 @@ import (
 	"os"
 	"testing"
 
-	"golang.org/x/mobile/geom"
-	"golang.org/x/mobile/gl"
+	"github.com/golang/mobile/geom"
+	"github.com/golang/mobile/gl"
 )
 
 func TestImage(t *testing.T) {

@@ -7,16 +7,16 @@
 // It is intended to serve as a reference implementation for testing
 // other sprite Engines written against OpenGL, or other more exotic
 // modern hardware interfaces.
-package portable // import "golang.org/x/mobile/sprite/portable"
+package portable // import "github.com/golang/mobile/sprite/portable"
 
 import (
 	"image"
 	"image/draw"
 
-	"golang.org/x/mobile/f32"
-	"golang.org/x/mobile/geom"
-	"golang.org/x/mobile/sprite"
-	"golang.org/x/mobile/sprite/clock"
+	"github.com/golang/mobile/f32"
+	"github.com/golang/mobile/geom"
+	"github.com/golang/mobile/sprite"
+	"github.com/golang/mobile/sprite/clock"
 )
 
 // Engine builds a sprite Engine that renders onto dst.

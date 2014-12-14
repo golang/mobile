@@ -7,10 +7,10 @@
 package main
 
 import (
-	"golang.org/x/mobile/app"
+	"github.com/golang/mobile/app"
 
-	_ "golang.org/x/mobile/bind/java"
-	_ "golang.org/x/mobile/bind/java/testpkg/go_testpkg"
+	_ "github.com/golang/mobile/bind/java"
+	_ "github.com/golang/mobile/bind/java/testpkg/go_testpkg"
 )
 
 func main() {

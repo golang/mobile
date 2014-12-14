@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package java // import "golang.org/x/mobile/bind/java"
+package java // import "github.com/golang/mobile/bind/java"
 
 //#cgo LDFLAGS: -llog
 //#include <android/log.h>
@@ -15,8 +15,8 @@ import (
 	"sync"
 	"unsafe"
 
-	"golang.org/x/mobile/app"
-	"golang.org/x/mobile/bind/seq"
+	"github.com/golang/mobile/app"
+	"github.com/golang/mobile/bind/seq"
 )
 
 const maxSliceLen = 1<<31 - 1

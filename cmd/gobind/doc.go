@@ -24,7 +24,7 @@ Go. Start with a Go package:
 
 Generate a Go binding package and Java stubs:
 
-	go install golang.org/x/mobile/cmd/gobind
+	go install github.com/golang/mobile/cmd/gobind
 	gobind -lang=go github.com/crawshaw/hi > hi/go_hi/go_hi.go
 	gobind -lang=java github.com/crawshaw/hi > hi/Hi.java
 
@@ -165,8 +165,8 @@ Java, do not store an instance of Seq.Object inside it.
 
 Further reading
 
-Examples can be found in http://golang.org/x/mobile/example.
+Examples can be found in http://github.com/golang/mobile/example.
 
 Design doc: http://golang.org/s/gobind
 */
-package main // import "golang.org/x/mobile/cmd/gobind"
+package main // import "github.com/golang/mobile/cmd/gobind"
