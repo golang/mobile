@@ -9,13 +9,13 @@ import (
 	"encoding/binary"
 	"log"
 
-	"golang.org/x/mobile/app"
-	"golang.org/x/mobile/app/debug"
-	"golang.org/x/mobile/event"
-	"golang.org/x/mobile/f32"
-	"golang.org/x/mobile/geom"
-	"golang.org/x/mobile/gl"
-	"golang.org/x/mobile/gl/glutil"
+	"github.com/golang/mobile/app"
+	"github.com/golang/mobile/app/debug"
+	"github.com/golang/mobile/event"
+	"github.com/golang/mobile/f32"
+	"github.com/golang/mobile/geom"
+	"github.com/golang/mobile/gl"
+	"github.com/golang/mobile/gl/glutil"
 )
 
 var (

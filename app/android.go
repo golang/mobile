@@ -58,7 +58,7 @@ import (
 	"runtime"
 	"unsafe"
 
-	"golang.org/x/mobile/geom"
+	"github.com/golang/mobile/geom"
 )
 
 var assetManager *C.AAssetManager
@@ -167,7 +167,7 @@ func onLowMemory(activity *C.ANativeActivity) {
 }
 
 // JavaInit is an initialization function registered by the package
-// golang.org/x/mobile/bind/java. It gives the Java language
+// github.com/golang/mobile/bind/java. It gives the Java language
 // bindings access to the JNI *JavaVM object.
 var JavaInit func(javaVM uintptr)
 

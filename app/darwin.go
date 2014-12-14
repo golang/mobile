@@ -33,9 +33,9 @@ import (
 	"runtime"
 	"sync"
 
-	"golang.org/x/mobile/event"
-	"golang.org/x/mobile/geom"
-	"golang.org/x/mobile/gl"
+	"github.com/golang/mobile/event"
+	"github.com/golang/mobile/geom"
+	"github.com/golang/mobile/gl"
 )
 
 var initThreadID uint64

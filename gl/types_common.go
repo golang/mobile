@@ -28,7 +28,7 @@ void depthRangef(GLfloat n, GLfloat f)                      { glDepthRangef(n, f
 void sampleCoverage(GLfloat v, GLboolean invert)            { glSampleCoverage(v, invert); }
 */
 import "C"
-import "golang.org/x/mobile/f32"
+import "github.com/golang/mobile/f32"
 
 // WriteAffine writes the contents of an Affine to a 3x3 matrix GL uniform.
 func (u Uniform) WriteAffine(a *f32.Affine) {

@@ -8,7 +8,7 @@ import (
 	"image"
 	"image/draw"
 
-	"golang.org/x/mobile/f32"
+	"github.com/golang/mobile/f32"
 )
 
 // affine draws each pixel of dst using bilinear interpolation of the

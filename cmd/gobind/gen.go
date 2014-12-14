@@ -14,7 +14,7 @@ import (
 	"go/scanner"
 	"go/token"
 
-	"golang.org/x/mobile/bind"
+	"github.com/golang/mobile/bind"
 	"golang.org/x/tools/go/loader"
 )
 

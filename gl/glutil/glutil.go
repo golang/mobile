@@ -3,12 +3,12 @@
 // license that can be found in the LICENSE file.
 
 // Package glutil implements OpenGL utility functions.
-package glutil // import "golang.org/x/mobile/gl/glutil"
+package glutil // import "github.com/golang/mobile/gl/glutil"
 
 import (
 	"fmt"
 
-	"golang.org/x/mobile/gl"
+	"github.com/golang/mobile/gl"
 )
 
 // CreateProgram creates, compiles, and links a gl.Program.

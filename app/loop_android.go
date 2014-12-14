@@ -81,9 +81,9 @@ import "C"
 import (
 	"log"
 
-	"golang.org/x/mobile/event"
-	"golang.org/x/mobile/geom"
-	"golang.org/x/mobile/gl"
+	"github.com/golang/mobile/event"
+	"github.com/golang/mobile/geom"
+	"github.com/golang/mobile/gl"
 )
 
 func windowDrawLoop(cb Callbacks, w *C.ANativeWindow, queue *C.AInputQueue) {
