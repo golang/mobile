@@ -1014,8 +1014,8 @@ func Uniform2fv(dst Uniform, src []float32) {
 // Uniform2i writes an ivec2 uniform variable.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
-func Uniform2i(location, v0, v1 int) {
-	C.glUniform2i(C.GLint(location), C.GLint(v0), C.GLint(v1))
+func Uniform2i(dst Uniform, v0, v1 int) {
+	C.glUniform2i(dst.c(), C.GLint(v0), C.GLint(v1))
 }
 
 // Uniform2iv writes an ivec2 uniform array of len(src)/2 elements.
@@ -1042,8 +1042,8 @@ func Uniform3fv(dst Uniform, src []float32) {
 // Uniform3i writes an ivec3 uniform variable.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
-func Uniform3i(location, v0, v1, v2 int32) {
-	C.glUniform3i(C.GLint(location), C.GLint(v0), C.GLint(v1), C.GLint(v2))
+func Uniform3i(dst Uniform, v0, v1, v2 int32) {
+	C.glUniform3i(dst.c(), C.GLint(v0), C.GLint(v1), C.GLint(v2))
 }
 
 // Uniform3iv writes an ivec3 uniform array of len(src)/3 elements.
