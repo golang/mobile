@@ -1681,12 +1681,12 @@ func Uniform2fv(dst Uniform, src []float32) {
 	C.glUniform2fv(dst.c(), C.GLsizei(len(src)/2), (*C.GLfloat)(&src[0]))
 }
 
-func Uniform2i(location, v0, v1 int) {
+func Uniform2i(dst Uniform, v0, v1 int) {
 	defer func() {
 		errstr := errDrain()
-		log.Printf("gl.Uniform2i(%v, %v, %v) %v", location, v0, v1, errstr)
+		log.Printf("gl.Uniform2i(%v, %v, %v) %v", dst, v0, v1, errstr)
 	}()
-	C.glUniform2i(C.GLint(location), C.GLint(v0), C.GLint(v1))
+	C.glUniform2i(dst.c(), C.GLint(v0), C.GLint(v1))
 }
 
 func Uniform2iv(dst Uniform, src []int32) {
@@ -1713,12 +1713,12 @@ func Uniform3fv(dst Uniform, src []float32) {
 	C.glUniform3fv(dst.c(), C.GLsizei(len(src)/3), (*C.GLfloat)(&src[0]))
 }
 
-func Uniform3i(location, v0, v1, v2 int32) {
+func Uniform3i(dst Uniform, v0, v1, v2 int32) {
 	defer func() {
 		errstr := errDrain()
-		log.Printf("gl.Uniform3i(%v, %v, %v, %v) %v", location, v0, v1, v2, errstr)
+		log.Printf("gl.Uniform3i(%v, %v, %v, %v) %v", dst, v0, v1, v2, errstr)
 	}()
-	C.glUniform3i(C.GLint(location), C.GLint(v0), C.GLint(v1), C.GLint(v2))
+	C.glUniform3i(dst.c(), C.GLint(v0), C.GLint(v1), C.GLint(v2))
 }
 
 func Uniform3iv(dst Uniform, src []int32) {
