@@ -18,8 +18,12 @@ function cleanup() {
   rm -rf "$ANDROID_APP"
 }
 
+if [ -z "$TMPDIR" ]; then
+	TMPDIR="/tmp"
+fi
+
 if [ -z "$ANDROID_APP" ]; then
-	ANDROID_APP=`mktemp -d /tmp/android-java.XXXXX` || die 'failed to create a temporary directory'
+	ANDROID_APP=`mktemp -d ${TMPDIR}/android-java.XXXXX` || die 'failed to create a temporary directory'
 	echo "Temporary directory for test: $ANDROID_APP"
 	trap cleanup EXIT
 fi
@@ -56,7 +60,7 @@ cd $ANDROID_APP
 
 # If there is no connected device, this will fail after creating the test apk.
 # The apk is located in $ANDROID_APP/build/outputs/apk directory.
-./gradlew connectedAndroidTest && echo "PASS"
+./gradlew connectedAndroidTest && echo "PASS" && exit 0
 
 # TODO(hyangah): copy the gradle's test output directory in case of test failure?
 
