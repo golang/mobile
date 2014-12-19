@@ -8,7 +8,6 @@ import (
 	"image"
 	"log"
 	"math"
-	"os"
 	"time"
 
 	_ "image/jpeg"
@@ -125,12 +124,13 @@ const (
 )
 
 func loadTextures() []sprite.SubTex {
-	f, err := os.Open("../../testdata/waza-gophers.jpeg")
+	a, err := app.Open("waza-gophers.jpeg")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer f.Close()
-	img, _, err := image.Decode(f)
+	defer a.Close()
+
+	img, _, err := image.Decode(a)
 	if err != nil {
 		log.Fatal(err)
 	}
