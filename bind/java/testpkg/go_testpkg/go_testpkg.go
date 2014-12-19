@@ -16,6 +16,13 @@ func proxy_Add(out, in *seq.Buffer) {
 	out.WriteInt(res)
 }
 
+func proxy_BytesAppend(out, in *seq.Buffer) {
+	param_a := in.ReadByteArray()
+	param_b := in.ReadByteArray()
+	res := testpkg.BytesAppend(param_a, param_b)
+	out.WriteByteArray(res)
+}
+
 func proxy_Call(out, in *seq.Buffer) {
 	var param_i testpkg.I
 	param_i_ref := in.ReadRef()
@@ -99,11 +106,12 @@ func proxy_StrDup(out, in *seq.Buffer) {
 
 func init() {
 	seq.Register("testpkg", 1, proxy_Add)
-	seq.Register("testpkg", 2, proxy_Call)
-	seq.Register("testpkg", 3, proxy_Err)
-	seq.Register("testpkg", 4, proxy_GC)
-	seq.Register("testpkg", 5, proxy_Keep)
-	seq.Register("testpkg", 6, proxy_New)
-	seq.Register("testpkg", 7, proxy_NumSCollected)
-	seq.Register("testpkg", 8, proxy_StrDup)
+	seq.Register("testpkg", 2, proxy_BytesAppend)
+	seq.Register("testpkg", 3, proxy_Call)
+	seq.Register("testpkg", 4, proxy_Err)
+	seq.Register("testpkg", 5, proxy_GC)
+	seq.Register("testpkg", 6, proxy_Keep)
+	seq.Register("testpkg", 7, proxy_New)
+	seq.Register("testpkg", 8, proxy_NumSCollected)
+	seq.Register("testpkg", 9, proxy_StrDup)
 }

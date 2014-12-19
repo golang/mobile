@@ -20,6 +20,17 @@ public abstract class Testpkg {
         return _result;
     }
     
+    public static byte[] BytesAppend(byte[] a, byte[] b) {
+        go.Seq _in = new go.Seq();
+        go.Seq _out = new go.Seq();
+        byte[] _result;
+        _in.writeByteArray(a);
+        _in.writeByteArray(b);
+        Seq.send(DESCRIPTOR, CALL_BytesAppend, _in, _out);
+        _result = _out.readByteArray();
+        return _result;
+    }
+
     public static void Call(I i) {
         go.Seq _in = new go.Seq();
         go.Seq _out = new go.Seq();
@@ -171,12 +182,13 @@ public abstract class Testpkg {
     }
     
     private static final int CALL_Add = 1;
-    private static final int CALL_Call = 2;
-    private static final int CALL_Err = 3;
-    private static final int CALL_GC = 4;
-    private static final int CALL_Keep = 5;
-    private static final int CALL_New = 6;
-    private static final int CALL_NumSCollected = 7;
-    private static final int CALL_StrDup = 8;
+    private static final int CALL_BytesAppend = 2;
+    private static final int CALL_Call = 3;
+    private static final int CALL_Err = 4;
+    private static final int CALL_GC = 5;
+    private static final int CALL_Keep = 6;
+    private static final int CALL_New = 7;
+    private static final int CALL_NumSCollected = 8;
+    private static final int CALL_StrDup = 9;
     private static final String DESCRIPTOR = "testpkg";
 }

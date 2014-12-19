@@ -91,6 +91,22 @@ func (b *Buffer) ReadFloat64() float64 {
 	return v
 }
 
+func (b *Buffer) ReadByteArray() []byte {
+	sz := b.ReadInt64()
+	if sz == 0 {
+		return nil
+	}
+
+	ptr := b.ReadInt64()
+	org := (*[1 << 30]byte)(unsafe.Pointer(uintptr(ptr)))[:sz]
+
+	// Make a copy managed by Go, so the returned byte array can be
+	// used safely in Go.
+	slice := make([]byte, sz)
+	copy(slice, org)
+	return slice
+}
+
 func (b *Buffer) ReadRef() *Ref {
 	ref := &Ref{b.ReadInt32()}
 	if ref.Num > 0 {
@@ -137,6 +153,19 @@ func (b *Buffer) WriteFloat64(v float64) {
 	b.Offset += 8
 }
 
+func (b *Buffer) WriteByteArray(byt []byte) {
+	sz := len(byt)
+	if sz == 0 {
+		b.WriteInt64(int64(sz))
+		return
+	}
+
+	ptr := uintptr(unsafe.Pointer(&byt[0]))
+	b.WriteInt64(int64(sz))
+	b.WriteInt64(int64(ptr))
+	return
+}
+
 func (b *Buffer) WriteGoRef(obj interface{}) {
 	refs.Lock()
 	num := refs.refs[obj]
@@ -154,6 +183,8 @@ func (b *Buffer) WriteGoRef(obj interface{}) {
 	b.WriteInt32(int32(num))
 }
 
+/*  TODO: Will we need it?
 func (b *Buffer) WriteRef(ref *Ref) {
 	b.WriteInt32(ref.Num)
 }
+*/

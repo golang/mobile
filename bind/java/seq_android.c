@@ -203,6 +203,20 @@ Java_go_Seq_readUTF16(JNIEnv *env, jobject obj) {
 	return (*env)->NewString(env, (jchar*)mem_read(env, obj, 2*size), size);
 }
 
+JNIEXPORT jbyteArray JNICALL
+Java_go_Seq_readByteArray(JNIEnv *env, jobject obj) {
+	// Send the (array length, pointer) pair encoded as two int64.
+	// The pointer value is omitted if array length is 0.
+	jlong size = Java_go_Seq_readInt64(env, obj);
+	if (size == 0) {
+		return NULL;
+	}
+	jbyteArray res = (*env)->NewByteArray(env, size);
+	jlong ptr = Java_go_Seq_readInt64(env, obj);
+	(*env)->SetByteArrayRegion(env, res, 0, size, (jbyte*)(intptr_t)(ptr));
+	return res;
+}
+
 #define MEM_WRITE(ty) (*(ty*)mem_write(env, obj, sizeof(ty)))
 
 JNIEXPORT void JNICALL
@@ -244,6 +258,35 @@ Java_go_Seq_writeUTF16(JNIEnv *env, jobject obj, jstring v) {
 	int32_t size = (*env)->GetStringLength(env, v);
 	MEM_WRITE(int32_t) = size;
 	(*env)->GetStringRegion(env, v, 0, size, (jchar*)mem_write(env, obj, 2*size));
+}
+
+JNIEXPORT void JNICALL
+Java_go_Seq_writeByteArray(JNIEnv *env, jobject obj, jbyteArray v) {
+	// For Byte array, we pass only the (array length, pointer) pair
+	// encoded as two int64 values. If the array length is 0,
+	// the pointer value is omitted.
+	if (v == NULL) {
+		MEM_WRITE(int64_t) = 0;
+		return;
+	}
+
+	jsize len = (*env)->GetArrayLength(env, v);
+	MEM_WRITE(int64_t) = len;
+	if (len == 0) {
+		return;
+	}
+
+	jboolean isCopy;
+	jbyte* b = (*env)->GetByteArrayElements(env, v, &isCopy);
+	if (isCopy) {
+		// TODO: It's not clear how to handle if b is pointing to
+		// a copy that may become invalid with ReleaseByteArrayElements.
+		// Should we fall back to copy the byte array into the buffer?
+		LOG_FATAL("got a copied byte array (len=%d)", len);
+	}
+	// gross pointer-to-int64 conversion.
+	MEM_WRITE(int64_t) = (int64_t)((intptr_t)b);
+	(*env)->ReleaseByteArrayElements(env, v, (jbyte*)b, 0);
 }
 
 JNIEXPORT void JNICALL
