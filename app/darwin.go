@@ -74,6 +74,9 @@ func initGL() {
 	var id C.GLuint
 	C.glGenVertexArrays(1, &id)
 	C.glBindVertexArray(id)
+	if cb.Start != nil {
+		cb.Start()
+	}
 }
 
 var cb Callbacks
