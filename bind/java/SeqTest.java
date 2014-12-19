@@ -1,6 +1,9 @@
 package go;
 
 import android.test.suitebuilder.annotation.Suppress;
+import android.test.MoreAsserts;
+import java.util.Arrays;
+import java.util.Random;
 
 import go.testpkg.Testpkg;
 
@@ -49,6 +52,32 @@ public class SeqTest extends TestCase {
       fail("expected non-nil error to be turned into an exception");
     } catch (Exception e) {
       assertEquals("messages should match", msg, e.getMessage());
+    }
+  }
+
+  public void testByteArray() {
+    for (int i = 0; i < 2048; i++) {
+      if (i == 0) {
+        byte[] got = Testpkg.BytesAppend(null, null);
+        assertEquals("Bytes(null+null) should match", (byte[])null, got);
+        got = Testpkg.BytesAppend(new byte[0], new byte[0]);
+        assertEquals("Bytes(empty+empty) should match", (byte[])null, got);
+        continue;
+      }
+
+      byte[] want = new byte[i];
+      new Random().nextBytes(want);
+
+      byte[] s1 = null;
+      byte[] s2 = null;
+      if (i > 0) {
+        s1 = Arrays.copyOfRange(want, 0, 1);
+      }
+      if (i > 1) {
+        s2 = Arrays.copyOfRange(want, 1, i);
+      }
+      byte[] got = Testpkg.BytesAppend(s1, s2);
+      MoreAsserts.assertEquals("Bytes(len="+i+") should match", want, got);
     }
   }
 

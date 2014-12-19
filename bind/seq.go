@@ -25,7 +25,7 @@ func seqType(t types.Type) string {
 			return "Int32"
 		case types.Int64:
 			return "Int64"
-		case types.Uint8:
+		case types.Uint8: // Byte.
 			// TODO(crawshaw): questionable, but vital?
 			return "Byte"
 		// TODO(crawshaw): case types.Uint, types.Uint16, types.Uint32, types.Uint64:
@@ -37,7 +37,7 @@ func seqType(t types.Type) string {
 			return "UTF16"
 		default:
 			// Should be caught earlier in processing.
-			panic(fmt.Sprintf("unsupported return type: %s", t))
+			panic(fmt.Sprintf("unsupported basic seqType: %s", t))
 		}
 	case *types.Named:
 		switch u := t.Underlying().(type) {
@@ -46,6 +46,19 @@ func seqType(t types.Type) string {
 		default:
 			panic(fmt.Sprintf("unsupported named seqType: %s / %T", u, u))
 		}
+	case *types.Slice:
+		switch e := t.Elem().(type) {
+		case *types.Basic:
+			switch e.Kind() {
+			case types.Uint8: // Byte.
+				return "ByteArray"
+			default:
+				panic(fmt.Sprintf("unsupported seqType: %s(%s) / %T(%T)", t, e, t, e))
+			}
+		default:
+			panic(fmt.Sprintf("unsupported seqType: %s(%s) / %T(%T)", t, e, t, e))
+		}
+	// TODO: let the types.Array case handled like types.Slice?
 	default:
 		panic(fmt.Sprintf("unsupported seqType: %s / %T", t, t))
 	}

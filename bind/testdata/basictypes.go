@@ -9,3 +9,5 @@ func Ints(x int8, y int16, z int32, t int64, u int) {}
 func Error() error { return nil }
 
 func ErrorPair() (int, error) { return 0, nil }
+
+func ByteArrays(x []byte) []byte { return nil }

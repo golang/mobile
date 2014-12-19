@@ -68,3 +68,7 @@ func Err(s string) error {
 	}
 	return nil
 }
+
+func BytesAppend(a []byte, b []byte) []byte {
+	return append(a, b...)
+}
