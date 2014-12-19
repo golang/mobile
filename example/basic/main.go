@@ -31,14 +31,14 @@ var (
 
 func main() {
 	app.Run(app.Callbacks{
+		Start: start,
+		Stop:  stop,
 		Draw:  draw,
 		Touch: touch,
 	})
 }
 
-// TODO(crawshaw): Need an easier way to do GL-dependent initialization.
-
-func initGL() {
+func start() {
 	var err error
 	program, err = glutil.CreateProgram(vertexShader, fragmentShader)
 	if err != nil {
@@ -54,6 +54,13 @@ func initGL() {
 	color = gl.GetUniformLocation(program, "color")
 	offset = gl.GetUniformLocation(program, "offset")
 	touchLoc = geom.Point{geom.Width / 2, geom.Height / 2}
+
+	// TODO(crawshaw): the debug package needs to put GL state init here
+}
+
+func stop() {
+	gl.DeleteProgram(program)
+	gl.DeleteBuffer(buf)
 }
 
 func touch(t event.Touch) {
@@ -61,10 +68,6 @@ func touch(t event.Touch) {
 }
 
 func draw() {
-	if program.Value == 0 {
-		initGL()
-	}
-
 	gl.ClearColor(1, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 

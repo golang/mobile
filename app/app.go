@@ -20,6 +20,35 @@ func Run(cb Callbacks) {
 
 // Callbacks is the set of functions called by the app.
 type Callbacks struct {
+	// Start is called when the app enters the foreground.
+	// The app will start receiving Draw and Touch calls.
+	//
+	// Window geometry will be configured and an OpenGL context
+	// will be available.
+	//
+	// Start is an equivalent lifecycle state to onStart() on
+	// Android and applicationDidBecomeActive on iOS.
+	Start func()
+
+	// Stop is called shortly before a program is suspended.
+	//
+	// When Stop is received, the app is no longer visible and not is
+	// receiving events. It should:
+	//
+	//	- Save any state the user expects saved (for example text).
+	//	- Release all resources that are not needed.
+	//
+	// Execution time in the stop state is limited, and the limit is
+	// enforced by the operating system. Stop as quickly as you can.
+	//
+	// An app that is stopped may be started again. For example, the user
+	// opens Recent Apps and switches to your app. A stopped app may also
+	// be terminated by the operating system with no further warning.
+	//
+	// Stop is equivalent to onStop() on Android and
+	// applicationDidEnterBackground on iOS.
+	Stop func()
+
 	// Draw is called by the render loop to draw the screen.
 	//
 	// Drawing is done into a framebuffer, which is then swapped onto the
