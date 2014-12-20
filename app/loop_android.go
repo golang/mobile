@@ -143,25 +143,32 @@ func processEvent(cb Callbacks, e *C.AInputEvent) {
 		if cb.Touch == nil {
 			return
 		}
-		x := C.AMotionEvent_getX(e, 0)
-		y := C.AMotionEvent_getY(e, 0)
 
-		var ty event.TouchType
-		switch C.AMotionEvent_getAction(e) {
-		case C.AMOTION_EVENT_ACTION_DOWN:
-			ty = event.TouchStart
-		case C.AMOTION_EVENT_ACTION_MOVE:
-			ty = event.TouchMove
-		case C.AMOTION_EVENT_ACTION_UP:
-			ty = event.TouchEnd
+		// At most one of the events in this batch is an up or down event; get its index and type.
+		upDownIndex := C.size_t(C.AMotionEvent_getAction(e)&C.AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> C.AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT
+		upDownTyp := event.TouchMove
+		switch C.AMotionEvent_getAction(e) & C.AMOTION_EVENT_ACTION_MASK {
+		case C.AMOTION_EVENT_ACTION_DOWN, C.AMOTION_EVENT_ACTION_POINTER_DOWN:
+			upDownTyp = event.TouchStart
+		case C.AMOTION_EVENT_ACTION_UP, C.AMOTION_EVENT_ACTION_POINTER_UP:
+			upDownTyp = event.TouchEnd
 		}
-		cb.Touch(event.Touch{
-			Type: ty,
-			Loc: geom.Point{
-				X: geom.Pt(float32(x) / geom.PixelsPerPt),
-				Y: geom.Pt(float32(y) / geom.PixelsPerPt),
-			},
-		})
+
+		for i, n := C.size_t(0), C.AMotionEvent_getPointerCount(e); i < n; i++ {
+			typ := event.TouchMove
+			if i == upDownIndex {
+				typ = upDownTyp
+			}
+			x := C.AMotionEvent_getX(e, i)
+			y := C.AMotionEvent_getY(e, i)
+			cb.Touch(event.Touch{
+				Type: typ,
+				Loc: geom.Point{
+					X: geom.Pt(float32(x) / geom.PixelsPerPt),
+					Y: geom.Pt(float32(y) / geom.PixelsPerPt),
+				},
+			})
+		}
 	default:
 		log.Printf("unknown input event, type=%d", C.AInputEvent_getType(e))
 	}
