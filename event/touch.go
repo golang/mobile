@@ -20,9 +20,15 @@ import (
 
 // Touch is a user touch event.
 //
+// The same ID is shared by all events in a sequence. A sequence starts with a
+// single TouchStart, is followed by zero or more TouchMoves, and ends with a
+// single TouchEnd. An ID distinguishes concurrent sequences but is
+// subsequently reused.
+//
 // On Android, this is an AInputEvent with AINPUT_EVENT_TYPE_MOTION.
 // On iOS, it is the UIEvent delivered to a UIView.
 type Touch struct {
+	ID   TouchSequenceID
 	Type TouchType
 	Loc  geom.Point
 }
@@ -39,6 +45,9 @@ func (t Touch) String() string {
 	}
 	return fmt.Sprintf("Touch{ %s, %s }", ty, t.Loc)
 }
+
+// TouchSequenceID identifies a sequence of Touch events.
+type TouchSequenceID int64
 
 // TouchType describes the type of a touch event.
 type TouchType byte

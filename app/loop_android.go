@@ -165,13 +165,12 @@ func processEvent(cb Callbacks, e *C.AInputEvent) {
 			if i == upDownIndex {
 				typ = upDownTyp
 			}
-			x := C.AMotionEvent_getX(e, i)
-			y := C.AMotionEvent_getY(e, i)
 			cb.Touch(event.Touch{
+				ID:   event.TouchSequenceID(C.AMotionEvent_getPointerId(e, i)),
 				Type: typ,
 				Loc: geom.Point{
-					X: geom.Pt(float32(x) / geom.PixelsPerPt),
-					Y: geom.Pt(float32(y) / geom.PixelsPerPt),
+					X: geom.Pt(float32(C.AMotionEvent_getX(e, i)) / geom.PixelsPerPt),
+					Y: geom.Pt(float32(C.AMotionEvent_getY(e, i)) / geom.PixelsPerPt),
 				},
 			})
 		}

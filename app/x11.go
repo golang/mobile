@@ -46,21 +46,22 @@ func onResize(w, h int) {
 	geom.Height = geom.Pt(h)
 }
 
-var events struct {
+var touchEvents struct {
 	sync.Mutex
 	pending []event.Touch
 }
 
 func sendTouch(ty event.TouchType, x, y float32) {
-	events.Lock()
-	events.pending = append(events.pending, event.Touch{
+	touchEvents.Lock()
+	touchEvents.pending = append(touchEvents.pending, event.Touch{
+		ID:   0,
 		Type: ty,
 		Loc: geom.Point{
-			X: geom.Pt(x),
-			Y: geom.Pt(y),
+			X: geom.Pt(x / geom.PixelsPerPt),
+			Y: geom.Height - geom.Pt(y/geom.PixelsPerPt),
 		},
 	})
-	events.Unlock()
+	touchEvents.Unlock()
 }
 
 //export onTouchStart
@@ -74,16 +75,16 @@ func onTouchEnd(x, y float32) { sendTouch(event.TouchEnd, x, y) }
 
 //export onDraw
 func onDraw() {
-	events.Lock()
-	pending := events.pending
-	events.pending = nil
-	events.Unlock()
-
-	for _, e := range pending {
-		if cb.Touch != nil {
+	touchEvents.Lock()
+	pending := touchEvents.pending
+	touchEvents.pending = nil
+	touchEvents.Unlock()
+	if cb.Touch != nil {
+		for _, e := range pending {
 			cb.Touch(e)
 		}
 	}
+
 	if cb.Draw != nil {
 		cb.Draw()
 	}
