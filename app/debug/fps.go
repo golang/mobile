@@ -9,14 +9,13 @@ import (
 	"fmt"
 	"image"
 	"image/draw"
-	"io/ioutil"
 	"log"
 	"math"
-	"runtime"
 	"sync"
 	"time"
 
 	"code.google.com/p/freetype-go/freetype"
+	"golang.org/x/mobile/font"
 	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/gl/glutil"
 )
@@ -34,22 +33,7 @@ var fps struct {
 // TODO(crawshaw): The gldebug mode needs to complain loudly when GL functions
 //                 are called before init, because often they fail silently.
 func fpsInit() {
-	font := ""
-	switch runtime.GOOS {
-	case "android":
-		font = "/system/fonts/DroidSansMono.ttf"
-	case "darwin":
-		font = "/Library/Fonts/Andale Mono.ttf"
-	case "linux":
-		font = "/usr/share/fonts/truetype/droid/DroidSansMono.ttf"
-	default:
-		panic(fmt.Sprintf("go.mobile/app/debug: unsupported runtime.GOOS %q", runtime.GOOS))
-	}
-
-	b, err := ioutil.ReadFile(font)
-	if err != nil {
-		panic(err)
-	}
+	b := font.Monospace()
 	f, err := freetype.ParseFont(b)
 	if err != nil {
 		panic(err)
