@@ -3,17 +3,20 @@
 The Go mobile repository holds packages and build tools for using Go on Android.
 
 This is early work and the build system is a bumpy ride. Building a binary for
-Android requires using a Go cross compiler and an external linker from the NDK.  
+Android requires using a Go cross compiler and an external linker from the NDK.
 
 For now, the easiest way to setup a build environment is using the provided
 Dockerfile:
 
-	go get -d golang.org/x/mobile/...
-	docker build -t mobile $GOPATH/src/golang.org/x/mobile
+	docker pull golang/mobile
+
+Get the sample applications.
+
+	go get -d golang.org/x/mobile/example/...
 
 In your app directory under your `$GOPATH`, copy the following files from either
-the [golang.org/x/mobile/basic](https://github.com/golang/mobile/tree/master/example/basic)
-or [golang.org/x/mobile/libhello](https://github.com/golang/mobile/tree/master/example/libhello)
+the [golang.org/x/mobile/example/basic](https://github.com/golang/mobile/tree/master/example/basic)
+or [golang.org/x/mobile/example/libhello](https://github.com/golang/mobile/tree/master/example/libhello)
 apps:
 
 	AndroidManifest.xml
