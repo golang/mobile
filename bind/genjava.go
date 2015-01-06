@@ -174,9 +174,21 @@ func (g *javaGen) genInterfaceStub(o *types.TypeName, m *types.Interface) {
 			g.Printf("%s param_%s = in.read%s;\n", jt, p.Name(), seqRead(p.Type()))
 		}
 
-		// TODO(crawshaw): handle catching a Exception
 		res := sig.Results()
-		if res.Len() > 0 {
+		var returnsError bool
+		var numRes = res.Len()
+		if (res.Len() == 1 && isErrorType(res.At(0).Type())) ||
+			(res.Len() == 2 && isErrorType(res.At(1).Type())) {
+			numRes -= 1
+			returnsError = true
+		}
+
+		if returnsError {
+			g.Printf("try {\n")
+			g.Indent()
+		}
+
+		if numRes > 0 {
 			g.Printf("%s result = ", g.javaType(res.At(0).Type()))
 		}
 
@@ -188,6 +200,24 @@ func (g *javaGen) genInterfaceStub(o *types.TypeName, m *types.Interface) {
 			g.Printf("param_%s", sig.Params().At(i).Name())
 		}
 		g.Printf(");\n")
+
+		if numRes > 0 {
+			g.Printf("out.write%s;\n", seqWrite(res.At(0).Type(), "result"))
+		}
+		if returnsError {
+			g.Printf("out.writeUTF16(null);\n")
+			g.Outdent()
+			g.Printf("} catch (Exception e) {\n")
+			g.Indent()
+			if numRes > 0 {
+				resTyp := res.At(0).Type()
+				g.Printf("%s result = %s;\n", g.javaType(resTyp), g.javaTypeDefault(resTyp))
+				g.Printf("out.write%s;\n", seqWrite(resTyp, "result"))
+			}
+			g.Printf("out.writeUTF16(e.getMessage());\n")
+			g.Outdent()
+			g.Printf("}\n")
+		}
 		g.Printf("return;\n")
 		g.Outdent()
 		g.Printf("}\n")
@@ -319,6 +349,32 @@ func (g *javaGen) javaType(T types.Type) string {
 		}
 		// TODO(crawshaw): more checking here
 		return n.Name()
+	default:
+		g.errorf("unsupported javaType: %#+v, %s\n", T, T)
+		return "TODO"
+	}
+}
+
+// javaTypeDefault returns a string that represents the default value of the mapped java type.
+// TODO(hyangah): Combine javaType and javaTypeDefault?
+func (g *javaGen) javaTypeDefault(T types.Type) string {
+	switch T := T.(type) {
+	case *types.Basic:
+		switch T.Kind() {
+		case types.Bool:
+			return "false"
+		case types.Int, types.Int8, types.Int16, types.Int32,
+			types.Int64, types.Uint8, types.Float32, types.Float64:
+			return "0"
+		case types.String:
+			return "null"
+		default:
+			g.errorf("unsupported return type: %s", T)
+			return "TODO"
+		}
+	case *types.Slice, *types.Pointer, *types.Named:
+		return "null"
+
 	default:
 		g.errorf("unsupported javaType: %#+v, %s\n", T, T)
 		return "TODO"

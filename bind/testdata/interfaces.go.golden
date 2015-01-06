@@ -12,9 +12,9 @@ import (
 func proxy_Add3(out, in *seq.Buffer) {
 	var param_r interfaces.I
 	param_r_ref := in.ReadRef()
-	if param_r_ref.Num < 0 {
+	if param_r_ref.Num < 0 { // go object
 		param_r = param_r_ref.Get().(interfaces.I)
-	} else {
+	} else { // foreign object
 		param_r = (*proxyI)(param_r_ref)
 	}
 	res := interfaces.Add3(param_r)
@@ -26,11 +26,24 @@ const (
 	proxyIRandCode   = 0x10a
 )
 
+func proxyIRand(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := ref.Get().(interfaces.I)
+	res := v.Rand()
+	out.WriteInt32(res)
+}
+
+func init() {
+	seq.Register(proxyIDescriptor, proxyIRandCode, proxyIRand)
+}
+
 type proxyI seq.Ref
 
-func (p *proxyI) Rand() (res_0 int32) {
-	out := new(seq.Buffer)
-	seq.Transact((*seq.Ref)(p), proxyIRandCode, out)
+func (p *proxyI) Rand() int32 {
+	in := new(seq.Buffer)
+	out := seq.Transact((*seq.Ref)(p), proxyIRandCode, in)
+	res_0 := out.ReadInt32()
+	return res_0
 }
 
 func proxy_Seven(out, in *seq.Buffer) {

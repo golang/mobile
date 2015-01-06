@@ -30,12 +30,67 @@ public abstract class Testpkg {
         _result = _out.readByteArray();
         return _result;
     }
-
-    public static void Call(I i) {
+    
+    public static void CallE(I i) throws Exception {
         go.Seq _in = new go.Seq();
         go.Seq _out = new go.Seq();
         _in.writeRef(i.ref());
-        Seq.send(DESCRIPTOR, CALL_Call, _in, _out);
+        Seq.send(DESCRIPTOR, CALL_CallE, _in, _out);
+        String _err = _out.readUTF16();
+        if (_err != null) {
+            throw new Exception(_err);
+        }
+    }
+    
+    public static void CallF(I i) {
+        go.Seq _in = new go.Seq();
+        go.Seq _out = new go.Seq();
+        _in.writeRef(i.ref());
+        Seq.send(DESCRIPTOR, CALL_CallF, _in, _out);
+    }
+    
+    public static I CallI(I i) {
+        go.Seq _in = new go.Seq();
+        go.Seq _out = new go.Seq();
+        I _result;
+        _in.writeRef(i.ref());
+        Seq.send(DESCRIPTOR, CALL_CallI, _in, _out);
+        _result = new I.Proxy(_out.readRef());
+        return _result;
+    }
+    
+    public static S CallS(I i) {
+        go.Seq _in = new go.Seq();
+        go.Seq _out = new go.Seq();
+        S _result;
+        _in.writeRef(i.ref());
+        Seq.send(DESCRIPTOR, CALL_CallS, _in, _out);
+        _result = new S(_out.readRef());
+        return _result;
+    }
+    
+    public static long CallV(I i) {
+        go.Seq _in = new go.Seq();
+        go.Seq _out = new go.Seq();
+        long _result;
+        _in.writeRef(i.ref());
+        Seq.send(DESCRIPTOR, CALL_CallV, _in, _out);
+        _result = _out.readInt();
+        return _result;
+    }
+    
+    public static long CallVE(I i) throws Exception {
+        go.Seq _in = new go.Seq();
+        go.Seq _out = new go.Seq();
+        long _result;
+        _in.writeRef(i.ref());
+        Seq.send(DESCRIPTOR, CALL_CallVE, _in, _out);
+        _result = _out.readInt();
+        String _err = _out.readUTF16();
+        if (_err != null) {
+            throw new Exception(_err);
+        }
+        return _result;
     }
     
     public static void Err(String s) throws Exception {
@@ -56,7 +111,19 @@ public abstract class Testpkg {
     }
     
     public interface I extends go.Seq.Object {
+        public void E() throws Exception;
+        
         public void F();
+        
+        public I I();
+        
+        public S S();
+        
+        public String String();
+        
+        public long V();
+        
+        public long VE() throws Exception;
         
         public static abstract class Stub implements I {
             static final String DESCRIPTOR = "go.testpkg.I";
@@ -70,8 +137,49 @@ public abstract class Testpkg {
             
             public void call(int code, go.Seq in, go.Seq out) {
                 switch (code) {
+                case Proxy.CALL_E: {
+                    try {
+                        this.E();
+                        out.writeUTF16(null);
+                    } catch (Exception e) {
+                        out.writeUTF16(e.getMessage());
+                    }
+                    return;
+                }
                 case Proxy.CALL_F: {
                     this.F();
+                    return;
+                }
+                case Proxy.CALL_I: {
+                    I result = this.I();
+                    out.writeRef(result.ref());
+                    return;
+                }
+                case Proxy.CALL_S: {
+                    S result = this.S();
+                    out.writeRef(result.ref());
+                    return;
+                }
+                case Proxy.CALL_String: {
+                    String result = this.String();
+                    out.writeUTF16(result);
+                    return;
+                }
+                case Proxy.CALL_V: {
+                    long result = this.V();
+                    out.writeInt(result);
+                    return;
+                }
+                case Proxy.CALL_VE: {
+                    try {
+                        long result = this.VE();
+                        out.writeInt(result);
+                        out.writeUTF16(null);
+                    } catch (Exception e) {
+                        long result = 0;
+                        out.writeInt(result);
+                        out.writeUTF16(e.getMessage());
+                    }
                     return;
                 }
                 default:
@@ -93,6 +201,17 @@ public abstract class Testpkg {
                 throw new RuntimeException("cycle: cannot call proxy");
             }
         
+            public void E() throws Exception {
+                go.Seq _in = new go.Seq();
+                go.Seq _out = new go.Seq();
+                _in.writeRef(ref);
+                Seq.send(DESCRIPTOR, CALL_E, _in, _out);
+                String _err = _out.readUTF16();
+                if (_err != null) {
+                    throw new Exception(_err);
+                }
+            }
+            
             public void F() {
                 go.Seq _in = new go.Seq();
                 go.Seq _out = new go.Seq();
@@ -100,7 +219,67 @@ public abstract class Testpkg {
                 Seq.send(DESCRIPTOR, CALL_F, _in, _out);
             }
             
-            static final int CALL_F = 0x10a;
+            public I I() {
+                go.Seq _in = new go.Seq();
+                go.Seq _out = new go.Seq();
+                I _result;
+                _in.writeRef(ref);
+                Seq.send(DESCRIPTOR, CALL_I, _in, _out);
+                _result = new I.Proxy(_out.readRef());
+                return _result;
+            }
+            
+            public S S() {
+                go.Seq _in = new go.Seq();
+                go.Seq _out = new go.Seq();
+                S _result;
+                _in.writeRef(ref);
+                Seq.send(DESCRIPTOR, CALL_S, _in, _out);
+                _result = new S(_out.readRef());
+                return _result;
+            }
+            
+            public String String() {
+                go.Seq _in = new go.Seq();
+                go.Seq _out = new go.Seq();
+                String _result;
+                _in.writeRef(ref);
+                Seq.send(DESCRIPTOR, CALL_String, _in, _out);
+                _result = _out.readUTF16();
+                return _result;
+            }
+            
+            public long V() {
+                go.Seq _in = new go.Seq();
+                go.Seq _out = new go.Seq();
+                long _result;
+                _in.writeRef(ref);
+                Seq.send(DESCRIPTOR, CALL_V, _in, _out);
+                _result = _out.readInt();
+                return _result;
+            }
+            
+            public long VE() throws Exception {
+                go.Seq _in = new go.Seq();
+                go.Seq _out = new go.Seq();
+                long _result;
+                _in.writeRef(ref);
+                Seq.send(DESCRIPTOR, CALL_VE, _in, _out);
+                _result = _out.readInt();
+                String _err = _out.readUTF16();
+                if (_err != null) {
+                    throw new Exception(_err);
+                }
+                return _result;
+            }
+            
+            static final int CALL_E = 0x10a;
+            static final int CALL_F = 0x20a;
+            static final int CALL_I = 0x30a;
+            static final int CALL_S = 0x40a;
+            static final int CALL_String = 0x50a;
+            static final int CALL_V = 0x60a;
+            static final int CALL_VE = 0x70a;
         }
     }
     
@@ -132,6 +311,7 @@ public abstract class Testpkg {
     public static final class S implements go.Seq.Object {
         private static final String DESCRIPTOR = "go.testpkg.S";
         private static final int CALL_F = 0x00c;
+        private static final int CALL_String = 0x10c;
         
         private go.Seq.Ref ref;
         
@@ -149,6 +329,16 @@ public abstract class Testpkg {
             go.Seq _out = new go.Seq();
             _in.writeRef(ref);
             Seq.send(DESCRIPTOR, CALL_F, _in, _out);
+        }
+        
+        public String String() {
+            go.Seq _in = new go.Seq();
+            go.Seq _out = new go.Seq();
+            String _result;
+            _in.writeRef(ref);
+            Seq.send(DESCRIPTOR, CALL_String, _in, _out);
+            _result = _out.readUTF16();
+            return _result;
         }
         
         @Override public boolean equals(Object o) {
@@ -183,12 +373,17 @@ public abstract class Testpkg {
     
     private static final int CALL_Add = 1;
     private static final int CALL_BytesAppend = 2;
-    private static final int CALL_Call = 3;
-    private static final int CALL_Err = 4;
-    private static final int CALL_GC = 5;
-    private static final int CALL_Keep = 6;
-    private static final int CALL_New = 7;
-    private static final int CALL_NumSCollected = 8;
-    private static final int CALL_StrDup = 9;
+    private static final int CALL_CallE = 3;
+    private static final int CALL_CallF = 4;
+    private static final int CALL_CallI = 5;
+    private static final int CALL_CallS = 6;
+    private static final int CALL_CallV = 7;
+    private static final int CALL_CallVE = 8;
+    private static final int CALL_Err = 9;
+    private static final int CALL_GC = 10;
+    private static final int CALL_Keep = 11;
+    private static final int CALL_New = 12;
+    private static final int CALL_NumSCollected = 13;
+    private static final int CALL_StrDup = 14;
     private static final String DESCRIPTOR = "testpkg";
 }
