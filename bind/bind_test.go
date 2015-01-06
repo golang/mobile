@@ -7,6 +7,7 @@ import (
 	"go/parser"
 	"go/token"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -87,6 +88,7 @@ func TestGenJava(t *testing.T) {
 			continue
 		}
 		out := writeTempFile(t, "java", buf.Bytes())
+		defer os.Remove(out)
 		golden := filename[:len(filename)-len(".go")] + ".java.golden"
 		if diffstr := diff(golden, out); diffstr != "" {
 			t.Errorf("%s: does not match Java golden:\n%s", filename, diffstr)
@@ -111,6 +113,7 @@ func TestGenGo(t *testing.T) {
 			continue
 		}
 		out := writeTempFile(t, "go", buf.Bytes())
+		defer os.Remove(out)
 		golden := filename + ".golden"
 		if diffstr := diff(golden, out); diffstr != "" {
 			t.Errorf("%s: does not match Java golden:\n%s", filename, diffstr)
