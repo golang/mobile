@@ -1,6 +1,8 @@
 // Package testpkg contains bound functions for testing the cgo-JNI interface.
 package testpkg
 
+//go:generate gobind -lang=go -output=go_testpkg/go_testpkg.go .
+//go:generate gobind -lang=java -output=Testpkg.java .
 import (
 	"errors"
 	"fmt"
