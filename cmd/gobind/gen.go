@@ -5,7 +5,7 @@
 package main
 
 import (
-	"os"
+	"io"
 	"path/filepath"
 
 	"go/ast"
@@ -18,7 +18,7 @@ import (
 	"golang.org/x/tools/go/loader"
 )
 
-func genPkg(pkg *build.Package) {
+func genPkg(w io.Writer, pkg *build.Package) {
 	if len(pkg.CgoFiles) > 0 {
 		errorf("gobind: cannot use cgo-dependent package as service definition: %s", pkg.CgoFiles[0])
 		return
@@ -46,9 +46,9 @@ func genPkg(pkg *build.Package) {
 
 	switch *lang {
 	case "java":
-		err = bind.GenJava(os.Stdout, fset, p)
+		err = bind.GenJava(w, fset, p)
 	case "go":
-		err = bind.GenGo(os.Stdout, fset, p)
+		err = bind.GenGo(w, fset, p)
 	default:
 		errorf("unknown target language: %q", *lang)
 	}
