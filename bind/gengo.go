@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"go/token"
 	"log"
+	"strings"
 
 	"golang.org/x/tools/go/types"
 )
@@ -46,19 +47,7 @@ func (g *goGen) genFuncBody(o *types.Func, selectorLHS string) {
 	params := sig.Params()
 	for i := 0; i < params.Len(); i++ {
 		p := params.At(i)
-		t := seqType(p.Type())
-		if t == "Ref" {
-			name := p.Type().(*types.Named).Obj().Name()
-			g.Printf("var param_%s %s.%s\n", p.Name(), g.pkg.Name(), name)
-			g.Printf("param_%s_ref := in.ReadRef()\n", p.Name())
-			g.Printf("if param_%s_ref.Num < 0 {\n", p.Name())
-			g.Printf("    param_%s = param_%s_ref.Get().(%s.%s)\n", p.Name(), p.Name(), g.pkg.Name(), name)
-			g.Printf("} else {\n")
-			g.Printf("    param_%s = (*proxy%s)(param_%s_ref)\n", p.Name(), name, p.Name())
-			g.Printf("}\n")
-		} else {
-			g.Printf("param_%s := in.Read%s()\n", p.Name(), t)
-		}
+		g.genRead("param_"+p.Name(), "in", p.Type())
 	}
 
 	res := sig.Results()
@@ -239,6 +228,7 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 func (g *goGen) genInterface(obj *types.TypeName) {
 	iface := obj.Type().(*types.Named).Underlying().(*types.Interface)
 
+	// Descriptor and code for interface methods.
 	g.Printf("const (\n")
 	g.Indent()
 	g.Printf("proxy%sDescriptor = \"go.%s.%s\"\n", obj.Name(), g.pkg.Name(), obj.Name())
@@ -248,46 +238,154 @@ func (g *goGen) genInterface(obj *types.TypeName) {
 	g.Outdent()
 	g.Printf(")\n\n")
 
+	// Define the entry points.
+	for i := 0; i < iface.NumMethods(); i++ {
+		m := iface.Method(i)
+		g.Printf("func proxy%s%s(out, in *seq.Buffer) {\n", obj.Name(), m.Name())
+		g.Indent()
+		g.Printf("ref := in.ReadRef()\n")
+		g.Printf("v := ref.Get().(%s.%s)\n", g.pkg.Name(), obj.Name())
+		g.genFuncBody(m, "v")
+		g.Outdent()
+		g.Printf("}\n\n")
+	}
+
+	// Register the method entry points.
+	g.Printf("func init() {\n")
+	g.Indent()
+	for i := 0; i < iface.NumMethods(); i++ {
+		g.Printf("seq.Register(proxy%sDescriptor, proxy%s%sCode, proxy%s%s)\n",
+			obj.Name(), obj.Name(), iface.Method(i).Name(), obj.Name(), iface.Method(i).Name())
+	}
+	g.Outdent()
+	g.Printf("}\n\n")
+
+	// Define a proxy interface.
 	g.Printf("type proxy%s seq.Ref\n\n", obj.Name())
 
 	for i := 0; i < iface.NumMethods(); i++ {
 		m := iface.Method(i)
 		sig := m.Type().(*types.Signature)
 		params := sig.Params()
+		res := sig.Results()
+
+		if res.Len() > 2 ||
+			(res.Len() == 2 && !isErrorType(res.At(1).Type())) {
+			g.errorf("functions and methods must return either zero or one value, and optionally an error: %s.%s", obj.Name(), m.Name())
+			continue
+		}
+
 		g.Printf("func (p *proxy%s) %s(", obj.Name(), m.Name())
 		for i := 0; i < params.Len(); i++ {
 			if i > 0 {
 				g.Printf(", ")
 			}
-			g.Printf("%s %s", paramName(params, i), params.At(i).Type())
+			g.Printf("%s %s", paramName(params, i), g.typeString(params.At(i).Type()))
 		}
 		g.Printf(") ")
-		res := sig.Results()
-		if res.Len() > 0 {
-			g.Printf("(")
-		}
-		for i := 0; i < res.Len(); i++ {
-			if i > 0 {
-				g.Printf(", ")
-			}
-			g.Printf("res_%d %s", i, res.At(i).Type())
-		}
-		if res.Len() > 0 {
-			g.Printf(")")
+
+		if res.Len() == 1 {
+			g.Printf(g.typeString(res.At(0).Type()))
+		} else if res.Len() == 2 {
+			g.Printf("(%s, error)", g.typeString(res.At(0).Type()))
 		}
 		g.Printf(" {\n")
 		g.Indent()
 
-		g.Printf("out := new(seq.Buffer)\n")
+		g.Printf("in := new(seq.Buffer)\n")
 		for i := 0; i < params.Len(); i++ {
-			p := params.At(i)
-			g.Printf("out.Write%s\n", seqWrite(p.Type(), paramName(params, i)))
+			g.genWrite(paramName(params, i), "in", params.At(i).Type())
 		}
-		g.Printf("seq.Transact((*seq.Ref)(p), proxy%s%sCode, out)\n", obj.Name(), m.Name())
+
+		if res.Len() == 0 {
+			g.Printf("seq.Transact((*seq.Ref)(p), proxy%s%sCode, in)\n", obj.Name(), m.Name())
+		} else {
+			g.Printf("out := seq.Transact((*seq.Ref)(p), proxy%s%sCode, in)\n", obj.Name(), m.Name())
+			var rvs []string
+			for i := 0; i < res.Len(); i++ {
+				rv := fmt.Sprintf("res_%d", i)
+				g.genRead(rv, "out", res.At(i).Type())
+				rvs = append(rvs, rv)
+			}
+			g.Printf("return %s\n", strings.Join(rvs, ","))
+		}
 
 		g.Outdent()
 		g.Printf("}\n\n")
 	}
+}
+
+func (g *goGen) genRead(valName, seqName string, typ types.Type) {
+	if isErrorType(typ) {
+		g.Printf("%s := %s.ReadError()\n", valName, seqName)
+		return
+	}
+	switch t := typ.(type) {
+	case *types.Pointer:
+		switch u := t.Elem().(type) {
+		case *types.Named:
+			o := u.Obj()
+			if o.Pkg() != g.pkg {
+				g.errorf("type %s not defined in package %s", u, g.pkg)
+				return
+			}
+			g.Printf("// Must be a Go object\n")
+			g.Printf("%s_ref := %s.ReadRef()\n", valName, seqName)
+			g.Printf("%s := %s_ref.Get().(*%s.%s)\n", valName, valName, g.pkg.Name(), o.Name())
+		default:
+			g.errorf("unsupported type %s", t)
+		}
+	case *types.Named:
+		switch t.Underlying().(type) {
+		case *types.Interface, *types.Pointer:
+			o := t.Obj()
+			if o.Pkg() != g.pkg {
+				g.errorf("type %s not defined in package %s", t, g.pkg)
+				return
+			}
+			g.Printf("var %s %s\n", valName, g.typeString(t))
+			g.Printf("%s_ref := %s.ReadRef()\n", valName, seqName)
+			g.Printf("if %s_ref.Num < 0 { // go object \n", valName)
+			g.Printf("   %s = %s_ref.Get().(%s.%s)\n", valName, valName, g.pkg.Name(), o.Name())
+			g.Printf("} else {  // foreign object \n")
+			g.Printf("   %s = (*proxy%s)(%s_ref)\n", valName, o.Name(), valName)
+			g.Printf("}\n")
+		}
+	default:
+		g.Printf("%s := %s.Read%s()\n", valName, seqName, seqType(t))
+	}
+}
+
+func (g *goGen) typeString(typ types.Type) string {
+	pkg := g.pkg
+
+	switch t := typ.(type) {
+	case *types.Named:
+		obj := t.Obj()
+		if obj.Pkg() == nil { // e.g. error type is *types.Named.
+			return types.TypeString(pkg, typ)
+		}
+		if obj.Pkg() != g.pkg {
+			g.errorf("type %s not defined in package %s", t, g.pkg)
+		}
+
+		switch t.Underlying().(type) {
+		case *types.Interface, *types.Struct:
+			return fmt.Sprintf("%s.%s", pkg.Name(), types.TypeString(pkg, typ))
+		default:
+			g.errorf("unsupported named type %s / %T", t, t)
+		}
+	case *types.Pointer:
+		switch t := t.Elem().(type) {
+		case *types.Named:
+			return fmt.Sprintf("*%s", g.typeString(t))
+		default:
+			g.errorf("not yet supported, pointer type %s / %T", t, t)
+		}
+	default:
+		return types.TypeString(pkg, typ)
+	}
+	return ""
 }
 
 func (g *goGen) gen() error {

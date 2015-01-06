@@ -23,15 +23,84 @@ func proxy_BytesAppend(out, in *seq.Buffer) {
 	out.WriteByteArray(res)
 }
 
-func proxy_Call(out, in *seq.Buffer) {
+func proxy_CallE(out, in *seq.Buffer) {
 	var param_i testpkg.I
 	param_i_ref := in.ReadRef()
-	if param_i_ref.Num < 0 {
+	if param_i_ref.Num < 0 { // go object
 		param_i = param_i_ref.Get().(testpkg.I)
-	} else {
+	} else { // foreign object
 		param_i = (*proxyI)(param_i_ref)
 	}
-	testpkg.Call(param_i)
+	err := testpkg.CallE(param_i)
+	if err == nil {
+		out.WriteUTF16("")
+	} else {
+		out.WriteUTF16(err.Error())
+	}
+}
+
+func proxy_CallF(out, in *seq.Buffer) {
+	var param_i testpkg.I
+	param_i_ref := in.ReadRef()
+	if param_i_ref.Num < 0 { // go object
+		param_i = param_i_ref.Get().(testpkg.I)
+	} else { // foreign object
+		param_i = (*proxyI)(param_i_ref)
+	}
+	testpkg.CallF(param_i)
+}
+
+func proxy_CallI(out, in *seq.Buffer) {
+	var param_i testpkg.I
+	param_i_ref := in.ReadRef()
+	if param_i_ref.Num < 0 { // go object
+		param_i = param_i_ref.Get().(testpkg.I)
+	} else { // foreign object
+		param_i = (*proxyI)(param_i_ref)
+	}
+	res := testpkg.CallI(param_i)
+	out.WriteGoRef(res)
+}
+
+func proxy_CallS(out, in *seq.Buffer) {
+	var param_i testpkg.I
+	param_i_ref := in.ReadRef()
+	if param_i_ref.Num < 0 { // go object
+		param_i = param_i_ref.Get().(testpkg.I)
+	} else { // foreign object
+		param_i = (*proxyI)(param_i_ref)
+	}
+	res := testpkg.CallS(param_i)
+	out.WriteGoRef(res)
+}
+
+func proxy_CallV(out, in *seq.Buffer) {
+	var param_i testpkg.I
+	param_i_ref := in.ReadRef()
+	if param_i_ref.Num < 0 { // go object
+		param_i = param_i_ref.Get().(testpkg.I)
+	} else { // foreign object
+		param_i = (*proxyI)(param_i_ref)
+	}
+	res := testpkg.CallV(param_i)
+	out.WriteInt(res)
+}
+
+func proxy_CallVE(out, in *seq.Buffer) {
+	var param_i testpkg.I
+	param_i_ref := in.ReadRef()
+	if param_i_ref.Num < 0 { // go object
+		param_i = param_i_ref.Get().(testpkg.I)
+	} else { // foreign object
+		param_i = (*proxyI)(param_i_ref)
+	}
+	res, err := testpkg.CallVE(param_i)
+	out.WriteInt(res)
+	if err == nil {
+		out.WriteUTF16("")
+	} else {
+		out.WriteUTF16(err.Error())
+	}
 }
 
 func proxy_Err(out, in *seq.Buffer) {
@@ -50,22 +119,146 @@ func proxy_GC(out, in *seq.Buffer) {
 
 const (
 	proxyIDescriptor = "go.testpkg.I"
-	proxyIFCode      = 0x10a
+	proxyIECode      = 0x10a
+	proxyIFCode      = 0x20a
+	proxyIICode      = 0x30a
+	proxyISCode      = 0x40a
+	proxyIStringCode = 0x50a
+	proxyIVCode      = 0x60a
+	proxyIVECode     = 0x70a
 )
+
+func proxyIE(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := ref.Get().(testpkg.I)
+	err := v.E()
+	if err == nil {
+		out.WriteUTF16("")
+	} else {
+		out.WriteUTF16(err.Error())
+	}
+}
+
+func proxyIF(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := ref.Get().(testpkg.I)
+	v.F()
+}
+
+func proxyII(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := ref.Get().(testpkg.I)
+	res := v.I()
+	out.WriteGoRef(res)
+}
+
+func proxyIS(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := ref.Get().(testpkg.I)
+	res := v.S()
+	out.WriteGoRef(res)
+}
+
+func proxyIString(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := ref.Get().(testpkg.I)
+	res := v.String()
+	out.WriteUTF16(res)
+}
+
+func proxyIV(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := ref.Get().(testpkg.I)
+	res := v.V()
+	out.WriteInt(res)
+}
+
+func proxyIVE(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := ref.Get().(testpkg.I)
+	res, err := v.VE()
+	out.WriteInt(res)
+	if err == nil {
+		out.WriteUTF16("")
+	} else {
+		out.WriteUTF16(err.Error())
+	}
+}
+
+func init() {
+	seq.Register(proxyIDescriptor, proxyIECode, proxyIE)
+	seq.Register(proxyIDescriptor, proxyIFCode, proxyIF)
+	seq.Register(proxyIDescriptor, proxyIICode, proxyII)
+	seq.Register(proxyIDescriptor, proxyISCode, proxyIS)
+	seq.Register(proxyIDescriptor, proxyIStringCode, proxyIString)
+	seq.Register(proxyIDescriptor, proxyIVCode, proxyIV)
+	seq.Register(proxyIDescriptor, proxyIVECode, proxyIVE)
+}
 
 type proxyI seq.Ref
 
+func (p *proxyI) E() error {
+	in := new(seq.Buffer)
+	out := seq.Transact((*seq.Ref)(p), proxyIECode, in)
+	res_0 := out.ReadError()
+	return res_0
+}
+
 func (p *proxyI) F() {
-	out := new(seq.Buffer)
-	seq.Transact((*seq.Ref)(p), proxyIFCode, out)
+	in := new(seq.Buffer)
+	seq.Transact((*seq.Ref)(p), proxyIFCode, in)
+}
+
+func (p *proxyI) I() testpkg.I {
+	in := new(seq.Buffer)
+	out := seq.Transact((*seq.Ref)(p), proxyIICode, in)
+	var res_0 testpkg.I
+	res_0_ref := out.ReadRef()
+	if res_0_ref.Num < 0 { // go object
+		res_0 = res_0_ref.Get().(testpkg.I)
+	} else { // foreign object
+		res_0 = (*proxyI)(res_0_ref)
+	}
+	return res_0
+}
+
+func (p *proxyI) S() *testpkg.S {
+	in := new(seq.Buffer)
+	out := seq.Transact((*seq.Ref)(p), proxyISCode, in)
+	// Must be a Go object
+	res_0_ref := out.ReadRef()
+	res_0 := res_0_ref.Get().(*testpkg.S)
+	return res_0
+}
+
+func (p *proxyI) String() string {
+	in := new(seq.Buffer)
+	out := seq.Transact((*seq.Ref)(p), proxyIStringCode, in)
+	res_0 := out.ReadUTF16()
+	return res_0
+}
+
+func (p *proxyI) V() int {
+	in := new(seq.Buffer)
+	out := seq.Transact((*seq.Ref)(p), proxyIVCode, in)
+	res_0 := out.ReadInt()
+	return res_0
+}
+
+func (p *proxyI) VE() (int, error) {
+	in := new(seq.Buffer)
+	out := seq.Transact((*seq.Ref)(p), proxyIVECode, in)
+	res_0 := out.ReadInt()
+	res_1 := out.ReadError()
+	return res_0, res_1
 }
 
 func proxy_Keep(out, in *seq.Buffer) {
 	var param_i testpkg.I
 	param_i_ref := in.ReadRef()
-	if param_i_ref.Num < 0 {
+	if param_i_ref.Num < 0 { // go object
 		param_i = param_i_ref.Get().(testpkg.I)
-	} else {
+	} else { // foreign object
 		param_i = (*proxyI)(param_i_ref)
 	}
 	testpkg.Keep(param_i)
@@ -84,6 +277,7 @@ func proxy_NumSCollected(out, in *seq.Buffer) {
 const (
 	proxySDescriptor = "go.testpkg.S"
 	proxySFCode      = 0x00c
+	proxySStringCode = 0x10c
 )
 
 type proxyS seq.Ref
@@ -94,8 +288,16 @@ func proxySF(out, in *seq.Buffer) {
 	v.F()
 }
 
+func proxySString(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := ref.Get().(*testpkg.S)
+	res := v.String()
+	out.WriteUTF16(res)
+}
+
 func init() {
 	seq.Register(proxySDescriptor, proxySFCode, proxySF)
+	seq.Register(proxySDescriptor, proxySStringCode, proxySString)
 }
 
 func proxy_StrDup(out, in *seq.Buffer) {
@@ -107,11 +309,16 @@ func proxy_StrDup(out, in *seq.Buffer) {
 func init() {
 	seq.Register("testpkg", 1, proxy_Add)
 	seq.Register("testpkg", 2, proxy_BytesAppend)
-	seq.Register("testpkg", 3, proxy_Call)
-	seq.Register("testpkg", 4, proxy_Err)
-	seq.Register("testpkg", 5, proxy_GC)
-	seq.Register("testpkg", 6, proxy_Keep)
-	seq.Register("testpkg", 7, proxy_New)
-	seq.Register("testpkg", 8, proxy_NumSCollected)
-	seq.Register("testpkg", 9, proxy_StrDup)
+	seq.Register("testpkg", 3, proxy_CallE)
+	seq.Register("testpkg", 4, proxy_CallF)
+	seq.Register("testpkg", 5, proxy_CallI)
+	seq.Register("testpkg", 6, proxy_CallS)
+	seq.Register("testpkg", 7, proxy_CallV)
+	seq.Register("testpkg", 8, proxy_CallVE)
+	seq.Register("testpkg", 9, proxy_Err)
+	seq.Register("testpkg", 10, proxy_GC)
+	seq.Register("testpkg", 11, proxy_Keep)
+	seq.Register("testpkg", 12, proxy_New)
+	seq.Register("testpkg", 13, proxy_NumSCollected)
+	seq.Register("testpkg", 14, proxy_StrDup)
 }

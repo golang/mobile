@@ -96,14 +96,85 @@ public class SeqTest extends TestCase {
   boolean finalizedAnI;
 
   private class AnI extends Testpkg.I.Stub {
-    boolean called;
-    public void F() {
-      called = true;
+    public void E() throws Exception {
+      throw new Exception("my exception from E");
     }
+
+    boolean calledF;
+    public void F() {
+      calledF = true;
+    }
+
+    public Testpkg.I I() {
+      return this;
+    }
+
+    public Testpkg.S S() {
+      return Testpkg.New();
+    }
+
+    public long V() {
+      return 1234;
+    }
+
+    public long VE() throws Exception {
+      throw new Exception("my exception from VE");
+    }
+
+    public String name;
+
+    public String String() {
+      return name;
+    }
+
     @Override
     public void finalize() throws Throwable {
       finalizedAnI = true;
       super.finalize();
+    }
+  }
+  // TODO(hyangah): add tests for methods that take parameters.
+
+  public void testInterfaceMethodReturnsError() {
+    final AnI obj = new AnI();
+    try {
+      Testpkg.CallE(obj);
+      fail("Expecting exception but none was thrown.");
+    } catch (Exception e) {
+      assertEquals("Error messages should match", "my exception from E", e.getMessage());
+    }
+  }
+
+  public void testInterfaceMethodVoid() {
+    final AnI obj = new AnI();
+    Testpkg.CallF(obj);
+    assertTrue("Want AnI.F to be called", obj.calledF);
+  }
+
+  public void testInterfaceMethodReturnsInterface() {
+    AnI obj = new AnI();
+    obj.name = "testing AnI.I";
+    Testpkg.I i = Testpkg.CallI(obj);
+    assertEquals("Want AnI.I to return itself", i.String(), obj.String());
+  }
+
+  public void testInterfaceMethodReturnsStructPointer() {
+    final AnI obj = new AnI();
+    Testpkg.S s = Testpkg.CallS(obj);
+  }
+
+  public void testInterfaceMethodReturnsInt() {
+    final AnI obj = new AnI();
+    assertEquals("Values must match", 1234, Testpkg.CallV(obj));
+  }
+
+  public void testInterfaceMethodReturnsIntOrError() {
+    final AnI obj = new AnI();
+    try {
+      long v = Testpkg.CallVE(obj);
+      fail("Expecting exception but none was thrown and got value " + v);
+    } catch (Exception e) {
+      assertEquals("Error messages should match", "my exception from VE", e.getMessage());
     }
   }
 
@@ -113,8 +184,8 @@ public class SeqTest extends TestCase {
     finalizedAnI = false;
     AnI obj = new AnI();
     runGC();
-    Testpkg.Call(obj);
-    assertTrue("want F to be called", obj.called);
+    Testpkg.CallF(obj);
+    assertTrue("want F to be called", obj.calledF);
     obj = null;
     runGC();
     assertTrue("want obj to be collected", finalizedAnI);
@@ -137,4 +208,3 @@ public class SeqTest extends TestCase {
     System.runFinalization();
   }
 }
-

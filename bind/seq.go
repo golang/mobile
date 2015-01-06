@@ -8,6 +8,7 @@ import (
 
 // seqType returns a string that can be used for reading and writing a
 // type using the seq library.
+// TODO(hyangah): avoid panic; gobind needs to output the problematic code location.
 func seqType(t types.Type) string {
 	if isErrorType(t) {
 		return "UTF16"
@@ -59,6 +60,12 @@ func seqType(t types.Type) string {
 			panic(fmt.Sprintf("unsupported seqType: %s(%s) / %T(%T)", t, e, t, e))
 		}
 	// TODO: let the types.Array case handled like types.Slice?
+	case *types.Pointer:
+		if _, ok := t.Elem().(*types.Named); ok {
+			return "Ref"
+		}
+		panic(fmt.Sprintf("not supported yet, pointer type: %s / %T", t, t))
+
 	default:
 		panic(fmt.Sprintf("unsupported seqType: %s / %T", t, t))
 	}

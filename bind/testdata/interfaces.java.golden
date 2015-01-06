@@ -36,6 +36,7 @@ public abstract class Interfaces {
                 switch (code) {
                 case Proxy.CALL_Rand: {
                     int result = this.Rand();
+                    out.writeInt32(result);
                     return;
                 }
                 default:

@@ -5,6 +5,7 @@
 package seq
 
 import (
+	"errors"
 	"fmt"
 	"unicode/utf16"
 	"unsafe"
@@ -65,6 +66,13 @@ func (b *Buffer) WriteUTF16(s string) {
 }
 
 const maxSliceLen = (1<<31 - 1) / 2
+
+func (b *Buffer) ReadError() error {
+	if s := b.ReadUTF16(); s != "" {
+		return errors.New(s)
+	}
+	return nil
+}
 
 func (b *Buffer) ReadUTF16() string {
 	size := int(b.ReadInt32())

@@ -27,6 +27,9 @@ const debug = false
 //export Send
 func Send(descriptor string, code int, req *C.uint8_t, reqlen C.size_t, res **C.uint8_t, reslen *C.size_t) {
 	fn := seq.Registry[descriptor][code]
+	if fn == nil {
+		panic(fmt.Sprintf("invalid descriptor(%s) and code(0x%x)", descriptor, code))
+	}
 	in := new(seq.Buffer)
 	if reqlen > 0 {
 		in.Data = (*[maxSliceLen]byte)(unsafe.Pointer(req))[:reqlen]
