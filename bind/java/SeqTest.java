@@ -81,6 +81,27 @@ public class SeqTest extends TestCase {
     }
   }
 
+  // Test for golang.org/issue/9486.
+  public void testByteArrayAfterString() {
+    byte[] bytes = new byte[1024];
+    for (int i=0; i < bytes.length; i++) {
+           bytes[i] = 8;
+    }
+
+    String stuff = "stuff";
+    byte[] got = Testpkg.AppendToString(stuff, bytes);
+
+    try {
+      byte[] s = stuff.getBytes("UTF-8");
+      byte[] want = new byte[s.length + bytes.length];
+      System.arraycopy(s, 0, want, 0, s.length);
+      System.arraycopy(bytes, 0, want, s.length, bytes.length);
+      MoreAsserts.assertEquals("Bytes should match", want, got);
+    } catch (Exception e) {
+      fail("Cannot perform the test: " + e.toString());
+    }
+  }
+
   public void testGoRefGC() {
     Testpkg.S s = Testpkg.New();
     runGC();

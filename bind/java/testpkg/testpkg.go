@@ -108,3 +108,9 @@ func Err(s string) error {
 func BytesAppend(a []byte, b []byte) []byte {
 	return append(a, b...)
 }
+
+func AppendToString(str string, someBytes []byte) []byte {
+	a := []byte(str)
+	fmt.Printf("str=%q (len=%d), someBytes=%v (len=%d)\n", str, len(str), someBytes, len(someBytes))
+	return append(a, someBytes...)
+}
