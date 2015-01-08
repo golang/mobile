@@ -36,6 +36,11 @@ func Send(descriptor string, code int, req *C.uint8_t, reqlen C.size_t, res **C.
 	}
 	out := new(seq.Buffer)
 	fn(out, in)
+	// BUG(hyangah): the function returning a go byte slice (so fn writes a pointer into 'out') is unsafe.
+	// After fn is complete here, Go runtime is free to collect or move the pointed byte slice
+	// contents. (Explicitly calling runtime.GC here will surface the problem?)
+	// Without pinning support from Go side, it will be hard to fix it without extra copying.
+
 	seqToBuf(res, reslen, out)
 }
 

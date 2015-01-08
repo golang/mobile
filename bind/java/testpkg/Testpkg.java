@@ -20,6 +20,17 @@ public abstract class Testpkg {
         return _result;
     }
     
+    public static byte[] AppendToString(String str, byte[] someBytes) {
+        go.Seq _in = new go.Seq();
+        go.Seq _out = new go.Seq();
+        byte[] _result;
+        _in.writeUTF16(str);
+        _in.writeByteArray(someBytes);
+        Seq.send(DESCRIPTOR, CALL_AppendToString, _in, _out);
+        _result = _out.readByteArray();
+        return _result;
+    }
+    
     public static byte[] BytesAppend(byte[] a, byte[] b) {
         go.Seq _in = new go.Seq();
         go.Seq _out = new go.Seq();
@@ -372,18 +383,19 @@ public abstract class Testpkg {
     }
     
     private static final int CALL_Add = 1;
-    private static final int CALL_BytesAppend = 2;
-    private static final int CALL_CallE = 3;
-    private static final int CALL_CallF = 4;
-    private static final int CALL_CallI = 5;
-    private static final int CALL_CallS = 6;
-    private static final int CALL_CallV = 7;
-    private static final int CALL_CallVE = 8;
-    private static final int CALL_Err = 9;
-    private static final int CALL_GC = 10;
-    private static final int CALL_Keep = 11;
-    private static final int CALL_New = 12;
-    private static final int CALL_NumSCollected = 13;
-    private static final int CALL_StrDup = 14;
+    private static final int CALL_AppendToString = 2;
+    private static final int CALL_BytesAppend = 3;
+    private static final int CALL_CallE = 4;
+    private static final int CALL_CallF = 5;
+    private static final int CALL_CallI = 6;
+    private static final int CALL_CallS = 7;
+    private static final int CALL_CallV = 8;
+    private static final int CALL_CallVE = 9;
+    private static final int CALL_Err = 10;
+    private static final int CALL_GC = 11;
+    private static final int CALL_Keep = 12;
+    private static final int CALL_New = 13;
+    private static final int CALL_NumSCollected = 14;
+    private static final int CALL_StrDup = 15;
     private static final String DESCRIPTOR = "testpkg";
 }

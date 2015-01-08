@@ -19,6 +19,15 @@ static jfieldID receive_refnum_id;
 static jfieldID receive_code_id;
 static jfieldID receive_handle_id;
 
+static jclass jbytearray_clazz;
+
+// pinned represents a pinned array to be released at the end of Send call.
+typedef struct pinned {
+	jobject ref;
+	void* ptr;
+	struct pinned* next;
+} pinned;
+
 // mem is a simple C equivalent of seq.Buffer.
 //
 // Many of the allocations around mem could be avoided to improve
@@ -28,6 +37,9 @@ typedef struct mem {
 	uint32_t off;
 	uint32_t len;
 	uint32_t cap;
+
+	// TODO(hyangah): have it as a separate field outside mem?
+	pinned* pinned;
 } mem;
 
 // mem_ensure ensures that m has at least size bytes free.
@@ -42,6 +54,7 @@ static mem *mem_ensure(mem *m, uint32_t size) {
 		m->off = 0;
 		m->len = 0;
 		m->buf = NULL;
+		m->pinned = NULL;
 	}
 	if (m->cap > m->off+size) {
 		return m;
@@ -95,6 +108,47 @@ uint8_t *mem_write(JNIEnv *env, jobject obj, uint32_t size) {
 	return res;
 }
 
+static void *pin_array(JNIEnv *env, jobject obj, jobject arr) {
+	mem *m = mem_get(env, obj);
+	if (m == NULL) {
+		m = mem_ensure(m, 64);
+	}
+	pinned *p = (pinned*) malloc(sizeof(pinned));
+	if (p == NULL) {
+		LOG_FATAL("pin_array malloc failed");
+	}
+	p->ref = (*env)->NewGlobalRef(env, arr);
+
+	if ((*env)->IsInstanceOf(env, p->ref, jbytearray_clazz)) {
+		p->ptr = (*env)->GetByteArrayElements(env, p->ref, NULL);
+	} else {
+		LOG_FATAL("unsupported array type");
+	}
+
+	p->next = m->pinned;
+	m->pinned = p;
+	return p->ptr;
+}
+
+static void unpin_arrays(JNIEnv *env, mem *m) {
+	pinned* p = m->pinned;
+	while (p != NULL) {
+		if ((*env)->IsInstanceOf(env, p->ref, jbytearray_clazz)) {
+			(*env)->ReleaseByteArrayElements(env, p->ref, (jbyte*)p->ptr, JNI_ABORT);
+		} else {
+			LOG_FATAL("invalid array type");
+		}
+
+		(*env)->DeleteGlobalRef(env, p->ref);
+
+		pinned* o = p;
+		p = p->next;
+		free(o);
+	}
+	m->pinned = NULL;
+}
+
+
 static jfieldID find_field(JNIEnv *env, const char *class_name, const char *field_name, const char *field_type) {
 	jclass clazz = (*env)->FindClass(env, class_name);
 	if (clazz == NULL) {
@@ -107,6 +161,15 @@ static jfieldID find_field(JNIEnv *env, const char *class_name, const char *fiel
 		return NULL;
 	}
 	return id;
+}
+
+static jclass find_class(JNIEnv *env, const char *class_name) {
+	jclass clazz = (*env)->FindClass(env, class_name);
+	if (clazz == NULL) {
+		LOG_FATAL("cannot find %s", class_name);
+		return NULL;
+	}
+	return (*env)->NewGlobalRef(env, clazz);
 }
 
 void init_seq(void *javavm) {
@@ -128,6 +191,8 @@ void init_seq(void *javavm) {
 	receive_handle_id = find_field(env, "go/Seq$Receive", "handle", "I");
 	receive_code_id = find_field(env, "go/Seq$Receive", "code", "I");
 
+	jbytearray_clazz = find_class(env, "[B");
+
 	LOG_INFO("loaded go/Seq");
 
 	if (res == JNI_EDETACHED) {
@@ -148,6 +213,7 @@ JNIEXPORT void JNICALL
 Java_go_Seq_free(JNIEnv *env, jobject obj) {
 	mem *m = mem_get(env, obj);
 	if (m != NULL) {
+		unpin_arrays(env, m);
 		free((void*)m->buf);
 		free((void*)m);
 	}
@@ -276,17 +342,8 @@ Java_go_Seq_writeByteArray(JNIEnv *env, jobject obj, jbyteArray v) {
 		return;
 	}
 
-	jboolean isCopy;
-	jbyte* b = (*env)->GetByteArrayElements(env, v, &isCopy);
-	if (isCopy) {
-		// TODO: It's not clear how to handle if b is pointing to
-		// a copy that may become invalid with ReleaseByteArrayElements.
-		// Should we fall back to copy the byte array into the buffer?
-		LOG_FATAL("got a copied byte array (len=%d)", len);
-	}
-	// gross pointer-to-int64 conversion.
-	MEM_WRITE(int64_t) = (int64_t)((intptr_t)b);
-	(*env)->ReleaseByteArrayElements(env, v, (jbyte*)b, 0);
+	jbyte* b = pin_array(env, obj, v);
+	MEM_WRITE(int64_t) = (jlong)(uintptr_t)b;
 }
 
 JNIEXPORT void JNICALL
@@ -337,6 +394,7 @@ Java_go_Seq_send(JNIEnv *env, jclass clazz, jstring descriptor, jint code, jobje
 	desc.n = (*env)->GetStringUTFLength(env, descriptor);
 	Send(desc, (GoInt)code, src->buf, src->len, &dst->buf, &dst->len);
 	(*env)->ReleaseStringUTFChars(env, descriptor, desc.p);
+	unpin_arrays(env, src);  // assume 'src' is no longer needed.
 }
 
 JNIEXPORT void JNICALL
