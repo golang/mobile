@@ -34,6 +34,10 @@ To build, run:
 
 	docker run -v $GOPATH/src:/src mobile /bin/bash -c 'cd /src/your/project && ./make.bash'
 
+Note the use of -v option to mount $GOPATH/src to /src of the container.
+The above command will fail if the -v option is missing or the specified
+volume is not accessible from the container.
+
 When working with an all-Go application, this will produce a binary at
 `$GOPATH/src/your/project/bin/name-debug.apk`. You can use the adb tool to install
 and run this app. See all.bash for an example.
