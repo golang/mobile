@@ -59,6 +59,9 @@ RUN curl -L https://github.com/golang/go/archive/master.zip -o /tmp/go.zip && \
 	./all.bash && \
 	CC_FOR_TARGET=$NDK_ROOT/bin/arm-linux-androideabi-gcc GOOS=android GOARCH=arm GOARM=7 ./make.bash
 
+# Expect the GOPATH/src volume to be mounted.  (-v $GOPATH/src:/src)
+VOLUME ["/src"]
+
 # Generate a debug keystore to avoid it being generated on each `docker run`
 # and fail `adb install -r <apk>` with a conflicting certificate error.
 RUN keytool -genkeypair -alias androiddebugkey -keypass android -keystore ~/.android/debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 365
