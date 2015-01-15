@@ -11,8 +11,8 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"flag"
+	"fmt"
 	"go/ast"
 	"go/format"
 	"go/parser"
@@ -221,6 +221,7 @@ const preamble = `// Copyright 2014 The Go Authors.  All rights reserved.
 // Generated from gl.go using go generate. DO NOT EDIT.
 // See doc.go for details.
 
+// +build linux darwin
 // +build gldebug
 
 package gl

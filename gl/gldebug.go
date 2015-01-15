@@ -5,6 +5,7 @@
 // Generated from gl.go using go generate. DO NOT EDIT.
 // See doc.go for details.
 
+// +build linux darwin
 // +build gldebug
 
 package gl
