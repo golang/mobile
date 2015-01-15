@@ -1,4 +1,4 @@
-# Dockerfile to build an image with the local version of go.mobile.
+# Dockerfile to build an image with the local version of golang.org/x/mobile.
 #
 #  > docker build -t mobile $GOPATH/src/golang.org/x/mobile
 #  > docker run -it --rm -v $GOPATH/src:/src mobile
@@ -47,14 +47,27 @@ ENV PATH $PATH:$ANT_HOME/bin
 ENV PATH $PATH:$GRADLE_HOME/bin
 
 # Install Go.
+#   1) 1.4 for bootstrap.
+ENV GOROOT_BOOTSTRAP /go1.4
+RUN (curl -sSL https://golang.org/dl/go1.4.linux-amd64.tar.gz | tar -vxz -C /tmp) && \
+	mv /tmp/go $GOROOT_BOOTSTRAP
+
+
+#   2) Download and cross compile the Go on revision GOREV.
+#
+# GOVERSION string is the output of 'git log -n 1 --format="format: devel +%h %cd" HEAD'
+# like in go tool dist.
+# Revision picked on Jan 21, 2015.
+ENV GO_REV      34bc85f6f3b02ebcd490b40f4d32907ff2e69af3
+ENV GO_VERSION  devel +34bc85f Wed Jan 21 21:30:46 2015 +0000
+
 ENV GOROOT /go
 ENV GOPATH /
 ENV PATH $PATH:$GOROOT/bin
-RUN curl -L https://github.com/golang/go/archive/master.zip -o /tmp/go.zip && \
-	unzip /tmp/go.zip && \
-	rm /tmp/go.zip && \
-	mv /go-master $GOROOT && \
-	echo devel > $GOROOT/VERSION && \
+
+RUN mkdir -p $GOROOT && \
+	curl -sSL "https://go.googlesource.com/go/+archive/$GO_REV.tar.gz" | tar -vxz -C $GOROOT && \
+	echo $GO_VERSION > $GOROOT/VERSION && \
 	cd $GOROOT/src && \
 	./all.bash && \
 	CC_FOR_TARGET=$NDK_ROOT/bin/arm-linux-androideabi-gcc GOOS=android GOARCH=arm GOARM=7 ./make.bash
