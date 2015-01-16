@@ -32,7 +32,7 @@ the name of your app.
 
 To build, run:
 
-	docker run -v $GOPATH/src:/src mobile /bin/bash -c 'cd /src/your/project && ./make.bash'
+	docker run -v $GOPATH/src:/src golang/mobile /bin/bash -c 'cd /src/your/project && ./make.bash'
 
 Note the use of -v option to mount $GOPATH/src to /src of the container.
 The above command will fail if the -v option is missing or the specified
