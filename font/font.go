@@ -4,7 +4,6 @@
 
 // +build linux darwin
 
-// Package font provides platform independent access to system fonts.
 package font
 
 // Default returns the default system font.
