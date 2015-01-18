@@ -6,12 +6,34 @@
 
 package font
 
-import "io/ioutil"
+import (
+	"io/ioutil"
+	"os"
+)
+
+func readFont(fontname string) ([]byte, error) {
+	// Common places where fonts are located in linux distributions
+	var common_font_dirs []string = []string{
+		// Ubuntu
+		"/usr/share/fonts/truetype/droid/",
+		// Archlinux
+		"/usr/share/fonts/TTF/",
+	}
+	var err error
+	// Try in the different directories
+	for _, dir := range common_font_dirs {
+		path := dir + fontname
+		if _, err = os.Stat(path); err == nil {
+			return ioutil.ReadFile(path)
+		}
+	}
+	return []byte{}, err
+}
 
 func buildDefault() ([]byte, error) {
-	return ioutil.ReadFile("/usr/share/fonts/truetype/droid/DroidSans.ttf")
+	return readFont("DroidSans.ttf")
 }
 
 func buildMonospace() ([]byte, error) {
-	return ioutil.ReadFile("/usr/share/fonts/truetype/droid/DroidSansMono.ttf")
+	return readFont("DroidSansMono.ttf")
 }
