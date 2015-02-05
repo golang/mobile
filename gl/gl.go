@@ -597,7 +597,7 @@ func GetProgramInfoLog(p Program) string {
 	return C.GoString((*C.char)(buf))
 }
 
-// GetShaderi returns a parameter value for a render buffer.
+// GetRenderbufferParameteri returns a parameter value for a render buffer.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetRenderbufferParameteriv.xhtml
 func GetRenderbufferParameteri(target, pname Enum) int {
@@ -1186,7 +1186,7 @@ func VertexAttrib4fv(dst Attrib, src []float32) {
 	C.glVertexAttrib4fv(dst.c(), (*C.GLfloat)(&src[0]))
 }
 
-// VertexAttribPointer uses a bound bufer to define vertex attribute data.
+// VertexAttribPointer uses a bound buffer to define vertex attribute data.
 //
 // Direct use of VertexAttribPointer to load data into OpenGL is not
 // supported via the Go bindings. Instead, use BindBuffer with an
