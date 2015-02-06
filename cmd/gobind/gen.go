@@ -5,8 +5,12 @@
 package main
 
 import (
+	"fmt"
 	"io"
+	"os"
 	"path/filepath"
+	"unicode"
+	"unicode/utf8"
 
 	"go/ast"
 	"go/build"
@@ -16,9 +20,10 @@ import (
 
 	"golang.org/x/mobile/bind"
 	"golang.org/x/tools/go/loader"
+	"golang.org/x/tools/go/types"
 )
 
-func genPkg(w io.Writer, pkg *build.Package) {
+func genPkg(pkg *build.Package) {
 	if len(pkg.CgoFiles) > 0 {
 		errorf("gobind: cannot use cgo-dependent package as service definition: %s", pkg.CgoFiles[0])
 		return
@@ -44,6 +49,12 @@ func genPkg(w io.Writer, pkg *build.Package) {
 	}
 	p := program.Created[0].Pkg
 
+	w, closer, err := writer(*lang, p)
+	if err != nil {
+		errorf("%v", err)
+		return
+	}
+
 	switch *lang {
 	case "java":
 		err = bind.GenJava(w, fset, p)
@@ -61,6 +72,9 @@ func genPkg(w io.Writer, pkg *build.Package) {
 		} else {
 			errorf("%v", err)
 		}
+	}
+	if err := closer(); err != nil {
+		errorf("error in closing output: %v", err)
 	}
 }
 
@@ -88,4 +102,36 @@ func parseFiles(dir string, filenames []string) []*ast.File {
 		return nil
 	}
 	return files
+}
+
+func writer(lang string, pkg *types.Package) (w io.Writer, closer func() error, err error) {
+	if *outdir == "" {
+		return os.Stdout, func() error { return nil }, nil
+	}
+
+	// TODO(hakim): support output of multiple files e.g. .h/.m files for objc.
+
+	if err := os.MkdirAll(*outdir, 0755); err != nil {
+		return nil, nil, fmt.Errorf("invalid output dir: %v\n", err)
+	}
+	fname := defaultFileName(lang, pkg)
+	f, err := os.Create(filepath.Join(*outdir, fname))
+	if err != nil {
+		return nil, nil, fmt.Errorf("invalid output dir: %v\n", err)
+	}
+	return f, f.Close, nil
+}
+
+func defaultFileName(lang string, pkg *types.Package) string {
+	switch lang {
+	case "java":
+		firstRune, size := utf8.DecodeRuneInString(pkg.Name())
+		className := string(unicode.ToUpper(firstRune)) + pkg.Name()[size:]
+		return className + ".java"
+	case "go":
+		return "go_" + pkg.Name() + ".go"
+	}
+	errorf("unknown target language: %q", lang)
+	os.Exit(exitStatus)
+	return ""
 }
