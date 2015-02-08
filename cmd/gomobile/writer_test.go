@@ -29,12 +29,14 @@ func TestWriter(t *testing.T) {
 		t.Fatal(err)
 	}
 	f.Close()
+	defer os.Remove(f.Name())
 	apkPath := f.Name() + ".apk"
 
 	f, err = os.Create(apkPath)
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer os.Remove(apkPath)
 
 	apkw := NewWriter(f, privKey)
 
