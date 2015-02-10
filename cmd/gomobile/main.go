@@ -87,9 +87,10 @@ func help(args []string) {
 }
 
 var commands = []*command{
-	// TODO(crawshaw): cmdInstall, cmdRun
+	// TODO(crawshaw): cmdRun
 	cmdBuild,
 	cmdInit,
+	cmdInstall,
 }
 
 type command struct {
