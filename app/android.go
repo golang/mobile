@@ -26,13 +26,11 @@ pthread_cond_t go_started_cond;
 pthread_mutex_t go_started_mu;
 int go_started;
 
-// current_vm is stored to initialize other cgo packages.
+// native_activity is stored to initialize other cgo packages.
 //
 // As all the Go packages in a program form a single shared library,
-// there can only be one JNI_OnLoad function for iniitialization. In
-// OpenJDK there is JNI_GetCreatedJavaVMs, but this is not available
-// on android.
-JavaVM* current_vm;
+// there can only be one ANativeActivity_onCreate for iniitialization.
+ANativeActivity* native_activity;
 
 // build_auxv builds an ELF auxiliary vector for initializing the Go
 // runtime. While there does not appear to be any spec for this
@@ -166,9 +164,13 @@ func onConfigurationChanged(activity *C.ANativeActivity) {
 func onLowMemory(activity *C.ANativeActivity) {
 }
 
-// JavaInit is an initialization function registered by the package
-// golang.org/x/mobile/bind/java. It gives the Java language
-// bindings access to the JNI *JavaVM object.
+var androidInit []func(*byte)
+
+func RegisterAndroidInit(fn func(ptrANativeActivity *byte)) {
+	androidInit = append(androidInit, fn)
+}
+
+// JavaInit is deprecated. Use RegisterAndroidInit.
 var JavaInit func(javaVM uintptr)
 
 var (
@@ -237,8 +239,12 @@ func run(cb Callbacks) {
 	C.free(unsafe.Pointer(ctag))
 	C.free(unsafe.Pointer(cstr))
 
+	for _, ainit := range androidInit {
+		ainit((*byte)(unsafe.Pointer(C.native_activity)))
+	}
 	if JavaInit != nil {
-		JavaInit(uintptr(unsafe.Pointer(C.current_vm)))
+		vm := (*C.native_activity).vm
+		JavaInit(uintptr(unsafe.Pointer(vm)))
 	}
 
 	// Inform Java that the program is initialized.
