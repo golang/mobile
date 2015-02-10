@@ -79,9 +79,14 @@ func runInit(cmd *command) error {
 		return err
 	}
 
+	url := "http://dl.google.com/android/ndk/" + ndkName
+
+	if buildV {
+		fmt.Fprintf(os.Stderr, "fetching %s\n", url)
+	}
+
 	// TODO(crawshaw): The arm compiler toolchain compresses to 33 MB, less than a tenth of the NDK. Provide an alternative binary download.
-	// TODO(crawshaw): extra logging with -v
-	resp, err := http.Get("http://dl.google.com/android/ndk/" + ndkName)
+	resp, err := http.Get(url)
 	if err != nil {
 		return err
 	}
@@ -102,7 +107,9 @@ func runInit(cmd *command) error {
 	inflate.Dir = tmpdir
 	out, err := inflate.CombinedOutput()
 	if err != nil {
-		os.Stderr.Write(out) // TODO(crawshaw): only in verbose mode?
+		if buildV {
+			os.Stderr.Write(out)
+		}
 		return err
 	}
 	srcSysroot := filepath.Join(tmpdir, "android-ndk-r10d", "platforms", "android-15", "arch-arm", "usr")
@@ -145,8 +152,11 @@ func runInit(cmd *command) error {
 	if v := goEnv("GOROOT_BOOTSTRAP"); v != "" {
 		make.Env = append(make.Env, `GOROOT_BOOTSTRAP=`+v)
 	}
-	make.Stdout = os.Stdout
-	make.Stderr = os.Stderr
+	if buildV {
+		fmt.Fprintf(os.Stderr, "building android/arm cross compiler\n")
+		make.Stdout = os.Stdout
+		make.Stderr = os.Stderr
+	}
 	if err := make.Run(); err != nil {
 		return err
 	}

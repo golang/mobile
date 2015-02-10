@@ -9,7 +9,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
-	"flag"
 	"fmt"
 	"go/build"
 	"io"
@@ -42,14 +41,12 @@ are copied into the APK file.
 
 These build flags are shared by the build, install, and test commands.
 For documentation, see 'go help build':
-TODO:
 	-a
 	-tags 'tag list'
 `,
 }
 
 // TODO: -n
-// TODO: -v
 // TODO: -x
 // TODO: -mobile
 
@@ -58,12 +55,13 @@ func runBuild(cmd *command) error {
 	if err != nil {
 		panic(err)
 	}
+	args := cmd.flag.Args()
 
-	switch len(flag.Args()) {
-	case 1:
+	switch len(args) {
+	case 0:
 		pkg, err = ctx.ImportDir(cwd, build.ImportComment)
-	case 2:
-		pkg, err = ctx.Import(flag.Args()[1], cwd, build.ImportComment)
+	case 1:
+		pkg, err = ctx.Import(args[0], cwd, build.ImportComment)
 	default:
 		cmd.usage()
 		os.Exit(1)
@@ -133,6 +131,9 @@ func runBuild(cmd *command) error {
 		`-i`, // TODO(crawshaw): control with a flag
 		`-ldflags="-shared"`,
 		`-o`, libPath)
+	if buildV {
+		gocmd.Args = append(gocmd.Args, "-v")
+	}
 	gocmd.Stdout = os.Stdout
 	gocmd.Stderr = os.Stderr
 	gocmd.Env = []string{
@@ -226,6 +227,29 @@ func runBuild(cmd *command) error {
 	// TODO: add gdbserver to apk?
 
 	return apkw.Close()
+}
+
+// "Build flags", used by multiple commands.
+var (
+	buildA bool // -a
+	buildV bool // -v
+)
+
+func addBuildFlags(cmd *command) {
+	cmd.flag.BoolVar(&buildA, "a", false, "")
+	cmd.flag.Var((*stringsFlag)(&ctx.BuildTags), "tags", "")
+}
+
+func addBuildFlagsNXV(cmd *command) {
+	// TODO: -n, -x
+	cmd.flag.BoolVar(&buildV, "v", false, "")
+}
+
+func init() {
+	addBuildFlags(cmdBuild)
+	// TODO: addBuildFlags(cmdInstall)
+	addBuildFlagsNXV(cmdBuild)
+	addBuildFlagsNXV(cmdInit)
 }
 
 // A random uninteresting private key.
