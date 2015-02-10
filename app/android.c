@@ -19,11 +19,13 @@
 extern pthread_cond_t go_started_cond;
 extern pthread_mutex_t go_started_mu;
 extern int go_started;
-extern ANativeActivity* native_activity;
+extern JavaVM* current_vm;
 
 static int (*_rt0_arm_linux1)(int argc, char** argv);
 
 jint JNI_OnLoad(JavaVM* vm, void* reserved) {
+	current_vm = vm;
+
 	JNIEnv* env;
 	if ((*vm)->GetEnv(vm, (void**)&env, JNI_VERSION_1_6) != JNI_OK) {
 		return -1;
@@ -90,7 +92,7 @@ void InitGoRuntime() {
 
 // Runtime entry point when using NativeActivity.
 void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_t savedStateSize) {
-	native_activity = activity;
+	current_vm = activity->vm;
 
 	InitGoRuntime();
 
