@@ -50,6 +50,8 @@ func main() {
 
 	for _, cmd := range commands {
 		if cmd.Name == args[0] {
+			cmd.flag.Usage = cmd.usage
+			cmd.flag.Parse(args[1:])
 			if err := cmd.run(cmd); err != nil {
 				msg := err.Error()
 				if msg != "" {
@@ -95,6 +97,7 @@ var commands = []*command{
 
 type command struct {
 	run   func(*command) error
+	flag  flag.FlagSet
 	Name  string
 	Usage string
 	Short string
