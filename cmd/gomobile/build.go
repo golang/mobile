@@ -118,9 +118,15 @@ func runBuild(cmd *command) error {
 	libPath := filepath.Join(workPath, "lib"+libName+".so")
 
 	gopath := goEnv("GOPATH")
-	ccpath := filepath.Join(gopath, filepath.FromSlash("pkg/gomobile/android-"+ndkVersion+"/arm/bin"))
+	var ccpath string
+	for _, p := range filepath.SplitList(gopath) {
+		ccpath = filepath.Join(p, filepath.FromSlash("pkg/gomobile/android-"+ndkVersion+"/arm/bin"))
+		if _, err = os.Stat(ccpath); err == nil {
+			break
+		}
+	}
 
-	if _, err := os.Stat(ccpath); err != nil {
+	if err != nil || ccpath == "" {
 		// TODO(crawshaw): call gomobile init
 		return fmt.Errorf("android %s toolchain not installed in $GOPATH/pkg/gomobile, run gomobile init", ndkVersion)
 	}
