@@ -154,6 +154,9 @@ func runBuild(cmd *command) error {
 	if buildI {
 		gocmd.Args = append(gocmd.Args, "-i")
 	}
+
+	gocmd.Args = append(gocmd.Args, pkg.ImportPath)
+
 	gocmd.Stdout = os.Stdout
 	gocmd.Stderr = os.Stderr
 	gocmd.Env = []string{
