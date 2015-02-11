@@ -53,11 +53,15 @@ func runInit(cmd *command) error {
 		arch = "x86_64"
 	}
 
-	dst := filepath.Join(goEnv("GOPATH"), filepath.FromSlash("pkg/gomobile/android-"+ndkVersion+"/arm"))
+	gopaths := filepath.SplitList(goEnv("GOPATH"))
+	if len(gopaths) == 0 {
+		return fmt.Errorf("GOPATH is not set")
+	}
+
+	dst := filepath.Join(gopaths[0], filepath.FromSlash("pkg/gomobile/android-"+ndkVersion+"/arm"))
 	if err := os.RemoveAll(dst); err != nil && !os.IsExist(err) {
 		return err
 	}
-
 	if err := os.MkdirAll(filepath.Join(dst, "sysroot", "usr"), 0755); err != nil {
 		return err
 	}
