@@ -137,58 +137,9 @@ func runBuild(cmd *command) error {
 	}
 	libPath := filepath.Join(tmpdir, "lib"+libName+".so")
 
-	gopath := goEnv("GOPATH")
-	for _, p := range filepath.SplitList(gopath) {
-		ndkccpath = filepath.Join(p, filepath.FromSlash("pkg/gomobile/android-"+ndkVersion))
-		if _, err = os.Stat(filepath.Join(ndkccpath, "arm", "bin")); err == nil {
-			break
-		}
+	if err := gobuild(pkg.ImportPath, libPath); err != nil {
+		return err
 	}
-	if err != nil || ndkccpath == "" {
-		// TODO(crawshaw): call gomobile init
-		return fmt.Errorf("android toolchain not installed in $GOPATH/pkg/gomobile, run:\n\tgomobile init")
-	}
-	if buildX {
-		fmt.Fprintln(os.Stderr, "NDKCCPATH="+ndkccpath)
-	}
-
-	gocmd := exec.Command(
-		`go`,
-		`build`,
-		`-ldflags="-shared"`,
-		`-tags=`+strconv.Quote(strings.Join(ctx.BuildTags, ",")),
-		`-o`, libPath)
-	if buildV {
-		gocmd.Args = append(gocmd.Args, "-v")
-	}
-	if buildI {
-		gocmd.Args = append(gocmd.Args, "-i")
-	}
-
-	gocmd.Args = append(gocmd.Args, pkg.ImportPath)
-
-	gocmd.Stdout = os.Stdout
-	gocmd.Stderr = os.Stderr
-	gocmd.Env = []string{
-		`GOOS=android`,
-		`GOARCH=arm`,
-		`GOARM=7`,
-		`CGO_ENABLED=1`,
-		`CC=` + filepath.Join(ndkccpath, "arm", "bin", "arm-linux-androideabi-gcc"),
-		`CXX=` + filepath.Join(ndkccpath, "arm", "bin", "arm-linux-androideabi-g++"),
-		`GOGCCFLAGS="-fPIC -marm -pthread -fmessage-length=0"`,
-		`GOROOT=` + goEnv("GOROOT"),
-		`GOPATH=` + gopath,
-	}
-	if buildX {
-		printcmd("%s", strings.Join(gocmd.Env, " ")+" "+strings.Join(gocmd.Args, " "))
-	}
-	if !buildN {
-		if err := gocmd.Run(); err != nil {
-			return err
-		}
-	}
-
 	block, _ := pem.Decode([]byte(debugCert))
 	if block == nil {
 		return errors.New("no debug cert")
@@ -322,6 +273,62 @@ func addBuildFlagsNVX(cmd *command) {
 	cmd.flag.BoolVar(&buildX, "x", false, "")
 }
 
+func gobuild(src, libPath string) error {
+	var err error
+	gopath := goEnv("GOPATH")
+	for _, p := range filepath.SplitList(gopath) {
+		ndkccpath = filepath.Join(p, filepath.FromSlash("pkg/gomobile/android-"+ndkVersion))
+		if _, err = os.Stat(filepath.Join(ndkccpath, "arm", "bin")); err == nil {
+			break
+		}
+	}
+	if err != nil || ndkccpath == "" {
+		// TODO(crawshaw): call gomobile init
+		return fmt.Errorf("android toolchain not installed in $GOPATH/pkg/gomobile, run:\n\tgomobile init")
+	}
+	if buildX {
+		fmt.Fprintln(os.Stderr, "NDKCCPATH="+ndkccpath)
+	}
+
+	gocmd := exec.Command(
+		`go`,
+		`build`,
+		`-ldflags="-shared"`,
+		`-tags=`+strconv.Quote(strings.Join(ctx.BuildTags, ",")),
+		`-o`, libPath)
+	if buildV {
+		gocmd.Args = append(gocmd.Args, "-v")
+	}
+	if buildI {
+		gocmd.Args = append(gocmd.Args, "-i")
+	}
+
+	gocmd.Args = append(gocmd.Args, src)
+
+	gocmd.Stdout = os.Stdout
+	gocmd.Stderr = os.Stderr
+	gocmd.Env = []string{
+		`GOOS=android`,
+		`GOARCH=arm`,
+		`GOARM=7`,
+		`CGO_ENABLED=1`,
+		`CC=` + filepath.Join(ndkccpath, "arm", "bin", "arm-linux-androideabi-gcc"),
+		`CXX=` + filepath.Join(ndkccpath, "arm", "bin", "arm-linux-androideabi-g++"),
+		`GOGCCFLAGS="-fPIC -marm -pthread -fmessage-length=0"`,
+		`GOROOT=` + goEnv("GOROOT"),
+		`GOPATH=` + gopath,
+	}
+	if buildX {
+		printcmd("%s", strings.Join(gocmd.Env, " ")+" "+strings.Join(gocmd.Args, " "))
+	}
+	if !buildN {
+		if err := gocmd.Run(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func init() {
 	buildO = cmdBuild.flag.String("o", "", "output file")
 	addBuildFlags(cmdBuild)
@@ -331,6 +338,9 @@ func init() {
 	addBuildFlagsNVX(cmdInstall)
 
 	addBuildFlagsNVX(cmdInit)
+
+	addBuildFlags(cmdBind)
+	addBuildFlagsNVX(cmdBind)
 }
 
 // A random uninteresting private key.

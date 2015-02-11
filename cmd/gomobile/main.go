@@ -90,6 +90,7 @@ func help(args []string) {
 
 var commands = []*command{
 	// TODO(crawshaw): cmdRun
+	cmdBind,
 	cmdBuild,
 	cmdInit,
 	cmdInstall,
