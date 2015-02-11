@@ -35,7 +35,9 @@ func runInstall(cmd *command) error {
 		`-r`,
 		filepath.Base(pkg.Dir)+`.apk`,
 	)
-	install.Stdout = os.Stdout
-	install.Stderr = os.Stderr
+	if buildV {
+		install.Stdout = os.Stdout
+		install.Stderr = os.Stderr
+	}
 	return install.Run()
 }

@@ -17,6 +17,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -39,9 +40,16 @@ added to the APK file. Otherwise, a default manifest is generated.
 If the package directory contains an assets subdirectory, its contents
 are copied into the APK file.
 
+The -o flag specifies the output file name. If not specified, the
+output file name depends on the package built. The output file must end
+in '.apk'.
+
+The -v flag provides verbose output, including the list of packages built.
+
 These build flags are shared by the build, install, and test commands.
 For documentation, see 'go help build':
 	-a
+	-i
 	-tags 'tag list'
 `,
 }
@@ -98,6 +106,7 @@ func runBuild(cmd *command) error {
 			return err
 		}
 		buf := new(bytes.Buffer)
+		buf.WriteString(`<?xml version="1.0" encoding="utf-8"?>`)
 		err := manifestTmpl.Execute(buf, manifestTmplData{
 			// TODO(crawshaw): a better package path.
 			JavaPkgPath: "org.golang.todo." + pkg.Name,
@@ -107,8 +116,10 @@ func runBuild(cmd *command) error {
 		if err != nil {
 			return err
 		}
-		// TODO(crawshaw): print generated manifest with -v.
 		manifestData = buf.Bytes()
+		if buildV {
+			fmt.Fprintf(os.Stderr, "generated AndroidManifest.xml:\n%s\n", manifestData)
+		}
 	} else {
 		libName, err = manifestLibName(manifestData)
 		if err != nil {
@@ -134,11 +145,14 @@ func runBuild(cmd *command) error {
 	gocmd := exec.Command(
 		`go`,
 		`build`,
-		`-i`, // TODO(crawshaw): control with a flag
 		`-ldflags="-shared"`,
+		`-tags=`+strconv.Quote(strings.Join(ctx.BuildTags, ",")),
 		`-o`, libPath)
 	if buildV {
 		gocmd.Args = append(gocmd.Args, "-v")
+	}
+	if buildI {
+		gocmd.Args = append(gocmd.Args, "-i")
 	}
 	gocmd.Stdout = os.Stdout
 	gocmd.Stderr = os.Stderr
@@ -166,8 +180,13 @@ func runBuild(cmd *command) error {
 		return err
 	}
 
-	// TODO: -o
-	out, err := os.Create(filepath.Base(pkg.Dir) + ".apk")
+	if *buildO == "" {
+		*buildO = filepath.Base(pkg.Dir) + ".apk"
+	}
+	if !strings.HasSuffix(*buildO, ".apk") {
+		return fmt.Errorf("output file name %q does not end in '.apk'", *buildO)
+	}
+	out, err := os.Create(*buildO)
 	if err != nil {
 		return err
 	}
@@ -237,12 +256,15 @@ func runBuild(cmd *command) error {
 
 // "Build flags", used by multiple commands.
 var (
-	buildA bool // -a
-	buildV bool // -v
+	buildA bool    // -a
+	buildV bool    // -v
+	buildI bool    // -i
+	buildO *string // -o
 )
 
 func addBuildFlags(cmd *command) {
 	cmd.flag.BoolVar(&buildA, "a", false, "")
+	cmd.flag.BoolVar(&buildI, "i", false, "")
 	cmd.flag.Var((*stringsFlag)(&ctx.BuildTags), "tags", "")
 }
 
@@ -252,9 +274,13 @@ func addBuildFlagsNXV(cmd *command) {
 }
 
 func init() {
+	buildO = cmdBuild.flag.String("o", "", "output file")
 	addBuildFlags(cmdBuild)
-	// TODO: addBuildFlags(cmdInstall)
 	addBuildFlagsNXV(cmdBuild)
+
+	addBuildFlags(cmdInstall)
+	addBuildFlagsNXV(cmdInstall)
+
 	addBuildFlagsNXV(cmdInit)
 }
 

@@ -55,7 +55,6 @@ type manifestTmplData struct {
 }
 
 var manifestTmpl = template.Must(template.New("manifest").Parse(`
-<?xml version="1.0" encoding="utf-8"?>
 <manifest
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	package="{{.JavaPkgPath}}"
@@ -74,5 +73,4 @@ var manifestTmpl = template.Must(template.New("manifest").Parse(`
 		</intent-filter>
 	</activity>
 	</application>
-</manifest> 
-`))
+</manifest>`))
