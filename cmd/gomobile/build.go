@@ -23,6 +23,8 @@ import (
 
 var ctx = build.Default
 var pkg *build.Package
+var ndkccpath string
+var tmpdir string
 
 var cmdBuild = &command{
 	run:   runBuild,
@@ -50,12 +52,12 @@ These build flags are shared by the build, install, and test commands.
 For documentation, see 'go help build':
 	-a
 	-i
+	-n
+	-x
 	-tags 'tag list'
 `,
 }
 
-// TODO: -n
-// TODO: -x
 // TODO: -mobile
 
 func runBuild(cmd *command) error {
@@ -93,11 +95,18 @@ func runBuild(cmd *command) error {
 		return fmt.Errorf(`%s does not import "golang.org/x/mobile/app"`, pkg.ImportPath)
 	}
 
-	workPath, err := ioutil.TempDir("", "gobuildapk-work-")
-	if err != nil {
-		return err
+	if buildN {
+		tmpdir = "$WORK"
+	} else {
+		tmpdir, err = ioutil.TempDir("", "gobuildapk-work-")
+		if err != nil {
+			return err
+		}
 	}
-	defer os.RemoveAll(workPath)
+	defer removeAll(tmpdir)
+	if buildX {
+		fmt.Fprintln(os.Stderr, "WORK="+tmpdir)
+	}
 
 	libName := path.Base(pkg.ImportPath)
 	manifestData, err := ioutil.ReadFile(filepath.Join(pkg.Dir, "AndroidManifest.xml"))
@@ -126,20 +135,21 @@ func runBuild(cmd *command) error {
 			return err
 		}
 	}
-	libPath := filepath.Join(workPath, "lib"+libName+".so")
+	libPath := filepath.Join(tmpdir, "lib"+libName+".so")
 
 	gopath := goEnv("GOPATH")
-	var ccpath string
 	for _, p := range filepath.SplitList(gopath) {
-		ccpath = filepath.Join(p, filepath.FromSlash("pkg/gomobile/android-"+ndkVersion+"/arm/bin"))
-		if _, err = os.Stat(ccpath); err == nil {
+		ndkccpath = filepath.Join(p, filepath.FromSlash("pkg/gomobile/android-"+ndkVersion))
+		if _, err = os.Stat(filepath.Join(ndkccpath, "arm", "bin")); err == nil {
 			break
 		}
 	}
-
-	if err != nil || ccpath == "" {
+	if err != nil || ndkccpath == "" {
 		// TODO(crawshaw): call gomobile init
-		return fmt.Errorf("android %s toolchain not installed in $GOPATH/pkg/gomobile, run gomobile init", ndkVersion)
+		return fmt.Errorf("android toolchain not installed in $GOPATH/pkg/gomobile, run:\n\tgomobile init")
+	}
+	if buildX {
+		fmt.Fprintln(os.Stderr, "NDKCCPATH="+ndkccpath)
 	}
 
 	gocmd := exec.Command(
@@ -164,14 +174,19 @@ func runBuild(cmd *command) error {
 		`GOARCH=arm`,
 		`GOARM=7`,
 		`CGO_ENABLED=1`,
-		`CC=` + filepath.Join(ccpath, "arm-linux-androideabi-gcc"),
-		`CXX=` + filepath.Join(ccpath, "arm-linux-androideabi-g++"),
+		`CC=` + filepath.Join(ndkccpath, "arm", "bin", "arm-linux-androideabi-gcc"),
+		`CXX=` + filepath.Join(ndkccpath, "arm", "bin", "arm-linux-androideabi-g++"),
 		`GOGCCFLAGS="-fPIC -marm -pthread -fmessage-length=0"`,
 		`GOROOT=` + goEnv("GOROOT"),
 		`GOPATH=` + gopath,
 	}
-	if err := gocmd.Run(); err != nil {
-		return err
+	if buildX {
+		printcmd("%s", strings.Join(gocmd.Env, " ")+" "+strings.Join(gocmd.Args, " "))
+	}
+	if !buildN {
+		if err := gocmd.Run(); err != nil {
+			return err
+		}
 	}
 
 	block, _ := pem.Decode([]byte(debugCert))
@@ -194,9 +209,21 @@ func runBuild(cmd *command) error {
 		return err
 	}
 
-	apkw := NewWriter(out, privKey)
+	var apkw *Writer
+	if !buildN {
+		apkw = NewWriter(out, privKey)
+	}
+	apkwcreate := func(name string) (io.Writer, error) {
+		if buildV {
+			fmt.Fprintf(os.Stderr, "apk: %s\n", name)
+		}
+		if buildN {
+			return ioutil.Discard, nil
+		}
+		return apkw.Create(name)
+	}
 
-	w, err := apkw.Create("AndroidManifest.xml")
+	w, err := apkwcreate("AndroidManifest.xml")
 	if err != nil {
 		return err
 	}
@@ -204,16 +231,18 @@ func runBuild(cmd *command) error {
 		return err
 	}
 
-	r, err := os.Open(libPath)
+	w, err = apkwcreate("lib/armeabi/lib" + libName + ".so")
 	if err != nil {
 		return err
 	}
-	w, err = apkw.Create("lib/armeabi/lib" + libName + ".so")
-	if err != nil {
-		return err
-	}
-	if _, err := io.Copy(w, r); err != nil {
-		return err
+	if !buildN {
+		r, err := os.Open(libPath)
+		if err != nil {
+			return err
+		}
+		if _, err := io.Copy(w, r); err != nil {
+			return err
+		}
 	}
 
 	// Add any assets.
@@ -238,7 +267,7 @@ func runBuild(cmd *command) error {
 				return nil
 			}
 			name := "assets/" + path[len(assetsDir)+1:]
-			w, err := apkw.Create(name)
+			w, err := apkwcreate(name)
 			if err != nil {
 				return err
 			}
@@ -254,14 +283,30 @@ func runBuild(cmd *command) error {
 
 	// TODO: add gdbserver to apk?
 
+	if buildN {
+		return nil
+	}
 	return apkw.Close()
+}
+
+func printcmd(format string, args ...interface{}) {
+	cmd := fmt.Sprintf(format+"\n", args...)
+	if tmpdir != "" {
+		cmd = strings.Replace(cmd, tmpdir, "$WORK", -1)
+	}
+	if ndkccpath != "" {
+		cmd = strings.Replace(cmd, ndkccpath, "$NDKCCPATH", -1)
+	}
+	fmt.Fprint(os.Stderr, cmd)
 }
 
 // "Build flags", used by multiple commands.
 var (
 	buildA bool    // -a
-	buildV bool    // -v
 	buildI bool    // -i
+	buildN bool    // -n
+	buildV bool    // -v
+	buildX bool    // -x
 	buildO *string // -o
 )
 
@@ -271,20 +316,21 @@ func addBuildFlags(cmd *command) {
 	cmd.flag.Var((*stringsFlag)(&ctx.BuildTags), "tags", "")
 }
 
-func addBuildFlagsNXV(cmd *command) {
-	// TODO: -n, -x
+func addBuildFlagsNVX(cmd *command) {
+	cmd.flag.BoolVar(&buildN, "n", false, "")
 	cmd.flag.BoolVar(&buildV, "v", false, "")
+	cmd.flag.BoolVar(&buildX, "x", false, "")
 }
 
 func init() {
 	buildO = cmdBuild.flag.String("o", "", "output file")
 	addBuildFlags(cmdBuild)
-	addBuildFlagsNXV(cmdBuild)
+	addBuildFlagsNVX(cmdBuild)
 
 	addBuildFlags(cmdInstall)
-	addBuildFlagsNXV(cmdInstall)
+	addBuildFlagsNVX(cmdInstall)
 
-	addBuildFlagsNXV(cmdInit)
+	addBuildFlagsNVX(cmdInit)
 }
 
 // A random uninteresting private key.

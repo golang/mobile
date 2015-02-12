@@ -57,20 +57,33 @@ func runInit(cmd *command) error {
 	if len(gopaths) == 0 {
 		return fmt.Errorf("GOPATH is not set")
 	}
-
-	dst := filepath.Join(gopaths[0], filepath.FromSlash("pkg/gomobile/android-"+ndkVersion+"/arm"))
-	if err := os.RemoveAll(dst); err != nil && !os.IsExist(err) {
-		return err
-	}
-	if err := os.MkdirAll(filepath.Join(dst, "sysroot", "usr"), 0755); err != nil {
-		return err
+	ndkccpath = filepath.Join(gopaths[0], filepath.FromSlash("pkg/gomobile/android-"+ndkVersion))
+	if buildX {
+		fmt.Fprintln(os.Stderr, "NDKCCPATH="+ndkccpath)
 	}
 
-	tmpdir, err := ioutil.TempDir(dst, "gomobile-init-")
-	if err != nil {
+	if err := removeAll(ndkccpath); err != nil && !os.IsExist(err) {
 		return err
 	}
-	defer os.RemoveAll(tmpdir)
+	dst := filepath.Join(ndkccpath, "arm")
+	dstSysroot := filepath.Join(dst, "sysroot", "usr")
+	if err := mkdir(dstSysroot); err != nil {
+		return err
+	}
+
+	if buildN {
+		tmpdir = filepath.Join(ndkccpath, "work")
+	} else {
+		var err error
+		tmpdir, err = ioutil.TempDir(ndkccpath, "gomobile-init-")
+		if err != nil {
+			return err
+		}
+	}
+	if buildX {
+		fmt.Fprintln(os.Stderr, "WORK="+tmpdir)
+	}
+	defer removeAll(tmpdir)
 
 	ndkName := "android-" + ndkVersion + "-" + runtime.GOOS + "-" + arch + "."
 	if runtime.GOOS == "windows" {
@@ -78,46 +91,27 @@ func runInit(cmd *command) error {
 	} else {
 		ndkName += "bin"
 	}
-	f, err := os.OpenFile(filepath.Join(tmpdir, ndkName), os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0755)
-	if err != nil {
-		return err
-	}
 
 	url := "http://dl.google.com/android/ndk/" + ndkName
-
-	if buildV {
-		fmt.Fprintf(os.Stderr, "fetching %s\n", url)
-	}
-
-	// TODO(crawshaw): The arm compiler toolchain compresses to 33 MB, less than a tenth of the NDK. Provide an alternative binary download.
-	resp, err := http.Get(url)
-	if err != nil {
+	if err := fetch(filepath.Join(tmpdir, ndkName), url); err != nil {
 		return err
-	}
-	_, err = io.Copy(f, resp.Body)
-	err2 := resp.Body.Close()
-	err3 := f.Close()
-	if err != nil {
-		return err
-	}
-	if err2 != nil {
-		return err2
-	}
-	if err3 != nil {
-		return err3
 	}
 
 	inflate := exec.Command(filepath.Join(tmpdir, ndkName))
 	inflate.Dir = tmpdir
-	out, err := inflate.CombinedOutput()
-	if err != nil {
-		if buildV {
-			os.Stderr.Write(out)
+	if buildX {
+		printcmd("%s", inflate.Args[0])
+	}
+	if !buildN {
+		out, err := inflate.CombinedOutput()
+		if err != nil {
+			if buildV {
+				os.Stderr.Write(out)
+			}
+			return err
 		}
-		return err
 	}
 	srcSysroot := filepath.Join(tmpdir, "android-ndk-r10d", "platforms", "android-15", "arch-arm", "usr")
-	dstSysroot := filepath.Join(dst, "sysroot", "usr")
 	if err := move(dstSysroot, srcSysroot, "include", "lib"); err != nil {
 		return err
 	}
@@ -128,11 +122,11 @@ func runInit(cmd *command) error {
 	}
 
 	linkpath := filepath.Join(dst, "arm-linux-androideabi", "bin")
-	if err := os.MkdirAll(linkpath, 0755); err != nil {
+	if err := mkdir(linkpath); err != nil {
 		return err
 	}
 	for _, name := range []string{"ld", "ld.gold", "as", "gcc", "g++"} {
-		if err := os.Symlink(filepath.Join(dst, "bin", "arm-linux-androideabi-"+name), filepath.Join(linkpath, name)); err != nil {
+		if err := symlink(filepath.Join(dst, "bin", "arm-linux-androideabi-"+name), filepath.Join(linkpath, name)); err != nil {
 			return err
 		}
 	}
@@ -161,20 +155,53 @@ func runInit(cmd *command) error {
 		make.Stdout = os.Stdout
 		make.Stderr = os.Stderr
 	}
+	if buildX {
+		printcmd("%s", strings.Join(make.Env, " ")+" "+strings.Join(make.Args, " "))
+	}
+	if buildN {
+		return nil
+	}
 	if err := make.Run(); err != nil {
 		return err
 	}
-
 	return nil
 }
 
 func move(dst, src string, names ...string) error {
 	for _, name := range names {
-		if err := os.Rename(filepath.Join(src, name), filepath.Join(dst, name)); err != nil {
+		srcf := filepath.Join(src, name)
+		dstf := filepath.Join(dst, name)
+		if buildX {
+			printcmd("mv %s %s", srcf, dstf)
+		}
+		if buildN {
+			continue
+		}
+		if err := os.Rename(srcf, dstf); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+func mkdir(dir string) error {
+	if buildX {
+		printcmd("mkdir -p %s", dir)
+	}
+	if buildN {
+		return nil
+	}
+	return os.MkdirAll(dir, 0755)
+}
+
+func symlink(src, dst string) error {
+	if buildX {
+		printcmd("ln -s %s %s", src, dst)
+	}
+	if buildN {
+		return nil
+	}
+	return os.Symlink(src, dst)
 }
 
 func checkGoVersion() error {
@@ -186,6 +213,49 @@ func checkGoVersion() error {
 		return fmt.Errorf("bad Go tool: %v", err)
 	}
 	return nil
+}
+
+func fetch(dst, url string) error {
+	if buildV {
+		fmt.Fprintf(os.Stderr, "fetching %s\n", url)
+	}
+	if buildX {
+		printcmd("curl -o%s %s", dst, url)
+	}
+	if buildN {
+		return nil
+	}
+
+	f, err := os.OpenFile(dst, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0755)
+	if err != nil {
+		return err
+	}
+
+	// TODO(crawshaw): The arm compiler toolchain compresses to 33 MB, less than a tenth of the NDK. Provide an alternative binary download.
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(f, resp.Body)
+	err2 := resp.Body.Close()
+	err3 := f.Close()
+	if err != nil {
+		return err
+	}
+	if err2 != nil {
+		return err2
+	}
+	return err3
+}
+
+func removeAll(path string) error {
+	if buildX {
+		printcmd("rm -r -f %q", path)
+	}
+	if buildN {
+		return nil
+	}
+	return os.RemoveAll(path)
 }
 
 func goEnv(name string) string {
