@@ -8,6 +8,8 @@ package main
 // TODO(crawshaw): android/{386,arm64}
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -19,7 +21,16 @@ import (
 	"strings"
 )
 
+// useStrippedNDK determines whether the init subcommand fetches the GCC
+// toolchain from the original Android NDK, or from the stripped-down NDK
+// hosted specifically for the gomobile tool.
+//
+// There is a significant size different (400MB compared to 30MB).
+var useStrippedNDK = runtime.GOOS == "linux" || runtime.GOOS == "darwin"
+
 const ndkVersion = "ndk-r10d"
+
+var arch = runtime.GOARCH
 
 var cmdInit = &command{
 	run:   runInit,
@@ -48,7 +59,6 @@ func runInit(cmd *command) error {
 	}
 	os.Remove(sentinel)
 
-	arch := runtime.GOARCH
 	if arch == "amd64" {
 		arch = "x86_64"
 	}
@@ -85,32 +95,10 @@ func runInit(cmd *command) error {
 	}
 	defer removeAll(tmpdir)
 
-	ndkName := "android-" + ndkVersion + "-" + runtime.GOOS + "-" + arch + "."
-	if runtime.GOOS == "windows" {
-		ndkName += "exe"
-	} else {
-		ndkName += "bin"
-	}
-
-	url := "http://dl.google.com/android/ndk/" + ndkName
-	if err := fetch(filepath.Join(tmpdir, ndkName), url); err != nil {
+	if err := fetchNDK(); err != nil {
 		return err
 	}
 
-	inflate := exec.Command(filepath.Join(tmpdir, ndkName))
-	inflate.Dir = tmpdir
-	if buildX {
-		printcmd("%s", inflate.Args[0])
-	}
-	if !buildN {
-		out, err := inflate.CombinedOutput()
-		if err != nil {
-			if buildV {
-				os.Stderr.Write(out)
-			}
-			return err
-		}
-	}
 	srcSysroot := filepath.Join(tmpdir, "android-ndk-r10d", "platforms", "android-15", "arch-arm", "usr")
 	if err := move(dstSysroot, srcSysroot, "include", "lib"); err != nil {
 		return err
@@ -215,6 +203,94 @@ func checkGoVersion() error {
 	return nil
 }
 
+func fetchNDK() error {
+	if useStrippedNDK {
+		return fetchStrippedNDK()
+	}
+
+	ndkName := "android-" + ndkVersion + "-" + runtime.GOOS + "-" + arch + "."
+	if runtime.GOOS == "windows" {
+		ndkName += "exe"
+	} else {
+		ndkName += "bin"
+	}
+	url := "https://dl.google.com/android/ndk/" + ndkName
+	if err := fetch(filepath.Join(tmpdir, ndkName), url); err != nil {
+		return err
+	}
+
+	inflate := exec.Command(filepath.Join(tmpdir, ndkName))
+	inflate.Dir = tmpdir
+	if buildX {
+		printcmd("%s", inflate.Args[0])
+	}
+	if buildN {
+		return nil
+	}
+	out, err := inflate.CombinedOutput()
+	if err != nil {
+		if buildV {
+			os.Stderr.Write(out)
+		}
+	}
+	return err
+}
+
+func fetchStrippedNDK() error {
+	name := "gomobile-ndk-r10d-" + runtime.GOOS + "-" + arch + ".tar.gz"
+	url := "https://dl.google.com/go/mobile/" + name
+	if err := fetch(filepath.Join(tmpdir, name), url); err != nil {
+		return err
+	}
+	if buildX {
+		printcmd("tar xfz %s", name)
+	}
+	if buildN {
+		return nil
+	}
+
+	tf, err := os.Open(filepath.Join(tmpdir, name))
+	if err != nil {
+		return err
+	}
+	defer tf.Close()
+	zr, err := gzip.NewReader(tf)
+	if err != nil {
+		return err
+	}
+	tr := tar.NewReader(zr)
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		dst := filepath.Join(tmpdir, hdr.Name)
+		if hdr.Typeflag == tar.TypeSymlink {
+			if err := symlink(hdr.Linkname, dst); err != nil {
+				return err
+			}
+			continue
+		}
+		if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+			return err
+		}
+		f, err := os.OpenFile(dst, os.O_CREATE|os.O_EXCL|os.O_WRONLY, os.FileMode(hdr.Mode)&0777)
+		if err != nil {
+			return err
+		}
+		if _, err := io.Copy(f, tr); err != nil {
+			return err
+		}
+		if err := f.Close(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func fetch(dst, url string) error {
 	if buildV {
 		fmt.Fprintf(os.Stderr, "fetching %s\n", url)
@@ -231,7 +307,6 @@ func fetch(dst, url string) error {
 		return err
 	}
 
-	// TODO(crawshaw): The arm compiler toolchain compresses to 33 MB, less than a tenth of the NDK. Provide an alternative binary download.
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
