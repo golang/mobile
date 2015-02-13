@@ -50,7 +50,10 @@ func main() {
 
 	for _, cmd := range commands {
 		if cmd.Name == args[0] {
-			cmd.flag.Usage = cmd.usage
+			cmd.flag.Usage = func() {
+				cmd.usage()
+				os.Exit(1)
+			}
 			cmd.flag.Parse(args[1:])
 			if err := cmd.run(cmd); err != nil {
 				msg := err.Error()
@@ -106,7 +109,7 @@ type command struct {
 }
 
 func (cmd *command) usage() {
-	fmt.Fprintf(os.Stdout, "usage: %s %s\n%s", gomobileName, cmd.Usage, cmd.Long)
+	fmt.Fprintf(os.Stdout, "usage: %s %s %s\n%s", gomobileName, cmd.Name, cmd.Usage, cmd.Long)
 }
 
 var usageTmpl = template.Must(template.New("usage").Parse(
