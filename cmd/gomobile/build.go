@@ -240,6 +240,8 @@ func runBuild(cmd *command) error {
 	return apkw.Close()
 }
 
+var xout io.Writer = os.Stderr
+
 func printcmd(format string, args ...interface{}) {
 	cmd := fmt.Sprintf(format+"\n", args...)
 	if tmpdir != "" {
@@ -248,7 +250,10 @@ func printcmd(format string, args ...interface{}) {
 	if ndkccpath != "" {
 		cmd = strings.Replace(cmd, ndkccpath, "$NDKCCPATH", -1)
 	}
-	fmt.Fprint(os.Stderr, cmd)
+	if env := os.Getenv("HOME"); env != "" {
+		cmd = strings.Replace(cmd, env, "$HOME", -1)
+	}
+	fmt.Fprint(xout, cmd)
 }
 
 // "Build flags", used by multiple commands.
@@ -276,9 +281,11 @@ func addBuildFlagsNVX(cmd *command) {
 func gobuild(src, libPath string) error {
 	var err error
 	gopath := goEnv("GOPATH")
+	ndkccbin := ""
 	for _, p := range filepath.SplitList(gopath) {
 		ndkccpath = filepath.Join(p, filepath.FromSlash("pkg/gomobile/android-"+ndkVersion))
-		if _, err = os.Stat(filepath.Join(ndkccpath, "arm", "bin")); err == nil {
+		ndkccbin = filepath.Join(ndkccpath, "arm", "bin")
+		if _, err = os.Stat(ndkccbin); err == nil {
 			break
 		}
 	}
@@ -295,6 +302,7 @@ func gobuild(src, libPath string) error {
 		`build`,
 		`-ldflags="-shared"`,
 		`-tags=`+strconv.Quote(strings.Join(ctx.BuildTags, ",")),
+		`-toolexec=`+filepath.Join(ndkccbin, "toolexec"),
 		`-o`, libPath)
 	if buildV {
 		gocmd.Args = append(gocmd.Args, "-v")
@@ -312,11 +320,12 @@ func gobuild(src, libPath string) error {
 		`GOARCH=arm`,
 		`GOARM=7`,
 		`CGO_ENABLED=1`,
-		`CC=` + filepath.Join(ndkccpath, "arm", "bin", "arm-linux-androideabi-gcc"),
-		`CXX=` + filepath.Join(ndkccpath, "arm", "bin", "arm-linux-androideabi-g++"),
+		`CC=` + filepath.Join(ndkccbin, "arm-linux-androideabi-gcc"),
+		`CXX=` + filepath.Join(ndkccbin, "arm-linux-androideabi-g++"),
 		`GOGCCFLAGS="-fPIC -marm -pthread -fmessage-length=0"`,
 		`GOROOT=` + goEnv("GOROOT"),
 		`GOPATH=` + gopath,
+		`GOMOBILEPATH=` + ndkccbin, // for toolexec
 	}
 	if buildX {
 		printcmd("%s", strings.Join(gocmd.Env, " ")+" "+strings.Join(gocmd.Args, " "))

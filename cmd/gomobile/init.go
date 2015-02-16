@@ -9,6 +9,7 @@ package main
 
 import (
 	"archive/tar"
+	"bytes"
 	"compress/gzip"
 	"fmt"
 	"io"
@@ -26,11 +27,23 @@ import (
 // hosted specifically for the gomobile tool.
 //
 // There is a significant size different (400MB compared to 30MB).
-var useStrippedNDK = runtime.GOOS == "linux" || runtime.GOOS == "darwin"
+var useStrippedNDK = goos == "linux" || goos == "darwin"
 
 const ndkVersion = "ndk-r10d"
 
-var arch = runtime.GOARCH
+var (
+	goos    = runtime.GOOS
+	goarch  = runtime.GOARCH
+	ndkarch string
+)
+
+func init() {
+	if runtime.GOARCH == "amd64" {
+		ndkarch = "x86_64"
+	} else {
+		ndkarch = runtime.GOARCH
+	}
+}
 
 var cmdInit = &command{
 	run:   runInit,
@@ -48,28 +61,13 @@ func runInit(cmd *command) error {
 		return err
 	}
 
-	// Provide an early error message if Go was installed system-wide.
-	goroot := goEnv("GOROOT")
-	sentinel := filepath.Join(goroot, "gomobile-sentinel")
-	if err := ioutil.WriteFile(sentinel, []byte("write test"), 0664); err != nil {
-		if os.IsPermission(err) {
-			return fmt.Errorf("GOROOT %q is not writable. Run:\n\tsudo gomobile init", goroot)
-		}
-		return fmt.Errorf("GOROOT not writable: %v", err)
-	}
-	os.Remove(sentinel)
-
-	if arch == "amd64" {
-		arch = "x86_64"
-	}
-
 	gopaths := filepath.SplitList(goEnv("GOPATH"))
 	if len(gopaths) == 0 {
 		return fmt.Errorf("GOPATH is not set")
 	}
 	ndkccpath = filepath.Join(gopaths[0], filepath.FromSlash("pkg/gomobile/android-"+ndkVersion))
 	if buildX {
-		fmt.Fprintln(os.Stderr, "NDKCCPATH="+ndkccpath)
+		fmt.Fprintln(xout, "NDKCCPATH="+ndkccpath)
 	}
 
 	if err := removeAll(ndkccpath); err != nil && !os.IsExist(err) {
@@ -91,9 +89,15 @@ func runInit(cmd *command) error {
 		}
 	}
 	if buildX {
-		fmt.Fprintln(os.Stderr, "WORK="+tmpdir)
+		fmt.Fprintln(xout, "WORK="+tmpdir)
 	}
 	defer removeAll(tmpdir)
+
+	goroot := goEnv("GOROOT")
+	tmpGoroot := filepath.Join(tmpdir, "go")
+	if err := copyGoroot(tmpGoroot, goroot); err != nil {
+		return err
+	}
 
 	if err := fetchNDK(); err != nil {
 		return err
@@ -104,7 +108,7 @@ func runInit(cmd *command) error {
 		return err
 	}
 
-	ndkpath := filepath.Join(tmpdir, "android-ndk-r10d", "toolchains", "arm-linux-androideabi-4.8", "prebuilt", runtime.GOOS+"-"+arch)
+	ndkpath := filepath.Join(tmpdir, "android-ndk-r10d", "toolchains", "arm-linux-androideabi-4.8", "prebuilt", goos+"-"+ndkarch)
 	if err := move(dst, ndkpath, "bin", "lib", "libexec"); err != nil {
 		return err
 	}
@@ -113,27 +117,30 @@ func runInit(cmd *command) error {
 	if err := mkdir(linkpath); err != nil {
 		return err
 	}
-	for _, name := range []string{"ld", "ld.gold", "as", "gcc", "g++"} {
+	for _, name := range []string{"ld", "as", "gcc", "g++"} {
 		if err := symlink(filepath.Join(dst, "bin", "arm-linux-androideabi-"+name), filepath.Join(linkpath, name)); err != nil {
 			return err
 		}
 	}
 
 	// TODO(crawshaw): make.bat on windows
-	ccpath := filepath.Join(dst, "bin")
-	make := exec.Command(filepath.Join(goroot, "src", "make.bash"), "--no-clean")
-	make.Dir = filepath.Join(goroot, "src")
+	ndkccbin := filepath.Join(dst, "bin")
+	envpath := os.Getenv("PATH")
+	if buildN {
+		envpath = "$PATH"
+	}
+	make := exec.Command(filepath.Join(tmpGoroot, "src", "make.bash"), "--no-clean")
+	make.Dir = filepath.Join(tmpGoroot, "src")
 	make.Env = []string{
-		`PATH=` + os.Getenv("PATH"),
+		`PATH=` + envpath,
 		`TMPDIR=` + tmpdir,
 		`HOME=` + os.Getenv("HOME"), // for default the go1.4 bootstrap
 		`GOOS=android`,
 		`GOARCH=arm`,
 		`GOARM=7`,
 		`CGO_ENABLED=1`,
-		`CC_FOR_TARGET=` + filepath.Join(ccpath, "arm-linux-androideabi-gcc"),
-		`CXX_FOR_TARGET=` + filepath.Join(ccpath, "arm-linux-androideabi-g++"),
-		`GOBIN=` + tmpdir, // avoid overwriting current Go tool
+		`CC_FOR_TARGET=` + filepath.Join(ndkccbin, "arm-linux-androideabi-gcc"),
+		`CXX_FOR_TARGET=` + filepath.Join(ndkccbin, "arm-linux-androideabi-g++"),
 	}
 	if v := goEnv("GOROOT_BOOTSTRAP"); v != "" {
 		make.Env = append(make.Env, `GOROOT_BOOTSTRAP=`+v)
@@ -146,14 +153,97 @@ func runInit(cmd *command) error {
 	if buildX {
 		printcmd("%s", strings.Join(make.Env, " ")+" "+strings.Join(make.Args, " "))
 	}
-	if buildN {
-		return nil
+	if !buildN {
+		if err := make.Run(); err != nil {
+			return err
+		}
 	}
-	if err := make.Run(); err != nil {
+
+	// Move the Go cross compiler toolchain into GOPATH.
+	gotoolsrc := filepath.Join(tmpGoroot, "pkg", "tool", goos+"_"+goarch)
+	if err := move(ndkccbin, gotoolsrc, "5a", "5l", "5g", "cgo", "nm", "pack", "link"); err != nil {
 		return err
 	}
+
+	// Build toolexec command.
+	toolexecSrc := filepath.Join(tmpdir, "toolexec.go")
+	if !buildN {
+		if err := ioutil.WriteFile(toolexecSrc, []byte(toolexec), 0644); err != nil {
+			return err
+		}
+	}
+	make = exec.Command("go", "build", "-o", filepath.Join(ndkccbin, "toolexec"), toolexecSrc)
+	if buildV {
+		fmt.Fprintf(os.Stderr, "building gomobile toolexec\n")
+		make.Stdout = os.Stdout
+		make.Stderr = os.Stderr
+	}
+	if buildX {
+		printcmd("%s", strings.Join(make.Args, " "))
+	}
+	if !buildN {
+		if err := make.Run(); err != nil {
+			return err
+		}
+	}
+
+	// Move pre-compiled stdlib for android into GOROOT. This is
+	// the only time we modify the user's GOROOT.
+	cannotRemove := false
+	if err := removeAll(filepath.Join(goroot, "pkg", "android_arm")); err != nil {
+		cannotRemove = true
+	}
+	if err := move(filepath.Join(goroot, "pkg"), filepath.Join(tmpGoroot, "pkg"), "android_arm"); err != nil {
+		// Move android_arm into a temp directory that outlives
+		// this process and give the user installation instructions.
+		dir, err := ioutil.TempDir("", "gomobile-")
+		if err != nil {
+			return err
+		}
+		if err := move(dir, filepath.Join(tmpGoroot, "pkg"), "android_arm"); err != nil {
+			return err
+		}
+		// TODO: modify instructions for windows.
+		remove := ""
+		if cannotRemove {
+			remove = "\trm -r -f %s/pkg/android_arm\n"
+		}
+		return fmt.Errorf(
+			`Cannot install android/arm in GOROOT.
+Make GOROOT writable (possibly by becoming the super user, using sudo) and run:
+%s	mv %s %s`,
+			remove,
+			filepath.Join(dir, "android_arm"),
+			filepath.Join(goroot, "pkg"),
+		)
+	}
+
 	return nil
 }
+
+// toolexec is the source of a small program designed to be passed to
+// the -toolexec flag of go build.
+const toolexec = `package main
+
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+)
+
+func main() {
+	args := append([]string{}, os.Args[1:]...)
+	args[0] = filepath.Join(os.Getenv("GOMOBILEPATH"), filepath.Base(args[0]))
+	cmd := exec.Command(args[0], args[1:]...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
+	}
+}
+`
 
 func move(dst, src string, names ...string) error {
 	for _, name := range names {
@@ -196,9 +286,12 @@ func checkGoVersion() error {
 	if err := exec.Command("which", "go").Run(); err != nil {
 		return fmt.Errorf(`no Go tool on $PATH`)
 	}
-	_, err := exec.Command("go", "version").Output()
+	buildHelp, err := exec.Command("go", "help", "build").Output()
 	if err != nil {
 		return fmt.Errorf("bad Go tool: %v", err)
+	}
+	if !bytes.Contains(buildHelp, []byte("-toolexec")) {
+		return fmt.Errorf("installed Go tool does not support -toolexec")
 	}
 	return nil
 }
@@ -208,8 +301,8 @@ func fetchNDK() error {
 		return fetchStrippedNDK()
 	}
 
-	ndkName := "android-" + ndkVersion + "-" + runtime.GOOS + "-" + arch + "."
-	if runtime.GOOS == "windows" {
+	ndkName := "android-" + ndkVersion + "-" + goos + "-" + ndkarch + "."
+	if goos == "windows" {
 		ndkName += "exe"
 	} else {
 		ndkName += "bin"
@@ -237,7 +330,7 @@ func fetchNDK() error {
 }
 
 func fetchStrippedNDK() error {
-	name := "gomobile-ndk-r10d-" + runtime.GOOS + "-" + arch + ".tar.gz"
+	name := "gomobile-ndk-r10d-" + goos + "-" + ndkarch + ".tar.gz"
 	url := "https://dl.google.com/go/mobile/" + name
 	if err := fetch(filepath.Join(tmpdir, name), url); err != nil {
 		return err
@@ -321,6 +414,60 @@ func fetch(dst, url string) error {
 		return err2
 	}
 	return err3
+}
+
+// copyGoroot copies GOROOT from src to dst.
+//
+// It skips the pkg directory, which is not necessary for make.bash,
+// and symlinks .git to avoid a 70MB copy.
+func copyGoroot(dst, src string) error {
+	if err := mkdir(filepath.Join(dst, "pkg")); err != nil {
+		return err
+	}
+	for _, dir := range []string{"include", "lib", "src"} {
+		if err := copyAll(filepath.Join(dst, dir), filepath.Join(src, dir)); err != nil {
+			return err
+		}
+	}
+	return symlink(filepath.Join(src, ".git"), filepath.Join(dst, ".git"))
+}
+
+func copyAll(dst, src string) error {
+	if buildX {
+		printcmd("cp -a %s %s", src, dst)
+	}
+	if buildN {
+		return nil
+	}
+	return filepath.Walk(src, func(path string, info os.FileInfo, errin error) (err error) {
+		if errin != nil {
+			return errin
+		}
+		prefixLen := len(src)
+		if len(path) > prefixLen {
+			prefixLen++ // file separator
+		}
+		outpath := filepath.Join(dst, path[prefixLen:])
+		if info.IsDir() {
+			return os.Mkdir(outpath, 0755)
+		}
+		in, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer in.Close()
+		out, err := os.OpenFile(outpath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, info.Mode())
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if errc := out.Close(); err == nil {
+				err = errc
+			}
+		}()
+		_, err = io.Copy(out, in)
+		return err
+	})
 }
 
 func removeAll(path string) error {
