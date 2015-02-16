@@ -136,29 +136,37 @@ const androidManifest = `
 </manifest>
 `
 
-func diff(s1, s2 string) (data []byte, err error) {
-	f1, err := ioutil.TempFile("", "apk-writer-diff")
+func writeTempFile(data string) (string, error) {
+	f, err := ioutil.TempFile("", "gofmt")
 	if err != nil {
-		return
+		return "", err
 	}
-	defer os.Remove(f1.Name())
-	defer f1.Close()
+	_, err = io.WriteString(f, data)
+	errc := f.Close()
+	if err == nil {
+		return f.Name(), errc
+	}
+	return f.Name(), err
+}
 
-	f2, err := ioutil.TempFile("", "apk-writer-diff")
+func diff(got, want string) (string, error) {
+	wantPath, err := writeTempFile(want)
 	if err != nil {
-		return
+		return "", err
 	}
-	defer os.Remove(f2.Name())
-	defer f2.Close()
+	defer os.Remove(wantPath)
 
-	io.WriteString(f1, s1)
-	io.WriteString(f2, s2)
+	gotPath, err := writeTempFile(got)
+	if err != nil {
+		return "", err
+	}
+	defer os.Remove(gotPath)
 
-	data, err = exec.Command("diff", "-u", f1.Name(), f2.Name()).CombinedOutput()
+	data, err := exec.Command("diff", "-u", wantPath, gotPath).CombinedOutput()
 	if len(data) > 0 {
 		// diff exits with a non-zero status when the files don't match.
 		// Ignore that failure as long as we get output.
 		err = nil
 	}
-	return
+	return string(data), err
 }
