@@ -53,7 +53,18 @@ var cmdInit = &command{
 Init downloads and installs the Android C++ compiler toolchain.
 
 The toolchain is installed in $GOPATH/pkg/gomobile.
+If the Android C++ compiler toolchain already exists in the path,
+it skips download and uses the existing toolchain.
+
+The -u option forces download and installation of the new toolchain
+even when the toolchain exists.
 `,
+}
+
+var initU bool // -u
+
+func init() {
+	cmdInit.flag.BoolVar(&initU, "u", false, "force toolchain download")
 }
 
 func runInit(cmd *command) error {
@@ -70,13 +81,21 @@ func runInit(cmd *command) error {
 		fmt.Fprintln(xout, "NDKCCPATH="+ndkccpath)
 	}
 
-	if err := removeAll(ndkccpath); err != nil && !os.IsExist(err) {
-		return err
+	sentinel := filepath.Join(ndkccpath, "ndk.sentinel")
+	needNDK := initU
+	if !needNDK {
+		if _, err := os.Stat(sentinel); err != nil {
+			needNDK = true
+		}
 	}
-	dst := filepath.Join(ndkccpath, "arm")
-	dstSysroot := filepath.Join(dst, "sysroot", "usr")
-	if err := mkdir(dstSysroot); err != nil {
-		return err
+
+	if needNDK {
+		if err := removeAll(ndkccpath); err != nil && !os.IsExist(err) {
+			return err
+		}
+		if err := mkdir(ndkccpath); err != nil {
+			return err
+		}
 	}
 
 	if buildN {
@@ -99,29 +118,19 @@ func runInit(cmd *command) error {
 		return err
 	}
 
-	if err := fetchNDK(); err != nil {
-		return err
-	}
-
-	srcSysroot := filepath.Join(tmpdir, "android-ndk-r10d", "platforms", "android-15", "arch-arm", "usr")
-	if err := move(dstSysroot, srcSysroot, "include", "lib"); err != nil {
-		return err
-	}
-
-	ndkpath := filepath.Join(tmpdir, "android-ndk-r10d", "toolchains", "arm-linux-androideabi-4.8", "prebuilt", goos+"-"+ndkarch)
-	if err := move(dst, ndkpath, "bin", "lib", "libexec"); err != nil {
-		return err
-	}
-
-	linkpath := filepath.Join(dst, "arm-linux-androideabi", "bin")
-	if err := mkdir(linkpath); err != nil {
-		return err
-	}
-	for _, name := range []string{"ld", "as", "gcc", "g++"} {
-		if err := symlink(filepath.Join(dst, "bin", "arm-linux-androideabi-"+name), filepath.Join(linkpath, name)); err != nil {
+	if needNDK {
+		if err := fetchNDK(); err != nil {
 			return err
 		}
+
+		if !buildN {
+			if err := ioutil.WriteFile(sentinel, []byte("done"), 0644); err != nil {
+				return err
+			}
+		}
 	}
+
+	dst := filepath.Join(ndkccpath, "arm")
 
 	// TODO(crawshaw): make.bat on windows
 	ndkccbin := filepath.Join(dst, "bin")
@@ -298,35 +307,63 @@ func checkGoVersion() error {
 
 func fetchNDK() error {
 	if useStrippedNDK {
-		return fetchStrippedNDK()
+		if err := fetchStrippedNDK(); err != nil {
+			return err
+		}
+	} else {
+		ndkName := "android-" + ndkVersion + "-" + goos + "-" + ndkarch + "."
+		if goos == "windows" {
+			ndkName += "exe"
+		} else {
+			ndkName += "bin"
+		}
+		url := "https://dl.google.com/android/ndk/" + ndkName
+		if err := fetch(filepath.Join(tmpdir, ndkName), url); err != nil {
+			return err
+		}
+
+		inflate := exec.Command(filepath.Join(tmpdir, ndkName))
+		inflate.Dir = tmpdir
+		if buildX {
+			printcmd("%s", inflate.Args[0])
+		}
+		if !buildN {
+			out, err := inflate.CombinedOutput()
+			if err != nil {
+				if buildV {
+					os.Stderr.Write(out)
+				}
+				return err
+			}
+		}
 	}
 
-	ndkName := "android-" + ndkVersion + "-" + goos + "-" + ndkarch + "."
-	if goos == "windows" {
-		ndkName += "exe"
-	} else {
-		ndkName += "bin"
-	}
-	url := "https://dl.google.com/android/ndk/" + ndkName
-	if err := fetch(filepath.Join(tmpdir, ndkName), url); err != nil {
+	dst := filepath.Join(ndkccpath, "arm")
+	dstSysroot := filepath.Join(dst, "sysroot", "usr")
+	if err := mkdir(dstSysroot); err != nil {
 		return err
 	}
 
-	inflate := exec.Command(filepath.Join(tmpdir, ndkName))
-	inflate.Dir = tmpdir
-	if buildX {
-		printcmd("%s", inflate.Args[0])
+	srcSysroot := filepath.Join(tmpdir, "android-ndk-r10d", "platforms", "android-15", "arch-arm", "usr")
+	if err := move(dstSysroot, srcSysroot, "include", "lib"); err != nil {
+		return err
 	}
-	if buildN {
-		return nil
+
+	ndkpath := filepath.Join(tmpdir, "android-ndk-r10d", "toolchains", "arm-linux-androideabi-4.8", "prebuilt", goos+"-"+ndkarch)
+	if err := move(dst, ndkpath, "bin", "lib", "libexec"); err != nil {
+		return err
 	}
-	out, err := inflate.CombinedOutput()
-	if err != nil {
-		if buildV {
-			os.Stderr.Write(out)
+
+	linkpath := filepath.Join(dst, "arm-linux-androideabi", "bin")
+	if err := mkdir(linkpath); err != nil {
+		return err
+	}
+	for _, name := range []string{"ld", "as", "gcc", "g++"} {
+		if err := symlink(filepath.Join(dst, "bin", "arm-linux-androideabi-"+name), filepath.Join(linkpath, name)); err != nil {
+			return err
 		}
 	}
-	return err
+	return nil
 }
 
 func fetchStrippedNDK() error {
