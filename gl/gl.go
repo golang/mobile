@@ -15,18 +15,15 @@ package gl
 //                 further away from the underlying OpenGL spec.
 
 /*
-#cgo darwin  LDFLAGS: -framework OpenGL
-#cgo linux   LDFLAGS: -lGLESv2
-#cgo darwin  CFLAGS: -DGOOS_darwin
-#cgo linux   CFLAGS: -DGOOS_linux
-
 #include <stdlib.h>
 
-#ifdef GOOS_linux
+#ifdef os_linux
 #include <GLES2/gl2.h>
 #endif
-
-#ifdef GOOS_darwin
+#ifdef os_darwin_arm
+#include <OpenGLES/ES2/glext.h>
+#endif
+#ifdef os_darwin_amd64
 #include <OpenGL/gl3.h>
 #endif
 */
