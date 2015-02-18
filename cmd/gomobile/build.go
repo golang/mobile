@@ -323,6 +323,9 @@ func gobuild(src, libPath string) error {
 	if buildI {
 		gocmd.Args = append(gocmd.Args, "-i")
 	}
+	if buildX {
+		gocmd.Args = append(gocmd.Args, "-x")
+	}
 
 	gocmd.Args = append(gocmd.Args, src)
 
