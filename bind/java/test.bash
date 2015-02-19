@@ -34,22 +34,12 @@ fi
 android create lib-project -n BindJavaTest \
   -t "android-19"  -p $ANDROID_APP -k go.testpkg -g -v 0.12.+
 
-# Add the necessary Java source files (Seq.java and app/Go.java)) in to the
-# project directory. (go package)
-mkdir -p $ANDROID_APP/src/main/java/go
-ln -sf $PWD/Seq.java $ANDROID_APP/src/main/java/go
-ln -sf $PWD/../../app/*.java $ANDROID_APP/src/main/java/go
+gomobile bind -outdir="$ANDROID_APP" ./testpkg
 
-# Add the testpkg java file (output of gobind -lang=java) necessary for SeqTest.java.
-mkdir -p $ANDROID_APP/src/main/java/go/testpkg
-ln -sf $PWD/testpkg/Testpkg.java $ANDROID_APP/src/main/java/go/testpkg
-
-# Add the compiled jni shared library under src/main/jniLibs/armeabi directory.
-mkdir -p $ANDROID_APP/src/main/jniLibs/armeabi
-CGO_ENABLED=1 GOOS=android GOARCH=arm GOARM=7 \
-  go build -ldflags="-shared" \
-  -o $ANDROID_APP/src/main/jniLibs/armeabi/libgojni.so \
-  javatest.go
+# Copy files to the main src, jni directories.
+mv $ANDROID_APP/android/src/main/java/go $ANDROID_APP/src/main/java/
+mkdir -p $ANDROID_APP/src/main/jniLibs
+cp -r $ANDROID_APP/android/libs/* $ANDROID_APP/src/main/jniLibs
 
 # Add the test file under androidTest directory.
 mkdir -p $ANDROID_APP/src/androidTest/java/go
