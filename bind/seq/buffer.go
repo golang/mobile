@@ -51,43 +51,58 @@ func (b *Buffer) grow(need int) {
 	b.Data = data
 }
 
+// align returns the aligned offset.
+func align(offset, alignment int) int {
+	pad := offset % alignment
+	if pad > 0 {
+		pad = alignment - pad
+	}
+	return pad + offset
+}
+
 func (b *Buffer) ReadInt32() int32 {
-	if len(b.Data)-b.Offset < 4 {
+	offset := align(b.Offset, 4)
+	if len(b.Data)-offset < 4 {
 		b.panic(4)
 	}
-	v := *(*int32)(unsafe.Pointer(&b.Data[b.Offset]))
-	b.Offset += 4
+	v := *(*int32)(unsafe.Pointer(&b.Data[offset]))
+	b.Offset = offset + 4
 	return v
 }
 
 func (b *Buffer) ReadInt64() int64 {
-	if len(b.Data)-b.Offset < 8 {
+	offset := align(b.Offset, 8)
+	if len(b.Data)-offset < 8 {
 		b.panic(8)
 	}
-	v := *(*int64)(unsafe.Pointer(&b.Data[b.Offset]))
-	b.Offset += 8
+	v := *(*int64)(unsafe.Pointer(&b.Data[offset]))
+	b.Offset = offset + 8
 	return v
 }
+
+// TODO(hyangah): int8, int16?
 
 func (b *Buffer) ReadInt() int {
 	return int(b.ReadInt64())
 }
 
 func (b *Buffer) ReadFloat32() float32 {
-	if len(b.Data)-b.Offset < 4 {
+	offset := align(b.Offset, 4)
+	if len(b.Data)-offset < 4 {
 		b.panic(4)
 	}
-	v := *(*float32)(unsafe.Pointer(&b.Data[b.Offset]))
-	b.Offset += 4
+	v := *(*float32)(unsafe.Pointer(&b.Data[offset]))
+	b.Offset = offset + 4
 	return v
 }
 
 func (b *Buffer) ReadFloat64() float64 {
-	if len(b.Data)-b.Offset < 8 {
+	offset := align(b.Offset, 8)
+	if len(b.Data)-offset < 8 {
 		b.panic(8)
 	}
-	v := *(*float64)(unsafe.Pointer(&b.Data[b.Offset]))
-	b.Offset += 8
+	v := *(*float64)(unsafe.Pointer(&b.Data[offset]))
+	b.Offset = offset + 8
 	return v
 }
 
@@ -118,19 +133,21 @@ func (b *Buffer) ReadRef() *Ref {
 }
 
 func (b *Buffer) WriteInt32(v int32) {
-	if len(b.Data)-b.Offset < 4 {
-		b.grow(4)
+	offset := align(b.Offset, 4)
+	if len(b.Data)-offset < 4 {
+		b.grow(offset + 4 - len(b.Data))
 	}
-	*(*int32)(unsafe.Pointer(&b.Data[b.Offset])) = v
-	b.Offset += 4
+	*(*int32)(unsafe.Pointer(&b.Data[offset])) = v
+	b.Offset = offset + 4
 }
 
 func (b *Buffer) WriteInt64(v int64) {
-	if len(b.Data)-b.Offset < 8 {
-		b.grow(8)
+	offset := align(b.Offset, 8)
+	if len(b.Data)-offset < 8 {
+		b.grow(offset + 8 - len(b.Data))
 	}
-	*(*int64)(unsafe.Pointer(&b.Data[b.Offset])) = v
-	b.Offset += 8
+	*(*int64)(unsafe.Pointer(&b.Data[offset])) = v
+	b.Offset = offset + 8
 }
 
 func (b *Buffer) WriteInt(v int) {
@@ -138,19 +155,21 @@ func (b *Buffer) WriteInt(v int) {
 }
 
 func (b *Buffer) WriteFloat32(v float32) {
-	if len(b.Data)-b.Offset < 4 {
-		b.grow(4)
+	offset := align(b.Offset, 4)
+	if len(b.Data)-offset < 4 {
+		b.grow(offset + 4 - len(b.Data))
 	}
-	*(*float32)(unsafe.Pointer(&b.Data[b.Offset])) = v
-	b.Offset += 4
+	*(*float32)(unsafe.Pointer(&b.Data[offset])) = v
+	b.Offset = offset + 4
 }
 
 func (b *Buffer) WriteFloat64(v float64) {
-	if len(b.Data)-b.Offset < 8 {
-		b.grow(8)
+	offset := align(b.Offset, 8)
+	if len(b.Data)-offset < 8 {
+		b.grow(offset + 8 - len(b.Data))
 	}
-	*(*float64)(unsafe.Pointer(&b.Data[b.Offset])) = v
-	b.Offset += 8
+	*(*float64)(unsafe.Pointer(&b.Data[offset])) = v
+	b.Offset = offset + 8
 }
 
 func (b *Buffer) WriteByteArray(byt []byte) {

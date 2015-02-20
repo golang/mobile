@@ -73,7 +73,15 @@ static mem *mem_get(JNIEnv *env, jobject obj) {
 	return (mem*)(uintptr_t)(*env)->GetLongField(env, obj, memptr_id);
 }
 
-static uint8_t *mem_read(JNIEnv *env, jobject obj, uint32_t size) {
+static uint32_t align(uint32_t offset, uint32_t alignment) {
+	uint32_t pad = offset % alignment;
+	if (pad > 0) {
+		pad = alignment-pad;
+	}
+	return pad+offset;
+}
+
+static uint8_t *mem_read(JNIEnv *env, jobject obj, uint32_t size, uint32_t alignment) {
 	if (size == 0) {
 		return NULL;
 	}
@@ -81,15 +89,17 @@ static uint8_t *mem_read(JNIEnv *env, jobject obj, uint32_t size) {
 	if (m == NULL) {
 		LOG_FATAL("mem_read on NULL mem");
 	}
-	if (m->len-m->off < size) {
-		LOG_FATAL("short read, size: %d", size);
+	uint32_t offset = align(m->off, alignment);
+
+	if (m->len-offset < size) {
+		LOG_FATAL("short read");
 	}
-	uint8_t *res = m->buf+m->off;
-	m->off += size;
+	uint8_t *res = m->buf+offset;
+	m->off = offset+size;
 	return res;
 }
 
-uint8_t *mem_write(JNIEnv *env, jobject obj, uint32_t size) {
+uint8_t *mem_write(JNIEnv *env, jobject obj, uint32_t size, uint32_t alignment) {
 	mem *m = mem_get(env, obj);
 	if (m == NULL) {
 		LOG_FATAL("mem_write on NULL mem");
@@ -97,14 +107,15 @@ uint8_t *mem_write(JNIEnv *env, jobject obj, uint32_t size) {
 	if (m->off != m->len) {
 		LOG_FATAL("write can only append to seq, size: (off=%d, len=%d, size=%d", m->off, m->len, size);
 	}
+	uint32_t offset = align(m->off, alignment);
 	uint32_t cap = m->cap;
-	while (m->off+size > cap) {
+	while (offset+size > cap) {
 		cap *= 2;
 	}
 	m = mem_ensure(m, cap);
-	uint8_t *res = m->buf+m->off;
-	m->off += size;
-	m->len += size;
+	uint8_t *res = m->buf+offset;
+	m->off = offset+size;
+	m->len = offset+size;
 	return res;
 }
 
@@ -219,7 +230,7 @@ Java_go_Seq_free(JNIEnv *env, jobject obj) {
 	}
 }
 
-#define MEM_READ(obj, ty) ((ty*)mem_read(env, obj, sizeof(ty)))
+#define MEM_READ(obj, ty) ((ty*)mem_read(env, obj, sizeof(ty), sizeof(ty)))
 
 JNIEXPORT jbyte JNICALL
 Java_go_Seq_readInt8(JNIEnv *env, jobject obj) {
@@ -266,7 +277,7 @@ Java_go_Seq_readUTF16(JNIEnv *env, jobject obj) {
 	if (size == 0) {
 		return NULL;
 	}
-	return (*env)->NewString(env, (jchar*)mem_read(env, obj, 2*size), size);
+	return (*env)->NewString(env, (jchar*)mem_read(env, obj, 2*size, 1), size);
 }
 
 JNIEXPORT jbyteArray JNICALL
@@ -283,7 +294,7 @@ Java_go_Seq_readByteArray(JNIEnv *env, jobject obj) {
 	return res;
 }
 
-#define MEM_WRITE(ty) (*(ty*)mem_write(env, obj, sizeof(ty)))
+#define MEM_WRITE(ty) (*(ty*)mem_write(env, obj, sizeof(ty), sizeof(ty)))
 
 JNIEXPORT void JNICALL
 Java_go_Seq_writeInt8(JNIEnv *env, jobject obj, jbyte v) {
@@ -323,7 +334,7 @@ Java_go_Seq_writeUTF16(JNIEnv *env, jobject obj, jstring v) {
 	}
 	int32_t size = (*env)->GetStringLength(env, v);
 	MEM_WRITE(int32_t) = size;
-	(*env)->GetStringRegion(env, v, 0, size, (jchar*)mem_write(env, obj, 2*size));
+	(*env)->GetStringRegion(env, v, 0, size, (jchar*)mem_write(env, obj, 2*size, 1));
 }
 
 JNIEXPORT void JNICALL
