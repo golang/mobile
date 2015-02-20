@@ -68,7 +68,8 @@ func init() {
 }
 
 func runInit(cmd *command) error {
-	if err := checkGoVersion(); err != nil {
+	version, err := goVersion()
+	if err != nil {
 		return err
 	}
 
@@ -76,15 +77,16 @@ func runInit(cmd *command) error {
 	if len(gopaths) == 0 {
 		return fmt.Errorf("GOPATH is not set")
 	}
-	ndkccpath = filepath.Join(gopaths[0], filepath.FromSlash("pkg/gomobile/android-"+ndkVersion))
+	ndkccpath = filepath.Join(gopaths[0], "pkg", "gomobile", "android-"+ndkVersion)
+	ndkccdl := filepath.Join(ndkccpath, "downloaded")
+	verpath := filepath.Join(gopaths[0], "pkg", "gomobile", "version")
 	if buildX {
 		fmt.Fprintln(xout, "NDKCCPATH="+ndkccpath)
 	}
 
-	sentinel := filepath.Join(ndkccpath, "ndk.sentinel")
 	needNDK := initU
 	if !needNDK {
-		if _, err := os.Stat(sentinel); err != nil {
+		if _, err := os.Stat(ndkccdl); err != nil {
 			needNDK = true
 		}
 	}
@@ -124,7 +126,7 @@ func runInit(cmd *command) error {
 		}
 
 		if !buildN {
-			if err := ioutil.WriteFile(sentinel, []byte("done"), 0644); err != nil {
+			if err := ioutil.WriteFile(ndkccdl, []byte("done"), 0644); err != nil {
 				return err
 			}
 		}
@@ -227,6 +229,15 @@ Make GOROOT writable (possibly by becoming the super user, using sudo) and run:
 		)
 	}
 
+	if buildX {
+		printcmd("go version > %s", verpath)
+	}
+	if !buildN {
+		if err := ioutil.WriteFile(verpath, version, 0644); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -291,18 +302,18 @@ func symlink(src, dst string) error {
 	return os.Symlink(src, dst)
 }
 
-func checkGoVersion() error {
+func goVersion() ([]byte, error) {
 	if err := exec.Command("which", "go").Run(); err != nil {
-		return fmt.Errorf(`no Go tool on $PATH`)
+		return nil, fmt.Errorf(`no Go tool on $PATH`)
 	}
 	buildHelp, err := exec.Command("go", "help", "build").Output()
 	if err != nil {
-		return fmt.Errorf("bad Go tool: %v", err)
+		return nil, fmt.Errorf("bad Go tool: %v", err)
 	}
 	if !bytes.Contains(buildHelp, []byte("-toolexec")) {
-		return fmt.Errorf("installed Go tool does not support -toolexec")
+		return nil, fmt.Errorf("installed Go tool does not support -toolexec")
 	}
-	return nil
+	return exec.Command("go", "version").Output()
 }
 
 func fetchNDK() error {
