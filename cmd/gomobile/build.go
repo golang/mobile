@@ -279,20 +279,33 @@ func addBuildFlagsNVX(cmd *command) {
 }
 
 func gobuild(src, libPath string) error {
-	var err error
+	version, err := goVersion()
+	if err != nil {
+		return err
+	}
+
 	gopath := goEnv("GOPATH")
-	ndkccbin := ""
+	gomobilepath := ""
 	for _, p := range filepath.SplitList(gopath) {
-		ndkccpath = filepath.Join(p, filepath.FromSlash("pkg/gomobile/android-"+ndkVersion))
-		ndkccbin = filepath.Join(ndkccpath, "arm", "bin")
-		if _, err = os.Stat(ndkccbin); err == nil {
+		gomobilepath = filepath.Join(p, "pkg", "gomobile")
+		if _, err = os.Stat(gomobilepath); err == nil {
 			break
 		}
 	}
-	if err != nil || ndkccpath == "" {
-		// TODO(crawshaw): call gomobile init
-		return fmt.Errorf("android toolchain not installed in $GOPATH/pkg/gomobile, run:\n\tgomobile init")
+	if err != nil || gomobilepath == "" {
+		return errors.New("android toolchain not installed, run:\n\tgomobile init")
 	}
+	verpath := filepath.Join(gomobilepath, "version")
+	installedVersion, err := ioutil.ReadFile(verpath)
+	if err != nil {
+		return errors.New("android toolchain partially installed, run:\n\tgomobile init")
+	}
+	if !bytes.Equal(installedVersion, version) {
+		return errors.New("android toolchain out of date, run:\n\tgomobile init")
+	}
+
+	ndkccpath = filepath.Join(gomobilepath, "android-"+ndkVersion)
+	ndkccbin := filepath.Join(ndkccpath, "arm", "bin")
 	if buildX {
 		fmt.Fprintln(os.Stderr, "NDKCCPATH="+ndkccpath)
 	}

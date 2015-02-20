@@ -94,5 +94,6 @@ mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/link $NDKCCPATH/arm/bin/link
 go build -o $NDKCCPATH/arm/bin/toolexec $WORK/toolexec.go
 rm -r -f "$HOME/go/pkg/android_arm"
 mv $WORK/go/pkg/android_arm $HOME/go/pkg/android_arm
+go version > GOPATH1/pkg/gomobile/version
 rm -r -f "$WORK"
 `))
