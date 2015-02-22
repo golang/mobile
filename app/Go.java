@@ -13,7 +13,7 @@ import android.util.Log;
 // Go code.
 public final class Go {
 	// init loads libgojni.so and starts the runtime.
-	public static void init(Context context) {
+	public static void init(final Context ctx) {
 		if (Looper.myLooper() != Looper.getMainLooper()) {
 			Log.wtf("Go", "Go.init must be called from main thread (looper="+Looper.myLooper().toString()+")");
 		}
@@ -29,7 +29,7 @@ public final class Go {
 
 		new Thread("GoMain") {
 			public void run() {
-				Go.run();
+				Go.run(ctx);
 			}
 		}.start();
 
@@ -42,6 +42,6 @@ public final class Go {
 
 	private static boolean running = false;
 
-	private static native void run();
+	private static native void run(Context ctx);
 	private static native void waitForRun();
 }

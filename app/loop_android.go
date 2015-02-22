@@ -101,6 +101,9 @@ func windowDrawLoop(cb Callbacks, w *C.ANativeWindow, queue *C.AInputQueue) {
 	geom.Width = geom.Pt(float32(C.windowWidth) / geom.PixelsPerPt)
 	geom.Height = geom.Pt(float32(C.windowHeight) / geom.PixelsPerPt)
 
+	// Wait until geometry and GL is initialized before cb.Start.
+	runStart(cb)
+
 	// We start here rather than onStart so the window exists and the Gl
 	// context is configured.
 	if cb.Start != nil {

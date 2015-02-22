@@ -34,6 +34,12 @@ int go_started;
 // on android.
 JavaVM* current_vm;
 
+// current_ctx is Android's android.context.Context. May be NULL.
+jobject current_ctx;
+
+// current_native_activity is the Android ANativeActivity. May be NULL.
+ANativeActivity* current_native_activity;
+
 // build_auxv builds an ELF auxiliary vector for initializing the Go
 // runtime. While there does not appear to be any spec for this
 // format, there are some notes in
@@ -166,10 +172,16 @@ func onConfigurationChanged(activity *C.ANativeActivity) {
 func onLowMemory(activity *C.ANativeActivity) {
 }
 
-// JavaInit is an initialization function registered by the package
-// golang.org/x/mobile/bind/java. It gives the Java language
-// bindings access to the JNI *JavaVM object.
-var JavaInit func(javaVM uintptr)
+type androidState struct {
+}
+
+func (androidState) JavaVM() unsafe.Pointer {
+	return unsafe.Pointer(C.current_vm)
+}
+
+func (androidState) AndroidContext() unsafe.Pointer {
+	return unsafe.Pointer(C.current_ctx)
+}
 
 var (
 	windowDestroyed = make(chan bool)
@@ -227,6 +239,23 @@ func (a *asset) Close() error {
 	return nil
 }
 
+func runStart(cb Callbacks) {
+	State = androidState{}
+
+	if cb.Start != nil {
+		cb.Start()
+	}
+}
+
+// notifyInitDone informs Java that the program is initialized.
+// A NativeActivity will not create a window until this is called.
+func notifyInitDone() {
+	C.pthread_mutex_lock(&C.go_started_mu)
+	C.go_started = 1
+	C.pthread_cond_signal(&C.go_started_cond)
+	C.pthread_mutex_unlock(&C.go_started_mu)
+}
+
 func run(cb Callbacks) {
 	// We want to keep the event loop on a consistent OS thread.
 	runtime.LockOSThread()
@@ -237,20 +266,12 @@ func run(cb Callbacks) {
 	C.free(unsafe.Pointer(ctag))
 	C.free(unsafe.Pointer(cstr))
 
-	if JavaInit != nil {
-		JavaInit(uintptr(unsafe.Pointer(C.current_vm)))
-	}
-
-	// Inform Java that the program is initialized.
-	C.pthread_mutex_lock(&C.go_started_mu)
-	C.go_started = 1
-	C.pthread_cond_signal(&C.go_started_cond)
-	C.pthread_mutex_unlock(&C.go_started_mu)
-
-	for {
-		select {
-		case w := <-windowCreated:
-			windowDrawLoop(cb, w, queue)
-		}
+	if C.current_native_activity == nil {
+		runStart(cb)
+		notifyInitDone()
+		select {}
+	} else {
+		notifyInitDone()
+		windowDrawLoop(cb, <-windowCreated, queue)
 	}
 }

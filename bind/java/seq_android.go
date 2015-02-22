@@ -78,10 +78,13 @@ func init() {
 	res.out = make(map[int32]*seq.Buffer)
 }
 
-func init() {
-	app.JavaInit = func(javaVM uintptr) {
-		C.init_seq(unsafe.Pointer(javaVM))
-	}
+// Init initializes communication with Java.
+// Typically called from the Start callback in app.Run.
+func Init() {
+	vm := app.State.(interface {
+		JavaVM() unsafe.Pointer
+	}).JavaVM()
+	C.init_seq(vm)
 }
 
 func seqToBuf(bufptr **C.uint8_t, lenptr *C.size_t, buf *seq.Buffer) {

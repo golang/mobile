@@ -8,11 +8,11 @@ package main
 
 import (
 	"golang.org/x/mobile/app"
+	"golang.org/x/mobile/bind/java"
 
-	_ "golang.org/x/mobile/bind/java"
 	_ "golang.org/x/mobile/bind/java/testpkg/go_testpkg"
 )
 
 func main() {
-	app.Run(app.Callbacks{})
+	app.Run(app.Callbacks{Start: java.Init})
 }
