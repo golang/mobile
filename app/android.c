@@ -15,16 +15,13 @@
 #include <string.h>
 #include "_cgo_export.h"
 
-// Defined in android.go.
-extern pthread_cond_t go_started_cond;
-extern pthread_mutex_t go_started_mu;
-extern int go_started;
-extern JavaVM* current_vm;
-
+// Defined in the Go runtime.
 static int (*_rt0_arm_linux1)(int argc, char** argv);
 
 jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	current_vm = vm;
+	current_ctx = NULL;
+	current_native_activity = NULL;
 
 	JNIEnv* env;
 	if ((*vm)->GetEnv(vm, (void**)&env, JNI_VERSION_1_6) != JNI_OK) {
@@ -92,7 +89,10 @@ void InitGoRuntime() {
 
 // Runtime entry point when using NativeActivity.
 void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_t savedStateSize) {
+	// Note that activity->clazz is mis-named.
 	current_vm = activity->vm;
+	current_ctx = (*activity->env)->NewGlobalRef(activity->env, activity->clazz);
+	current_native_activity = activity;
 
 	InitGoRuntime();
 
@@ -121,7 +121,8 @@ void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_
 
 // Runtime entry point when embedding Go in a Java App.
 JNIEXPORT void JNICALL
-Java_go_Go_run(JNIEnv* env, jclass clazz) {
+Java_go_Go_run(JNIEnv* env, jclass clazz, jobject ctx) {
+	current_ctx = (*env)->NewGlobalRef(env, ctx);
 	init_go_runtime(NULL);
 }
 

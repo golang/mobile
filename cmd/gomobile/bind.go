@@ -295,13 +295,13 @@ var androidMainTmpl = template.Must(template.New("android.go").Parse(`
 package main
 
 import (
-        "golang.org/x/mobile/app"
+	"golang.org/x/mobile/app"
+	"golang.org/x/mobile/bind/java"
 
-        _ "golang.org/x/mobile/bind/java"
-        _ "{{.}}"
+	_ "{{.}}"
 )
 
 func main() {
-        app.Run(app.Callbacks{})
+	app.Run(app.Callbacks{Start: java.Init})
 }
 `))

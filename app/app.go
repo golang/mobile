@@ -25,8 +25,12 @@ type Callbacks struct {
 	// Start is called when the app enters the foreground.
 	// The app will start receiving Draw and Touch calls.
 	//
-	// Window geometry will be configured and an OpenGL context
-	// will be available.
+	// If the app is responsible for the screen (that is, it is an
+	// all-Go app), then Window geometry will be configured and an
+	// OpenGL context will be available during Start.
+	//
+	// If this is a library, Start will be called before the
+	// app is told that Go has finished initialization.
 	//
 	// Start is an equivalent lifecycle state to onStart() on
 	// Android and applicationDidBecomeActive on iOS.
@@ -82,3 +86,17 @@ type ReadSeekCloser interface {
 	io.ReadSeeker
 	io.Closer
 }
+
+// State is global application-specific state.
+//
+// The State variable also holds operating system specific state.
+// Android apps have the extra methods:
+//
+//	// JavaVM returns a JNI *JavaVM.
+//	JavaVM() unsafe.Pointer
+//
+//	// AndroidContext returns a jobject for the app android.context.Context.
+//	AndroidContext() unsafe.Pointer
+//
+// State is not valid until Run has been called.
+var State interface{}
