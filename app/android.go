@@ -40,6 +40,11 @@ jobject current_ctx;
 // current_native_activity is the Android ANativeActivity. May be NULL.
 ANativeActivity* current_native_activity;
 
+// asset_manager is the asset manager of the app.
+// For all-Go app, this is initialized in onCreate.
+// For go library app, this is set from the context passed to Go.run.
+AAssetManager* asset_manager;
+
 // build_auxv builds an ELF auxiliary vector for initializing the Go
 // runtime. While there does not appear to be any spec for this
 // format, there are some notes in
@@ -67,11 +72,9 @@ import (
 	"golang.org/x/mobile/geom"
 )
 
-var assetManager *C.AAssetManager
-
 //export onCreate
 func onCreate(activity *C.ANativeActivity) {
-	assetManager = activity.assetManager
+	C.asset_manager = activity.assetManager
 
 	config := C.AConfiguration_new()
 	C.AConfiguration_fromAssetManager(config, activity.assetManager)
@@ -192,7 +195,7 @@ func openAsset(name string) (ReadSeekCloser, error) {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 	a := &asset{
-		ptr:  C.AAssetManager_open(assetManager, cname, C.AASSET_MODE_UNKNOWN),
+		ptr:  C.AAssetManager_open(C.asset_manager, cname, C.AASSET_MODE_UNKNOWN),
 		name: name,
 	}
 	if a.ptr == nil {
