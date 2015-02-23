@@ -15,6 +15,9 @@
 #include <string.h>
 #include "_cgo_export.h"
 
+#define LOG_INFO(...) __android_log_print(ANDROID_LOG_INFO, "Go", __VA_ARGS__)
+#define LOG_FATAL(...) __android_log_print(ANDROID_LOG_FATAL, "Go", __VA_ARGS__)
+
 // Defined in the Go runtime.
 static int (*_rt0_arm_linux1)(int argc, char** argv);
 
@@ -36,10 +39,92 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	return JNI_VERSION_1_6;
 }
 
+static jclass find_class(JNIEnv *env, const char *class_name) {
+	jclass clazz = (*env)->FindClass(env, class_name);
+	if (clazz == NULL) {
+		LOG_FATAL("cannot find %s", class_name);
+		return NULL;
+	}
+	return clazz;
+}
+
+static jmethodID find_method(JNIEnv *env, jclass clazz, const char *name, const char *sig) {
+	jmethodID m = (*env)->GetMethodID(env, clazz, name, sig);
+	if (m == 0) {
+		LOG_FATAL("cannot find method %s %s", name, sig);
+		return 0;
+	}
+	return m;
+}
+
+static void init_from_context() {
+	if (current_ctx == NULL) {
+		return;
+	}
+
+	int attached = 0;
+	JNIEnv* env;
+	switch ((*current_vm)->GetEnv(current_vm, (void**)&env, JNI_VERSION_1_6)) {
+	case JNI_OK:
+		break;
+	case JNI_EDETACHED:
+		if ((*current_vm)->AttachCurrentThread(current_vm, &env, 0) != 0) {
+			LOG_FATAL("cannot attach JVM");
+		}
+		attached = 1;
+		break;
+	case JNI_EVERSION:
+		LOG_FATAL("bad JNI version");
+	}
+
+	// String path = context.getCacheDir().getAbsolutePath();
+	jclass context_clazz = find_class(env, "android/content/Context");
+	jmethodID getcachedir = find_method(env, context_clazz, "getCacheDir", "()Ljava/io/File;");
+	jobject file = (*env)->CallObjectMethod(env, current_ctx, getcachedir, NULL);
+	jclass file_clazz = find_class(env, "java/io/File");
+	jmethodID getabsolutepath = find_method(env, file_clazz, "getAbsolutePath", "()Ljava/lang/String;");
+	jstring jpath = (jstring)(*env)->CallObjectMethod(env, file, getabsolutepath, NULL);
+	const char* path = (*env)->GetStringUTFChars(env, jpath, NULL);
+	if (setenv("TMPDIR", path, 1) != 0) {
+		LOG_INFO("setenv(\"TMPDIR\", \"%s\", 1) failed: %d", path, errno);
+	}
+	(*env)->ReleaseStringUTFChars(env, jpath, path);
+
+	if (attached) {
+		(*current_vm)->DetachCurrentThread(current_vm);
+	}
+}
+
+// has_prefix_key returns 1 if s starts with prefix.
+static int has_prefix(const char *s, const char* prefix) {
+	while (*prefix) {
+		if (*prefix++ != *s++)
+			return 0;
+	}
+	return 1;
+}
+
+// getenv_raw searches environ for name prefix and returns the string pair.
+// For example, getenv_raw("PATH=") returns "PATH=/bin".
+// If no entry is found, the name prefix is returned. For example "PATH=".
+static const char* getenv_raw(const char *name) {
+	extern char** environ;
+	char** env = environ;
+
+	for (env = environ; *env; env++) {
+		if (has_prefix(*env, name)) {
+			return *env;
+		}
+	}
+	return name;
+}
+
 static void* init_go_runtime(void* unused) {
+	init_from_context();
+
 	_rt0_arm_linux1 = (int (*)(int, char**))dlsym(RTLD_DEFAULT, "_rt0_arm_linux1");
 	if (_rt0_arm_linux1 == NULL) {
-		__android_log_print(ANDROID_LOG_FATAL, "Go", "missing _rt0_arm_linux1");
+		LOG_FATAL("missing _rt0_arm_linux1");
 	}
 
 	// Defensively heap-allocate argv0, for setenv.
@@ -48,13 +133,15 @@ static void* init_go_runtime(void* unused) {
 	// Build argv, including the ELF auxiliary vector.
 	struct {
 		char* argv[2];
-		char* envp[2];
+		const char* envp[4];
 		uint32_t auxv[64];
 	} x;
 	x.argv[0] = argv0;
 	x.argv[1] = NULL;
-	x.envp[0] = argv0;
-	x.envp[1] = NULL;
+	x.envp[0] = getenv_raw("TMPDIR=");
+	x.envp[1] = getenv_raw("PATH=");
+	x.envp[2] = getenv_raw("LD_LIBRARY_PATH=");
+	x.envp[3] = NULL;
 
 	build_auxv(x.auxv, sizeof(x.auxv)/sizeof(uint32_t));
 	int32_t argc = 1;
@@ -68,7 +155,7 @@ static void wait_go_runtime() {
 		pthread_cond_wait(&go_started_cond, &go_started_mu);
 	}
 	pthread_mutex_unlock(&go_started_mu);
-	__android_log_print(ANDROID_LOG_INFO, "Go", "Runtime started");
+	LOG_INFO("runtime started");
 }
 
 pthread_t nativeactivity_t;
