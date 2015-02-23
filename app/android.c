@@ -4,6 +4,7 @@
 
 // +build android
 
+#include <android/asset_manager_jni.h>
 #include <android/log.h>
 #include <dlfcn.h>
 #include <errno.h>
@@ -210,6 +211,18 @@ void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_
 JNIEXPORT void JNICALL
 Java_go_Go_run(JNIEnv* env, jclass clazz, jobject ctx) {
 	current_ctx = (*env)->NewGlobalRef(env, ctx);
+
+	if (current_ctx != NULL) {
+		// Init asset_manager.
+		jclass context_clazz = find_class(env, "android/content/Context");
+		jmethodID getassets = find_method(
+			env, context_clazz, "getAssets", "()Landroid/content/res/AssetManager;");
+		// Prevent the java AssetManager from being GC'd
+		jobject asset_manager_ref = (*env)->NewGlobalRef(
+			env, (*env)->CallObjectMethod(env, current_ctx, getassets));
+		asset_manager = AAssetManager_fromJava(env, asset_manager_ref);
+	}
+
 	init_go_runtime(NULL);
 }
 
