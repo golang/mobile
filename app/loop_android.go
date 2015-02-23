@@ -104,12 +104,6 @@ func windowDrawLoop(cb Callbacks, w *C.ANativeWindow, queue *C.AInputQueue) {
 	// Wait until geometry and GL is initialized before cb.Start.
 	runStart(cb)
 
-	// We start here rather than onStart so the window exists and the Gl
-	// context is configured.
-	if cb.Start != nil {
-		cb.Start()
-	}
-
 	for {
 		processEvents(cb, queue)
 		select {
