@@ -78,9 +78,7 @@ func init() {
 	res.out = make(map[int32]*seq.Buffer)
 }
 
-// Init initializes communication with Java.
-// Typically called from the Start callback in app.Run.
-func Init() {
+func initSeq() {
 	vm := app.State.(interface {
 		JavaVM() unsafe.Pointer
 	}).JavaVM()
