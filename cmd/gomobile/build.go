@@ -80,10 +80,12 @@ func runBuild(cmd *command) error {
 		return err
 	}
 
-	// Check that we are compiling an app.
 	if pkg.Name != "main" {
-		return fmt.Errorf(`package %q: can only build package "main"`, pkg.Name)
+		// Not an app, don't build a final package.
+		return gobuild(pkg.ImportPath, "")
 	}
+
+	// Building a program, make sure it is appropriate for mobile.
 	importsApp := false
 	for _, path := range pkg.Imports {
 		if path == "golang.org/x/mobile/app" {
@@ -278,6 +280,8 @@ func addBuildFlagsNVX(cmd *command) {
 	cmd.flag.BoolVar(&buildX, "x", false, "")
 }
 
+// gobuild builds a package.
+// If libPath is specified then it builds as a shared library.
 func gobuild(src, libPath string) error {
 	version, err := goVersion()
 	if err != nil {
@@ -313,10 +317,8 @@ func gobuild(src, libPath string) error {
 	gocmd := exec.Command(
 		`go`,
 		`build`,
-		`-ldflags="-shared"`,
 		`-tags=`+strconv.Quote(strings.Join(ctx.BuildTags, ",")),
-		`-toolexec=`+filepath.Join(ndkccbin, "toolexec"),
-		`-o`, libPath)
+		`-toolexec=`+filepath.Join(ndkccbin, "toolexec"))
 	if buildV {
 		gocmd.Args = append(gocmd.Args, "-v")
 	}
@@ -325,6 +327,16 @@ func gobuild(src, libPath string) error {
 	}
 	if buildX {
 		gocmd.Args = append(gocmd.Args, "-x")
+	}
+	if libPath == "" {
+		if *buildO != "" {
+			gocmd.Args = append(gocmd.Args, `-o`, *buildO)
+		}
+	} else {
+		gocmd.Args = append(gocmd.Args,
+			`-ldflags="-shared"`,
+			`-o`, libPath,
+		)
 	}
 
 	gocmd.Args = append(gocmd.Args, src)
