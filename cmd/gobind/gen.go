@@ -35,8 +35,7 @@ func genPkg(pkg *build.Package) {
 	}
 
 	conf := loader.Config{
-		SourceImports: true,
-		Fset:          fset,
+		Fset: fset,
 	}
 	conf.TypeChecker.Error = func(err error) {
 		errorf("%v", err)

@@ -271,8 +271,7 @@ func newBinder(bindPkg *build.Package) (*binder, error) {
 	}
 
 	conf := loader.Config{
-		SourceImports: true,
-		Fset:          fset,
+		Fset: fset,
 	}
 	conf.TypeChecker.Error = func(err error) {
 		fmt.Fprintln(os.Stderr, err)
