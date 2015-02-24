@@ -1,17 +1,17 @@
 package go;
 
 import android.test.suitebuilder.annotation.Suppress;
+import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
 import java.util.Arrays;
 import java.util.Random;
 
 import go.testpkg.Testpkg;
 
-import junit.framework.TestCase;
-
-public class SeqTest extends TestCase {
-  static {
-    Go.init(null);
+public class SeqTest extends AndroidTestCase {
+  protected void setUp() throws Exception {
+    super.setUp();
+    Go.init(this.getContext());
   }
 
   public void testAdd() {
