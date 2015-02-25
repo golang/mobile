@@ -302,6 +302,16 @@ func symlink(src, dst string) error {
 	return os.Symlink(src, dst)
 }
 
+func rm(name string) error {
+	if buildX {
+		printcmd("rm %s", name)
+	}
+	if buildN {
+		return nil
+	}
+	return os.Remove(name)
+}
+
 func goVersion() ([]byte, error) {
 	if err := exec.Command("which", "go").Run(); err != nil {
 		return nil, fmt.Errorf(`no Go tool on $PATH`)

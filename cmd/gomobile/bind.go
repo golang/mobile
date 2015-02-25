@@ -156,12 +156,14 @@ func runBind(cmd *command) error {
 
 	src := pathJoin(repo, "app/Go.java")
 	dst := pathJoin(androidOutdir, "src/main/java/go/Go.java")
+	rm(dst)
 	if err := symlink(src, dst); err != nil {
 		return err
 	}
 
 	src = pathJoin(repo, "bind/java/Seq.java")
 	dst = pathJoin(androidOutdir, "src/main/java/go/Seq.java")
+	rm(dst)
 	if err := symlink(src, dst); err != nil {
 		return err
 	}
