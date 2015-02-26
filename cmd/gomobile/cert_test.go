@@ -43,11 +43,11 @@ func TestSignPKCS7(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if exec.Command("which", "openssl").Run() != nil {
+	if openssl, err := exec.LookPath("openssl"); err != nil {
 		t.Log("command openssl not found, skipping")
 	} else {
 		cmd := exec.Command(
-			"openssl", "asn1parse",
+			openssl, "asn1parse",
 			"-inform", "DER",
 			"-i",
 			"-in", sigPath,
@@ -59,10 +59,10 @@ func TestSignPKCS7(t *testing.T) {
 		}
 	}
 
-	if exec.Command("which", "keytool").Run() != nil {
+	if keytool, err := exec.LookPath("keytool"); err != nil {
 		t.Log("command keytool not found, skipping")
 	} else {
-		cmd := exec.Command("keytool", "-v", "-printcert", "-file", sigPath)
+		cmd := exec.Command(keytool, "-v", "-printcert", "-file", sigPath)
 		out, err := cmd.CombinedOutput()
 		t.Logf("%v:\n%s", cmd.Args, out)
 		if err != nil {
