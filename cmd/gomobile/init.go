@@ -313,17 +313,18 @@ func rm(name string) error {
 }
 
 func goVersion() ([]byte, error) {
-	if err := exec.Command("which", "go").Run(); err != nil {
+	gobin, err := exec.LookPath("go")
+	if err != nil {
 		return nil, fmt.Errorf(`no Go tool on $PATH`)
 	}
-	buildHelp, err := exec.Command("go", "help", "build").Output()
+	buildHelp, err := exec.Command(gobin, "help", "build").Output()
 	if err != nil {
 		return nil, fmt.Errorf("bad Go tool: %v", err)
 	}
 	if !bytes.Contains(buildHelp, []byte("-toolexec")) {
 		return nil, fmt.Errorf("installed Go tool does not support -toolexec")
 	}
-	return exec.Command("go", "version").Output()
+	return exec.Command(gobin, "version").Output()
 }
 
 func fetchNDK() error {
