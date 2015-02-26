@@ -4,6 +4,8 @@
 
 package al
 
+// +build darwin
+
 // Error returns one of these error codes.
 const (
 	InvalidName      = 0xA001

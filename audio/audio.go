@@ -17,7 +17,7 @@ import (
 	"golang.org/x/mobile/audio/alc"
 )
 
-// Format represents an audio file format.
+// Format represents an PCM data format.
 type Format string
 
 const (
@@ -28,10 +28,10 @@ const (
 )
 
 var formatToCode = map[Format]int32{
-	Mono8:    0x1100,
-	Mono16:   0x1101,
-	Stereo8:  0x1102,
-	Stereo16: 0x1103,
+	Mono8:    al.FormatMono8,
+	Mono16:   al.FormatMono16,
+	Stereo8:  al.FormatStereo8,
+	Stereo16: al.FormatStereo16,
 }
 
 // State indicates the current playing state of the player.
@@ -46,11 +46,11 @@ const (
 )
 
 var codeToState = map[int32]State{
-	0:      Unknown,
-	0x1011: Initial,
-	0x1012: Playing,
-	0x1013: Paused,
-	0x1014: Stopped,
+	0:          Unknown,
+	al.Initial: Initial,
+	al.Playing: Playing,
+	al.Paused:  Paused,
+	al.Stopped: Stopped,
 }
 
 var device struct {
@@ -59,9 +59,9 @@ var device struct {
 }
 
 type track struct {
-	format Format
-	rate   int64 // sample rate
-	src    io.ReadSeeker
+	format           Format
+	samplesPerSecond int64
+	src              io.ReadSeeker
 }
 
 // Player is a basic audio player that plays PCM data.
@@ -71,15 +71,15 @@ type Player struct {
 	t      *track
 	source al.Source
 
-	muPrep sync.Mutex // guards prep and bufs
-	prep   bool
-	bufs   []al.Buffer
-	size   int64 // size of the audio source
+	mu        sync.Mutex
+	prep      bool
+	bufs      []al.Buffer // buffers are created and queued to source during prepare.
+	sizeBytes int64       // size of the audio source
 }
 
 // NewPlayer returns a new Player.
 // It initializes the underlying audio devices and the related resources.
-func NewPlayer(src io.ReadSeeker, format Format, sampleRate int64) (*Player, error) {
+func NewPlayer(src io.ReadSeeker, format Format, samplesPerSecond int64) (*Player, error) {
 	device.Lock()
 	defer device.Unlock()
 
@@ -87,38 +87,31 @@ func NewPlayer(src io.ReadSeeker, format Format, sampleRate int64) (*Player, err
 		device.d = alc.Open("")
 		c := device.d.CreateContext(nil)
 		if !alc.MakeContextCurrent(c) {
-			return nil, fmt.Errorf("player: cannot initiate a new player")
+			return nil, fmt.Errorf("audio: cannot initiate a new player")
 		}
 	}
 	s := al.GenSources(1)
 	if code := al.Error(); code != 0 {
-		return nil, fmt.Errorf("player: cannot generate an audio source [err=%x]", code)
-	}
-	bufs := al.GenBuffers(2)
-	if err := lastErr(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("audio: cannot generate an audio source [err=%x]", code)
 	}
 	return &Player{
-		t:      &track{format: format, src: src, rate: sampleRate},
+		t:      &track{format: format, src: src, samplesPerSecond: samplesPerSecond},
 		source: s[0],
-		bufs:   bufs,
 	}, nil
 }
 
 func (p *Player) prepare(offset int64, force bool) error {
-	p.muPrep.Lock()
-	defer p.muPrep.Unlock()
+	p.mu.Lock()
 	if !force && p.prep {
+		p.mu.Unlock()
 		return nil
 	}
-	if len(p.bufs) > 0 {
-		p.source.UnqueueBuffers(p.bufs)
-		al.DeleteBuffers(p.bufs)
-	}
+	p.mu.Unlock()
+
 	if _, err := p.t.src.Seek(offset, 0); err != nil {
 		return err
 	}
-	p.bufs = []al.Buffer{}
+	var bufs []al.Buffer
 	// TODO(jbd): Limit the number of buffers in use, unqueue and reuse
 	// the existing buffers as buffers are processed.
 	buf := make([]byte, 128*1024)
@@ -128,8 +121,8 @@ func (p *Player) prepare(offset int64, force bool) error {
 		if n > 0 {
 			size += int64(n)
 			b := al.GenBuffers(1)
-			b[0].BufferData(uint32(formatToCode[p.t.format]), buf[:n], int32(p.t.rate))
-			p.bufs = append(p.bufs, b[0])
+			b[0].BufferData(uint32(formatToCode[p.t.format]), buf[:n], int32(p.t.samplesPerSecond))
+			bufs = append(bufs, b[0])
 		}
 		if err == io.EOF {
 			break
@@ -138,11 +131,19 @@ func (p *Player) prepare(offset int64, force bool) error {
 			return err
 		}
 	}
-	p.size = size
+
+	p.mu.Lock()
 	if len(p.bufs) > 0 {
-		p.source.QueueBuffers(p.bufs)
+		p.source.UnqueueBuffers(p.bufs)
+		al.DeleteBuffers(p.bufs)
 	}
+	p.sizeBytes = size
+	p.bufs = bufs
 	p.prep = true
+	if len(bufs) > 0 {
+		p.source.QueueBuffers(bufs)
+	}
+	p.mu.Unlock()
 	return nil
 }
 
@@ -199,7 +200,7 @@ func (p *Player) Seek(offset time.Duration) error {
 // Current returns the current playback position of the audio that is being played.
 func (p *Player) Current() time.Duration {
 	if p == nil {
-		return time.Duration(0)
+		return 0
 	}
 	// TODO(jbd): Current never returns the Total when the playing is finished.
 	// OpenAL may be returning the last buffer's start point as an OffsetByte.
@@ -214,7 +215,7 @@ func (p *Player) Total() time.Duration {
 	// Prepare is required to determine the length of the source.
 	// We need to read the entire source to calculate the length.
 	p.prepare(0, false)
-	return byteOffsetToDur(p.t, p.size)
+	return byteOffsetToDur(p.t, p.sizeBytes)
 }
 
 // Volume returns the current player volume. The range of the volume is [0, 1].
@@ -250,31 +251,28 @@ func (p *Player) Destroy() {
 	if p.source != 0 {
 		al.DeleteSources(p.source)
 	}
-	p.muPrep.Lock()
+	p.mu.Lock()
 	if len(p.bufs) > 0 {
 		al.DeleteBuffers(p.bufs)
 	}
-	p.muPrep.Unlock()
+	p.mu.Unlock()
 }
 
 func byteOffsetToDur(t *track, offset int64) time.Duration {
-	size := float64(offset)
+	samples := offset
 	if t.format == Mono16 || t.format == Stereo16 {
-		size /= 2
+		samples /= 2
 	}
 	if t.format == Stereo8 || t.format == Stereo16 {
-		size /= 2
+		samples /= 2
 	}
-	size /= float64(t.rate)
-	// Casting size back to int64. Work in milliseconds,
-	// so that size doesn't get rounded excessively.
-	return time.Duration(size*1000) * time.Duration(time.Millisecond)
+	return time.Duration(samples * int64(time.Second) / t.samplesPerSecond)
 }
 
 func durToByteOffset(t *track, dur time.Duration) int64 {
-	size := int64(dur/time.Second) * t.rate
-	// Each sample is represented by 16-bits. Move twice further.
+	size := t.samplesPerSecond * int64(dur) / int64(time.Second)
 	if t.format == Mono16 || t.format == Stereo16 {
+		// Each sample is represented by 16-bits. Move twice further.
 		size *= 2
 	}
 	if t.format == Stereo8 || t.format == Stereo16 {

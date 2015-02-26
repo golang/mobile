@@ -22,19 +22,19 @@ func TestNoOp(t *testing.T) {
 	if err := p.Stop(); err != nil {
 		t.Errorf("no-op player failed to stop: %v", err)
 	}
-	if c := p.Current(); c != time.Duration(0) {
+	if c := p.Current(); c != 0 {
 		t.Errorf("no-op player returns a non-zero playback position: %v", c)
 	}
-	if tot := p.Total(); tot != time.Duration(0) {
+	if tot := p.Total(); tot != 0 {
 		t.Errorf("no-op player returns a non-zero total: %v", tot)
 	}
 	if vol := p.Volume(); vol != 0 {
-		t.Errorf("no-op player returns a non-zero total: %v", vol)
+		t.Errorf("no-op player returns a non-zero volume: %v", vol)
 	}
 	if s := p.State(); s != Unknown {
 		t.Errorf("playing state: %v", s)
 	}
 	p.SetVolume(0.1)
-	p.Seek(time.Duration(100))
+	p.Seek(1 * time.Second)
 	p.Destroy()
 }
