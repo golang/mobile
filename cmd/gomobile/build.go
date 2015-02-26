@@ -252,6 +252,9 @@ func printcmd(format string, args ...interface{}) {
 	if ndkccpath != "" {
 		cmd = strings.Replace(cmd, ndkccpath, "$NDKCCPATH", -1)
 	}
+	if goroot := goEnv("GOROOT"); goroot != "" {
+		cmd = strings.Replace(cmd, goroot, "$GOROOT", -1)
+	}
 	if env := os.Getenv("HOME"); env != "" {
 		cmd = strings.Replace(cmd, env, "$HOME", -1)
 	}

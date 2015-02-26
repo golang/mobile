@@ -66,10 +66,10 @@ rm -r -f "$NDKCCPATH"
 mkdir -p $NDKCCPATH
 WORK=GOPATH1/pkg/gomobile/android-{{.NDK}}/work
 mkdir -p $WORK/go/pkg
-cp -a $HOME/go/include $WORK/go/include
-cp -a $HOME/go/lib $WORK/go/lib
-cp -a $HOME/go/src $WORK/go/src
-ln -s $HOME/go/.git $WORK/go/.git
+cp -a $GOROOT/include $WORK/go/include
+cp -a $GOROOT/lib $WORK/go/lib
+cp -a $GOROOT/src $WORK/go/src
+ln -s $GOROOT/.git $WORK/go/.git
 curl -o$WORK/gomobile-{{.NDK}}-{{.GOOS}}-{{.NDKARCH}}.tar.gz https://dl.google.com/go/mobile/gomobile-{{.NDK}}-{{.GOOS}}-{{.NDKARCH}}.tar.gz
 tar xfz gomobile-{{.NDK}}-{{.GOOS}}-{{.NDKARCH}}.tar.gz
 mkdir -p $NDKCCPATH/arm/sysroot/usr
@@ -92,8 +92,8 @@ mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/nm $NDKCCPATH/arm/bin/nm
 mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/pack $NDKCCPATH/arm/bin/pack
 mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/link $NDKCCPATH/arm/bin/link
 go build -o $NDKCCPATH/arm/bin/toolexec $WORK/toolexec.go
-rm -r -f "$HOME/go/pkg/android_arm"
-mv $WORK/go/pkg/android_arm $HOME/go/pkg/android_arm
+rm -r -f "$GOROOT/pkg/android_arm"
+mv $WORK/go/pkg/android_arm $GOROOT/pkg/android_arm
 go version > GOPATH1/pkg/gomobile/version
 rm -r -f "$WORK"
 `))
