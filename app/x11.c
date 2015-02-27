@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+static Atom wm_delete_window;
+
 static Window
 new_window(Display *x_dpy, EGLDisplay e_dpy, int w, int h, EGLContext *ctx, EGLSurface *surf) {
 	static const EGLint attribs[] = {
@@ -99,11 +101,19 @@ runApp(void) {
 	EGLContext e_ctx;
 	EGLSurface e_surf;
 	Window win = new_window(x_dpy, e_dpy, 400, 400, &e_ctx, &e_surf);
+
+	wm_delete_window = XInternAtom(x_dpy, "WM_DELETE_WINDOW", True);
+	if (wm_delete_window != None) {
+		XSetWMProtocols(x_dpy, win, &wm_delete_window, 1);
+	}
+
 	XMapWindow(x_dpy, win);
 	if (!eglMakeCurrent(e_dpy, e_surf, e_surf, e_ctx)) {
 		fprintf(stderr, "eglMakeCurrent failed\n");
 		exit(1);
 	}
+
+	onStart();
 
 	while (1) {
 		XEvent ev;
@@ -136,6 +146,12 @@ runApp(void) {
 		case ConfigureNotify:
 			onResize(ev.xconfigure.width, ev.xconfigure.height);
 			glViewport(0, 0, (GLint)ev.xconfigure.width, (GLint)ev.xconfigure.height);
+			break;
+		case ClientMessage:
+			if (wm_delete_window != None && (Atom)ev.xclient.data.l[0] == wm_delete_window) {
+				onStop();
+				return;
+			}
 			break;
 		}
 	}

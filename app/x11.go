@@ -88,3 +88,17 @@ func onDraw() {
 		cb.Draw()
 	}
 }
+
+//export onStart
+func onStart() {
+	if cb.Start != nil {
+		cb.Start()
+	}
+}
+
+//export onStop
+func onStop() {
+	if cb.Stop != nil {
+		cb.Stop()
+	}
+}
