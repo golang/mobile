@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"golang.org/x/mobile/audio/al"
-	"golang.org/x/mobile/audio/alc"
 )
 
 // Format represents an PCM data format.
@@ -82,7 +81,7 @@ var codeToState = map[int32]State{
 
 var device struct {
 	sync.Mutex
-	d *alc.Device
+	d *al.Device
 }
 
 type track struct {
@@ -111,9 +110,9 @@ func NewPlayer(src io.ReadSeeker, format Format, samplesPerSecond int64) (*Playe
 	defer device.Unlock()
 
 	if device.d == nil {
-		device.d = alc.Open("")
+		device.d = al.Open("")
 		c := device.d.CreateContext(nil)
-		if !alc.MakeContextCurrent(c) {
+		if !al.MakeContextCurrent(c) {
 			return nil, fmt.Errorf("audio: cannot initiate a new player")
 		}
 	}

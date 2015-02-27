@@ -8,46 +8,29 @@
 //
 // More information about OpenAL Soft is available at
 // http://www.openal.org/documentation/openal-1.1-specification.pdf.
+//
+// In order to use this package on Linux desktop distros,
+// you will need OpenAL library as an external dependency.
+// On Ubuntu 14.04 'Trusty', you may have to install this library
+// by running the command below.
+//
+// 		sudo apt-get install libopenal-dev
+//
 package al
-
-/*
-// TODO(jbd,crawshaw): Add android and windows support.
-
-#cgo darwin   CFLAGS:  -DGOOS_darwin
-#cgo linux    CFLAGS:  -DGOOS_linux
-#cgo darwin   LDFLAGS: -framework OpenAL
-#cgo linux    LDFLAGS: -lopenal
-
-#ifdef GOOS_darwin
-#include <stdlib.h>
-#include <OpenAL/al.h>
-#endif
-
-#ifdef GOOS_linux
-#include <AL/al.h>
-#endif
-*/
-import "C"
-import "unsafe"
-
-/*
-On Ubuntu 14.04 'Trusty', you may have to install these libraries:
-sudo apt-get install libopenal-dev
-*/
 
 // Enable enables a capability.
 func Enable(capability int32) {
-	C.alEnable(C.ALenum(capability))
+	alEnable(capability)
 }
 
 // Disable disables a capability.
 func Disable(capability int32) {
-	C.alDisable(C.ALenum(capability))
+	alDisable(capability)
 }
 
 // Enabled returns true if the specified capability is enabled.
 func Enabled(capability int32) bool {
-	return C.alIsEnabled(C.ALenum(capability)) == 1
+	return alIsEnabled(capability)
 }
 
 // Vector represents an vector in a Cartesian coordinate system.
@@ -76,16 +59,15 @@ func (v Orientation) slice() []float32 {
 }
 
 func geti(param int) int32 {
-	return int32(C.alGetInteger(C.ALenum(param)))
+	return alGetInteger(param)
 }
 
 func getf(param int) float32 {
-	return float32(C.alGetFloat(C.ALenum(param)))
+	return alGetFloat(param)
 }
 
 func getString(param int) string {
-	v := C.alGetString(C.ALenum(param))
-	return C.GoString((*C.char)(v))
+	return alGetString(param)
 }
 
 // DistanceModel returns the distance model.
@@ -95,7 +77,7 @@ func DistanceModel() int32 {
 
 // SetDistanceModel sets the distance model.
 func SetDistanceModel(v int32) {
-	C.alDistanceModel(C.ALenum(v))
+	alDistanceModel(v)
 }
 
 // DopplerFactor returns the doppler factor.
@@ -105,7 +87,7 @@ func DopplerFactor() float32 {
 
 // SetDopplerFactor sets the doppler factor.
 func SetDopplerFactor(v float32) {
-	C.alDopplerFactor(C.ALfloat(v))
+	alDopplerFactor(v)
 }
 
 // DopplerVelocity returns the doppler velocity.
@@ -115,7 +97,7 @@ func DopplerVelocity() float32 {
 
 // SetDopplerVelocity sets the doppler velocity.
 func SetDopplerVelocity(v float32) {
-	C.alDopplerVelocity(C.ALfloat(v))
+	alDopplerVelocity(v)
 }
 
 // SpeedOfSound is the speed of sound in meters per second (m/s).
@@ -125,7 +107,7 @@ func SpeedOfSound() float32 {
 
 // SetSpeedOfSound sets the speed of sound, its unit should be meters per second (m/s).
 func SetSpeedOfSound(v float32) {
-	C.alSpeedOfSound(C.ALfloat(v))
+	alSpeedOfSound(v)
 }
 
 // Vendor returns the vendor.
@@ -150,7 +132,7 @@ func Extensions() string {
 
 // Error returns the most recently generated error.
 func Error() int32 {
-	return int32(C.alGetError())
+	return alGetError()
 }
 
 // Source represents an individual sound source in 3D-space.
@@ -161,34 +143,32 @@ type Source uint32
 // GenSources generates n new sources. These sources should be deleted
 // once they are not in use.
 func GenSources(n int) []Source {
-	s := make([]Source, n)
-	C.alGenSources(C.ALsizei(n), (*C.ALuint)(unsafe.Pointer(&s[0])))
-	return s
+	return alGenSources(n)
 }
 
 // PlaySources plays the sources.
 func PlaySources(source ...Source) {
-	C.alSourcePlayv(C.ALsizei(len(source)), (*C.ALuint)(unsafe.Pointer(&source[0])))
+	alSourcePlayv(source)
 }
 
 // PauseSources pauses the sources.
 func PauseSources(source ...Source) {
-	C.alSourcePausev(C.ALsizei(len(source)), (*C.ALuint)(unsafe.Pointer(&source[0])))
+	alSourcePausev(source)
 }
 
 // StopSources stops the sources.
 func StopSources(source ...Source) {
-	C.alSourceStopv(C.ALsizei(len(source)), (*C.ALuint)(unsafe.Pointer(&source[0])))
+	alSourceStopv(source)
 }
 
 // RewindSources rewinds the sources to their beginning positions.
 func RewindSources(source ...Source) {
-	C.alSourceRewindv(C.ALsizei(len(source)), (*C.ALuint)(unsafe.Pointer(&source[0])))
+	alSourceRewindv(source)
 }
 
 // DeleteSources deletes the sources.
 func DeleteSources(source ...Source) {
-	C.alDeleteSources(C.ALsizei(len(source)), (*C.ALuint)(unsafe.Pointer(&source[0])))
+	alDeleteSources(source)
 }
 
 // Gain returns the source gain.
@@ -288,41 +268,37 @@ func (s Source) OffsetByte() int32 {
 }
 
 func getSourcei(s Source, param int) int32 {
-	var v C.ALint
-	C.alGetSourcei(C.ALuint(s), C.ALenum(param), &v)
-	return int32(v)
+	return alGetSourcei(s, param)
 }
 
 func getSourcef(s Source, param int) float32 {
-	var v C.ALfloat
-	C.alGetSourcef(C.ALuint(s), C.ALenum(param), &v)
-	return float32(v)
+	return alGetSourcef(s, param)
 }
 
 func getSourcefv(s Source, param int, v []float32) {
-	C.alGetSourcefv(C.ALuint(s), C.ALenum(param), (*C.ALfloat)(unsafe.Pointer(&v[0])))
+	alGetSourcefv(s, param, v)
 }
 
 func setSourcei(s Source, param int, v int32) {
-	C.alSourcei(C.ALuint(s), C.ALenum(param), C.ALint(v))
+	alSourcei(s, param, v)
 }
 
 func setSourcef(s Source, param int, v float32) {
-	C.alSourcef(C.ALuint(s), C.ALenum(param), C.ALfloat(v))
+	alSourcef(s, param, v)
 }
 
 func setSourcefv(s Source, param int, v []float32) {
-	C.alSourcefv(C.ALuint(s), C.ALenum(param), (*C.ALfloat)(unsafe.Pointer(&v[0])))
+	alSourcefv(s, param, v)
 }
 
 // QueueBuffers adds the buffers to the buffer queue.
 func (s Source) QueueBuffers(buffers []Buffer) {
-	C.alSourceQueueBuffers(C.ALuint(s), C.ALsizei(len(buffers)), (*C.ALuint)(unsafe.Pointer(&buffers[0])))
+	alSourceQueueBuffers(s, buffers)
 }
 
 // UnqueueBuffers removes the specified buffers from the buffer queue.
 func (s Source) UnqueueBuffers(buffers []Buffer) {
-	C.alSourceUnqueueBuffers(C.ALuint(s), C.ALsizei(len(buffers)), (*C.ALuint)(unsafe.Pointer(&buffers[0])))
+	alSourceUnqueueBuffers(s, buffers)
 }
 
 // ListenerGain returns the total gain applied to the final mix.
@@ -372,21 +348,19 @@ func SetListenerOrientation(v Orientation) {
 }
 
 func getListenerf(param int) float32 {
-	var v C.ALfloat
-	C.alGetListenerf(C.ALenum(param), &v)
-	return float32(v)
+	return alGetListenerf(param)
 }
 
 func getListenerfv(param int, v []float32) {
-	C.alGetListenerfv(C.ALenum(param), (*C.ALfloat)(unsafe.Pointer(&v[0])))
+	alGetListenerfv(param, v)
 }
 
 func setListenerf(param int, v float32) {
-	C.alListenerf(C.ALenum(param), C.ALfloat(v))
+	alListenerf(param, v)
 }
 
 func setListenerfv(param int, v []float32) {
-	C.alListenerfv(C.ALenum(param), (*C.ALfloat)(unsafe.Pointer(&v[0])))
+	alListenerfv(param, v)
 }
 
 // A buffer represents a chunk of PCM audio data that could be buffered to an audio
@@ -396,20 +370,16 @@ type Buffer uint32
 // GenBuffers generates n new buffers. The generated buffers should be deleted
 // once they are no longer in use.
 func GenBuffers(n int) []Buffer {
-	s := make([]Buffer, n)
-	C.alGenBuffers(C.ALsizei(n), (*C.ALuint)(unsafe.Pointer(&s[0])))
-	return s
+	return alGenBuffers(n)
 }
 
 // DeleteBuffers deletes the buffers.
 func DeleteBuffers(buffers []Buffer) {
-	C.alDeleteBuffers(C.ALsizei(len(buffers)), (*C.ALuint)(unsafe.Pointer(&buffers[0])))
+	alDeleteBuffers(buffers)
 }
 
 func getBufferi(b Buffer, param int) int32 {
-	var v C.ALint
-	C.alGetBufferi(C.ALuint(b), C.ALenum(param), &v)
-	return int32(v)
+	return alGetBufferi(b, param)
 }
 
 // Frequency returns the frequency of the buffer data in Hertz (Hz).
@@ -434,10 +404,10 @@ func (b Buffer) Size() int32 {
 
 // BufferData buffers PCM data to the current buffer.
 func (b Buffer) BufferData(format uint32, data []byte, freq int32) {
-	C.alBufferData(C.ALuint(b), C.ALenum(format), unsafe.Pointer(&data[0]), C.ALsizei(len(data)), C.ALsizei(freq))
+	alBufferData(b, format, data, freq)
 }
 
 // Valid returns true if the buffer exists and is valid.
 func (b Buffer) Valid() bool {
-	return C.alIsBuffer(C.ALuint(b)) == 1
+	return alIsBuffer(b)
 }
