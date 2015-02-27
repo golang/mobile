@@ -49,11 +49,18 @@ new_window(Display *x_dpy, EGLDisplay e_dpy, int w, int h, EGLContext *ctx, EGLS
 
 	Window root = RootWindow(x_dpy, DefaultScreen(x_dpy));
 	XSetWindowAttributes attr;
+
+	attr.colormap = XCreateColormap(x_dpy, root, visInfo->visual, AllocNone);
+	if (!attr.colormap) {
+		fprintf(stderr, "XCreateColormap failed\n");
+		exit(1);
+	}
+
 	attr.event_mask = StructureNotifyMask | ExposureMask |
 		ButtonPressMask | ButtonReleaseMask | ButtonMotionMask;
 	Window win = XCreateWindow(
 		x_dpy, root, 0, 0, w, h, 0, visInfo->depth, InputOutput,
-		visInfo->visual, CWEventMask, &attr);
+		visInfo->visual, CWColormap | CWEventMask, &attr);
 	XFree(visInfo);
 
 	XSizeHints sizehints;
