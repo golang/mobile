@@ -34,11 +34,12 @@ type version struct {
 }
 
 var hosts = []version{
-	// TODO: windows
 	{"darwin", "x86"},
 	{"darwin", "x86_64"},
 	{"linux", "x86"},
 	{"linux", "x86_64"},
+	{"windows", "x86"},
+	{"windows", "x86_64"},
 }
 
 var tmpdir string
@@ -86,7 +87,13 @@ func mkpkg(host version) (err error) {
 	// We preserve the same file layout to make the full NDK interchangable
 	// with the cut down file.
 	usr := "android-" + ndkVersion + "/platforms/android-15/arch-arm/usr"
-	gcc := "android-" + ndkVersion + "/toolchains/arm-linux-androideabi-4.8/prebuilt/" + host.os + "-" + host.arch
+	gcc := "android-" + ndkVersion + "/toolchains/arm-linux-androideabi-4.8/prebuilt/"
+	if host.os == "windows" && host.arch == "x86" {
+		gcc += "windows"
+	} else {
+		gcc += host.os + "-" + host.arch
+	}
+
 	if err := os.MkdirAll(dst+"/"+usr, 0755); err != nil {
 		return err
 	}
