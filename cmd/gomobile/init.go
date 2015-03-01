@@ -140,18 +140,40 @@ func runInit(cmd *command) error {
 	if buildN {
 		envpath = "$PATH"
 	}
-	make := exec.Command(filepath.Join(tmpGoroot, "src", "make.bash"), "--no-clean")
+	makeScript := filepath.Join(tmpGoroot, "src", "make")
+	if goos == "windows" {
+		makeScript += ".bat"
+	} else {
+		makeScript += ".bash"
+	}
+
+	bin := func(name string) string {
+		if goos == "windows" {
+			return name + ".exe"
+		}
+		return name
+	}
+
+	make := exec.Command(makeScript, "--no-clean")
 	make.Dir = filepath.Join(tmpGoroot, "src")
 	make.Env = []string{
 		`PATH=` + envpath,
-		`TMPDIR=` + tmpdir,
-		`HOME=` + os.Getenv("HOME"), // for default the go1.4 bootstrap
 		`GOOS=android`,
 		`GOARCH=arm`,
 		`GOARM=7`,
 		`CGO_ENABLED=1`,
-		`CC_FOR_TARGET=` + filepath.Join(ndkccbin, "arm-linux-androideabi-gcc"),
-		`CXX_FOR_TARGET=` + filepath.Join(ndkccbin, "arm-linux-androideabi-g++"),
+		`CC_FOR_TARGET=` + filepath.Join(ndkccbin, bin("arm-linux-androideabi-gcc")),
+		`CXX_FOR_TARGET=` + filepath.Join(ndkccbin, bin("arm-linux-androideabi-g++")),
+	}
+	if goos == "windows" {
+		make.Env = append(make.Env, `TEMP=`+tmpdir)
+		make.Env = append(make.Env, `TMP=`+tmpdir)
+		make.Env = append(make.Env, `HOMEDRIVE=`+os.Getenv("HOMEDRIVE"))
+		make.Env = append(make.Env, `HOMEPATH=`+os.Getenv("HOMEPATH"))
+	} else {
+		make.Env = append(make.Env, `TMPDIR=`+tmpdir)
+		// for default the go1.4 bootstrap
+		make.Env = append(make.Env, `HOME=`+os.Getenv("HOME"))
 	}
 	if v := goEnv("GOROOT_BOOTSTRAP"); v != "" {
 		make.Env = append(make.Env, `GOROOT_BOOTSTRAP=`+v)
@@ -172,7 +194,11 @@ func runInit(cmd *command) error {
 
 	// Move the Go cross compiler toolchain into GOPATH.
 	gotoolsrc := filepath.Join(tmpGoroot, "pkg", "tool", goos+"_"+goarch)
-	if err := move(ndkccbin, gotoolsrc, "5a", "5l", "5g", "cgo", "nm", "pack", "link"); err != nil {
+	tools := []string{"5a", "5l", "5g", "cgo", "nm", "pack", "link"}
+	for i, name := range tools {
+		tools[i] = bin(name)
+	}
+	if err := move(ndkccbin, gotoolsrc, tools...); err != nil {
 		return err
 	}
 
@@ -183,7 +209,7 @@ func runInit(cmd *command) error {
 			return err
 		}
 	}
-	make = exec.Command("go", "build", "-o", filepath.Join(ndkccbin, "toolexec"), toolexecSrc)
+	make = exec.Command("go", "build", "-o", filepath.Join(ndkccbin, bin("toolexec")), toolexecSrc)
 	if buildV {
 		fmt.Fprintf(os.Stderr, "building gomobile toolexec\n")
 		make.Stdout = os.Stdout
@@ -214,10 +240,13 @@ func runInit(cmd *command) error {
 		if err := move(dir, filepath.Join(tmpGoroot, "pkg"), "android_arm"); err != nil {
 			return err
 		}
-		// TODO: modify instructions for windows.
 		remove := ""
 		if cannotRemove {
-			remove = "\trm -r -f %s/pkg/android_arm\n"
+			if goos == "windows" {
+				remove = "\trd /s /q %s\\pkg\\android_arm\n"
+			} else {
+				remove = "\trm -r -f %s/pkg/android_arm\n"
+			}
 		}
 		return fmt.Errorf(
 			`Cannot install android/arm in GOROOT.
@@ -275,6 +304,10 @@ func move(dst, src string, names ...string) error {
 		if buildN {
 			continue
 		}
+		if goos == "windows" {
+			// os.Rename fails if dstf already exists.
+			os.Remove(dstf)
+		}
 		if err := os.Rename(srcf, dstf); err != nil {
 			return err
 		}
@@ -298,6 +331,9 @@ func symlink(src, dst string) error {
 	}
 	if buildN {
 		return nil
+	}
+	if goos == "windows" {
+		return doCopyAll(dst, src)
 	}
 	return os.Symlink(src, dst)
 }
@@ -339,15 +375,33 @@ func fetchNDK() error {
 		} else {
 			ndkName += "bin"
 		}
+		archive := filepath.Join(tmpdir, ndkName)
 		url := "https://dl.google.com/android/ndk/" + ndkName
-		if err := fetch(filepath.Join(tmpdir, ndkName), url); err != nil {
+		if err := fetch(archive, url); err != nil {
 			return err
 		}
 
-		inflate := exec.Command(filepath.Join(tmpdir, ndkName))
+		// The self-extracting ndk dist file for Windows
+		// terminates with an error (error code 2 - corrupted or incomplete file)
+		// but there are no details on what caused this.
+		//
+		// Strangely, if the file is launched from file
+		// browser or unzipped with 7z.exe no error is reported.
+		// For now, we require 7z.exe on windows.
+		//
+		// Once we start using the stripped NDK, this code path
+		// will not matter.
+		//
+		// TODO(hyangah): don't depend on 7z.exe for windows.
+		var inflate *exec.Cmd
+		if goos != "windows" {
+			inflate = exec.Command(archive)
+		} else {
+			inflate = exec.Command("7z.exe", "x", archive)
+		}
 		inflate.Dir = tmpdir
 		if buildX {
-			printcmd("%s", inflate.Args[0])
+			printcmd("%s", archive)
 		}
 		if !buildN {
 			out, err := inflate.CombinedOutput()
@@ -371,7 +425,12 @@ func fetchNDK() error {
 		return err
 	}
 
-	ndkpath := filepath.Join(tmpdir, "android-ndk-r10d", "toolchains", "arm-linux-androideabi-4.8", "prebuilt", goos+"-"+ndkarch)
+	ndkpath := filepath.Join(tmpdir, "android-ndk-r10d", "toolchains", "arm-linux-androideabi-4.8", "prebuilt")
+	if goos == "windows" && ndkarch == "x86" {
+		ndkpath = filepath.Join(ndkpath, "windows")
+	} else {
+		ndkpath = filepath.Join(ndkpath, goos+"-"+ndkarch)
+	}
 	if err := move(dst, ndkpath, "bin", "lib", "libexec"); err != nil {
 		return err
 	}
@@ -381,6 +440,9 @@ func fetchNDK() error {
 		return err
 	}
 	for _, name := range []string{"ld", "as", "gcc", "g++"} {
+		if goos == "windows" {
+			name += ".exe"
+		}
 		if err := symlink(filepath.Join(dst, "bin", "arm-linux-androideabi-"+name), filepath.Join(linkpath, name)); err != nil {
 			return err
 		}
@@ -498,6 +560,10 @@ func copyAll(dst, src string) error {
 	if buildN {
 		return nil
 	}
+	return doCopyAll(dst, src)
+}
+
+func doCopyAll(dst, src string) error {
 	return filepath.Walk(src, func(path string, info os.FileInfo, errin error) (err error) {
 		if errin != nil {
 			return errin
@@ -536,7 +602,34 @@ func removeAll(path string) error {
 	if buildN {
 		return nil
 	}
+	// os.RemoveAll behaves differently in windows.
+	// http://golang.org/issues/9606
+	if goos == "windows" {
+		resetReadOnlyFlagAll(path)
+	}
+
 	return os.RemoveAll(path)
+}
+
+func resetReadOnlyFlagAll(path string) error {
+	fi, err := os.Stat(path)
+	if err != nil {
+		return err
+	}
+	if !fi.IsDir() {
+		return os.Chmod(path, 0666)
+	}
+	fd, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer fd.Close()
+
+	names, _ := fd.Readdirnames(-1)
+	for _, name := range names {
+		resetReadOnlyFlagAll(path + string(filepath.Separator) + name)
+	}
+	return nil
 }
 
 func goEnv(name string) string {
