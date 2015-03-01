@@ -483,7 +483,7 @@ func copyGoroot(dst, src string) error {
 	if err := mkdir(filepath.Join(dst, "pkg")); err != nil {
 		return err
 	}
-	for _, dir := range []string{"include", "lib", "src"} {
+	for _, dir := range []string{"lib", "src"} {
 		if err := copyAll(filepath.Join(dst, dir), filepath.Join(src, dir)); err != nil {
 			return err
 		}

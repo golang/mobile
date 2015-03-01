@@ -66,7 +66,6 @@ rm -r -f "$NDKCCPATH"
 mkdir -p $NDKCCPATH
 WORK=GOPATH1/pkg/gomobile/android-{{.NDK}}/work
 mkdir -p $WORK/go/pkg
-cp -a $GOROOT/include $WORK/go/include
 cp -a $GOROOT/lib $WORK/go/lib
 cp -a $GOROOT/src $WORK/go/src
 ln -s $GOROOT/.git $WORK/go/.git
