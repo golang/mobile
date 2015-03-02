@@ -83,9 +83,9 @@ ln -s $NDKCCPATH/arm/bin/arm-linux-androideabi-as $NDKCCPATH/arm/arm-linux-andro
 ln -s $NDKCCPATH/arm/bin/arm-linux-androideabi-gcc $NDKCCPATH/arm/arm-linux-androideabi/bin/gcc
 ln -s $NDKCCPATH/arm/bin/arm-linux-androideabi-g++ $NDKCCPATH/arm/arm-linux-androideabi/bin/g++
 PATH=$PATH GOOS=android GOARCH=arm GOARM=7 CGO_ENABLED=1 CC_FOR_TARGET=$NDKCCPATH/arm/bin/arm-linux-androideabi-gcc CXX_FOR_TARGET=$NDKCCPATH/arm/bin/arm-linux-androideabi-g++ TMPDIR=$WORK HOME=$HOME $WORK/go/src/make.bash --no-clean
-mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/5a $NDKCCPATH/arm/bin/5a
 mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/5l $NDKCCPATH/arm/bin/5l
 mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/5g $NDKCCPATH/arm/bin/5g
+mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/asm $NDKCCPATH/arm/bin/asm
 mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/cgo $NDKCCPATH/arm/bin/cgo
 mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/nm $NDKCCPATH/arm/bin/nm
 mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/pack $NDKCCPATH/arm/bin/pack
