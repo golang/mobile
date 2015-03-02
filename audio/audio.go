@@ -18,32 +18,59 @@ import (
 )
 
 // Format represents an PCM data format.
-type Format string
+type Format int
 
 const (
-	Mono8    = Format("mono8")
-	Mono16   = Format("mono16")
-	Stereo8  = Format("stereo8")
-	Stereo16 = Format("stereo16")
+	Mono8 Format = iota
+	Mono16
+	Stereo8
+	Stereo16
 )
 
-var formatToCode = map[Format]int32{
+func (f Format) String() string { return formatStrings[f] }
+
+// formatBytes is the product of bytes per sample and number of channels.
+var formatBytes = [...]int64{
+	Mono8:    1,
+	Mono16:   2,
+	Stereo8:  2,
+	Stereo16: 4,
+}
+
+var formatCodes = [...]uint32{
 	Mono8:    al.FormatMono8,
 	Mono16:   al.FormatMono16,
 	Stereo8:  al.FormatStereo8,
 	Stereo16: al.FormatStereo16,
 }
 
+var formatStrings = [...]string{
+	Mono8:    "mono8",
+	Mono16:   "mono16",
+	Stereo8:  "stereo8",
+	Stereo16: "stereo16",
+}
+
 // State indicates the current playing state of the player.
-type State string
+type State int
 
 const (
-	Unknown = State("unknown")
-	Initial = State("initial")
-	Playing = State("playing")
-	Paused  = State("paused")
-	Stopped = State("stopped")
+	Unknown State = iota
+	Initial
+	Playing
+	Paused
+	Stopped
 )
+
+func (s State) String() string { return stateStrings[s] }
+
+var stateStrings = [...]string{
+	Unknown: "unknown",
+	Initial: "initial",
+	Playing: "playing",
+	Paused:  "paused",
+	Stopped: "stopped",
+}
 
 var codeToState = map[int32]State{
 	0:          Unknown,
@@ -121,7 +148,7 @@ func (p *Player) prepare(offset int64, force bool) error {
 		if n > 0 {
 			size += int64(n)
 			b := al.GenBuffers(1)
-			b[0].BufferData(uint32(formatToCode[p.t.format]), buf[:n], int32(p.t.samplesPerSecond))
+			b[0].BufferData(formatCodes[p.t.format], buf[:n], int32(p.t.samplesPerSecond))
 			bufs = append(bufs, b[0])
 		}
 		if err == io.EOF {
@@ -259,26 +286,11 @@ func (p *Player) Destroy() {
 }
 
 func byteOffsetToDur(t *track, offset int64) time.Duration {
-	samples := offset
-	if t.format == Mono16 || t.format == Stereo16 {
-		samples /= 2
-	}
-	if t.format == Stereo8 || t.format == Stereo16 {
-		samples /= 2
-	}
-	return time.Duration(samples * int64(time.Second) / t.samplesPerSecond)
+	return time.Duration(offset * formatBytes[t.format] * int64(time.Second) / t.samplesPerSecond)
 }
 
 func durToByteOffset(t *track, dur time.Duration) int64 {
-	size := t.samplesPerSecond * int64(dur) / int64(time.Second)
-	if t.format == Mono16 || t.format == Stereo16 {
-		// Each sample is represented by 16-bits. Move twice further.
-		size *= 2
-	}
-	if t.format == Stereo8 || t.format == Stereo16 {
-		size *= 2
-	}
-	return size
+	return int64(dur) * t.samplesPerSecond / (formatBytes[t.format] * int64(time.Second))
 }
 
 // lastErr returns the last error or nil if the last operation
