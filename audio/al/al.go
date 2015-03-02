@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build darwin
+// +build darwin linux,!android
 
 // Package al provides OpenAL Soft bindings for Go.
 //
@@ -11,19 +11,29 @@
 package al
 
 /*
-// TODO(jbd,crawshaw): Add android, linux and windows support.
+// TODO(jbd,crawshaw): Add android and windows support.
 
-#cgo darwin   CFLAGS: -DGOOS_darwin
-#cgo darwin  LDFLAGS: -framework OpenAL
+#cgo darwin   CFLAGS:  -DGOOS_darwin
+#cgo linux    CFLAGS:  -DGOOS_linux
+#cgo darwin   LDFLAGS: -framework OpenAL
+#cgo linux    LDFLAGS: -lopenal
 
 #ifdef GOOS_darwin
 #include <stdlib.h>
 #include <OpenAL/al.h>
 #endif
 
+#ifdef GOOS_linux
+#include <AL/al.h>
+#endif
 */
 import "C"
 import "unsafe"
+
+/*
+On Ubuntu 14.04 'Trusty', you may have to install these libraries:
+sudo apt-get install libopenal-dev
+*/
 
 // Enable enables a capability.
 func Enable(capability int32) {
