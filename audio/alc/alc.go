@@ -2,22 +2,34 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build darwin
+// +build darwin linux,!android
 
 // Package alc provides OpenAL's ALC (Audio Library Context) bindings for Go.
 package alc
 
 /*
 #cgo darwin   CFLAGS:  -DGOOS_darwin
+#cgo linux    CFLAGS:  -DGOOS_linux
 #cgo darwin   LDFLAGS: -framework OpenAL
+#cgo linux    LDFLAGS: -lopenal
 
 #ifdef GOOS_darwin
 #include <stdlib.h>
 #include <OpenAL/alc.h>
 #endif
+
+#ifdef GOOS_linux
+#include <stdlib.h>
+#include <AL/alc.h>
+#endif
 */
 import "C"
 import "unsafe"
+
+/*
+On Ubuntu 14.04 'Trusty', you may have to install these libraries:
+sudo apt-get install libopenal-dev
+*/
 
 // Error returns one of these values.
 const (

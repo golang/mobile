@@ -2,9 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package al
+// +build darwin linux,!android
 
-// +build darwin
+package al
 
 // Error returns one of these error codes.
 const (
