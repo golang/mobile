@@ -362,6 +362,7 @@ func gobuild(src, libPath string) error {
 		printcmd("%s", strings.Join(gocmd.Env, " ")+" "+strings.Join(gocmd.Args, " "))
 	}
 	if !buildN {
+		gocmd.Env = environ(gocmd.Env)
 		if err := gocmd.Run(); err != nil {
 			return err
 		}
@@ -414,3 +415,27 @@ cSL5bhq0N5XHK77sscxW9vXjG0LJMXmFZPp9F6aV6ejkMIXyJ/Yz/EqeaJFwilTq
 Mc6xR47qkdzu0dQ1aPm4XD7AWDtIvPo/GG2DKOucLBbQc2cOWtKS
 -----END RSA PRIVATE KEY-----
 `
+
+// environ merges os.Environ and the given "key=value" pairs.
+func environ(kv []string) []string {
+	environ := map[string]string{}
+	for _, ev := range os.Environ() {
+		elem := strings.SplitN(ev, "=", 2)
+		if len(elem) != 2 {
+			panic(fmt.Sprintf("malformed env var %q from os.Environ", ev))
+		}
+		environ[elem[0]] = elem[1]
+	}
+	for _, ev := range kv {
+		elem := strings.SplitN(ev, "=", 2)
+		if len(elem) != 2 {
+			panic(fmt.Sprintf("malformed env var %q from input", ev))
+		}
+		environ[elem[0]] = elem[1]
+	}
+	ret := make([]string, 0, len(environ))
+	for k, v := range environ {
+		ret = append(ret, k+"="+v)
+	}
+	return ret
+}
