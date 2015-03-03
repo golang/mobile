@@ -27,7 +27,7 @@ import (
 // hosted specifically for the gomobile tool.
 //
 // There is a significant size different (400MB compared to 30MB).
-var useStrippedNDK = goos == "linux" || goos == "darwin"
+var useStrippedNDK = true
 
 const ndkVersion = "ndk-r10d"
 
@@ -134,7 +134,6 @@ func runInit(cmd *command) error {
 
 	dst := filepath.Join(ndkccpath, "arm")
 
-	// TODO(crawshaw): make.bat on windows
 	ndkccbin := filepath.Join(dst, "bin")
 	envpath := os.Getenv("PATH")
 	if buildN {
@@ -370,48 +369,8 @@ func fetchNDK() error {
 			return err
 		}
 	} else {
-		ndkName := "android-" + ndkVersion + "-" + goos + "-" + ndkarch + "."
-		if goos == "windows" {
-			ndkName += "exe"
-		} else {
-			ndkName += "bin"
-		}
-		archive := filepath.Join(tmpdir, ndkName)
-		url := "https://dl.google.com/android/ndk/" + ndkName
-		if err := fetch(archive, url); err != nil {
+		if err := fetchFullNDK(); err != nil {
 			return err
-		}
-
-		// The self-extracting ndk dist file for Windows
-		// terminates with an error (error code 2 - corrupted or incomplete file)
-		// but there are no details on what caused this.
-		//
-		// Strangely, if the file is launched from file
-		// browser or unzipped with 7z.exe no error is reported.
-		// For now, we require 7z.exe on windows.
-		//
-		// Once we start using the stripped NDK, this code path
-		// will not matter.
-		//
-		// TODO(hyangah): don't depend on 7z.exe for windows.
-		var inflate *exec.Cmd
-		if goos != "windows" {
-			inflate = exec.Command(archive)
-		} else {
-			inflate = exec.Command("7z.exe", "x", archive)
-		}
-		inflate.Dir = tmpdir
-		if buildX {
-			printcmd("%s", archive)
-		}
-		if !buildN {
-			out, err := inflate.CombinedOutput()
-			if err != nil {
-				if buildV {
-					os.Stderr.Write(out)
-				}
-				return err
-			}
 		}
 	}
 
@@ -500,6 +459,53 @@ func fetchStrippedNDK() error {
 			return err
 		}
 		if err := f.Close(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func fetchFullNDK() error {
+	ndkName := "android-" + ndkVersion + "-" + goos + "-" + ndkarch + "."
+	if goos == "windows" {
+		ndkName += "exe"
+	} else {
+		ndkName += "bin"
+	}
+	archive := filepath.Join(tmpdir, ndkName)
+	url := "https://dl.google.com/android/ndk/" + ndkName
+	if err := fetch(archive, url); err != nil {
+		return err
+	}
+
+	// The self-extracting ndk dist file for Windows
+	// terminates with an error (error code 2 - corrupted or incomplete file)
+	// but there are no details on what caused this.
+	//
+	// Strangely, if the file is launched from file
+	// browser or unzipped with 7z.exe no error is reported.
+	// For now, we require 7z.exe on windows.
+	//
+	// Once we start using the stripped NDK, this code path
+	// will not matter.
+	//
+	// TODO(hyangah): don't depend on 7z.exe for windows.
+	var inflate *exec.Cmd
+	if goos != "windows" {
+		inflate = exec.Command(archive)
+	} else {
+		inflate = exec.Command("7z.exe", "x", archive)
+	}
+	inflate.Dir = tmpdir
+	if buildX {
+		printcmd("%s", archive)
+	}
+	if !buildN {
+		out, err := inflate.CombinedOutput()
+		if err != nil {
+			if buildV {
+				os.Stderr.Write(out)
+			}
 			return err
 		}
 	}
