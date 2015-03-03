@@ -418,24 +418,35 @@ Mc6xR47qkdzu0dQ1aPm4XD7AWDtIvPo/GG2DKOucLBbQc2cOWtKS
 
 // environ merges os.Environ and the given "key=value" pairs.
 func environ(kv []string) []string {
-	environ := map[string]string{}
-	for _, ev := range os.Environ() {
+	envs := map[string]string{}
+
+	cur := os.Environ()
+	new := make([]string, 0, len(cur)+len(kv))
+	for _, ev := range cur {
 		elem := strings.SplitN(ev, "=", 2)
-		if len(elem) != 2 {
-			panic(fmt.Sprintf("malformed env var %q from os.Environ", ev))
+		if len(elem) != 2 || elem[0] == "" {
+			// pass the env var of unusual form untouched.
+			// e.g. Windows may have env var names starting with "=".
+			new = append(new, ev)
+			continue
 		}
-		environ[elem[0]] = elem[1]
+		if goos == "windows" {
+			elem[0] = strings.ToUpper(elem[0])
+		}
+		envs[elem[0]] = elem[1]
 	}
 	for _, ev := range kv {
 		elem := strings.SplitN(ev, "=", 2)
-		if len(elem) != 2 {
+		if len(elem) != 2 || elem[0] == "" {
 			panic(fmt.Sprintf("malformed env var %q from input", ev))
 		}
-		environ[elem[0]] = elem[1]
+		if goos == "windows" {
+			elem[0] = strings.ToUpper(elem[0])
+		}
+		envs[elem[0]] = elem[1]
 	}
-	ret := make([]string, 0, len(environ))
-	for k, v := range environ {
-		ret = append(ret, k+"="+v)
+	for k, v := range envs {
+		new = append(new, k+"="+v)
 	}
-	return ret
+	return new
 }
