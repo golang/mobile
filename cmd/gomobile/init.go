@@ -532,16 +532,24 @@ func fetch(dst, url string) error {
 	if err != nil {
 		return err
 	}
-	_, err = io.Copy(f, resp.Body)
-	err2 := resp.Body.Close()
-	err3 := f.Close()
+	var err2 error
+	if resp.StatusCode != http.StatusOK {
+		err = fmt.Errorf("error fetching %v, status: %v", url, resp.Status)
+	} else {
+		_, err2 = io.Copy(f, resp.Body)
+	}
+	err3 := resp.Body.Close()
+	err4 := f.Close()
 	if err != nil {
 		return err
 	}
 	if err2 != nil {
 		return err2
 	}
-	return err3
+	if err3 != nil {
+		return err3
+	}
+	return err4
 }
 
 // copyGoroot copies GOROOT from src to dst.
