@@ -9,8 +9,7 @@ import java.util.Random;
 import go.testpkg.Testpkg;
 
 public class SeqTest extends AndroidTestCase {
-  protected void setUp() throws Exception {
-    super.setUp();
+  public SeqTest() {
     Go.init(this.getContext());
   }
 
