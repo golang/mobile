@@ -57,6 +57,105 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+
+	if err := mkALPkg(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run(dir, path string, args ...string) error {
+	cmd := exec.Command(path, args...)
+	cmd.Dir = dir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func mkALPkg() (err error) {
+	alTmpDir, err := ioutil.TempDir("", "openal-release-")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(alTmpDir)
+
+	if err := run(alTmpDir, "git", "clone", "-v", "git://repo.or.cz/openal-soft.git", alTmpDir); err != nil {
+		return err
+	}
+	if err := run(alTmpDir, "git", "checkout", "19f79be57b8e768f44710b6d26017bc1f8c8fbda"); err != nil {
+		return err
+	}
+	if err := run(filepath.Join(alTmpDir, "cmake"), "cmake", "..", "-DCMAKE_TOOLCHAIN_FILE=../XCompile-Android.txt", "-DHOST=arm-linux-androideabi"); err != nil {
+		return err
+	}
+	if err := run(filepath.Join(alTmpDir, "cmake"), "make"); err != nil {
+		return err
+	}
+
+	// Build the tarball.
+	f, err := os.Create("gomobile-openal-soft-1.16.0.1.tar.gz")
+	if err != nil {
+		return err
+	}
+	bw := bufio.NewWriter(f)
+	zw, err := gzip.NewWriterLevel(bw, gzip.BestCompression)
+	if err != nil {
+		return err
+	}
+	tw := tar.NewWriter(zw)
+	defer func() {
+		err2 := f.Close()
+		if err == nil {
+			err = err2
+		}
+	}()
+	defer func() {
+		err2 := bw.Flush()
+		if err == nil {
+			err = err2
+		}
+	}()
+	defer func() {
+		err2 := zw.Close()
+		if err == nil {
+			err = err2
+		}
+	}()
+	defer func() {
+		err2 := tw.Close()
+		if err == nil {
+			err = err2
+		}
+	}()
+
+	files := map[string]string{
+		"cmake/libopenal.so": "lib/armeabi/libopenal.so",
+		"include/AL/al.h":    "include/AL/al.h",
+		"include/AL/alc.h":   "include/AL/alc.h",
+		"COPYING":            "include/AL/COPYING",
+	}
+	for src, dst := range files {
+		f, err := os.Open(filepath.Join(alTmpDir, src))
+		if err != nil {
+			return err
+		}
+		fi, err := f.Stat()
+		if err != nil {
+			return err
+		}
+		if err := tw.WriteHeader(&tar.Header{
+			Name: dst,
+			Mode: int64(fi.Mode()),
+			Size: fi.Size(),
+		}); err != nil {
+			return err
+		}
+		_, err = io.Copy(tw, f)
+		if err != nil {
+			return err
+		}
+		f.Close()
+	}
+	return nil
 }
 
 func mkpkg(host version) (err error) {
