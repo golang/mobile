@@ -78,9 +78,9 @@ func runInit(cmd *command) error {
 	if len(gopaths) == 0 {
 		return fmt.Errorf("GOPATH is not set")
 	}
-	ndkccpath = filepath.Join(gopaths[0], "pkg", "gomobile", "android-"+ndkVersion)
+	ndkccpath = filepath.Join(gopaths[0], "pkg/gomobile/android-"+ndkVersion)
 	ndkccdl := filepath.Join(ndkccpath, "downloaded")
-	verpath := filepath.Join(gopaths[0], "pkg", "gomobile", "version")
+	verpath := filepath.Join(gopaths[0], "pkg/gomobile/version")
 	if buildX {
 		fmt.Fprintln(xout, "NDKCCPATH="+ndkccpath)
 	}
@@ -142,7 +142,7 @@ func runInit(cmd *command) error {
 	if buildN {
 		envpath = "$PATH"
 	}
-	makeScript := filepath.Join(tmpGoroot, "src", "make")
+	makeScript := filepath.Join(tmpGoroot, "src/make")
 	if goos == "windows" {
 		makeScript += ".bat"
 	} else {
@@ -196,7 +196,7 @@ func runInit(cmd *command) error {
 	}
 
 	// Move the Go cross compiler toolchain into GOPATH.
-	gotoolsrc := filepath.Join(tmpGoroot, "pkg", "tool", goos+"_"+goarch)
+	gotoolsrc := filepath.Join(tmpGoroot, "pkg/tool", goos+"_"+goarch)
 	tools := []string{"5l", "5g", "asm", "cgo", "nm", "pack", "link"}
 	for i, name := range tools {
 		tools[i] = bin(name)
@@ -230,7 +230,7 @@ func runInit(cmd *command) error {
 	// Move pre-compiled stdlib for android into GOROOT. This is
 	// the only time we modify the user's GOROOT.
 	cannotRemove := false
-	if err := removeAll(filepath.Join(goroot, "pkg", "android_arm")); err != nil {
+	if err := removeAll(filepath.Join(goroot, "pkg/android_arm")); err != nil {
 		cannotRemove = true
 	}
 	if err := move(filepath.Join(goroot, "pkg"), filepath.Join(tmpGoroot, "pkg"), "android_arm"); err != nil {
@@ -452,17 +452,17 @@ func fetchNDK() error {
 	}
 
 	dst := filepath.Join(ndkccpath, "arm")
-	dstSysroot := filepath.Join(dst, "sysroot", "usr")
+	dstSysroot := filepath.Join(dst, "sysroot/usr")
 	if err := mkdir(dstSysroot); err != nil {
 		return err
 	}
 
-	srcSysroot := filepath.Join(tmpdir, "android-ndk-r10d", "platforms", "android-15", "arch-arm", "usr")
+	srcSysroot := filepath.Join(tmpdir, "android-ndk-r10d/platforms/android-15/arch-arm/usr")
 	if err := move(dstSysroot, srcSysroot, "include", "lib"); err != nil {
 		return err
 	}
 
-	ndkpath := filepath.Join(tmpdir, "android-ndk-r10d", "toolchains", "arm-linux-androideabi-4.8", "prebuilt")
+	ndkpath := filepath.Join(tmpdir, "android-ndk-r10d/toolchains/arm-linux-androideabi-4.8/prebuilt")
 	if goos == "windows" && ndkarch == "x86" {
 		ndkpath = filepath.Join(ndkpath, "windows")
 	} else {
@@ -472,7 +472,7 @@ func fetchNDK() error {
 		return err
 	}
 
-	linkpath := filepath.Join(dst, "arm-linux-androideabi", "bin")
+	linkpath := filepath.Join(dst, "arm-linux-androideabi/bin")
 	if err := mkdir(linkpath); err != nil {
 		return err
 	}

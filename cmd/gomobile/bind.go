@@ -125,11 +125,7 @@ func runBind(cmd *command) error {
 		return err
 	}
 
-	pathJoin := func(a, b string) string {
-		return filepath.Join(a, filepath.FromSlash(b))
-	}
-
-	mainFile := pathJoin(tmpdir, "androidlib/main.go")
+	mainFile := filepath.Join(tmpdir, "androidlib/main.go")
 	err = writeFile(mainFile, func(w io.Writer) error {
 		return androidMainTmpl.Execute(w, "../go_"+binder.pkg.Name())
 	})
@@ -137,9 +133,9 @@ func runBind(cmd *command) error {
 		return fmt.Errorf("failed to create the main package for android: %v", err)
 	}
 
-	androidOutdir := pathJoin(*bindOutdir, "android")
+	androidOutdir := filepath.Join(*bindOutdir, "android")
 
-	err = gobuild(mainFile, pathJoin(androidOutdir, "libs/armeabi-v7a/libgojni.so"))
+	err = gobuild(mainFile, filepath.Join(androidOutdir, "libs/armeabi-v7a/libgojni.so"))
 	if err != nil {
 		return err
 	}
@@ -150,19 +146,19 @@ func runBind(cmd *command) error {
 	repo := filepath.Clean(filepath.Join(p.Dir, "..")) // golang.org/x/mobile directory.
 
 	// TODO(crawshaw): use a better package path derived from the go package.
-	if err := binder.GenJava(pathJoin(androidOutdir, "src/main/java/go/"+binder.pkg.Name())); err != nil {
+	if err := binder.GenJava(filepath.Join(androidOutdir, "src/main/java/go/"+binder.pkg.Name())); err != nil {
 		return err
 	}
 
-	src := pathJoin(repo, "app/Go.java")
-	dst := pathJoin(androidOutdir, "src/main/java/go/Go.java")
+	src := filepath.Join(repo, "app/Go.java")
+	dst := filepath.Join(androidOutdir, "src/main/java/go/Go.java")
 	rm(dst)
 	if err := symlink(src, dst); err != nil {
 		return err
 	}
 
-	src = pathJoin(repo, "bind/java/Seq.java")
-	dst = pathJoin(androidOutdir, "src/main/java/go/Seq.java")
+	src = filepath.Join(repo, "bind/java/Seq.java")
+	dst = filepath.Join(androidOutdir, "src/main/java/go/Seq.java")
 	rm(dst)
 	if err := symlink(src, dst); err != nil {
 		return err
