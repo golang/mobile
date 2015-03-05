@@ -30,6 +30,7 @@ import (
 var useStrippedNDK = true
 
 const ndkVersion = "ndk-r10d"
+const openALVersion = "openal-soft-1.16.0.1"
 
 var (
 	goos    = runtime.GOOS
@@ -124,7 +125,9 @@ func runInit(cmd *command) error {
 		if err := fetchNDK(); err != nil {
 			return err
 		}
-
+		if err := fetchOpenAL(); err != nil {
+			return err
+		}
 		if !buildN {
 			if err := ioutil.WriteFile(ndkccdl, []byte("done"), 0644); err != nil {
 				return err
@@ -363,6 +366,80 @@ func goVersion() ([]byte, error) {
 	return exec.Command(gobin, "version").Output()
 }
 
+func fetchOpenAL() error {
+	name := "gomobile-" + openALVersion + ".tar.gz"
+	url := "https://dl.google.com/go/mobile/" + name
+	if err := fetch(filepath.Join(tmpdir, name), url); err != nil {
+		return err
+	}
+	if err := extract(name, "openal"); err != nil {
+		return err
+	}
+	dst := filepath.Join(ndkccpath, "arm", "sysroot", "usr", "include")
+	src := filepath.Join(tmpdir, "openal", "include")
+	if err := move(dst, src, "AL"); err != nil {
+		return err
+	}
+	libDst := filepath.Join(ndkccpath, "openal")
+	libSrc := filepath.Join(tmpdir, "openal")
+	if err := mkdir(libDst); err != nil {
+		return nil
+	}
+	if err := move(libDst, libSrc, "lib"); err != nil {
+		return err
+	}
+	return nil
+}
+
+func extract(name, dst string) error {
+	if buildX {
+		printcmd("tar xfz %s", name)
+	}
+	if buildN {
+		return nil
+	}
+	tf, err := os.Open(filepath.Join(tmpdir, name))
+	if err != nil {
+		return err
+	}
+	defer tf.Close()
+	zr, err := gzip.NewReader(tf)
+	if err != nil {
+		return err
+	}
+	tr := tar.NewReader(zr)
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		dst := filepath.Join(tmpdir, dst+"/"+hdr.Name)
+		if hdr.Typeflag == tar.TypeSymlink {
+			if err := symlink(hdr.Linkname, dst); err != nil {
+				return err
+			}
+			continue
+		}
+		if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+			return err
+		}
+		f, err := os.OpenFile(dst, os.O_CREATE|os.O_EXCL|os.O_WRONLY, os.FileMode(hdr.Mode)&0777)
+		if err != nil {
+			return err
+		}
+		if _, err := io.Copy(f, tr); err != nil {
+			return err
+		}
+		if err := f.Close(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func fetchNDK() error {
 	if useStrippedNDK {
 		if err := fetchStrippedNDK(); err != nil {
@@ -416,53 +493,7 @@ func fetchStrippedNDK() error {
 	if err := fetch(filepath.Join(tmpdir, name), url); err != nil {
 		return err
 	}
-	if buildX {
-		printcmd("tar xfz %s", name)
-	}
-	if buildN {
-		return nil
-	}
-
-	tf, err := os.Open(filepath.Join(tmpdir, name))
-	if err != nil {
-		return err
-	}
-	defer tf.Close()
-	zr, err := gzip.NewReader(tf)
-	if err != nil {
-		return err
-	}
-	tr := tar.NewReader(zr)
-	for {
-		hdr, err := tr.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return err
-		}
-		dst := filepath.Join(tmpdir, hdr.Name)
-		if hdr.Typeflag == tar.TypeSymlink {
-			if err := symlink(hdr.Linkname, dst); err != nil {
-				return err
-			}
-			continue
-		}
-		if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
-			return err
-		}
-		f, err := os.OpenFile(dst, os.O_CREATE|os.O_EXCL|os.O_WRONLY, os.FileMode(hdr.Mode)&0777)
-		if err != nil {
-			return err
-		}
-		if _, err := io.Copy(f, tr); err != nil {
-			return err
-		}
-		if err := f.Close(); err != nil {
-			return err
-		}
-	}
-	return nil
+	return extract(name, "")
 }
 
 func fetchFullNDK() error {

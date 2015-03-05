@@ -82,6 +82,11 @@ ln -s $NDKCCPATH/arm/bin/arm-linux-androideabi-ld $NDKCCPATH/arm/arm-linux-andro
 ln -s $NDKCCPATH/arm/bin/arm-linux-androideabi-as $NDKCCPATH/arm/arm-linux-androideabi/bin/as
 ln -s $NDKCCPATH/arm/bin/arm-linux-androideabi-gcc $NDKCCPATH/arm/arm-linux-androideabi/bin/gcc
 ln -s $NDKCCPATH/arm/bin/arm-linux-androideabi-g++ $NDKCCPATH/arm/arm-linux-androideabi/bin/g++
+curl -o$WORK/gomobile-openal-soft-1.16.0.1.tar.gz https://dl.google.com/go/mobile/gomobile-openal-soft-1.16.0.1.tar.gz
+tar xfz gomobile-openal-soft-1.16.0.1.tar.gz
+mv $WORK/openal/include/AL $NDKCCPATH/arm/sysroot/usr/include/AL
+mkdir -p $NDKCCPATH/openal
+mv $WORK/openal/lib $NDKCCPATH/openal/lib
 PATH=$PATH GOOS=android GOARCH=arm GOARM=7 CGO_ENABLED=1 CC_FOR_TARGET=$NDKCCPATH/arm/bin/arm-linux-androideabi-gcc CXX_FOR_TARGET=$NDKCCPATH/arm/bin/arm-linux-androideabi-g++ TMPDIR=$WORK HOME=$HOME $WORK/go/src/make.bash --no-clean
 mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/5l $NDKCCPATH/arm/bin/5l
 mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/5g $NDKCCPATH/arm/bin/5g
