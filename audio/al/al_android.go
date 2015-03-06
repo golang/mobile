@@ -9,6 +9,7 @@ package al
 
 #include <android/log.h>
 #include <stdlib.h>
+#include <string.h>
 #include <dlfcn.h>
 #include <jni.h>
 #include <limits.h>
@@ -42,8 +43,8 @@ void* al_init(void* vm, void* context) {
   const char *cpackage_name = (*env)->GetStringUTFChars(env, package_name, 0);
 
   char lib_path[PATH_MAX] = "/data/data/";
-  strcat(lib_path, cpackage_name);
-  strcat(lib_path, "/lib/libopenal.so");
+  strlcat(lib_path, cpackage_name, sizeof(lib_path));
+  strlcat(lib_path, "/lib/libopenal.so", sizeof(lib_path));
   void* handle = dlopen(lib_path, RTLD_LAZY);
   (*env)->ReleaseStringUTFChars(env, package_name, cpackage_name);
   if (!handle) {
