@@ -198,6 +198,33 @@ func runBuild(cmd *command) error {
 		}
 	}
 
+	importsAudio := pkgImportsAudio(pkg)
+	if importsAudio {
+		alDir := filepath.Join(ndkccpath, "openal/lib")
+		filepath.Walk(alDir, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if info.IsDir() {
+				return nil
+			}
+			name := "lib/" + path[len(alDir)+1:]
+			w, err := apkwcreate(name)
+			if err != nil {
+				return err
+			}
+			if !buildN {
+				f, err := os.Open(path)
+				if err != nil {
+					return err
+				}
+				defer f.Close()
+				_, err = io.Copy(w, f)
+			}
+			return err
+		})
+	}
+
 	// Add any assets.
 	assetsDir := filepath.Join(pkg.Dir, "assets")
 	assetsDirExists := true
@@ -368,6 +395,34 @@ func gobuild(src, libPath string) error {
 		}
 	}
 	return nil
+}
+
+var importsAudioPkgs = make(map[string]struct{})
+
+// pkgImportsAudio returns true if the given package or one of its
+// dependencies imports the mobile/audio package.
+func pkgImportsAudio(pkg *build.Package) bool {
+	for _, path := range pkg.Imports {
+		if path == "C" {
+			continue
+		}
+		if _, ok := importsAudioPkgs[path]; ok {
+			continue
+		}
+		importsAudioPkgs[path] = struct{}{}
+		if strings.HasPrefix(path, "golang.org/x/mobile/audio") {
+			return true
+		}
+		dPkg, err := ctx.Import(path, "", build.ImportComment)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error while looking up for the audio package: %v", err)
+			os.Exit(2)
+		}
+		if pkgImportsAudio(dPkg) {
+			return true
+		}
+	}
+	return false
 }
 
 func init() {
