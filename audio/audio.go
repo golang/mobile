@@ -5,6 +5,14 @@
 // +build darwin linux
 
 // Package audio provides a basic audio player.
+//
+// In order to use this package on Linux desktop distros,
+// you will need OpenAL library as an external dependency.
+// On Ubuntu 14.04 'Trusty', you may have to install this library
+// by running the command below.
+//
+// 		sudo apt-get install libopenal-dev
+//
 package audio
 
 import (
