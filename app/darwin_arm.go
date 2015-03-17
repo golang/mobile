@@ -96,16 +96,20 @@ var machinePPI = map[string]int{
 }
 
 func ppi() int {
-	// TODO(crawshaw): use lookup table to get the correct PPI.
-	//C.uname(&C.sysInfo)
-	//machine := C.GoString(C.sysInfo.machine)
-	//return machinePPI[machine]
-	return 326
+	C.uname(&C.sysInfo)
+	name := C.GoString(&C.sysInfo.machine[0])
+	v, ok := machinePPI[name]
+	if !ok {
+		log.Fatalf("unknown machine: %s", name)
+	}
+	return v
 }
 
 //export setGeom
 func setGeom(width, height int) {
-	geom.PixelsPerPt = float32(ppi()) / 72
+	if geom.PixelsPerPt == 0 {
+		geom.PixelsPerPt = float32(ppi()) / 72
+	}
 	geom.Width = geom.Pt(float32(width) / geom.PixelsPerPt)
 	geom.Height = geom.Pt(float32(height) / geom.PixelsPerPt)
 }

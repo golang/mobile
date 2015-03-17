@@ -43,14 +43,13 @@ struct utsname sysInfo;
 	GLKView *view = (GLKView *)self.view;
 	view.context = self.context;
 	view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
-
-	// TODO(crawshaw): set correct geometry.
-	//CGRect bounds = view.bounds;
-	//view.contentScaleFactor;
-	setGeom(300, 300);
 }
 - (void)update {
-	NSLog(@"AppController update");
+	GLKView *view = (GLKView *)self.view;
+	int w = [view drawableWidth];
+	int h = [view drawableHeight];
+	setGeom(w, h);
+
 	drawgl((GoUintptr)self.context);
 }
 @end
