@@ -53,7 +53,7 @@ func alcOpenDevice(name string) unsafe.Pointer {
 
 func alcCloseDevice(d unsafe.Pointer) bool {
 	dev := (*C.ALCdevice)(d)
-	return C.call_alcCloseDevice(alcCloseDeviceFunc, dev) == 1
+	return C.call_alcCloseDevice(alcCloseDeviceFunc, dev) == C.AL_TRUE
 }
 
 func alcCreateContext(d unsafe.Pointer, attrs []int32) unsafe.Pointer {
@@ -64,5 +64,5 @@ func alcCreateContext(d unsafe.Pointer, attrs []int32) unsafe.Pointer {
 
 func alcMakeContextCurrent(c unsafe.Pointer) bool {
 	ctx := (*C.ALCcontext)(c)
-	return C.call_alcMakeContextCurrent(alcMakeContextCurrentFunc, ctx) == 1
+	return C.call_alcMakeContextCurrent(alcMakeContextCurrentFunc, ctx) == C.AL_TRUE
 }

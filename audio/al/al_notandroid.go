@@ -34,7 +34,7 @@ func alDisable(capability int32) {
 }
 
 func alIsEnabled(capability int32) bool {
-	return C.alIsEnabled(C.ALenum(capability)) == 1
+	return C.alIsEnabled(C.ALenum(capability)) == C.AL_TRUE
 }
 
 func alGetInteger(k int) int32 {
@@ -172,5 +172,5 @@ func alBufferData(b Buffer, format uint32, data []byte, freq int32) {
 }
 
 func alIsBuffer(b Buffer) bool {
-	return C.alIsBuffer(C.ALuint(b)) == 1
+	return C.alIsBuffer(C.ALuint(b)) == C.AL_TRUE
 }
