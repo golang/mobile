@@ -121,7 +121,7 @@ func BlendFuncSeparate(sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha Enum) 
 // BufferData creates a new data store for the bound buffer object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glBufferData.xhtml
-func BufferData(target Enum, usage Enum, src []byte) {
+func BufferData(target Enum, src []byte, usage Enum) {
 	C.glBufferData(target.c(), C.GLsizeiptr(len(src)), unsafe.Pointer(&src[0]), usage.c())
 }
 
@@ -222,6 +222,24 @@ func CopyTexSubImage2D(target Enum, level, xoffset, yoffset, x, y, width, height
 	C.glCopyTexSubImage2D(target.c(), C.GLint(level), C.GLint(xoffset), C.GLint(yoffset), C.GLint(x), C.GLint(y), C.GLsizei(width), C.GLsizei(height))
 }
 
+// CreateBuffer creates a buffer object.
+//
+// http://www.khronos.org/opengles/sdk/docs/man3/html/glGenBuffers.xhtml
+func CreateBuffer() Buffer {
+	var b Buffer
+	C.glGenBuffers(1, (*C.GLuint)(&b.Value))
+	return b
+}
+
+// CreateFramebuffer creates a framebuffer object.
+//
+// http://www.khronos.org/opengles/sdk/docs/man3/html/glGenFramebuffers.xhtml
+func CreateFramebuffer() Framebuffer {
+	var b Framebuffer
+	C.glGenFramebuffers(1, (*C.GLuint)(&b.Value))
+	return b
+}
+
 // CreateProgram creates a new empty program object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glCreateProgram.xhtml
@@ -229,11 +247,29 @@ func CreateProgram() Program {
 	return Program{Value: uint32(C.glCreateProgram())}
 }
 
+// CreateRenderbuffer create a renderbuffer object.
+//
+// http://www.khronos.org/opengles/sdk/docs/man3/html/glGenRenderbuffers.xhtml
+func CreateRenderbuffer() Renderbuffer {
+	var b Renderbuffer
+	C.glGenRenderbuffers(1, (*C.GLuint)(&b.Value))
+	return b
+}
+
 // CreateShader creates a new empty shader object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glCreateShader.xhtml
 func CreateShader(ty Enum) Shader {
 	return Shader{Value: uint32(C.glCreateShader(ty.c()))}
+}
+
+// CreateTexture creates a texture object.
+//
+// http://www.khronos.org/opengles/sdk/docs/man3/html/glGenTextures.xhtml
+func CreateTexture() Texture {
+	var t Texture
+	C.glGenTextures(1, (*C.GLuint)(&t.Value))
+	return t
 }
 
 // CullFace specifies which polygons are candidates for culling.
@@ -409,47 +445,11 @@ func FrontFace(mode Enum) {
 	C.glFrontFace(mode.c())
 }
 
-// GenBuffer creates a buffer object.
-//
-// http://www.khronos.org/opengles/sdk/docs/man3/html/glGenBuffers.xhtml
-func GenBuffer() Buffer {
-	var b Buffer
-	C.glGenBuffers(1, (*C.GLuint)(&b.Value))
-	return b
-}
-
 // GenerateMipmap generates mipmaps for the current texture.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGenerateMipmap.xhtml
 func GenerateMipmap(target Enum) {
 	C.glGenerateMipmap(target.c())
-}
-
-// GenFramebuffer creates a framebuffer object.
-//
-// http://www.khronos.org/opengles/sdk/docs/man3/html/glGenFramebuffers.xhtml
-func GenFramebuffer() Framebuffer {
-	var b Framebuffer
-	C.glGenFramebuffers(1, (*C.GLuint)(&b.Value))
-	return b
-}
-
-// GenRenderbuffer create a renderbuffer object.
-//
-// http://www.khronos.org/opengles/sdk/docs/man3/html/glGenRenderbuffers.xhtml
-func GenRenderbuffer() Renderbuffer {
-	var b Renderbuffer
-	C.glGenRenderbuffers(1, (*C.GLuint)(&b.Value))
-	return b
-}
-
-// GenTexture creates a texture object.
-//
-// http://www.khronos.org/opengles/sdk/docs/man3/html/glGenTextures.xhtml
-func GenTexture() Texture {
-	var t Texture
-	C.glGenTextures(1, (*C.GLuint)(&t.Value))
-	return t
 }
 
 // GetActiveAttrib returns details about an attribute variable.
@@ -660,10 +660,10 @@ func GetShaderSource(s Shader) string {
 //	VERSION
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetString.xhtml
-func GetString(name Enum) string {
+func GetString(pname Enum) string {
 	// Bounce through unsafe.Pointer, because on some platforms
 	// GetString returns an *unsigned char which doesn't convert.
-	return C.GoString((*C.char)((unsafe.Pointer)(C.glGetString(name.c()))))
+	return C.GoString((*C.char)((unsafe.Pointer)(C.glGetString(pname.c()))))
 }
 
 // GetTexParameterfv returns the float values of a texture parameter.
@@ -698,8 +698,8 @@ func GetUniformiv(dst []int32, src Uniform, p Program) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetUniformLocation.xhtml
 func GetUniformLocation(p Program, name string) Uniform {
-	str := C.CString(name)
-	defer C.free((unsafe.Pointer)(str))
+	str := unsafe.Pointer(C.CString(name))
+	defer C.free(str)
 	return Uniform{Value: int32(C.glGetUniformLocation(p.c(), (*C.GLchar)(str)))}
 }
 

@@ -81,9 +81,9 @@ func (u Uniform) WriteVec4(v *f32.Vec4) {
 
 func glBoolean(b bool) C.GLboolean {
 	if b {
-		return 0
+		return TRUE
 	}
-	return 1
+	return FALSE
 }
 
 // Desktop OpenGL and the ES 2/3 APIs have a very slight difference

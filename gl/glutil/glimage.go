@@ -35,13 +35,13 @@ func glInit() {
 		panic(err)
 	}
 
-	glimage.quadXY = gl.GenBuffer()
-	glimage.quadUV = gl.GenBuffer()
+	glimage.quadXY = gl.CreateBuffer()
+	glimage.quadUV = gl.CreateBuffer()
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, glimage.quadXY)
-	gl.BufferData(gl.ARRAY_BUFFER, gl.STATIC_DRAW, quadXYCoords)
+	gl.BufferData(gl.ARRAY_BUFFER, quadXYCoords, gl.STATIC_DRAW)
 	gl.BindBuffer(gl.ARRAY_BUFFER, glimage.quadUV)
-	gl.BufferData(gl.ARRAY_BUFFER, gl.STATIC_DRAW, quadUVCoords)
+	gl.BufferData(gl.ARRAY_BUFFER, quadUVCoords, gl.STATIC_DRAW)
 
 	glimage.pos = gl.GetAttribLocation(glimage.program, "pos")
 	glimage.mvp = gl.GetUniformLocation(glimage.program, "mvp")
@@ -81,7 +81,7 @@ func NewImage(w, h int) *Image {
 
 	img := &Image{
 		RGBA:      m.SubImage(image.Rect(0, 0, w, h)).(*image.RGBA),
-		Texture:   gl.GenTexture(),
+		Texture:   gl.CreateTexture(),
 		texWidth:  dx,
 		texHeight: dy,
 	}
