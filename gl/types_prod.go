@@ -78,7 +78,7 @@ func (v Renderbuffer) c() C.GLuint { return C.GLuint(v.Value) }
 func (v Texture) c() C.GLuint      { return C.GLuint(v.Value) }
 func (v Uniform) c() C.GLint       { return C.GLint(v.Value) }
 
-func (v Attrib) String() string       { return fmt.Sprintf("Attrib(%d)", v) }
+func (v Attrib) String() string       { return fmt.Sprintf("Attrib(%d)", v.Value) }
 func (v Program) String() string      { return fmt.Sprintf("Program(%d)", v.Value) }
 func (v Shader) String() string       { return fmt.Sprintf("Shader(%d)", v.Value) }
 func (v Buffer) String() string       { return fmt.Sprintf("Buffer(%d)", v.Value) }

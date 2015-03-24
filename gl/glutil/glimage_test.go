@@ -52,9 +52,9 @@ func TestImage(t *testing.T) {
 	geom.Width = ptW
 	geom.Height = ptH
 
-	fBuf := gl.GenFramebuffer()
+	fBuf := gl.CreateFramebuffer()
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fBuf)
-	colorBuf := gl.GenRenderbuffer()
+	colorBuf := gl.CreateRenderbuffer()
 	gl.BindRenderbuffer(gl.RENDERBUFFER, colorBuf)
 	// https://www.khronos.org/opengles/sdk/docs/man/xhtml/glRenderbufferStorage.xml
 	// says that the internalFormat "must be one of the following symbolic constants:
