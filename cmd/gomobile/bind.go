@@ -5,6 +5,7 @@
 package main
 
 import (
+	"archive/zip"
 	"errors"
 	"fmt"
 	"go/ast"
@@ -15,7 +16,10 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"text/template"
 	"unicode"
 	"unicode/utf8"
@@ -37,19 +41,18 @@ Bind generates language bindings like gobind (golang.org/x/mobile/cmd/gobind)
 for a package and builds a shared library for each platform from the go binding
 code.
 
-The -outdir flag specifies the output directory and is required.
+For Android, the bind command produces an AAR file that archives the precompiled
+Java API stub classes, the compiled shared libraries, and all asset files in
+the /assets subdirectory under the package directory. The output AAR file name
+is '<package_name>.aar'.
 
-For Android, the bind command will place the generated Java API stubs and the
-compiled shared libraries in the android subdirectory of the following layout.
+This command requires 'javac' (version 1.7+) and Android SDK (API level 9
+or newer) to build the library for Android. The environment variable
+ANDROID_HOME must be set to the path to Android SDK.
 
-<outdir>/android
-  libs/
-     armeabi-v7a/libgojni.so
-     ...
-  src/main/java/go/
-	Seq.java
-	Go.java
-        mypackage/Mypackage.java
+For more details of AAR file format, see:
+
+   http://tools.android.com/tech-docs/new-build-system/aar-format
 
 The -v flag provides verbose output, including the list of packages built.
 
@@ -64,11 +67,7 @@ For documentation, see 'go help build':
 }
 
 // TODO: -mobile
-
-var bindOutdir *string // -outdir
-func init() {
-	bindOutdir = cmdBind.flag.String("outdir", "", "output directory. Default is the current directory.")
-}
+// TODO: reuse the -o option to specify the output file name?
 
 func runBind(cmd *command) error {
 	cwd, err := os.Getwd()
@@ -91,16 +90,8 @@ func runBind(cmd *command) error {
 		return err
 	}
 
-	if *bindOutdir == "" {
-		return fmt.Errorf("-outdir is required")
-	}
-
-	if !buildN {
-		sentinel := filepath.Join(*bindOutdir, "gomobile-bind-sentinel")
-		if err := ioutil.WriteFile(sentinel, []byte("write test"), 0644); err != nil {
-			return fmt.Errorf("output directory %q not writable", *bindOutdir)
-		}
-		os.Remove(sentinel)
+	if sdkDir := os.Getenv("ANDROID_HOME"); sdkDir == "" {
+		return fmt.Errorf("this command requires ANDROID_HOME environment variable (path to the Android SDK)")
 	}
 
 	if buildN {
@@ -133,12 +124,13 @@ func runBind(cmd *command) error {
 		return fmt.Errorf("failed to create the main package for android: %v", err)
 	}
 
-	androidOutdir := filepath.Join(*bindOutdir, "android")
+	androidDir := filepath.Join(tmpdir, "android")
 
-	err = gobuild(mainFile, filepath.Join(androidOutdir, "libs/armeabi-v7a/libgojni.so"))
+	err = gobuild(mainFile, filepath.Join(androidDir, "src/main/jniLibs/armeabi-v7a/libgojni.so"))
 	if err != nil {
 		return err
 	}
+
 	p, err := ctx.Import("golang.org/x/mobile/app", cwd, build.ImportComment)
 	if err != nil {
 		return fmt.Errorf(`"golang.org/x/mobile/app" is not found; run go get golang.org/x/mobile/app`)
@@ -146,25 +138,25 @@ func runBind(cmd *command) error {
 	repo := filepath.Clean(filepath.Join(p.Dir, "..")) // golang.org/x/mobile directory.
 
 	// TODO(crawshaw): use a better package path derived from the go package.
-	if err := binder.GenJava(filepath.Join(androidOutdir, "src/main/java/go/"+binder.pkg.Name())); err != nil {
+	if err := binder.GenJava(filepath.Join(androidDir, "src/main/java/go/"+binder.pkg.Name())); err != nil {
 		return err
 	}
 
 	src := filepath.Join(repo, "app/Go.java")
-	dst := filepath.Join(androidOutdir, "src/main/java/go/Go.java")
+	dst := filepath.Join(androidDir, "src/main/java/go/Go.java")
 	rm(dst)
 	if err := symlink(src, dst); err != nil {
 		return err
 	}
 
 	src = filepath.Join(repo, "bind/java/Seq.java")
-	dst = filepath.Join(androidOutdir, "src/main/java/go/Seq.java")
+	dst = filepath.Join(androidDir, "src/main/java/go/Seq.java")
 	rm(dst)
 	if err := symlink(src, dst); err != nil {
 		return err
 	}
 
-	return nil
+	return buildAAR(androidDir, bindPkg)
 }
 
 type binder struct {
@@ -302,3 +294,272 @@ func main() {
 	app.Run(app.Callbacks{Start: java.Init})
 }
 `))
+
+// AAR is the format for the binary distribution of an Android Library Project
+// and it is a ZIP archive with extension .aar.
+// http://tools.android.com/tech-docs/new-build-system/aar-format
+//
+// These entries are directly at the root of the archive.
+//
+//	AndroidManifest.xml (mandatory)
+// 	classes.jar (mandatory)
+//	assets/ (optional)
+//	jni/<abi>/libgojni.so
+//	R.txt (mandatory)
+//	res/ (mandatory)
+//	libs/*.jar (optional, not relevant)
+//	proguard.txt (optional, not relevant)
+//	lint.jar (optional, not relevant)
+//	aidl (optional, not relevant)
+//
+// javac and jar commands are needed to build classes.jar.
+func buildAAR(androidDir string, pkg *build.Package) (err error) {
+	var out io.Writer = ioutil.Discard
+	if !buildN {
+		f, err := os.Create(pkg.Name + ".aar")
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if cerr := f.Close(); err == nil {
+				err = cerr
+			}
+		}()
+		out = f
+	}
+
+	aarw := zip.NewWriter(out)
+	aarwcreate := func(name string) (io.Writer, error) {
+		if buildV {
+			fmt.Fprintf(os.Stderr, "aar: %s\n", name)
+		}
+		return aarw.Create(name)
+	}
+	w, err := aarwcreate("AndroidManifest.xml")
+	if err != nil {
+		return err
+	}
+	const manifestFmt = `<manifest xmlns:android="http://schemas.android.com/apk/res/android" package=%q />`
+	fmt.Fprintf(w, manifestFmt, "go."+pkg.Name+".gojni")
+
+	w, err = aarwcreate("classes.jar")
+	if err != nil {
+		return err
+	}
+	src := filepath.Join(androidDir, "src/main/java")
+	if err := buildJar(w, src); err != nil {
+		return err
+	}
+
+	assetsDir := filepath.Join(pkg.Dir, "assets")
+	assetsDirExists := false
+	if fi, err := os.Stat(assetsDir); err == nil {
+		assetsDirExists = fi.IsDir()
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+
+	if assetsDirExists {
+		err := filepath.Walk(
+			assetsDir, func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				if info.IsDir() {
+					return nil
+				}
+				f, err := os.Open(path)
+				if err != nil {
+					return err
+				}
+				defer f.Close()
+				name := "assets/" + path[len(assetsDir)+1:]
+				w, err := aarwcreate(name)
+				if err != nil {
+					return nil
+				}
+				_, err = io.Copy(w, f)
+				return err
+			})
+		if err != nil {
+			return err
+		}
+	}
+
+	lib := "armeabi-v7a/libgojni.so"
+	w, err = aarwcreate("jni/" + lib)
+	if err != nil {
+		return err
+	}
+	if !buildN {
+		r, err := os.Open(filepath.Join(androidDir, "src/main/jniLibs/"+lib))
+		if err != nil {
+			return err
+		}
+		defer r.Close()
+		if _, err := io.Copy(w, r); err != nil {
+			return err
+		}
+	}
+
+	// TODO(hyangah): do we need to use aapt to create R.txt?
+	w, err = aarwcreate("R.txt")
+	if err != nil {
+		return err
+	}
+
+	w, err = aarwcreate("res/")
+	if err != nil {
+		return err
+	}
+
+	return aarw.Close()
+}
+
+const (
+	javacTargetVer = "1.7"
+	minAndroidAPI  = 9
+)
+
+func buildJar(w io.Writer, srcDir string) error {
+	var srcFiles []string
+	if buildN {
+		srcFiles = []string{"*.java"}
+	} else {
+		err := filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if filepath.Ext(path) == ".java" {
+				srcFiles = append(srcFiles, filepath.Join(".", path[len(srcDir):]))
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	dst := filepath.Join(tmpdir, "javac-output")
+	if !buildN {
+		if err := os.MkdirAll(dst, 0700); err != nil {
+			return err
+		}
+	}
+	defer removeAll(dst)
+
+	apiPath, err := androidAPIPath()
+	if err != nil {
+		return err
+	}
+
+	args := []string{
+		"-d", dst,
+		"-source", javacTargetVer,
+		"-target", javacTargetVer,
+		"-bootclasspath", filepath.Join(apiPath, "android.jar"),
+	}
+	args = append(args, srcFiles...)
+
+	javac := exec.Command("javac", args...)
+	javac.Dir = srcDir
+	if buildV {
+		javac.Stdout = os.Stdout
+		javac.Stderr = os.Stderr
+	}
+	if buildX {
+		printcmd("%s", strings.Join(javac.Args, " "))
+	}
+	if !buildN {
+		if err := javac.Run(); err != nil {
+			return err
+		}
+	}
+
+	if buildX {
+		printcmd("jar c -C %s .", dst)
+	}
+	if buildN {
+		return nil
+	}
+
+	jarw := zip.NewWriter(w)
+	jarwcreate := func(name string) (io.Writer, error) {
+		if buildV {
+			fmt.Fprintf(os.Stderr, "jar: %s\n", name)
+		}
+		return jarw.Create(name)
+	}
+	f, err := jarwcreate("META-INF/MANIFEST.MF")
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(f, manifestHeader)
+
+	err = filepath.Walk(dst, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		out, err := jarwcreate(filepath.ToSlash(path[len(dst)+1:]))
+		if err != nil {
+			return err
+		}
+		in, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer in.Close()
+		_, err = io.Copy(out, in)
+		return err
+	})
+	if err != nil {
+		return err
+	}
+	return jarw.Close()
+}
+
+// androidAPIPath returns an android SDK platform directory under ANDROID_HOME.
+// If there are multiple platforms that satisfy the minimum version requirement
+// androidAPIPath returns the latest one among them.
+func androidAPIPath() (string, error) {
+	sdk := os.Getenv("ANDROID_HOME")
+	if sdk == "" {
+		return "", fmt.Errorf("ANDROID_HOME environment var is not set")
+	}
+	sdkDir, err := os.Open(filepath.Join(sdk, "platforms"))
+	if err != nil {
+		return "", fmt.Errorf("failed to find android SDK platform: %v", err)
+	}
+	defer sdkDir.Close()
+	fis, err := sdkDir.Readdir(-1)
+	if err != nil {
+		return "", fmt.Errorf("failed to find android SDK platform (min API level: %d): %v", minAndroidAPI, err)
+	}
+
+	var apiPath string
+	var apiVer int
+	for _, fi := range fis {
+		name := fi.Name()
+		if !fi.IsDir() || !strings.HasPrefix(name, "android-") {
+			continue
+		}
+		n, err := strconv.Atoi(name[len("android-"):])
+		if err != nil || n < minAndroidAPI {
+			continue
+		}
+		p := filepath.Join(sdkDir.Name(), name)
+		_, err = os.Stat(filepath.Join(p, "android.jar"))
+		if err == nil && apiVer < n {
+			apiPath = p
+			apiVer = n
+		}
+	}
+	if apiVer == 0 {
+		return "", fmt.Errorf("failed to find android SDK platform (min API level: %d) in %s",
+			minAndroidAPI, sdkDir.Name())
+	}
+	return apiPath, nil
+}
