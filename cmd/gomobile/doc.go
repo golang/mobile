@@ -46,19 +46,20 @@ Bind generates language bindings like gobind (golang.org/x/mobile/cmd/gobind)
 for a package and builds a shared library for each platform from the go binding
 code.
 
-The -outdir flag specifies the output directory and is required.
+For Android, the bind command produces an AAR (Android ARchive) file that
+archives the precompiled Java API stub classes, the compiled shared libraries,
+and all asset files in the /assets subdirectory under the package directory.
+The output AAR file name is '<package_name>.aar'.
 
-For Android, the bind command will place the generated Java API stubs and the
-compiled shared libraries in the android subdirectory of the following layout.
+The AAR file is commonly used for binary distribution of an Android library
+project and most Android IDEs support AAR import. For example, in Android
+Studio (1.2+), an AAR file can be imported using the module import wizard
+(File > New > New Module > Import .JAR or .AAR package), and setting it as
+a new dependency of a module (File > Project Structure > Dependencies).
 
-<outdir>/android
-  libs/
-     armeabi-v7a/libgojni.so
-     ...
-  src/main/java/go/
-	Seq.java
-	Go.java
-        mypackage/Mypackage.java
+This command requires 'javac' (version 1.7+) and Android SDK (API level 9
+or newer) to build the library for Android. The environment variable
+ANDROID_HOME must be set to the path to Android SDK.
 
 The -v flag provides verbose output, including the list of packages built.
 
