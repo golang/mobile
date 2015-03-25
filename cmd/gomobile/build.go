@@ -60,7 +60,7 @@ For documentation, see 'go help build':
 
 // TODO: -mobile
 
-func runBuild(cmd *command) error {
+func runBuild(cmd *command) (err error) {
 	cwd, err := os.Getwd()
 	if err != nil {
 		panic(err)
@@ -157,9 +157,18 @@ func runBuild(cmd *command) error {
 	if !strings.HasSuffix(*buildO, ".apk") {
 		return fmt.Errorf("output file name %q does not end in '.apk'", *buildO)
 	}
-	out, err := os.Create(*buildO)
-	if err != nil {
-		return err
+	var out io.Writer
+	if !buildN {
+		f, err := os.Create(*buildO)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if cerr := f.Close(); err == nil {
+				err = cerr
+			}
+		}()
+		out = f
 	}
 
 	var apkw *Writer
