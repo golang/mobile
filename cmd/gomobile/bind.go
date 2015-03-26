@@ -31,7 +31,7 @@ var cmdBind = &command{
 	run:   runBind,
 	Name:  "bind",
 	Usage: "[package]",
-	Short: "build a shared library for android APK and/or iOS app",
+	Short: "build a shared library for android APK and iOS app",
 	Long: `
 Bind generates language bindings like gobind (golang.org/x/mobile/cmd/gobind)
 for a package and builds a shared library for each platform from the go binding

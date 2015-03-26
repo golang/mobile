@@ -49,6 +49,7 @@ func init() {
 var cmdInit = &command{
 	run:   runInit,
 	Name:  "init",
+	Usage: "[-u]",
 	Short: "install android compiler toolchain",
 	Long: `
 Init downloads and installs the Android C++ compiler toolchain.

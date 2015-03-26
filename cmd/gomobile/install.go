@@ -14,7 +14,7 @@ var cmdInstall = &command{
 	run:   runInstall,
 	Name:  "install",
 	Usage: "[package]",
-	Short: "compile android APK and/or iOS app and install on device",
+	Short: "compile android APK and iOS app and install on device",
 	Long: `
 Install compiles and installs the app named by the import path on the
 attached mobile device.
