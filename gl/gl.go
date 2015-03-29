@@ -370,8 +370,8 @@ func Disable(cap Enum) {
 }
 
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glDisableVertexAttribArray.xhtml
-func DisableVertexAttribArray(index Attrib) {
-	C.glDisableVertexAttribArray(index.c())
+func DisableVertexAttribArray(a Attrib) {
+	C.glDisableVertexAttribArray(a.c())
 }
 
 // DrawArrays renders geometric primitives from the bound data.
@@ -384,7 +384,7 @@ func DrawArrays(mode Enum, first, count int) {
 // DrawElements renders primitives from a bound buffer.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glDrawElements.xhtml
-func DrawElements(mode, ty Enum, offset, count int) {
+func DrawElements(mode Enum, count int, ty Enum, offset int) {
 	C.glDrawElements(mode.c(), C.GLsizei(count), ty.c(), unsafe.Pointer(uintptr(offset)))
 }
 
@@ -400,8 +400,8 @@ func Enable(cap Enum) {
 // EnableVertexAttribArray enables a vertex attribute array.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glEnableVertexAttribArray.xhtml
-func EnableVertexAttribArray(index Attrib) {
-	C.glEnableVertexAttribArray(index.c())
+func EnableVertexAttribArray(a Attrib) {
+	C.glEnableVertexAttribArray(a.c())
 }
 
 // Finish blocks until the effects of all previously called GL
@@ -452,24 +452,30 @@ func GenerateMipmap(target Enum) {
 	C.glGenerateMipmap(target.c())
 }
 
-// GetActiveAttrib returns details about an attribute variable.
+// GetActiveAttrib returns details about an active attribute variable.
+// A value of 0 for index selects the first active attribute variable.
+// Permissible values for index range from 0 to the number of active
+// attribute variables minus 1.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetActiveAttrib.xhtml
-func GetActiveAttrib(p Program, a Attrib) (name string, size int, ty Enum) {
+func GetActiveAttrib(p Program, index uint32) (name string, size int, ty Enum) {
 	bufSize := GetProgrami(p, ACTIVE_ATTRIBUTE_MAX_LENGTH)
 	buf := C.malloc(C.size_t(bufSize))
 	defer C.free(buf)
 
 	var cSize C.GLint
 	var cType C.GLenum
-	C.glGetActiveAttrib(p.c(), a.c(), C.GLsizei(bufSize), nil, &cSize, &cType, (*C.GLchar)(buf))
+	C.glGetActiveAttrib(p.c(), C.GLuint(index), C.GLsizei(bufSize), nil, &cSize, &cType, (*C.GLchar)(buf))
 	return C.GoString((*C.char)(buf)), int(cSize), Enum(cType)
 }
 
 // GetActiveUniform returns details about an active uniform variable.
+// A value of 0 for index selects the first active uniform variable.
+// Permissible values for index range from 0 to the number of active
+// uniform variables minus 1.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetActiveUniform.xhtml
-func GetActiveUniform(p Program, u Uniform) (name string, size int, ty Enum) {
+func GetActiveUniform(p Program, index uint32) (name string, size int, ty Enum) {
 	bufSize := GetProgrami(p, ACTIVE_UNIFORM_MAX_LENGTH)
 	buf := C.malloc(C.size_t(bufSize))
 	defer C.free(buf)
@@ -477,7 +483,7 @@ func GetActiveUniform(p Program, u Uniform) (name string, size int, ty Enum) {
 	var cSize C.GLint
 	var cType C.GLenum
 
-	C.glGetActiveUniform(p.c(), C.GLuint(u.Value), C.GLsizei(bufSize), nil, &cSize, &cType, (*C.GLchar)(buf))
+	C.glGetActiveUniform(p.c(), C.GLuint(index), C.GLsizei(bufSize), nil, &cSize, &cType, (*C.GLchar)(buf))
 	return C.GoString((*C.char)(buf)), int(cSize), Enum(cType)
 }
 
@@ -497,7 +503,7 @@ func GetAttachedShaders(p Program) []Shader {
 	return shaders
 }
 
-// GetAttribLocation finds a program attribute variable by name.
+// GetAttribLocation returns the location of an attribute variable.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetAttribLocation.xhtml
 func GetAttribLocation(p Program, name string) Attrib {
@@ -694,7 +700,7 @@ func GetUniformiv(dst []int32, src Uniform, p Program) {
 	C.glGetUniformiv(p.c(), src.c(), (*C.GLint)(&dst[0]))
 }
 
-// GetUniformLocation returns the location of uniform variable.
+// GetUniformLocation returns the location of a uniform variable.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetUniformLocation.xhtml
 func GetUniformLocation(p Program, name string) Uniform {

@@ -28,7 +28,7 @@ type Enum uint32
 // Types are defined a structs so that in debug mode they can carry
 // extra information, such as a string name. See typesdebug.go.
 
-// Attrib is an attribute index.
+// Attrib identifies the location of a specific attribute variable.
 type Attrib struct {
 	Value uint
 }
@@ -63,7 +63,7 @@ type Texture struct {
 	Value uint32
 }
 
-// A Uniform identifies a GL uniform attribute value.
+// Uniform identifies the location of a specific uniform variable.
 type Uniform struct {
 	Value int32
 }
