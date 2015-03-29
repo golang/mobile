@@ -1003,12 +1003,12 @@ func Disable(cap Enum) {
 	C.glDisable(cap.c())
 }
 
-func DisableVertexAttribArray(index Attrib) {
+func DisableVertexAttribArray(a Attrib) {
 	defer func() {
 		errstr := errDrain()
-		log.Printf("gl.DisableVertexAttribArray(%v) %v", index, errstr)
+		log.Printf("gl.DisableVertexAttribArray(%v) %v", a, errstr)
 	}()
-	C.glDisableVertexAttribArray(index.c())
+	C.glDisableVertexAttribArray(a.c())
 }
 
 func DrawArrays(mode Enum, first, count int) {
@@ -1019,10 +1019,10 @@ func DrawArrays(mode Enum, first, count int) {
 	C.glDrawArrays(mode.c(), C.GLint(first), C.GLsizei(count))
 }
 
-func DrawElements(mode, ty Enum, offset, count int) {
+func DrawElements(mode Enum, count int, ty Enum, offset int) {
 	defer func() {
 		errstr := errDrain()
-		log.Printf("gl.DrawElements(%v, %v, %v, %v) %v", mode, ty, offset, count, errstr)
+		log.Printf("gl.DrawElements(%v, %v, %v, %v) %v", mode, count, ty, offset, errstr)
 	}()
 	C.glDrawElements(mode.c(), C.GLsizei(count), ty.c(), unsafe.Pointer(uintptr(offset)))
 }
@@ -1035,12 +1035,12 @@ func Enable(cap Enum) {
 	C.glEnable(cap.c())
 }
 
-func EnableVertexAttribArray(index Attrib) {
+func EnableVertexAttribArray(a Attrib) {
 	defer func() {
 		errstr := errDrain()
-		log.Printf("gl.EnableVertexAttribArray(%v) %v", index, errstr)
+		log.Printf("gl.EnableVertexAttribArray(%v) %v", a, errstr)
 	}()
-	C.glEnableVertexAttribArray(index.c())
+	C.glEnableVertexAttribArray(a.c())
 }
 
 func Finish() {
@@ -1091,31 +1091,31 @@ func GenerateMipmap(target Enum) {
 	C.glGenerateMipmap(target.c())
 }
 
-func GetActiveAttrib(p Program, a Attrib) (name string, size int, ty Enum) {
+func GetActiveAttrib(p Program, index uint32) (name string, size int, ty Enum) {
 	defer func() {
 		errstr := errDrain()
-		log.Printf("gl.GetActiveAttrib(%v, %v) (%v, %v, %v) %v", p, a, name, size, ty, errstr)
+		log.Printf("gl.GetActiveAttrib(%v, %v) (%v, %v, %v) %v", p, index, name, size, ty, errstr)
 	}()
 	bufSize := GetProgrami(p, ACTIVE_ATTRIBUTE_MAX_LENGTH)
 	buf := C.malloc(C.size_t(bufSize))
 	defer C.free(buf)
 	var cSize C.GLint
 	var cType C.GLenum
-	C.glGetActiveAttrib(p.c(), a.c(), C.GLsizei(bufSize), nil, &cSize, &cType, (*C.GLchar)(buf))
+	C.glGetActiveAttrib(p.c(), C.GLuint(index), C.GLsizei(bufSize), nil, &cSize, &cType, (*C.GLchar)(buf))
 	return C.GoString((*C.char)(buf)), int(cSize), Enum(cType)
 }
 
-func GetActiveUniform(p Program, u Uniform) (name string, size int, ty Enum) {
+func GetActiveUniform(p Program, index uint32) (name string, size int, ty Enum) {
 	defer func() {
 		errstr := errDrain()
-		log.Printf("gl.GetActiveUniform(%v, %v) (%v, %v, %v) %v", p, u, name, size, ty, errstr)
+		log.Printf("gl.GetActiveUniform(%v, %v) (%v, %v, %v) %v", p, index, name, size, ty, errstr)
 	}()
 	bufSize := GetProgrami(p, ACTIVE_UNIFORM_MAX_LENGTH)
 	buf := C.malloc(C.size_t(bufSize))
 	defer C.free(buf)
 	var cSize C.GLint
 	var cType C.GLenum
-	C.glGetActiveUniform(p.c(), C.GLuint(u.Value), C.GLsizei(bufSize), nil, &cSize, &cType, (*C.GLchar)(buf))
+	C.glGetActiveUniform(p.c(), C.GLuint(index), C.GLsizei(bufSize), nil, &cSize, &cType, (*C.GLchar)(buf))
 	return C.GoString((*C.char)(buf)), int(cSize), Enum(cType)
 }
 
