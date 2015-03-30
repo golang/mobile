@@ -11,18 +11,22 @@ import "time"
 type manager struct {
 }
 
-func enable(m *manager, t Type, delay time.Duration) error {
+func (m *manager) initialize() {
 	panic("not implemented")
 }
 
-func disable(m *manager, t Type) error {
+func (m *manager) enable(t Type, delay time.Duration) error {
 	panic("not implemented")
 }
 
-func read(m *manager, e []Event) (n int, err error) {
+func (m *manager) disable(t Type) error {
 	panic("not implemented")
 }
 
-func close(m *manager) error {
+func (m *manager) read(e []Event) (n int, err error) {
+	panic("not implemented")
+}
+
+func (m *manager) close() error {
 	panic("not implemented")
 }

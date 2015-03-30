@@ -77,22 +77,24 @@ type Manager struct {
 func (m *Manager) Enable(t Type, delay time.Duration) error {
 	if m.m == nil {
 		m.m = new(manager)
+		m.m.initialize()
 	}
 	if t < 0 || int(t) >= len(sensorNames) {
 		return errors.New("sensor: unknown sensor type")
 	}
-	return enable(m.m, t, delay)
+	return m.m.enable(t, delay)
 }
 
 // Disable disables to feed the manager with the specified sensor.
 func (m *Manager) Disable(t Type) error {
 	if m.m == nil {
 		m.m = new(manager)
+		m.m.initialize()
 	}
 	if t < 0 || int(t) >= len(sensorNames) {
 		return errors.New("sensor: unknown sensor type")
 	}
-	return disable(m.m, t)
+	return m.m.disable(t)
 }
 
 // Read reads a series of events from the manager.
@@ -101,15 +103,16 @@ func (m *Manager) Disable(t Type) error {
 func (m *Manager) Read(e []Event) (n int, err error) {
 	if m.m == nil {
 		m.m = new(manager)
+		m.m.initialize()
 	}
-	return read(m.m, e)
+	return m.m.read(e)
 }
 
 // Close stops the manager and frees the related resources.
 // Once Close is called, Manager becomes invalid to use.
 func (m *Manager) Close() error {
 	if m.m == nil {
-		m.m = new(manager)
+		return nil
 	}
-	return close(m.m)
+	return m.m.close()
 }
