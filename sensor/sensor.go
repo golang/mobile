@@ -7,7 +7,6 @@ package sensor
 
 import (
 	"errors"
-	"sync"
 	"time"
 )
 
@@ -66,12 +65,7 @@ type Event struct {
 
 // Manager multiplexes sensor event data from various sensor sources.
 type Manager struct {
-	once sync.Once
-	m    *manager // platform-specific implementation of the underlying manager
-}
-
-func (m *Manager) init() {
-	m.m = &manager{}
+	m *manager // platform-specific implementation of the underlying manager
 }
 
 // Enable enables a sensor with the specified delay rate.
@@ -81,7 +75,9 @@ func (m *Manager) init() {
 // Valid sensor types supported by this package are Accelerometer,
 // Gyroscope, Magnetometer and Altimeter.
 func (m *Manager) Enable(t Type, delay time.Duration) error {
-	m.once.Do(m.init)
+	if m.m == nil {
+		m.m = new(manager)
+	}
 	if t < 0 || int(t) >= len(sensorNames) {
 		return errors.New("sensor: unknown sensor type")
 	}
@@ -90,7 +86,9 @@ func (m *Manager) Enable(t Type, delay time.Duration) error {
 
 // Disable disables to feed the manager with the specified sensor.
 func (m *Manager) Disable(t Type) error {
-	m.once.Do(m.init)
+	if m.m == nil {
+		m.m = new(manager)
+	}
 	if t < 0 || int(t) >= len(sensorNames) {
 		return errors.New("sensor: unknown sensor type")
 	}
@@ -101,13 +99,17 @@ func (m *Manager) Disable(t Type) error {
 // It may read up to len(e) number of events, but will return
 // less events if timeout occurs.
 func (m *Manager) Read(e []Event) (n int, err error) {
-	m.once.Do(m.init)
+	if m.m == nil {
+		m.m = new(manager)
+	}
 	return read(m.m, e)
 }
 
 // Close stops the manager and frees the related resources.
 // Once Close is called, Manager becomes invalid to use.
 func (m *Manager) Close() error {
-	m.once.Do(m.init)
+	if m.m == nil {
+		m.m = new(manager)
+	}
 	return close(m.m)
 }
