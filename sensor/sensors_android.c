@@ -39,27 +39,38 @@ void android_disableSensor(ASensorEventQueue* q, int s) {
   ASensorEventQueue_disableSensor(q, sensor);
 }
 
-int android_readQueue(int looperId, ASensorEventQueue* q, int n, int32_t* types, int64_t* timestamps, float* vectors) {
+// TODO(jbd): Introduce a struct of type, timestamp and vectors.
+// CGO doesn't support union types, therefore we will not be able
+// to reuse ASensorEvent.
+int android_readQueue(
+  int looperId,
+  ASensorEventQueue* q,
+  int timeoutMillis,
+  int n,
+  int32_t* types,
+  int64_t* timestamps,
+  float* vectors
+) {
   int id;
   int events;
   ASensorEvent event;
-  // TODO(jbd): Timeout if pollAll blocks longer than it should.
-  int i = 0;
-  // Block forever until new events are on the queue.
-  while (i < n && (id = ALooper_pollAll(-1, NULL, &events, NULL)) >= 0) {
+  int i = 0, num = 0;
+  // TODO(jbd): Make sure we don't have to consume the sensor queue entirely.
+  while (i < n && (id = ALooper_pollAll(timeoutMillis, NULL, &events, NULL)) >= 0) {
     if (id != looperId) {
       continue;
     }
     if (ASensorEventQueue_getEvents(q, &event, 1)) {
-      types[i] = event.type;
-      timestamps[i] = event.timestamp;
-      vectors[i*3] = event.vector.x;
-      vectors[i*3+1] = event.vector.y;
-      vectors[i*3+2] = event.vector.z;
-      i++;
+      types[num] = event.type;
+      timestamps[num] = event.timestamp;
+      vectors[num*3] = event.vector.x;
+      vectors[num*3+1] = event.vector.y;
+      vectors[num*3+2] = event.vector.z;
+      num++;
     }
+    i++;
   }
-  return i;
+  return num;
 }
 
 void android_destroyManager(android_SensorManager* m) {
