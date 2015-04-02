@@ -15,6 +15,12 @@ void android_createManager(int looperId, android_SensorManager* dst);
 void android_destroyManager(android_SensorManager* m);
 int  android_enableSensor(ASensorEventQueue*, int, int32_t);
 void android_disableSensor(ASensorEventQueue*, int);
-int  android_readQueue(int looperId, ASensorEventQueue* q, int n, int32_t* types, int64_t* timestamps, float* vectors);
+int  android_readQueue(
+  int looperId, ASensorEventQueue* q,
+  int timeoutMillis, int n,
+  int32_t* types,
+  int64_t* timestamps,
+  float* vectors
+);
 
 #endif
