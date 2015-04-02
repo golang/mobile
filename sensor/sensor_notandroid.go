@@ -6,27 +6,29 @@
 
 package sensor
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 type manager struct {
 }
 
 func (m *manager) initialize() {
-	panic("not implemented")
 }
 
 func (m *manager) enable(t Type, delay time.Duration) error {
-	panic("not implemented")
+	return errors.New("sensor: no sensors available")
 }
 
 func (m *manager) disable(t Type) error {
-	panic("not implemented")
+	return errors.New("sensor: no sensors available")
 }
 
 func (m *manager) read(e []Event) (n int, err error) {
-	panic("not implemented")
+	return 0, errors.New("sensor: no sensor data available")
 }
 
 func (m *manager) close() error {
-	panic("not implemented")
+	return nil
 }
