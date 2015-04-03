@@ -75,7 +75,7 @@ func (m *manager) initialize() {
 		runtime.LockOSThread()
 		for {
 			v := <-m.inout
-			switch s := (v.in).(type) {
+			switch s := v.in.(type) {
 			case initSignal:
 				id := atomic.AddInt64(&nextLooperID, int64(1))
 				var mgr C.android_SensorManager
@@ -85,14 +85,14 @@ func (m *manager) initialize() {
 				usecsDelay := s.delay.Nanoseconds() * 1000
 				code := int(C.android_enableSensor(m.m.queue, typeToInt(s.t), C.int32_t(usecsDelay)))
 				if code != 0 {
-					*(s.err) = fmt.Errorf("sensor: no default %v sensor on the device", s.t)
+					*s.err = fmt.Errorf("sensor: no default %v sensor on the device", s.t)
 				}
 			case disableSignal:
 				C.android_disableSensor(m.m.queue, typeToInt(s.t))
 			case readSignal:
 				n, err := readEvents(m, s.dst)
-				*(s.n) = n
-				*(s.err) = err
+				*s.n = n
+				*s.err = err
 			case closeSignal:
 				C.android_destroyManager(m.m)
 				close(v.out)
