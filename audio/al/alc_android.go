@@ -29,6 +29,10 @@ ALCcontext* call_alcCreateContext(LPALCCREATECONTEXT fn, ALCdevice* d, const ALC
 ALCboolean call_alcMakeContextCurrent(LPALCMAKECONTEXTCURRENT fn, ALCcontext* c) {
   return fn(c);
 }
+
+void call_alcDestroyContext(LPALCDESTROYCONTEXT fn, ALCcontext* c) {
+  return fn(c);
+}
 */
 import "C"
 import (
@@ -65,4 +69,8 @@ func alcCreateContext(d unsafe.Pointer, attrs []int32) unsafe.Pointer {
 func alcMakeContextCurrent(c unsafe.Pointer) bool {
 	ctx := (*C.ALCcontext)(c)
 	return C.call_alcMakeContextCurrent(alcMakeContextCurrentFunc, ctx) == C.AL_TRUE
+}
+
+func alcDestroyContext(c unsafe.Pointer) {
+	C.call_alcDestroyContext(alcDestroyContextFunc, (*C.ALCcontext)(c))
 }

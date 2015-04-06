@@ -239,6 +239,7 @@ var (
 	alcCloseDeviceFunc        C.LPALCCLOSEDEVICE
 	alcCreateContextFunc      C.LPALCCREATECONTEXT
 	alcMakeContextCurrentFunc C.LPALCMAKECONTEXTCURRENT
+	alcDestroyContextFunc     C.LPALCDESTROYCONTEXT
 )
 
 func initAL() {
@@ -288,6 +289,7 @@ func initAL() {
 	alcCloseDeviceFunc = C.LPALCCLOSEDEVICE(fn("alcCloseDevice"))
 	alcCreateContextFunc = C.LPALCCREATECONTEXT(fn("alcCreateContext"))
 	alcMakeContextCurrentFunc = C.LPALCMAKECONTEXTCURRENT(fn("alcMakeContextCurrent"))
+	alcDestroyContextFunc = C.LPALCDESTROYCONTEXT(fn("alcDestroyContext"))
 }
 
 func fn(fname string) unsafe.Pointer {
