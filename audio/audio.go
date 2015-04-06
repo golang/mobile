@@ -120,7 +120,7 @@ func NewPlayer(src io.ReadSeeker, format Format, samplesPerSecond int64) (*Playe
 	if device.d == nil {
 		device.d = al.Open("")
 		c := device.d.CreateContext(nil)
-		if !c.MakeContextCurrent() {
+		if !al.MakeContextCurrent(c) {
 			return nil, fmt.Errorf("audio: cannot initiate a new player")
 		}
 	}

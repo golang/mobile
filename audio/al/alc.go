@@ -52,7 +52,7 @@ func (d *Device) CreateContext(attrs []int32) *Context {
 // MakeContextCurrent makes a context current. The context available
 // process-wide, you don't need to lock the current OS thread to
 // access the current context.
-func (c *Context) MakeContextCurrent() bool {
+func MakeContextCurrent(c *Context) bool {
 	return alcMakeContextCurrent(c.ptr)
 }
 
