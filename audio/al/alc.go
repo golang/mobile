@@ -55,3 +55,8 @@ func (d *Device) CreateContext(attrs []int32) *Context {
 func (c *Context) MakeContextCurrent() bool {
 	return alcMakeContextCurrent(c.ptr)
 }
+
+// Destroy destroys the current context and frees the related resources.
+func (c *Context) Destroy() {
+	alcDestroyContext(c.ptr)
+}

@@ -56,3 +56,7 @@ func alcMakeContextCurrent(c unsafe.Pointer) bool {
 	ctx := (*C.ALCcontext)(c)
 	return C.alcMakeContextCurrent(ctx) == C.ALC_TRUE
 }
+
+func alcDestroyContext(c unsafe.Pointer) {
+	C.alcDestroyContext((*C.ALCcontext)(c))
+}
