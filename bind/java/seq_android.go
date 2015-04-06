@@ -86,7 +86,7 @@ func initSeq() {
 }
 
 func seqToBuf(bufptr **C.uint8_t, lenptr *C.size_t, buf *seq.Buffer) {
-	if false {
+	if debug {
 		fmt.Printf("seqToBuf tag 1, len(buf.Data)=%d, *lenptr=%d\n", len(buf.Data), *lenptr)
 	}
 	if len(buf.Data) == 0 {
@@ -166,6 +166,14 @@ func transact(ref *seq.Ref, code int, in *seq.Buffer) *seq.Buffer {
 	return out
 }
 
+func encodeString(out *seq.Buffer, v string) {
+	out.WriteUTF16(v)
+}
+
+func decodeString(in *seq.Buffer) string {
+	return in.ReadUTF16()
+}
+
 func init() {
 	seq.FinalizeRef = func(ref *seq.Ref) {
 		if ref.Num < 0 {
@@ -175,4 +183,6 @@ func init() {
 	}
 
 	seq.Transact = transact
+	seq.EncString = encodeString
+	seq.DecString = decodeString
 }

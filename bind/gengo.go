@@ -91,9 +91,9 @@ func (g *goGen) genFuncBody(o *types.Func, selectorLHS string) {
 func (g *goGen) genWrite(valName, seqName string, T types.Type) {
 	if isErrorType(T) {
 		g.Printf("if %s == nil {\n", valName)
-		g.Printf("    %s.WriteUTF16(\"\");\n", seqName)
+		g.Printf("    %s.WriteString(\"\");\n", seqName)
 		g.Printf("} else {\n")
-		g.Printf("    %s.WriteUTF16(%s.Error());\n", seqName, valName)
+		g.Printf("    %s.WriteString(%s.Error());\n", seqName, valName)
 		g.Printf("}\n")
 		return
 	}
