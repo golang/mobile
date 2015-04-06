@@ -6,7 +6,10 @@
 
 package al
 
-import "unsafe"
+import (
+	"runtime"
+	"unsafe"
+)
 
 // Device represents an audio device.
 type Device struct {
@@ -46,7 +49,9 @@ func (d *Device) CreateContext(attrs []int32) *Context {
 	if ptr == nil {
 		return nil
 	}
-	return &Context{ptr: ptr}
+	c := &Context{ptr: ptr}
+	runtime.SetFinalizer(c, (*Context).Destroy)
+	return c
 }
 
 // MakeContextCurrent makes a context current. The context available
@@ -59,4 +64,5 @@ func MakeContextCurrent(c *Context) bool {
 // Destroy destroys the current context and frees the related resources.
 func (c *Context) Destroy() {
 	alcDestroyContext(c.ptr)
+	runtime.SetFinalizer(c, nil)
 }
