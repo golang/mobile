@@ -44,3 +44,9 @@ func Register(descriptor string, code int, fn Func) {
 	}
 	m[code] = fn
 }
+
+// DecString decodes a string encoded in the Buffer.
+var DecString func(in *Buffer) string
+
+// EncString encodes a Go string into the Buffer.
+var EncString func(out *Buffer, v string)

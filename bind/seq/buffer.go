@@ -132,6 +132,10 @@ func (b *Buffer) ReadRef() *Ref {
 	return ref
 }
 
+func (b *Buffer) ReadString() string {
+	return DecString(b)
+}
+
 func (b *Buffer) WriteInt32(v int32) {
 	offset := align(b.Offset, 4)
 	if len(b.Data)-offset < 4 {
@@ -183,6 +187,10 @@ func (b *Buffer) WriteByteArray(byt []byte) {
 	b.WriteInt64(int64(sz))
 	b.WriteInt64(int64(ptr))
 	return
+}
+
+func (b *Buffer) WriteString(v string) {
+	EncString(b, v)
 }
 
 func (b *Buffer) WriteGoRef(obj interface{}) {

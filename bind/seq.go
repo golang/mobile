@@ -11,7 +11,7 @@ import (
 // TODO(hyangah): avoid panic; gobind needs to output the problematic code location.
 func seqType(t types.Type) string {
 	if isErrorType(t) {
-		return "UTF16"
+		return "String"
 	}
 	switch t := t.(type) {
 	case *types.Basic:
@@ -35,7 +35,7 @@ func seqType(t types.Type) string {
 		case types.Float64:
 			return "Float64"
 		case types.String:
-			return "UTF16"
+			return "String"
 		default:
 			// Should be caught earlier in processing.
 			panic(fmt.Sprintf("unsupported basic seqType: %s", t))

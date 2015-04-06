@@ -18,9 +18,9 @@ func proxy_ByteArrays(out, in *seq.Buffer) {
 func proxy_Error(out, in *seq.Buffer) {
 	err := basictypes.Error()
 	if err == nil {
-		out.WriteUTF16("")
+		out.WriteString("")
 	} else {
-		out.WriteUTF16(err.Error())
+		out.WriteString(err.Error())
 	}
 }
 
@@ -28,9 +28,9 @@ func proxy_ErrorPair(out, in *seq.Buffer) {
 	res, err := basictypes.ErrorPair()
 	out.WriteInt(res)
 	if err == nil {
-		out.WriteUTF16("")
+		out.WriteString("")
 	} else {
-		out.WriteUTF16(err.Error())
+		out.WriteString(err.Error())
 	}
 }
 

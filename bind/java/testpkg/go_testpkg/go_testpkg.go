@@ -17,7 +17,7 @@ func proxy_Add(out, in *seq.Buffer) {
 }
 
 func proxy_AppendToString(out, in *seq.Buffer) {
-	param_str := in.ReadUTF16()
+	param_str := in.ReadString()
 	param_someBytes := in.ReadByteArray()
 	res := testpkg.AppendToString(param_str, param_someBytes)
 	out.WriteByteArray(res)
@@ -40,9 +40,9 @@ func proxy_CallE(out, in *seq.Buffer) {
 	}
 	err := testpkg.CallE(param_i)
 	if err == nil {
-		out.WriteUTF16("")
+		out.WriteString("")
 	} else {
-		out.WriteUTF16(err.Error())
+		out.WriteString(err.Error())
 	}
 }
 
@@ -104,19 +104,19 @@ func proxy_CallVE(out, in *seq.Buffer) {
 	res, err := testpkg.CallVE(param_i)
 	out.WriteInt(res)
 	if err == nil {
-		out.WriteUTF16("")
+		out.WriteString("")
 	} else {
-		out.WriteUTF16(err.Error())
+		out.WriteString(err.Error())
 	}
 }
 
 func proxy_Err(out, in *seq.Buffer) {
-	param_s := in.ReadUTF16()
+	param_s := in.ReadString()
 	err := testpkg.Err(param_s)
 	if err == nil {
-		out.WriteUTF16("")
+		out.WriteString("")
 	} else {
-		out.WriteUTF16(err.Error())
+		out.WriteString(err.Error())
 	}
 }
 
@@ -140,9 +140,9 @@ func proxyIE(out, in *seq.Buffer) {
 	v := ref.Get().(testpkg.I)
 	err := v.E()
 	if err == nil {
-		out.WriteUTF16("")
+		out.WriteString("")
 	} else {
-		out.WriteUTF16(err.Error())
+		out.WriteString(err.Error())
 	}
 }
 
@@ -170,7 +170,7 @@ func proxyIString(out, in *seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(testpkg.I)
 	res := v.String()
-	out.WriteUTF16(res)
+	out.WriteString(res)
 }
 
 func proxyIV(out, in *seq.Buffer) {
@@ -186,9 +186,9 @@ func proxyIVE(out, in *seq.Buffer) {
 	res, err := v.VE()
 	out.WriteInt(res)
 	if err == nil {
-		out.WriteUTF16("")
+		out.WriteString("")
 	} else {
-		out.WriteUTF16(err.Error())
+		out.WriteString(err.Error())
 	}
 }
 
@@ -241,7 +241,7 @@ func (p *proxyI) S() *testpkg.S {
 func (p *proxyI) String() string {
 	in := new(seq.Buffer)
 	out := seq.Transact((*seq.Ref)(p), proxyIStringCode, in)
-	res_0 := out.ReadUTF16()
+	res_0 := out.ReadString()
 	return res_0
 }
 
@@ -299,7 +299,7 @@ func proxySString(out, in *seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(*testpkg.S)
 	res := v.String()
-	out.WriteUTF16(res)
+	out.WriteString(res)
 }
 
 func init() {
@@ -308,9 +308,9 @@ func init() {
 }
 
 func proxy_StrDup(out, in *seq.Buffer) {
-	param_s := in.ReadUTF16()
+	param_s := in.ReadString()
 	res := testpkg.StrDup(param_s)
-	out.WriteUTF16(res)
+	out.WriteString(res)
 }
 
 func init() {

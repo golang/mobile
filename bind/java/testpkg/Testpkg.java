@@ -24,7 +24,7 @@ public abstract class Testpkg {
         go.Seq _in = new go.Seq();
         go.Seq _out = new go.Seq();
         byte[] _result;
-        _in.writeUTF16(str);
+        _in.writeString(str);
         _in.writeByteArray(someBytes);
         Seq.send(DESCRIPTOR, CALL_AppendToString, _in, _out);
         _result = _out.readByteArray();
@@ -47,7 +47,7 @@ public abstract class Testpkg {
         go.Seq _out = new go.Seq();
         _in.writeRef(i.ref());
         Seq.send(DESCRIPTOR, CALL_CallE, _in, _out);
-        String _err = _out.readUTF16();
+        String _err = _out.readString();
         if (_err != null) {
             throw new Exception(_err);
         }
@@ -97,7 +97,7 @@ public abstract class Testpkg {
         _in.writeRef(i.ref());
         Seq.send(DESCRIPTOR, CALL_CallVE, _in, _out);
         _result = _out.readInt();
-        String _err = _out.readUTF16();
+        String _err = _out.readString();
         if (_err != null) {
             throw new Exception(_err);
         }
@@ -107,9 +107,9 @@ public abstract class Testpkg {
     public static void Err(String s) throws Exception {
         go.Seq _in = new go.Seq();
         go.Seq _out = new go.Seq();
-        _in.writeUTF16(s);
+        _in.writeString(s);
         Seq.send(DESCRIPTOR, CALL_Err, _in, _out);
-        String _err = _out.readUTF16();
+        String _err = _out.readString();
         if (_err != null) {
             throw new Exception(_err);
         }
@@ -151,9 +151,9 @@ public abstract class Testpkg {
                 case Proxy.CALL_E: {
                     try {
                         this.E();
-                        out.writeUTF16(null);
+                        out.writeString(null);
                     } catch (Exception e) {
-                        out.writeUTF16(e.getMessage());
+                        out.writeString(e.getMessage());
                     }
                     return;
                 }
@@ -173,7 +173,7 @@ public abstract class Testpkg {
                 }
                 case Proxy.CALL_String: {
                     String result = this.String();
-                    out.writeUTF16(result);
+                    out.writeString(result);
                     return;
                 }
                 case Proxy.CALL_V: {
@@ -185,11 +185,11 @@ public abstract class Testpkg {
                     try {
                         long result = this.VE();
                         out.writeInt(result);
-                        out.writeUTF16(null);
+                        out.writeString(null);
                     } catch (Exception e) {
                         long result = 0;
                         out.writeInt(result);
-                        out.writeUTF16(e.getMessage());
+                        out.writeString(e.getMessage());
                     }
                     return;
                 }
@@ -217,7 +217,7 @@ public abstract class Testpkg {
                 go.Seq _out = new go.Seq();
                 _in.writeRef(ref);
                 Seq.send(DESCRIPTOR, CALL_E, _in, _out);
-                String _err = _out.readUTF16();
+                String _err = _out.readString();
                 if (_err != null) {
                     throw new Exception(_err);
                 }
@@ -256,7 +256,7 @@ public abstract class Testpkg {
                 String _result;
                 _in.writeRef(ref);
                 Seq.send(DESCRIPTOR, CALL_String, _in, _out);
-                _result = _out.readUTF16();
+                _result = _out.readString();
                 return _result;
             }
             
@@ -277,7 +277,7 @@ public abstract class Testpkg {
                 _in.writeRef(ref);
                 Seq.send(DESCRIPTOR, CALL_VE, _in, _out);
                 _result = _out.readInt();
-                String _err = _out.readUTF16();
+                String _err = _out.readString();
                 if (_err != null) {
                     throw new Exception(_err);
                 }
@@ -348,7 +348,7 @@ public abstract class Testpkg {
             String _result;
             _in.writeRef(ref);
             Seq.send(DESCRIPTOR, CALL_String, _in, _out);
-            _result = _out.readUTF16();
+            _result = _out.readString();
             return _result;
         }
         
@@ -376,9 +376,9 @@ public abstract class Testpkg {
         go.Seq _in = new go.Seq();
         go.Seq _out = new go.Seq();
         String _result;
-        _in.writeUTF16(s);
+        _in.writeString(s);
         Seq.send(DESCRIPTOR, CALL_StrDup, _in, _out);
-        _result = _out.readUTF16();
+        _result = _out.readString();
         return _result;
     }
     

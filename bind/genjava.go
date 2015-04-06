@@ -205,7 +205,7 @@ func (g *javaGen) genInterfaceStub(o *types.TypeName, m *types.Interface) {
 			g.Printf("out.write%s;\n", seqWrite(res.At(0).Type(), "result"))
 		}
 		if returnsError {
-			g.Printf("out.writeUTF16(null);\n")
+			g.Printf("out.writeString(null);\n")
 			g.Outdent()
 			g.Printf("} catch (Exception e) {\n")
 			g.Indent()
@@ -214,7 +214,7 @@ func (g *javaGen) genInterfaceStub(o *types.TypeName, m *types.Interface) {
 				g.Printf("%s result = %s;\n", g.javaType(resTyp), g.javaTypeDefault(resTyp))
 				g.Printf("out.write%s;\n", seqWrite(resTyp, "result"))
 			}
-			g.Printf("out.writeUTF16(e.getMessage());\n")
+			g.Printf("out.writeString(e.getMessage());\n")
 			g.Outdent()
 			g.Printf("}\n")
 		}
@@ -483,7 +483,7 @@ func (g *javaGen) genFunc(o *types.Func, method bool) {
 		g.genRead("_result", "_out", resultType)
 	}
 	if returnsError {
-		g.Printf(`String _err = _out.readUTF16();
+		g.Printf(`String _err = _out.readString();
 if (_err != null) {
     throw new Exception(_err);
 }
