@@ -60,9 +60,8 @@ type inOut struct {
 
 // manager is the Android-specific implementation of Manager.
 type manager struct {
-	m        *C.android_SensorManager
-	inout    chan inOut
-	minDelay int64 // read timeout in milliseconds
+	m     *C.android_SensorManager
+	inout chan inOut
 }
 
 // initialize inits the manager and creates a goroutine to proxy the CGO calls.
@@ -115,9 +114,6 @@ func (m *manager) initialize() {
 
 func (m *manager) enable(t Type, delay time.Duration) error {
 	var err error
-	if d := delay.Nanoseconds() * 1000 * 1000; m.minDelay == 0 || d < m.minDelay {
-		m.minDelay = d
-	}
 	done := make(chan struct{})
 	m.inout <- inOut{
 		in:  enableSignal{t: t, delay: delay, err: &err},
@@ -152,10 +148,10 @@ func readEvents(m *manager, e []Event) (n int, err error) {
 	types := make([]C.int32_t, num)
 	timestamps := make([]C.int64_t, num)
 	vectors := make([]C.float, 3*num)
+
+	// TODO(jbd): add timeout.
 	n = int(C.android_readQueue(
-		m.m.looperId,
-		m.m.queue,
-		C.int(2*m.minDelay), // wait twice as much than the min-expected delay
+		m.m.looperId, m.m.queue,
 		C.int(num),
 		(*C.int32_t)(unsafe.Pointer(&types[0])),
 		(*C.int64_t)(unsafe.Pointer(&timestamps[0])),
