@@ -27,7 +27,7 @@ func (t Type) String() string {
 	return "Unknown sensor"
 }
 
-var (
+const (
 	Accelerometer = Type(0)
 	Gyroscope     = Type(1)
 	Magnetometer  = Type(2)
