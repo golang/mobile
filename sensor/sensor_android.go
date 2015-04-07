@@ -149,7 +149,6 @@ func readEvents(m *manager, e []Event) (n int, err error) {
 	timestamps := make([]C.int64_t, num)
 	vectors := make([]C.float, 3*num)
 
-	// TODO(jbd): add timeout.
 	n = int(C.android_readQueue(
 		m.m.looperId, m.m.queue,
 		C.int(num),
