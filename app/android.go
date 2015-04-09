@@ -144,6 +144,7 @@ func onNativeWindowResized(activity *C.ANativeActivity, window *C.ANativeWindow)
 
 //export onNativeWindowRedrawNeeded
 func onNativeWindowRedrawNeeded(activity *C.ANativeActivity, window *C.ANativeWindow) {
+	windowRedrawNeeded <- window
 }
 
 //export onNativeWindowDestroyed
@@ -187,8 +188,9 @@ func (androidState) AndroidContext() unsafe.Pointer {
 }
 
 var (
-	windowDestroyed = make(chan bool)
-	windowCreated   = make(chan *C.ANativeWindow)
+	windowDestroyed    = make(chan bool)
+	windowCreated      = make(chan *C.ANativeWindow)
+	windowRedrawNeeded = make(chan *C.ANativeWindow)
 )
 
 func openAsset(name string) (ReadSeekCloser, error) {

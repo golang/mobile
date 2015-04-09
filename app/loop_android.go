@@ -31,6 +31,11 @@ EGLSurface surface;
 
 #define LOG_ERROR(...) __android_log_print(ANDROID_LOG_ERROR, "Go", __VA_ARGS__)
 
+void querySurfaceWidthAndHeight() {
+	eglQuerySurface(display, surface, EGL_WIDTH, &windowWidth);
+	eglQuerySurface(display, surface, EGL_HEIGHT, &windowHeight);
+}
+
 void createEGLWindow(ANativeWindow* window) {
 	EGLint numConfigs, format;
 	EGLConfig config;
@@ -71,8 +76,7 @@ void createEGLWindow(ANativeWindow* window) {
 		return;
 	}
 
-	eglQuerySurface(display, surface, EGL_WIDTH, &windowWidth);
-	eglQuerySurface(display, surface, EGL_HEIGHT, &windowHeight);
+	querySurfaceWidthAndHeight();
 }
 
 #undef LOG_ERROR
@@ -107,6 +111,11 @@ func windowDrawLoop(cb Callbacks, w *C.ANativeWindow, queue *C.AInputQueue) {
 	for {
 		processEvents(cb, queue)
 		select {
+		case <-windowRedrawNeeded:
+			// Re-query the width and height.
+			C.querySurfaceWidthAndHeight()
+			geom.Width = geom.Pt(float32(C.windowWidth) / geom.PixelsPerPt)
+			geom.Height = geom.Pt(float32(C.windowHeight) / geom.PixelsPerPt)
 		case <-windowDestroyed:
 			if cb.Stop != nil {
 				cb.Stop()
