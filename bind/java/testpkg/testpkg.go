@@ -1,4 +1,5 @@
 // Package testpkg contains bound functions for testing the cgo-JNI interface.
+// This is used in tests of golang.org/x/mobile/bind/java.
 package testpkg
 
 //go:generate gobind -lang=go -outdir=go_testpkg .
