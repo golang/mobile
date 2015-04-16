@@ -43,7 +43,7 @@ Supported types include:
 
 	- String and boolean types.
 
-	- Byte slice type.
+	- Byte slice types.
 
 	- Any function type all of whose parameters and results have
 	  supported types. Functions must return either no results,
