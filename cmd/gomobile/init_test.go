@@ -93,6 +93,7 @@ mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/5g $NDKCCPATH/arm/bin/5g
 mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/asm $NDKCCPATH/arm/bin/asm
 mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/cgo $NDKCCPATH/arm/bin/cgo
 mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/nm $NDKCCPATH/arm/bin/nm
+mv $WORK/go/pkg/tool/linux_amd64/old5a $NDKCCPATH/arm/bin/old5a
 mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/pack $NDKCCPATH/arm/bin/pack
 mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/link $NDKCCPATH/arm/bin/link
 go build -o $NDKCCPATH/arm/bin/toolexec $WORK/toolexec.go
