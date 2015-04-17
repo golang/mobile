@@ -69,8 +69,19 @@ import (
 	"runtime"
 	"unsafe"
 
+	"golang.org/x/mobile/app/internal/callfn"
 	"golang.org/x/mobile/geom"
 )
+
+//export callMain
+func callMain(mainPC uintptr) {
+	for _, name := range []string{"TMPDIR", "PATH", "LD_LIBRARY_PATH"} {
+		n := C.CString(name)
+		os.Setenv(name, C.GoString(C.getenv(n)))
+		C.free(unsafe.Pointer(n))
+	}
+	callfn.CallFn(mainPC)
+}
 
 //export onCreate
 func onCreate(activity *C.ANativeActivity) {
