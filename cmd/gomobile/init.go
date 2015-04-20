@@ -644,7 +644,7 @@ func doCopyAll(dst, src string) error {
 
 func removeAll(path string) error {
 	if buildX {
-		printcmd("rm -r -f %q", path)
+		printcmd(`rm -r -f "%s"`, path)
 	}
 	if buildN {
 		return nil
