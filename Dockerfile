@@ -58,18 +58,20 @@ RUN (curl -sSL https://golang.org/dl/go1.4.linux-amd64.tar.gz | tar -vxz -C /tmp
 # GOVERSION string is the output of 'git log -n 1 --format="format: devel +%h %cd" HEAD'
 # like in go tool dist.
 # Revision picked on Jan 21, 2015.
-ENV GO_REV      34bc85f6f3b02ebcd490b40f4d32907ff2e69af3
-ENV GO_VERSION  devel +34bc85f Wed Jan 21 21:30:46 2015 +0000
+ENV GO_REV 3f4de49d0a6469b38a6e07194a6b59d7a35b1d51
+ENV GO_VERSION devel +3f4de49 Mon Apr 20 15:56:56 2015 +0000
 
 ENV GOROOT /go
 ENV GOPATH /
 ENV PATH $PATH:$GOROOT/bin
 
 RUN mkdir -p $GOROOT && \
-	curl -sSL "https://go.googlesource.com/go/+archive/$GO_REV.tar.gz" | tar -vxz -C $GOROOT && \
-	echo $GO_VERSION > $GOROOT/VERSION && \
-	cd $GOROOT/src && \
-	./all.bash && \
+	curl -sSL "https://go.googlesource.com/go/+archive/$GO_REV.tar.gz" | tar -vxz -C $GOROOT
+RUN echo $GO_VERSION > $GOROOT/VERSION
+
+# TODO(hyangah): cannot run all.bash due to failures reported in golang.org/issues/9729
+RUN cd $GOROOT/src && \
+	./make.bash && \
 	CC_FOR_TARGET=$NDK_ROOT/bin/arm-linux-androideabi-gcc GOOS=android GOARCH=arm GOARM=7 ./make.bash
 
 # Expect the GOPATH/src volume to be mounted.  (-v $GOPATH/src:/src)

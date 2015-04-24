@@ -13,6 +13,11 @@
 //
 // 		sudo apt-get install libopenal-dev
 //
+// When compiled for Android, this package uses OpenAL Soft as a backend.
+// Please add its license file to the open source notices of your
+// application.
+// OpenAL Soft's license file could be found at
+// http://repo.or.cz/w/openal-soft.git/blob/HEAD:/COPYING.
 package audio
 
 import (

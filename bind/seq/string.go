@@ -70,6 +70,20 @@ func (b *Buffer) WriteUTF16(s string) {
 	b.Offset = offset1 + n
 }
 
+func (b *Buffer) WriteUTF8(s string) {
+	n := len(s)
+	b.WriteInt32(int32(n))
+	if len(s) == 0 {
+		return
+	}
+	offset := align(b.Offset, 1)
+	if len(b.Data)-offset < n {
+		b.grow(offset + n - len(b.Data))
+	}
+	copy(b.Data[offset:], s)
+	b.Offset = offset + n
+}
+
 const maxSliceLen = (1<<31 - 1) / 2
 
 func (b *Buffer) ReadError() error {
@@ -93,4 +107,17 @@ func (b *Buffer) ReadUTF16() string {
 	b.Offset = offset + 2*size
 
 	return s
+}
+
+func (b *Buffer) ReadUTF8() string {
+	size := int(b.ReadInt32())
+	if size == 0 {
+		return ""
+	}
+	if size < 0 {
+		panic(fmt.Sprintf("string size negative: %d", size))
+	}
+	offset := align(b.Offset, 1)
+	b.Offset = offset + size
+	return string(b.Data[offset : offset+size])
 }

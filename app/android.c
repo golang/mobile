@@ -19,9 +19,6 @@
 #define LOG_INFO(...) __android_log_print(ANDROID_LOG_INFO, "Go", __VA_ARGS__)
 #define LOG_FATAL(...) __android_log_print(ANDROID_LOG_FATAL, "Go", __VA_ARGS__)
 
-// Defined in the Go runtime.
-static int (*_rt0_arm_linux1)(int argc, char** argv);
-
 jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	current_vm = vm;
 	current_ctx = NULL;
@@ -122,32 +119,11 @@ static const char* getenv_raw(const char *name) {
 
 static void* init_go_runtime(void* unused) {
 	init_from_context();
-
-	_rt0_arm_linux1 = (int (*)(int, char**))dlsym(RTLD_DEFAULT, "_rt0_arm_linux1");
-	if (_rt0_arm_linux1 == NULL) {
-		LOG_FATAL("missing _rt0_arm_linux1");
+	uintptr_t mainPC = (uintptr_t)dlsym(RTLD_DEFAULT, "main.main");
+	if (!mainPC) {
+		LOG_FATAL("missing main.main");
 	}
-
-	// Defensively heap-allocate argv0, for setenv.
-	char* argv0 = strdup("gojni");
-
-	// Build argv, including the ELF auxiliary vector.
-	struct {
-		char* argv[2];
-		const char* envp[4];
-		uint32_t auxv[64];
-	} x;
-	x.argv[0] = argv0;
-	x.argv[1] = NULL;
-	x.envp[0] = getenv_raw("TMPDIR=");
-	x.envp[1] = getenv_raw("PATH=");
-	x.envp[2] = getenv_raw("LD_LIBRARY_PATH=");
-	x.envp[3] = NULL;
-
-	build_auxv(x.auxv, sizeof(x.auxv)/sizeof(uint32_t));
-	int32_t argc = 1;
-	_rt0_arm_linux1(argc, x.argv);
-	return NULL;
+	callMain(mainPC);
 }
 
 static void wait_go_runtime() {

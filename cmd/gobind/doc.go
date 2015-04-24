@@ -43,6 +43,8 @@ Supported types include:
 
 	- String and boolean types.
 
+	- Byte slice types.
+
 	- Any function type all of whose parameters and results have
 	  supported types. Functions must return either no results,
 	  one result, or two results where the type of the second is

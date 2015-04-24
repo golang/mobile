@@ -294,6 +294,9 @@ func printcmd(format string, args ...interface{}) {
 	if env := os.Getenv("HOME"); env != "" {
 		cmd = strings.Replace(cmd, env, "$HOME", -1)
 	}
+	if env := os.Getenv("HOMEPATH"); env != "" {
+		cmd = strings.Replace(cmd, env, "$HOMEPATH", -1)
+	}
 	fmt.Fprint(xout, cmd)
 }
 
