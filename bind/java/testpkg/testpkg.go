@@ -1,3 +1,7 @@
+// Copyright 2014 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 // Package testpkg contains bound functions for testing the cgo-JNI interface.
 // This is used in tests of golang.org/x/mobile/bind/java.
 package testpkg
