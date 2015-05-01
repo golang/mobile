@@ -12,13 +12,42 @@ Installation:
 	$ go get golang.org/x/mobile/cmd/gomobile
 	$ gomobile init
 
-	Note that until Go 1.5 is released, you must compile Go from
-	tip. For details see https://golang.org/doc/install/source.
-	The minimum process is:
+	Note that until Go 1.5 is released, you must compile Go from tip.
 
-	$ git clone https://go.googlesource.com/go
-	$ cd go/src
-	$ ./all.bash
+	Clone the source from the tip under $HOME/go directory. On Windows,
+	you may like to clone the repo to your user folder, %USERPROFILE%\go.
+
+	  $ git clone https://go.googlesource.com/go $HOME/go
+
+	Go 1.5 requires Go 1.4. Read more about this requirement at
+	http://golang.org/s/go15bootstrap.
+	Set GOROOT_BOOTSTRAP to the GOROOT of your existing 1.4 installation or
+	follow the steps below to checkout go1.4 from the source and build.
+
+	  $ git clone https://go.googlesource.com/go $HOME/go1.4
+	  $ cd $HOME/go1.4
+	  $ git checkout go1.4.1
+	  $ cd src && ./make.bash
+
+	If you clone Go 1.4 to a different destination, set GOROOT_BOOTSTRAP
+	environmental variable accordingly.
+
+	Build Go 1.5 and add Go 1.5 bin to your path.
+
+	  $ cd $HOME/go/src && ./make.bash
+	  $ export PATH=$PATH:$HOME/go/bin
+
+	Set a GOPATH if no GOPATH is set, add $GOPATH/bin to your path.
+
+	  $ export GOPATH=$HOME
+	  $ export PATH=$PATH:$GOPATH/bin
+
+	Now you can get the gomobile tool and initialize.
+
+	  $ go get golang.org/x/mobile/cmd/gomobile
+	  $ gomobile init
+
+	It may take a while to initialize gomobile, please wait.
 
 Usage:
 
@@ -55,7 +84,7 @@ The AAR file is commonly used for binary distribution of an Android library
 project and most Android IDEs support AAR import. For example, in Android
 Studio (1.2+), an AAR file can be imported using the module import wizard
 (File > New > New Module > Import .JAR or .AAR package), and setting it as
-a new dependency of a module (File > Project Structure > Dependencies).
+a new dependency (File > Project Structure > Dependencies).
 
 This command requires 'javac' (version 1.7+) and Android SDK (API level 9
 or newer) to build the library for Android. The environment variable
