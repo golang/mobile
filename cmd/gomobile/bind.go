@@ -6,6 +6,7 @@ package main
 
 import (
 	"archive/zip"
+	"bytes"
 	"errors"
 	"fmt"
 	"go/ast"
@@ -463,17 +464,22 @@ func buildJar(w io.Writer, srcDir string) error {
 	}
 	args = append(args, srcFiles...)
 
+	buf := new(bytes.Buffer)
 	javac := exec.Command("javac", args...)
 	javac.Dir = srcDir
 	if buildV {
 		javac.Stdout = os.Stdout
 		javac.Stderr = os.Stderr
+	} else {
+		javac.Stdout = buf
+		javac.Stderr = buf
 	}
 	if buildX {
 		printcmd("%s", strings.Join(javac.Args, " "))
 	}
 	if !buildN {
 		if err := javac.Run(); err != nil {
+			buf.WriteTo(xout)
 			return err
 		}
 	}
