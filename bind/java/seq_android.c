@@ -188,9 +188,7 @@ void init_seq(void *javavm) {
 	JNIEnv *env;
 	int res = (*vm)->GetEnv(vm, (void**)&env, JNI_VERSION_1_6);
 	if (res == JNI_EDETACHED) {
-		JavaVMAttachArgs args;
-		args.version = JNI_VERSION_1_6;
-		if ((*vm)->AttachCurrentThread(vm, &env, &args) != 0) {
+		if ((*vm)->AttachCurrentThread(vm, &env, NULL) != 0) {
 			LOG_FATAL("cannot attach to current_vm");
 		}
 	} else if (res != 0) {
