@@ -4,9 +4,22 @@
 
 // +build android
 
-// Go runtime entry point for apps running on android.
-// Sets up everything the runtime needs and exposes
-// the entry point to JNI.
+/*
+Android Apps are built with -buildmode=c-shared. They are loaded by a
+running Java process.
+
+Before any entry point is reached, a global constructor initializes the
+Go runtime, calling all Go init functions. All cgo calls will block
+until this is complete. Next JNI_OnLoad is called. When that is
+complete, one of two entry points is called.
+
+All-Go apps built using NativeActivity enter at ANativeActivity_onCreate.
+Go libraries, such as those built with gomobild bind, enter from Java at
+Java_go_Go_run.
+
+Both entry points make a cgo call that calls the Go main and blocks
+until app.Run is called.
+*/
 
 package app
 
@@ -21,10 +34,6 @@ package app
 #include <jni.h>
 #include <pthread.h>
 #include <stdlib.h>
-
-pthread_cond_t go_started_cond;
-pthread_mutex_t go_started_mu;
-int go_started;
 
 // current_vm is stored to initialize other cgo packages.
 //
@@ -44,21 +53,6 @@ ANativeActivity* current_native_activity;
 // For all-Go app, this is initialized in onCreate.
 // For go library app, this is set from the context passed to Go.run.
 AAssetManager* asset_manager;
-
-// build_auxv builds an ELF auxiliary vector for initializing the Go
-// runtime. While there does not appear to be any spec for this
-// format, there are some notes in
-//
-// Phrack, V. 0x0b, Issue 0x3a, P. 0x05.
-// http://phrack.org/issues/58/5.html
-//
-// Much of the time on linux the real auxv can be read from the file
-// /proc/self/auxv, however there are several conditions under which
-// Android apps cannot read this file (see a note to this effect in
-// sources/android/cpufeatures/cpu-features.c). So we construct a
-// fake one, working backwards from what the Go runtime wants to see
-// as defined by the code in src/runtime/os_linux_GOARCH.c.
-void build_auxv(uint32_t *auxv, size_t len);
 */
 import "C"
 import (
@@ -73,6 +67,8 @@ import (
 	"golang.org/x/mobile/geom"
 )
 
+var running = make(chan struct{}) // closed after app.Run is called
+
 //export callMain
 func callMain(mainPC uintptr) {
 	for _, name := range []string{"TMPDIR", "PATH", "LD_LIBRARY_PATH"} {
@@ -80,7 +76,9 @@ func callMain(mainPC uintptr) {
 		os.Setenv(name, C.GoString(C.getenv(n)))
 		C.free(unsafe.Pointer(n))
 	}
-	callfn.CallFn(mainPC)
+	go callfn.CallFn(mainPC)
+	<-running
+	log.Print("app.Run called")
 }
 
 //export onCreate
@@ -265,13 +263,6 @@ func runStart(cb Callbacks) {
 
 // notifyInitDone informs Java that the program is initialized.
 // A NativeActivity will not create a window until this is called.
-func notifyInitDone() {
-	C.pthread_mutex_lock(&C.go_started_mu)
-	C.go_started = 1
-	C.pthread_cond_signal(&C.go_started_cond)
-	C.pthread_mutex_unlock(&C.go_started_mu)
-}
-
 func run(cb Callbacks) {
 	// We want to keep the event loop on a consistent OS thread.
 	runtime.LockOSThread()
@@ -284,10 +275,10 @@ func run(cb Callbacks) {
 
 	if C.current_native_activity == nil {
 		runStart(cb)
-		notifyInitDone()
+		close(running)
 		select {}
 	} else {
-		notifyInitDone()
+		close(running)
 		windowDrawLoop(cb, <-windowCreated, queue)
 	}
 }

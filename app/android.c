@@ -29,11 +29,6 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 		return -1;
 	}
 
-	pthread_mutex_lock(&go_started_mu);
-	go_started = 0;
-	pthread_mutex_unlock(&go_started_mu);
-	pthread_cond_init(&go_started_cond, NULL);
-
 	return JNI_VERSION_1_6;
 }
 
@@ -117,38 +112,13 @@ static const char* getenv_raw(const char *name) {
 	return name;
 }
 
-static void* init_go_runtime(void* unused) {
+static void* call_main_and_wait() {
 	init_from_context();
 	uintptr_t mainPC = (uintptr_t)dlsym(RTLD_DEFAULT, "main.main");
 	if (!mainPC) {
 		LOG_FATAL("missing main.main");
 	}
 	callMain(mainPC);
-}
-
-static void wait_go_runtime() {
-	pthread_mutex_lock(&go_started_mu);
-	while (go_started == 0) {
-		pthread_cond_wait(&go_started_cond, &go_started_mu);
-	}
-	pthread_mutex_unlock(&go_started_mu);
-	LOG_INFO("runtime started");
-}
-
-pthread_t nativeactivity_t;
-
-// Runtime entry point when embedding Go in other libraries.
-void InitGoRuntime() {
-	pthread_mutex_lock(&go_started_mu);
-	go_started = 0;
-	pthread_mutex_unlock(&go_started_mu);
-	pthread_cond_init(&go_started_cond, NULL);
-
-	pthread_attr_t attr; 
-	pthread_attr_init(&attr);
-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-	pthread_create(&nativeactivity_t, NULL, init_go_runtime, NULL);
-	wait_go_runtime();
 }
 
 // Runtime entry point when using NativeActivity.
@@ -158,7 +128,7 @@ void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_
 	current_ctx = (*activity->env)->NewGlobalRef(activity->env, activity->clazz);
 	current_native_activity = activity;
 
-	InitGoRuntime();
+	call_main_and_wait();
 
 	// These functions match the methods on Activity, described at
 	// http://developer.android.com/reference/android/app/Activity.html
@@ -199,11 +169,5 @@ Java_go_Go_run(JNIEnv* env, jclass clazz, jobject ctx) {
 		asset_manager = AAssetManager_fromJava(env, asset_manager_ref);
 	}
 
-	init_go_runtime(NULL);
-}
-
-// Used by Java initialization code to know when it can use cgocall.
-JNIEXPORT void JNICALL
-Java_go_Go_waitForRun(JNIEnv* env, jclass clazz) {
-	wait_go_runtime();
+	call_main_and_wait();
 }
