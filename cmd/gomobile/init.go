@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -79,34 +80,23 @@ func runInit(cmd *command) error {
 	if len(gopaths) == 0 {
 		return fmt.Errorf("GOPATH is not set")
 	}
+	gomobilepath = filepath.Join(gopaths[0], "pkg/gomobile")
 	ndkccpath = filepath.Join(gopaths[0], "pkg/gomobile/android-"+ndkVersion)
-	ndkccdl := filepath.Join(ndkccpath, "downloaded")
 	verpath := filepath.Join(gopaths[0], "pkg/gomobile/version")
 	if buildX {
-		fmt.Fprintln(xout, "NDKCCPATH="+ndkccpath)
+		fmt.Fprintln(xout, "GOMOBILE="+gomobilepath)
 	}
+	removeGomobilepkg()
 
-	needNDK := initU
-	if !needNDK {
-		if _, err := os.Stat(ndkccdl); err != nil {
-			needNDK = true
-		}
-	}
-
-	if needNDK {
-		if err := removeAll(ndkccpath); err != nil && !os.IsExist(err) {
-			return err
-		}
-		if err := mkdir(ndkccpath); err != nil {
-			return err
-		}
+	if err := mkdir(ndkccpath); err != nil {
+		return err
 	}
 
 	if buildN {
-		tmpdir = filepath.Join(ndkccpath, "work")
+		tmpdir = filepath.Join(gomobilepath, "work")
 	} else {
 		var err error
-		tmpdir, err = ioutil.TempDir(ndkccpath, "gomobile-init-")
+		tmpdir, err = ioutil.TempDir(gomobilepath, "work-")
 		if err != nil {
 			return err
 		}
@@ -117,23 +107,20 @@ func runInit(cmd *command) error {
 	defer removeAll(tmpdir)
 
 	goroot := goEnv("GOROOT")
+	if err := checkVersionMatch(goroot, version); err != nil {
+		return err
+	}
+
 	tmpGoroot := filepath.Join(tmpdir, "go")
 	if err := copyGoroot(tmpGoroot, goroot); err != nil {
 		return err
 	}
 
-	if needNDK {
-		if err := fetchNDK(); err != nil {
-			return err
-		}
-		if err := fetchOpenAL(); err != nil {
-			return err
-		}
-		if !buildN {
-			if err := ioutil.WriteFile(ndkccdl, []byte("done"), 0644); err != nil {
-				return err
-			}
-		}
+	if err := fetchNDK(); err != nil {
+		return err
+	}
+	if err := fetchOpenAL(); err != nil {
+		return err
 	}
 
 	dst := filepath.Join(ndkccpath, "arm")
@@ -298,6 +285,23 @@ func main() {
 }
 `
 
+func removeGomobilepkg() {
+	dir, err := os.Open(gomobilepath)
+	if err != nil {
+		return
+	}
+	names, err := dir.Readdirnames(-1)
+	if err != nil {
+		return
+	}
+	for _, name := range names {
+		if name == "dl" {
+			continue
+		}
+		removeAll(filepath.Join(gomobilepath, name))
+	}
+}
+
 func move(dst, src string, names ...string) error {
 	for _, name := range names {
 		srcf := filepath.Join(src, name)
@@ -357,9 +361,9 @@ func goVersion() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf(`no Go tool on $PATH`)
 	}
-	buildHelp, err := exec.Command(gobin, "help", "build").Output()
+	buildHelp, err := exec.Command(gobin, "help", "build").CombinedOutput()
 	if err != nil {
-		return nil, fmt.Errorf("bad Go tool: %v", err)
+		return nil, fmt.Errorf("bad Go tool: %v (%s)", err, buildHelp)
 	}
 	if !bytes.Contains(buildHelp, []byte("-toolexec")) {
 		return nil, fmt.Errorf("installed Go tool does not support -toolexec")
@@ -367,13 +371,50 @@ func goVersion() ([]byte, error) {
 	return exec.Command(gobin, "version").Output()
 }
 
+// checkVersionMatch makes sure that the go command in the path matches
+// the GOROOT that will be used for building the cross compiler.
+//
+// This is typically not a problem when using the a release version, but
+// it is easy for development environments to drift, causing unexpected
+// errors.
+func checkVersionMatch(goroot string, version []byte) error {
+	if buildN {
+		return nil
+	}
+	version = bytes.TrimPrefix(version, []byte("go version "))
+	version = bytes.Trim(version, "\n")
+
+	// Build a temporary copy of cmd/dist to get the version string
+	// associated with the goroot.
+	distv := filepath.Join(tmpdir, "distv.exe")
+	cmd := exec.Command("go", "build", "-o", distv)
+	cmd.Dir = filepath.Join(goroot, "src/cmd/dist")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("cannot build cmd/dist: %v (%s)", err, out)
+	}
+
+	cmd = exec.Command(distv, "version")
+	cmd.Dir = goroot
+	out, err = cmd.Output()
+	if err != nil {
+		return fmt.Errorf("cannot get cmd/dist version: %v (%s)", err, out)
+	}
+	out = bytes.Trim(out, "\n")
+
+	if !bytes.HasPrefix(version, out) {
+		return fmt.Errorf("Go command out of sync with GOROOT. The command `go version` reports:\n\t%s\nbut the GOROOT %q is version:\n\t%s\nRebuild Go.", version, goroot, out)
+	}
+	return nil
+}
+
 func fetchOpenAL() error {
-	name := "gomobile-" + openALVersion + ".tar.gz"
-	url := "https://dl.google.com/go/mobile/" + name
-	if err := fetch(filepath.Join(tmpdir, name), url); err != nil {
+	url := "https://dl.google.com/go/mobile/gomobile-" + openALVersion + ".tar.gz"
+	archive, err := fetch(url)
+	if err != nil {
 		return err
 	}
-	if err := extract(name, "openal"); err != nil {
+	if err := extract("openal", archive); err != nil {
 		return err
 	}
 	dst := filepath.Join(ndkccpath, "arm", "sysroot", "usr", "include")
@@ -392,14 +433,14 @@ func fetchOpenAL() error {
 	return nil
 }
 
-func extract(name, dst string) error {
+func extract(dst, src string) error {
 	if buildX {
-		printcmd("tar xfz %s", name)
+		printcmd("tar xfz %s", src)
 	}
 	if buildN {
 		return nil
 	}
-	tf, err := os.Open(filepath.Join(tmpdir, name))
+	tf, err := os.Open(src)
 	if err != nil {
 		return err
 	}
@@ -489,39 +530,35 @@ func fetchNDK() error {
 }
 
 func fetchStrippedNDK() error {
-	name := "gomobile-ndk-r10d-" + goos + "-" + ndkarch + ".tar.gz"
-	url := "https://dl.google.com/go/mobile/" + name
-	if err := fetch(filepath.Join(tmpdir, name), url); err != nil {
+	url := "https://dl.google.com/go/mobile/gomobile-ndk-r10d-" + goos + "-" + ndkarch + ".tar.gz"
+	archive, err := fetch(url)
+	if err != nil {
 		return err
 	}
-	return extract(name, "")
+	return extract("", archive)
 }
 
 func fetchFullNDK() error {
-	ndkName := "android-" + ndkVersion + "-" + goos + "-" + ndkarch + "."
+	url := "https://dl.google.com/android/ndk/android-" + ndkVersion + "-" + goos + "-" + ndkarch + "."
 	if goos == "windows" {
-		ndkName += "exe"
+		url += "exe"
 	} else {
-		ndkName += "bin"
+		url += "bin"
 	}
-	archive := filepath.Join(tmpdir, ndkName)
-	url := "https://dl.google.com/android/ndk/" + ndkName
-	if err := fetch(archive, url); err != nil {
+	archive, err := fetch(url)
+	if err != nil {
 		return err
 	}
 
-	// The self-extracting ndk dist file for Windows
-	// terminates with an error (error code 2 - corrupted or incomplete file)
+	// The self-extracting ndk dist file for Windows terminates
+	// with an error (error code 2 - corrupted or incomplete file)
 	// but there are no details on what caused this.
 	//
-	// Strangely, if the file is launched from file
-	// browser or unzipped with 7z.exe no error is reported.
-	// For now, we require 7z.exe on windows.
+	// Strangely, if the file is launched from file browser or
+	// unzipped with 7z.exe no error is reported.
 	//
-	// Once we start using the stripped NDK, this code path
-	// will not matter.
-	//
-	// TODO(hyangah): don't depend on 7z.exe for windows.
+	// In general we use the stripped NDK, so this code path
+	// is not used, and 7z.exe is not a normal dependency.
 	var inflate *exec.Cmd
 	if goos != "windows" {
 		inflate = exec.Command(archive)
@@ -544,44 +581,61 @@ func fetchFullNDK() error {
 	return nil
 }
 
-func fetch(dst, url string) error {
+// fetch reads a URL into $GOPATH/pkg/gomobile/dl and returns the path
+// to the downloaded file. Downloading is skipped if the file is
+// already present.
+func fetch(url string) (dst string, err error) {
+	if err := mkdir(filepath.Join(gomobilepath, "dl")); err != nil {
+		return "", err
+	}
 	if buildV {
 		fmt.Fprintf(os.Stderr, "fetching %s\n", url)
 	}
+	name := path.Base(url)
+	dst = filepath.Join(gomobilepath, "dl", name)
 	if buildX {
 		printcmd("curl -o%s %s", dst, url)
 	}
 	if buildN {
-		return nil
+		return dst, nil
+	}
+	if _, err = os.Stat(dst); err == nil {
+		return dst, nil
 	}
 
-	f, err := os.OpenFile(dst, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0755)
+	f, err := ioutil.TempFile(tmpdir, "partial-"+name)
 	if err != nil {
-		return err
+		return "", err
 	}
+	defer func() {
+		if err != nil {
+			f.Close()
+			os.Remove(f.Name())
+		}
+	}()
 
 	resp, err := http.Get(url)
 	if err != nil {
-		return err
+		return "", err
 	}
-	var err2 error
 	if resp.StatusCode != http.StatusOK {
 		err = fmt.Errorf("error fetching %v, status: %v", url, resp.Status)
 	} else {
-		_, err2 = io.Copy(f, resp.Body)
+		_, err = io.Copy(f, resp.Body)
 	}
-	err3 := resp.Body.Close()
-	err4 := f.Close()
+	if err2 := resp.Body.Close(); err == nil {
+		err = err2
+	}
 	if err != nil {
-		return err
+		return "", err
 	}
-	if err2 != nil {
-		return err2
+	if err = f.Close(); err != nil {
+		return "", err
 	}
-	if err3 != nil {
-		return err3
+	if err = os.Rename(f.Name(), dst); err != nil {
+		return "", err
 	}
-	return err4
+	return dst, nil
 }
 
 // copyGoroot copies GOROOT from src to dst.
