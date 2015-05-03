@@ -23,7 +23,8 @@ import (
 
 var ctx = build.Default
 var pkg *build.Package
-var ndkccpath string
+var gomobilepath string // $GOPATH/pkg/gomobile
+var ndkccpath string    // $GOPATH/pkg/gomobile/android-{{.NDK}}
 var tmpdir string
 
 var cmdBuild = &command{
@@ -285,8 +286,8 @@ func printcmd(format string, args ...interface{}) {
 	if tmpdir != "" {
 		cmd = strings.Replace(cmd, tmpdir, "$WORK", -1)
 	}
-	if ndkccpath != "" {
-		cmd = strings.Replace(cmd, ndkccpath, "$NDKCCPATH", -1)
+	if gomobilepath != "" {
+		cmd = strings.Replace(cmd, gomobilepath, "$GOMOBILE", -1)
 	}
 	if goroot := goEnv("GOROOT"); goroot != "" {
 		cmd = strings.Replace(cmd, goroot, "$GOROOT", -1)
@@ -331,7 +332,6 @@ func gobuild(src, libPath string) error {
 	}
 
 	gopath := goEnv("GOPATH")
-	gomobilepath := ""
 	for _, p := range filepath.SplitList(gopath) {
 		gomobilepath = filepath.Join(p, "pkg", "gomobile")
 		if _, err = os.Stat(gomobilepath); err == nil {
@@ -353,7 +353,7 @@ func gobuild(src, libPath string) error {
 	ndkccpath = filepath.Join(gomobilepath, "android-"+ndkVersion)
 	ndkccbin := filepath.Join(ndkccpath, "arm", "bin")
 	if buildX {
-		fmt.Fprintln(os.Stderr, "NDKCCPATH="+ndkccpath)
+		fmt.Fprintln(xout, "GOMOBILE="+gomobilepath)
 	}
 
 	gocmd := exec.Command(
