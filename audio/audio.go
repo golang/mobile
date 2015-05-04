@@ -29,6 +29,12 @@ import (
 	"golang.org/x/mobile/audio/al"
 )
 
+// ReadSeekCloser is an io.ReadSeeker and io.Closer.
+type ReadSeekCloser interface {
+	io.ReadSeeker
+	io.Closer
+}
+
 // Format represents an PCM data format.
 type Format int
 
@@ -95,7 +101,7 @@ var codeToState = map[int32]State{
 type track struct {
 	format           Format
 	samplesPerSecond int64
-	src              io.ReadSeeker
+	src              ReadSeekCloser
 }
 
 // Player is a basic audio player that plays PCM data.
@@ -113,7 +119,7 @@ type Player struct {
 
 // NewPlayer returns a new Player.
 // It initializes the underlying audio devices and the related resources.
-func NewPlayer(src io.ReadSeeker, format Format, samplesPerSecond int64) (*Player, error) {
+func NewPlayer(src ReadSeekCloser, format Format, samplesPerSecond int64) (*Player, error) {
 	if err := al.OpenDevice(); err != nil {
 		return nil, err
 	}
@@ -283,6 +289,7 @@ func (p *Player) Destroy() {
 		al.DeleteBuffers(p.bufs)
 	}
 	p.mu.Unlock()
+	p.t.src.Close()
 }
 
 func byteOffsetToDur(t *track, offset int64) time.Duration {
