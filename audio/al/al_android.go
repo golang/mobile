@@ -243,7 +243,7 @@ var (
 )
 
 func initAL() {
-	state := app.State.(interface {
+	state := app.GetConfig().(interface {
 		JavaVM() unsafe.Pointer
 		AndroidContext() unsafe.Pointer
 	})

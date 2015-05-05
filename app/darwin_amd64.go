@@ -52,20 +52,23 @@ func init() {
 	initThreadID = uint64(C.threadID())
 }
 
-func run(callbacks Callbacks) {
+func run(callbacks []Callbacks) {
 	if tid := uint64(C.threadID()); tid != initThreadID {
 		log.Fatalf("app.Run called on thread %d, but app.init ran on %d", tid, initThreadID)
 	}
-	cb = callbacks
+	close(mainCalled)
 	C.runApp()
 }
 
 //export setGeom
 func setGeom(pixelsPerPt float32, width, height int) {
-	// Macs default to 72 DPI, so scales are equivalent.
-	geom.PixelsPerPt = pixelsPerPt
-	geom.Width = geom.Pt(float32(width) / pixelsPerPt)
-	geom.Height = geom.Pt(float32(height) / pixelsPerPt)
+	if geom.PixelsPerPt == 0 {
+		// Macs default to 72 DPI, so scales are equivalent.
+		geom.PixelsPerPt = pixelsPerPt
+	}
+	configAlt.Width = geom.Pt(float32(width) / geom.PixelsPerPt)
+	configAlt.Height = geom.Pt(float32(height) / geom.PixelsPerPt)
+	configSwap(callbacks)
 }
 
 func initGL() {
@@ -74,12 +77,9 @@ func initGL() {
 	var id C.GLuint
 	C.glGenVertexArrays(1, &id)
 	C.glBindVertexArray(id)
-	if cb.Start != nil {
-		cb.Start()
-	}
+	stateStart(callbacks)
 }
 
-var cb Callbacks
 var initGLOnce sync.Once
 
 var touchEvents struct {
@@ -94,7 +94,7 @@ func sendTouch(ty event.TouchType, x, y float32) {
 		Type: ty,
 		Loc: geom.Point{
 			X: geom.Pt(x / geom.PixelsPerPt),
-			Y: geom.Height - geom.Pt(y/geom.PixelsPerPt),
+			Y: GetConfig().Height - geom.Pt(y/geom.PixelsPerPt),
 		},
 	})
 	touchEvents.Unlock()
@@ -124,17 +124,21 @@ func drawgl(ctx C.GLintptr) {
 	pending := touchEvents.pending
 	touchEvents.pending = nil
 	touchEvents.Unlock()
-	if cb.Touch != nil {
-		for _, e := range pending {
-			cb.Touch(e)
+	for _, cb := range callbacks {
+		if cb.Touch != nil {
+			for _, e := range pending {
+				cb.Touch(e)
+			}
 		}
 	}
 
 	// TODO: is the library or the app responsible for clearing the buffers?
 	gl.ClearColor(0, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	if cb.Draw != nil {
-		cb.Draw()
+	for _, cb := range callbacks {
+		if cb.Draw != nil {
+			cb.Draw()
+		}
 	}
 
 	C.unlockContext(ctx)

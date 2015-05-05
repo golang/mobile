@@ -110,11 +110,14 @@ func setGeom(width, height int) {
 	if geom.PixelsPerPt == 0 {
 		geom.PixelsPerPt = float32(ppi()) / 72
 	}
-	geom.Width = geom.Pt(float32(width) / geom.PixelsPerPt)
-	geom.Height = geom.Pt(float32(height) / geom.PixelsPerPt)
+	configAlt.Width = geom.Pt(float32(width) / geom.PixelsPerPt)
+	configAlt.Height = geom.Pt(float32(height) / geom.PixelsPerPt)
+	configSwap()
+
 }
 
 func initGL() {
+	stateStart()
 }
 
 var cb Callbacks

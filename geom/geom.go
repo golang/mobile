@@ -110,10 +110,8 @@ func (r Rectangle) String() string { return r.Min.String() + "-" + r.Max.String(
 // Not valid until app initialization has completed.
 var PixelsPerPt float32
 
-// Width is the width of the device screen.
-// Not valid until app initialization has completed.
+// Width is deprecated. Use app.GetConfig().Width.
 var Width Pt
 
-// Height is the height of the device screen.
-// Not valid until app initialization has completed.
+// Height is deprecated. Use app.GetConfig().Height.
 var Height Pt

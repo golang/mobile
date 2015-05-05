@@ -29,11 +29,11 @@ import (
 	"golang.org/x/mobile/geom"
 )
 
-var cb Callbacks
+var callbacks []Callbacks
 
-func run(callbacks Callbacks) {
+func run(cbs []Callbacks) {
 	runtime.LockOSThread()
-	cb = callbacks
+	callbacks = cbs
 	C.runApp()
 }
 
@@ -41,9 +41,12 @@ func run(callbacks Callbacks) {
 func onResize(w, h int) {
 	// TODO(nigeltao): don't assume 72 DPI. DisplayWidth / DisplayWidthMM
 	// is probably the best place to start looking.
-	geom.PixelsPerPt = 1
-	geom.Width = geom.Pt(w)
-	geom.Height = geom.Pt(h)
+	if geom.PixelsPerPt == 0 {
+		geom.PixelsPerPt = 1
+	}
+	configAlt.Width = geom.Pt(w)
+	configAlt.Height = geom.Pt(h)
+	configSwap(callbacks)
 }
 
 var touchEvents struct {
@@ -79,27 +82,27 @@ func onDraw() {
 	pending := touchEvents.pending
 	touchEvents.pending = nil
 	touchEvents.Unlock()
-	if cb.Touch != nil {
-		for _, e := range pending {
-			cb.Touch(e)
+	for _, cb := range callbacks {
+		if cb.Touch != nil {
+			for _, e := range pending {
+				cb.Touch(e)
+			}
 		}
 	}
 
-	if cb.Draw != nil {
-		cb.Draw()
+	for _, cb := range callbacks {
+		if cb.Draw != nil {
+			cb.Draw()
+		}
 	}
 }
 
 //export onStart
 func onStart() {
-	if cb.Start != nil {
-		cb.Start()
-	}
+	stateInit(callbacks)
 }
 
 //export onStop
 func onStop() {
-	if cb.Stop != nil {
-		cb.Stop()
-	}
+	stateStop(callbacks)
 }

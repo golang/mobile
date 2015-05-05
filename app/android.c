@@ -148,12 +148,13 @@ static void* call_main_and_wait() {
 
 // Runtime entry point when using NativeActivity.
 void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_t savedStateSize) {
-	// Note that activity->clazz is mis-named.
-	current_vm = activity->vm;
-	current_ctx = (*activity->env)->NewGlobalRef(activity->env, activity->clazz);
 	current_native_activity = activity;
-
-	call_main_and_wait();
+	if (current_ctx == NULL) {
+		// Note that activity->clazz is mis-named.
+		current_vm = activity->vm;
+		current_ctx = (*activity->env)->NewGlobalRef(activity->env, activity->clazz);
+		call_main_and_wait();
+	}
 
 	// These functions match the methods on Activity, described at
 	// http://developer.android.com/reference/android/app/Activity.html

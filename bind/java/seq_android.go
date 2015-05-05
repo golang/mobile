@@ -79,12 +79,8 @@ func init() {
 }
 
 func initSeq() {
-	vm := app.State.(interface {
-		JavaVM() unsafe.Pointer
-	}).JavaVM()
-	classFinder := app.State.(interface {
-		ClassFinder() unsafe.Pointer
-	}).ClassFinder()
+	vm := app.GetConfig().JavaVM()
+	classFinder := app.GetConfig().ClassFinder()
 
 	C.init_seq(vm, classFinder)
 }
