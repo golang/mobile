@@ -69,8 +69,6 @@ import (
 	"golang.org/x/mobile/geom"
 )
 
-var running = make(chan struct{}) // closed after app.Run is called
-
 //export callMain
 func callMain(mainPC uintptr) {
 	for _, name := range []string{"TMPDIR", "PATH", "LD_LIBRARY_PATH"} {
@@ -79,7 +77,7 @@ func callMain(mainPC uintptr) {
 		C.free(unsafe.Pointer(n))
 	}
 	go callfn.CallFn(mainPC)
-	<-running
+	<-mainCalled
 	log.Print("app.Run called")
 }
 
@@ -187,20 +185,17 @@ func onConfigurationChanged(activity *C.ANativeActivity) {
 func onLowMemory(activity *C.ANativeActivity) {
 }
 
-type androidState struct {
-}
-
-func (androidState) JavaVM() unsafe.Pointer {
+func (Config) JavaVM() unsafe.Pointer {
 	return unsafe.Pointer(C.current_vm)
 }
 
 // ClassFinder returns a C function pointer for finding a given class using
 // the app class loader. (jclass) (*fn)(JNIEnv*, const char*).
-func (androidState) ClassFinder() unsafe.Pointer {
+func (Config) ClassFinder() unsafe.Pointer {
 	return unsafe.Pointer(C.app_find_class)
 }
 
-func (androidState) AndroidContext() unsafe.Pointer {
+func (Config) AndroidContext() unsafe.Pointer {
 	return unsafe.Pointer(C.current_ctx)
 }
 
@@ -261,17 +256,9 @@ func (a *asset) Close() error {
 	return nil
 }
 
-func runStart(cb Callbacks) {
-	State = androidState{}
-
-	if cb.Start != nil {
-		cb.Start()
-	}
-}
-
 // notifyInitDone informs Java that the program is initialized.
 // A NativeActivity will not create a window until this is called.
-func run(cb Callbacks) {
+func run(callbacks []Callbacks) {
 	// We want to keep the event loop on a consistent OS thread.
 	runtime.LockOSThread()
 
@@ -281,12 +268,14 @@ func run(cb Callbacks) {
 	C.free(unsafe.Pointer(ctag))
 	C.free(unsafe.Pointer(cstr))
 
+	close(mainCalled)
 	if C.current_native_activity == nil {
-		runStart(cb)
-		close(running)
+		stateStart(callbacks)
+		// TODO: stateStop under some conditions.
 		select {}
 	} else {
-		close(running)
-		windowDrawLoop(cb, <-windowCreated, queue)
+		for w := range windowCreated {
+			windowDraw(callbacks, w, queue)
+		}
 	}
 }

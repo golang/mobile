@@ -10,14 +10,20 @@ import (
 	"io"
 
 	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/geom"
 )
+
+var callbacks []Callbacks
 
 // Run starts the app.
 //
 // It must be called directly from the main function and will
 // block until the app exits.
+//
+// TODO(crawshaw): Remove cb parameter.
 func Run(cb Callbacks) {
-	run(cb)
+	callbacks = append(callbacks, cb)
+	run(callbacks)
 }
 
 // Callbacks is the set of functions called by the app.
@@ -38,7 +44,7 @@ type Callbacks struct {
 
 	// Stop is called shortly before a program is suspended.
 	//
-	// When Stop is received, the app is no longer visible and not is
+	// When Stop is received, the app is no longer visible and is not
 	// receiving events. It should:
 	//
 	//	- Save any state the user expects saved (for example text).
@@ -63,6 +69,15 @@ type Callbacks struct {
 
 	// Touch is called by the app when a touch event occurs.
 	Touch func(event.Touch)
+
+	// Config is called by the app when configuration has changed.
+	Config func(new, old Config)
+}
+
+// Register registers a set of callbacks.
+// Must be called before Run.
+func Register(cb Callbacks) {
+	callbacks = append(callbacks, cb)
 }
 
 // Open opens a named asset.
@@ -87,9 +102,22 @@ type ReadSeekCloser interface {
 	io.Closer
 }
 
-// State is global application-specific state.
+// GetConfig returns the current application state.
+// It will block until Run has been called.
+func GetConfig() Config {
+	select {
+	case <-mainCalled:
+	default:
+		panic("app.GetConfig is not available before app.Run is called")
+	}
+	configCurMu.Lock()
+	defer configCurMu.Unlock()
+	return configCur
+}
+
+// Config is global application-specific configuration.
 //
-// The State variable also holds operating system specific state.
+// The Config variable also holds operating system specific state.
 // Android apps have the extra methods:
 //
 //	// JavaVM returns a JNI *JavaVM.
@@ -98,5 +126,17 @@ type ReadSeekCloser interface {
 //	// AndroidContext returns a jobject for the app android.context.Context.
 //	AndroidContext() unsafe.Pointer
 //
-// State is not valid until Run has been called.
-var State interface{}
+// These extra methods are deliberately difficult to access because they
+// must be used with care. Their use implies the use of cgo, which probably
+// requires you understand the initialization process in the app package.
+// Also care must be taken to write both Android, iOS, and desktop-testing
+// versions to maintain portability.
+type Config struct {
+	// Width is the width of the device screen.
+	Width geom.Pt
+
+	// Height is the height of the device screen.
+	Height geom.Pt
+
+	// TODO: Orientation
+}

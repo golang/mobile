@@ -90,7 +90,7 @@ import (
 	"golang.org/x/mobile/gl"
 )
 
-func windowDrawLoop(cb Callbacks, w *C.ANativeWindow, queue *C.AInputQueue) {
+func windowDraw(callbacks []Callbacks, w *C.ANativeWindow, queue *C.AInputQueue) {
 	C.createEGLWindow(w)
 
 	// TODO: is the library or the app responsible for clearing the buffers?
@@ -102,51 +102,61 @@ func windowDrawLoop(cb Callbacks, w *C.ANativeWindow, queue *C.AInputQueue) {
 		log.Printf("GL initialization error: %s", errv)
 	}
 
-	geom.Width = geom.Pt(float32(C.windowWidth) / geom.PixelsPerPt)
-	geom.Height = geom.Pt(float32(C.windowHeight) / geom.PixelsPerPt)
+	configAlt.Width = geom.Pt(float32(C.windowWidth) / geom.PixelsPerPt)
+	configAlt.Height = geom.Pt(float32(C.windowHeight) / geom.PixelsPerPt)
+	configSwap(callbacks)
 
 	// Wait until geometry and GL is initialized before cb.Start.
-	runStart(cb)
+	stateStart(callbacks)
 
 	for {
-		processEvents(cb, queue)
+		processEvents(callbacks, queue)
 		select {
 		case <-windowRedrawNeeded:
 			// Re-query the width and height.
 			C.querySurfaceWidthAndHeight()
-			geom.Width = geom.Pt(float32(C.windowWidth) / geom.PixelsPerPt)
-			geom.Height = geom.Pt(float32(C.windowHeight) / geom.PixelsPerPt)
+			configAlt.Width = geom.Pt(float32(C.windowWidth) / geom.PixelsPerPt)
+			configAlt.Height = geom.Pt(float32(C.windowHeight) / geom.PixelsPerPt)
+			gl.Viewport(0, 0, int(C.windowWidth), int(C.windowHeight))
+			configSwap(callbacks)
 		case <-windowDestroyed:
-			if cb.Stop != nil {
-				cb.Stop()
-			}
+			stateStop(callbacks)
 			return
 		default:
-			if cb.Draw != nil {
-				cb.Draw()
+			for _, cb := range callbacks {
+				if cb.Draw != nil {
+					cb.Draw()
+				}
 			}
 			C.eglSwapBuffers(C.display, C.surface)
 		}
 	}
 }
 
-func processEvents(cb Callbacks, queue *C.AInputQueue) {
+func processEvents(callbacks []Callbacks, queue *C.AInputQueue) {
 	var event *C.AInputEvent
 	for C.AInputQueue_getEvent(queue, &event) >= 0 {
 		if C.AInputQueue_preDispatchEvent(queue, event) != 0 {
 			continue
 		}
-		processEvent(cb, event)
+		processEvent(callbacks, event)
 		C.AInputQueue_finishEvent(queue, event, 0)
 	}
 }
 
-func processEvent(cb Callbacks, e *C.AInputEvent) {
+func processEvent(callbacks []Callbacks, e *C.AInputEvent) {
 	switch C.AInputEvent_getType(e) {
 	case C.AINPUT_EVENT_TYPE_KEY:
 		log.Printf("TODO input event: key")
 	case C.AINPUT_EVENT_TYPE_MOTION:
-		if cb.Touch == nil {
+		// TODO: calculate hasTouch once in run
+		hasTouch := false
+		for _, cb := range callbacks {
+			if cb.Touch != nil {
+				hasTouch = true
+			}
+		}
+		if !hasTouch {
 			return
 		}
 
@@ -165,14 +175,19 @@ func processEvent(cb Callbacks, e *C.AInputEvent) {
 			if i == upDownIndex {
 				typ = upDownTyp
 			}
-			cb.Touch(event.Touch{
+			t := event.Touch{
 				ID:   event.TouchSequenceID(C.AMotionEvent_getPointerId(e, i)),
 				Type: typ,
 				Loc: geom.Point{
 					X: geom.Pt(float32(C.AMotionEvent_getX(e, i)) / geom.PixelsPerPt),
 					Y: geom.Pt(float32(C.AMotionEvent_getY(e, i)) / geom.PixelsPerPt),
 				},
-			})
+			}
+			for _, cb := range callbacks {
+				if cb.Touch != nil {
+					cb.Touch(t)
+				}
+			}
 		}
 	default:
 		log.Printf("unknown input event, type=%d", C.AInputEvent_getType(e))
