@@ -18,7 +18,7 @@
 // application.
 // OpenAL Soft's license file could be found at
 // http://repo.or.cz/w/openal-soft.git/blob/HEAD:/COPYING.
-package audio
+package audio // import "golang.org/x/mobile/audio"
 
 import (
 	"fmt"

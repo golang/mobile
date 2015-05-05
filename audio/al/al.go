@@ -20,7 +20,7 @@
 // license file to the open source notices of your application.
 // OpenAL Soft's license file could be found at
 // http://repo.or.cz/w/openal-soft.git/blob/HEAD:/COPYING.
-package al
+package al // import "golang.org/x/mobile/audio/al"
 
 // Enable enables a capability.
 func Enable(capability int32) {
