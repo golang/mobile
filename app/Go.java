@@ -34,5 +34,4 @@ public final class Go {
 	private static boolean running = false;
 
 	private static native void run(Context ctx);
-	private static native void waitForRun();
 }

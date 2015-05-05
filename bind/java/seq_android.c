@@ -159,15 +159,28 @@ static void unpin_arrays(JNIEnv *env, mem *m) {
 	m->pinned = NULL;
 }
 
+static void describe_exception(JNIEnv* env) {
+	jthrowable exc = (*env)->ExceptionOccurred(env);
+	if (exc) {
+		(*env)->ExceptionDescribe(env);
+		(*env)->ExceptionClear(env);
+	}
+}
+
+// find_class_fn finds a class with the given name using the app class loader.
+// It is implemented in the app package and is initialized during the init_seq call.
+static jclass (*find_class_fn)(JNIEnv*, const char*);
 
 static jfieldID find_field(JNIEnv *env, const char *class_name, const char *field_name, const char *field_type) {
-	jclass clazz = (*env)->FindClass(env, class_name);
+	jclass clazz = find_class_fn(env, class_name);
 	if (clazz == NULL) {
+		describe_exception(env);
 		LOG_FATAL("cannot find %s", class_name);
 		return NULL;
 	}
 	jfieldID id = (*env)->GetFieldID(env, clazz, field_name , field_type);
 	if(id == NULL) {
+		describe_exception(env);
 		LOG_FATAL("no %s/%s field", field_name, field_type);
 		return NULL;
 	}
@@ -175,26 +188,28 @@ static jfieldID find_field(JNIEnv *env, const char *class_name, const char *fiel
 }
 
 static jclass find_class(JNIEnv *env, const char *class_name) {
-	jclass clazz = (*env)->FindClass(env, class_name);
+	jclass clazz = find_class_fn(env, class_name);
 	if (clazz == NULL) {
+		describe_exception(env);
 		LOG_FATAL("cannot find %s", class_name);
 		return NULL;
 	}
 	return (*env)->NewGlobalRef(env, clazz);
 }
 
-void init_seq(void *javavm) {
+void init_seq(void *javavm, void *classfinder) {
 	JavaVM *vm = (JavaVM*)javavm;
+	find_class_fn = (jclass (*)(JNIEnv*, const char*))classfinder;
+
 	JNIEnv *env;
 	int res = (*vm)->GetEnv(vm, (void**)&env, JNI_VERSION_1_6);
 	if (res == JNI_EDETACHED) {
-		if ((*vm)->AttachCurrentThread(vm, &env, NULL) != 0) {
+		if ((*vm)->AttachCurrentThread(vm, &env, NULL) != JNI_OK) {
 			LOG_FATAL("cannot attach to current_vm");
 		}
-	} else if (res != 0) {
+	} else if (res != JNI_OK) {
 		LOG_FATAL("bad vm env: %d", res);
 	}
-
 	memptr_id = find_field(env, "go/Seq", "memptr", "J");
 	receive_refnum_id = find_field(env, "go/Seq$Receive", "refnum", "I");
 	receive_handle_id = find_field(env, "go/Seq$Receive", "handle", "I");

@@ -19,19 +19,6 @@
 #define LOG_INFO(...) __android_log_print(ANDROID_LOG_INFO, "Go", __VA_ARGS__)
 #define LOG_FATAL(...) __android_log_print(ANDROID_LOG_FATAL, "Go", __VA_ARGS__)
 
-jint JNI_OnLoad(JavaVM* vm, void* reserved) {
-	current_vm = vm;
-	current_ctx = NULL;
-	current_native_activity = NULL;
-
-	JNIEnv* env;
-	if ((*vm)->GetEnv(vm, (void**)&env, JNI_VERSION_1_6) != JNI_OK) {
-		return -1;
-	}
-
-	return JNI_VERSION_1_6;
-}
-
 static jclass find_class(JNIEnv *env, const char *class_name) {
 	jclass clazz = (*env)->FindClass(env, class_name);
 	if (clazz == NULL) {
@@ -48,6 +35,44 @@ static jmethodID find_method(JNIEnv *env, jclass clazz, const char *name, const 
 		return 0;
 	}
 	return m;
+}
+
+static jclass app_class_loader;
+static jmethodID app_find_class_fn;
+
+// app_find_class finds the given class using the class loader cached
+// during JNI_OnLoad. This allows the bind/java package and other
+// part of JNI to dynamically load java classes from non-Java threads.
+//
+// http://developer.android.com/training/articles/perf-jni.html#faq_FindClass
+jclass app_find_class(JNIEnv* env, const char* name) {
+    jstring classname = (*env)->NewStringUTF(env, name);
+    return (*env)->CallObjectMethod(env, app_class_loader, app_find_class_fn, classname);
+}
+
+jint JNI_OnLoad(JavaVM* vm, void* reserved) {
+	JNIEnv* env;
+	if ((*vm)->GetEnv(vm, (void**)&env, JNI_VERSION_1_6) != JNI_OK) {
+		return -1;
+	}
+
+	current_vm = vm;
+	current_ctx = NULL;
+	current_native_activity = NULL;
+
+	// cache the class loader for use in JNI threads.
+	jclass a_clazz = (*env)->FindClass(env, "go/Go");
+	jclass clazz_clazz = (*env)->GetObjectClass(env, a_clazz);
+	jclass class_loader_clazz = (*env)->FindClass(env, "java/lang/ClassLoader");
+	jmethodID get_class_loader = (*env)->GetMethodID(env, clazz_clazz, "getClassLoader",
+			"()Ljava/lang/ClassLoader;");
+	jclass loader = (*env)->CallObjectMethod(env, a_clazz, get_class_loader);
+	app_class_loader = (*env)->NewGlobalRef(env, loader);
+
+	app_find_class_fn = (*env)->GetMethodID(env, class_loader_clazz, "findClass",
+		    "(Ljava/lang/String;)Ljava/lang/Class;");
+
+	return JNI_VERSION_1_6;
 }
 
 static void init_from_context() {
@@ -163,6 +188,7 @@ Java_go_Go_run(JNIEnv* env, jclass clazz, jobject ctx) {
 		jclass context_clazz = find_class(env, "android/content/Context");
 		jmethodID getassets = find_method(
 			env, context_clazz, "getAssets", "()Landroid/content/res/AssetManager;");
+
 		// Prevent the java AssetManager from being GC'd
 		jobject asset_manager_ref = (*env)->NewGlobalRef(
 			env, (*env)->CallObjectMethod(env, current_ctx, getassets));
