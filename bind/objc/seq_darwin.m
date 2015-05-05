@@ -7,6 +7,7 @@
 #include <string.h>
 #include <Foundation/Foundation.h>
 #include "seq.h"
+#include "_cgo_export.h"
 
 #ifdef DEBUG
 #define LOG_DEBUG(...) NSLog(__VA_ARGS__);
@@ -88,7 +89,8 @@ static uint8_t *mem_read(GoSeq *seq, uint32_t size, uint32_t alignment) {
 uint8_t *mem_write(GoSeq *seq, uint32_t size, uint32_t alignment) {
   mem *m = (mem *)(seq->mem_ptr);
   if (m == NULL) {
-    LOG_FATAL(@"mem_write on NULL mem");
+    m = mem_ensure(seq->mem_ptr, size);
+    seq->mem_ptr = m;
   }
   if (m->off != m->len) {
     LOG_FATAL(@"write can only append to seq, size: (off=%zu len=%zu, size=%u)",
@@ -107,13 +109,116 @@ uint8_t *mem_write(GoSeq *seq, uint32_t size, uint32_t alignment) {
 }
 
 // extern
-void go_seq_init(GoSeq *seq) { seq->mem_ptr = mem_ensure(seq->mem_ptr, 64); }
-
-// extern
 void go_seq_free(GoSeq *seq) {
   mem *m = (mem *)(seq->mem_ptr);
   if (m != NULL) {
     free(m->buf);
     free(m);
   }
+}
+
+#define MEM_READ(seq, ty) ((ty *)mem_read(seq, sizeof(ty), sizeof(ty)))
+#define MEM_WRITE(seq, ty) (*(ty *)mem_write(seq, sizeof(ty), sizeof(ty)))
+
+int8_t go_seq_readInt8(GoSeq *seq) {
+  int8_t *v = MEM_READ(seq, int8_t);
+  return v == NULL ? 0 : *v;
+}
+void go_seq_writeInt8(GoSeq *seq, int8_t v) { MEM_WRITE(seq, int8_t) = v; }
+
+int16_t go_seq_readInt16(GoSeq *seq) {
+  int16_t *v = MEM_READ(seq, int16_t);
+  return v == NULL ? 0 : *v;
+}
+void go_seq_writeInt16(GoSeq *seq, int16_t v) { MEM_WRITE(seq, int16_t) = v; }
+
+int32_t go_seq_readInt32(GoSeq *seq) {
+  int32_t *v = MEM_READ(seq, int32_t);
+  return v == NULL ? 0 : *v;
+}
+void go_seq_writeInt32(GoSeq *seq, int32_t v) { MEM_WRITE(seq, int32_t) = v; }
+
+int64_t go_seq_readInt64(GoSeq *seq) {
+  int64_t *v = MEM_READ(seq, int64_t);
+  return v == NULL ? 0 : *v;
+}
+void go_seq_writeInt64(GoSeq *seq, int64_t v) { MEM_WRITE(seq, int64_t) = v; }
+
+float go_seq_readFloat32(GoSeq *seq) {
+  float *v = MEM_READ(seq, float);
+  return v == NULL ? 0 : *v;
+}
+void go_seq_writeFloat32(GoSeq *seq, float v) { MEM_WRITE(seq, float) = v; }
+
+double go_seq_readFloat64(GoSeq *seq) {
+  double *v = MEM_READ(seq, double);
+  return v == NULL ? 0 : *v;
+}
+void go_seq_writeFloat64(GoSeq *seq, double v) { MEM_WRITE(seq, double) = v; }
+
+NSString *go_seq_readUTF8(GoSeq *seq) {
+  int32_t len = *MEM_READ(seq, int32_t);
+  if (len == 0) {
+    return NULL;
+  }
+  const void *buf = (const void *)mem_read(seq, len, 1);
+  return [[NSString alloc] initWithBytes:buf
+                                  length:len
+                                encoding:NSUTF8StringEncoding];
+}
+
+void go_seq_writeUTF8(GoSeq *seq, NSString *s) {
+  int32_t len = [s lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+  MEM_WRITE(seq, int32_t) = len;
+
+  if (len == 0 && s.length > 0) {
+    LOG_INFO(@"unable to incode an NSString into UTF-8");
+    return;
+  }
+
+  char *buf = (char *)mem_write(seq, len + 1, 1);
+  NSUInteger used;
+  [s getBytes:buf
+           maxLength:len
+          usedLength:&used
+            encoding:NSUTF8StringEncoding
+             options:0
+               range:NSMakeRange(0, [s length])
+      remainingRange:NULL];
+  if (used < len) {
+    buf[used] = '\0';
+  }
+  return;
+}
+
+void go_seq_send(char *descriptor, int code, GoSeq *req_seq, GoSeq *res_seq) {
+  if (descriptor == NULL) {
+    LOG_FATAL(@"invalid NULL descriptor");
+  }
+  uint8_t *req_buf = NULL;
+  size_t req_len = 0;
+  if (req_seq != NULL) {
+    mem *req = (mem *)(req_seq->mem_ptr);
+    if (req != NULL) {
+      req_buf = req->buf;
+      req_len = req->len;
+    }
+  }
+
+  uint8_t **res_buf = NULL;
+  size_t *res_len = NULL;
+  if (res_seq != NULL) {
+    mem *res = (mem *)(res_seq->mem_ptr);
+    if (res == NULL) {
+      res = mem_ensure(res, 64);
+      res_seq->mem_ptr = res;
+    }
+    res_buf = &res->buf;
+    res_len = &res->len;
+  }
+
+  GoString desc;
+  desc.p = descriptor;
+  desc.n = strlen(descriptor);
+  Send(desc, (GoInt)code, req_buf, req_len, res_buf, res_len);
 }
