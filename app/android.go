@@ -46,6 +46,8 @@ JavaVM* current_vm;
 // current_ctx is Android's android.context.Context. May be NULL.
 jobject current_ctx;
 
+jclass app_find_class(JNIEnv* env, const char* name);
+
 // current_native_activity is the Android ANativeActivity. May be NULL.
 ANativeActivity* current_native_activity;
 
@@ -190,6 +192,12 @@ type androidState struct {
 
 func (androidState) JavaVM() unsafe.Pointer {
 	return unsafe.Pointer(C.current_vm)
+}
+
+// ClassFinder returns a C function pointer for finding a given class using
+// the app class loader. (jclass) (*fn)(JNIEnv*, const char*).
+func (androidState) ClassFinder() unsafe.Pointer {
+	return unsafe.Pointer(C.app_find_class)
 }
 
 func (androidState) AndroidContext() unsafe.Pointer {

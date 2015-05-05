@@ -82,7 +82,11 @@ func initSeq() {
 	vm := app.State.(interface {
 		JavaVM() unsafe.Pointer
 	}).JavaVM()
-	C.init_seq(vm)
+	classFinder := app.State.(interface {
+		ClassFinder() unsafe.Pointer
+	}).ClassFinder()
+
+	C.init_seq(vm, classFinder)
 }
 
 func seqToBuf(bufptr **C.uint8_t, lenptr *C.size_t, buf *seq.Buffer) {
