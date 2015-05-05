@@ -18,6 +18,7 @@ documentation serves as a starting point:
 - [mobile/sprite](http://godoc.org/golang.org/x/mobile/sprite)
 - [mobile/audio](http://godoc.org/golang.org/x/mobile/audio)
 - [mobile/sensor](http://godoc.org/golang.org/x/mobile/sensor)
+- [mobile/cmd/gomobile](http://godoc.org/golang.org/x/mobile/cmd/gomobile)
 - [mobile/cmd/gobind](http://godoc.org/golang.org/x/mobile/cmd/gobind)
 
 Contributions to Go are appreciated. See https://golang.org/doc/contribute.html.
