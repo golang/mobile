@@ -311,7 +311,7 @@ func main() {
 //	R.txt (mandatory)
 //	res/ (mandatory)
 //	libs/*.jar (optional, not relevant)
-//	proguard.txt (optional, not relevant)
+//	proguard.txt (optional)
 //	lint.jar (optional, not relevant)
 //	aidl (optional, not relevant)
 //
@@ -344,6 +344,12 @@ func buildAAR(androidDir string, pkg *build.Package) (err error) {
 	}
 	const manifestFmt = `<manifest xmlns:android="http://schemas.android.com/apk/res/android" package=%q />`
 	fmt.Fprintf(w, manifestFmt, "go."+pkg.Name+".gojni")
+
+	w, err = aarwcreate("proguard.txt")
+	if err != nil {
+		return err
+	}
+	fmt.Fprintln(w, `-keep class go.** { *; }`)
 
 	w, err = aarwcreate("classes.jar")
 	if err != nil {
