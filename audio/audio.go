@@ -92,11 +92,6 @@ var codeToState = map[int32]State{
 	al.Stopped: Stopped,
 }
 
-var device struct {
-	sync.Mutex
-	d *al.Device
-}
-
 type track struct {
 	format           Format
 	samplesPerSecond int64
@@ -119,15 +114,8 @@ type Player struct {
 // NewPlayer returns a new Player.
 // It initializes the underlying audio devices and the related resources.
 func NewPlayer(src io.ReadSeeker, format Format, samplesPerSecond int64) (*Player, error) {
-	device.Lock()
-	defer device.Unlock()
-
-	if device.d == nil {
-		device.d = al.Open("")
-		c := device.d.CreateContext(nil)
-		if !al.MakeContextCurrent(c) {
-			return nil, fmt.Errorf("audio: cannot initiate a new player")
-		}
+	if err := al.OpenDevice(); err != nil {
+		return nil, err
 	}
 	s := al.GenSources(1)
 	if code := al.Error(); code != 0 {

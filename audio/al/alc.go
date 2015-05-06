@@ -7,62 +7,66 @@
 package al
 
 import (
-	"runtime"
+	"errors"
+	"sync"
 	"unsafe"
 )
 
-// Device represents an audio device.
-type Device struct {
-	ptr unsafe.Pointer
+var (
+	mu sync.Mutex // mu protects Device and context
+
+	// device is the currently open audio device or nil.
+	device  unsafe.Pointer
+	context unsafe.Pointer
+)
+
+// DeviceError returns the last known error from the current device.
+func DeviceError() int32 {
+	return alcGetError(device)
 }
 
-// Error returns the last known error from the current device.
-func (d *Device) Error() int32 {
-	return alcGetError(d.ptr)
-}
+// TODO(jbd): Investigate the cases where multiple audio output
+// devices might be needed.
 
-// Context represents a context created in the OpenAL layer. A valid current
-// context is required to run OpenAL functions.
-// The returned context will be available process-wide if it's made the
-// current by calling MakeContextCurrent.
-type Context struct {
-	ptr unsafe.Pointer
-}
+// OpenDevice opens the default audio device.
+func OpenDevice() error {
+	mu.Lock()
+	defer mu.Unlock()
 
-// Open opens a new device in the OpenAL layer.
-func Open(name string) *Device {
-	ptr := alcOpenDevice(name)
-	if ptr == nil {
+	// already opened
+	if device != nil {
 		return nil
 	}
-	return &Device{ptr: ptr}
-}
 
-// Close closes the device.
-func (d *Device) Close() bool {
-	return alcCloseDevice(d.ptr)
-}
-
-// CreateContext creates a new context.
-func (d *Device) CreateContext(attrs []int32) *Context {
-	ptr := alcCreateContext(d.ptr, attrs)
+	ptr := alcOpenDevice("")
 	if ptr == nil {
-		return nil
+		return errors.New("al: cannot open the default audio device")
 	}
-	c := &Context{ptr: ptr}
-	runtime.SetFinalizer(c, (*Context).Destroy)
-	return c
+	ctx := alcCreateContext(ptr, nil)
+	if ctx == nil {
+		alcCloseDevice(ptr)
+		return errors.New("al: cannot create a new context")
+	}
+	alcMakeContextCurrent(ctx)
+	device = ptr
+	context = ctx
+	return nil
 }
 
-// MakeContextCurrent makes a context current. The context available
-// process-wide, you don't need to lock the current OS thread to
-// access the current context.
-func MakeContextCurrent(c *Context) bool {
-	return alcMakeContextCurrent(c.ptr)
-}
+// CloseDevice closes the device and frees related resources.
+func CloseDevice() {
+	mu.Lock()
+	defer mu.Unlock()
 
-// Destroy destroys the current context and frees the related resources.
-func (c *Context) Destroy() {
-	alcDestroyContext(c.ptr)
-	runtime.SetFinalizer(c, nil)
+	alcMakeContextCurrent(nil)
+
+	if context != nil {
+		alcDestroyContext(context)
+		context = nil
+	}
+
+	if device != nil {
+		alcCloseDevice(device)
+		device = nil
+	}
 }
