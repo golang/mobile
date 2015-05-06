@@ -215,7 +215,12 @@ void init_seq(void *javavm, void *classfinder) {
 	receive_handle_id = find_field(env, "go/Seq$Receive", "handle", "I");
 	receive_code_id = find_field(env, "go/Seq$Receive", "code", "I");
 
-	jbytearray_clazz = find_class(env, "[B");
+	// Find jbyteArray class info by instantiating a jbyteArray and getting
+	// its class info, because finding the jbyteArray class ("[B") using
+	// find_class_fn or JNIEnv's FindClass does not work on android-L.
+	jbyteArray a = (*env)->NewByteArray(env, 0);
+	jclass clazz = (*env)->GetObjectClass(env, a);
+	jbytearray_clazz = (*env)->NewGlobalRef(env, clazz);
 
 	LOG_INFO("loaded go/Seq");
 
