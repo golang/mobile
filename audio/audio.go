@@ -21,6 +21,7 @@
 package audio // import "golang.org/x/mobile/audio"
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"sync"
@@ -102,6 +103,11 @@ type track struct {
 	format           Format
 	samplesPerSecond int64
 	src              ReadSeekCloser
+
+	// hasHeader represents whether the audio source contains
+	// a PCM header. If true, the audio data starts 44 bytes
+	// later in the source.
+	hasHeader bool
 }
 
 // Player is a basic audio player that plays PCM data.
@@ -127,10 +133,28 @@ func NewPlayer(src ReadSeekCloser, format Format, samplesPerSecond int64) (*Play
 	if code := al.Error(); code != 0 {
 		return nil, fmt.Errorf("audio: cannot generate an audio source [err=%x]", code)
 	}
-	return &Player{
+	p := &Player{
 		t:      &track{format: format, src: src, samplesPerSecond: samplesPerSecond},
 		source: s[0],
-	}, nil
+	}
+	p.discoverHeader()
+	return p, nil
+}
+
+const headerSize = 44
+
+var (
+	riffHeader = []byte("RIFF")
+	waveHeader = []byte("WAVE")
+)
+
+func (p *Player) discoverHeader() {
+	buf := make([]byte, headerSize)
+	if n, _ := io.ReadFull(p.t.src, buf); n != headerSize {
+		// No header present or read error.
+		return
+	}
+	p.t.hasHeader = bytes.Equal(buf[0:4], riffHeader) && bytes.Equal(buf[8:12], waveHeader)
 }
 
 func (p *Player) prepare(offset int64, force bool) error {
@@ -141,6 +165,9 @@ func (p *Player) prepare(offset int64, force bool) error {
 	}
 	p.mu.Unlock()
 
+	if p.t.hasHeader {
+		offset += headerSize
+	}
 	if _, err := p.t.src.Seek(offset, 0); err != nil {
 		return err
 	}
