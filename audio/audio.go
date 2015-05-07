@@ -22,6 +22,7 @@ package audio // import "golang.org/x/mobile/audio"
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"sync"
@@ -125,6 +126,9 @@ type Player struct {
 
 // NewPlayer returns a new Player.
 // It initializes the underlying audio devices and the related resources.
+// If zero values are provided for format and sample rate values, the player
+// determines them from the source's WAV header.
+// An error is returned if the format and sample rate can't be determined.
 func NewPlayer(src ReadSeekCloser, format Format, samplesPerSecond int64) (*Player, error) {
 	if err := al.OpenDevice(); err != nil {
 		return nil, err
@@ -137,7 +141,15 @@ func NewPlayer(src ReadSeekCloser, format Format, samplesPerSecond int64) (*Play
 		t:      &track{format: format, src: src, samplesPerSecond: samplesPerSecond},
 		source: s[0],
 	}
-	p.discoverHeader()
+	if err := p.discoverHeader(); err != nil {
+		return nil, err
+	}
+	if p.t.format == 0 {
+		return nil, errors.New("audio: cannot determine the format")
+	}
+	if p.t.samplesPerSecond == 0 {
+		return nil, errors.New("audio: cannot determine the sample rate")
+	}
 	return p, nil
 }
 
@@ -148,13 +160,43 @@ var (
 	waveHeader = []byte("WAVE")
 )
 
-func (p *Player) discoverHeader() {
+func (p *Player) discoverHeader() error {
 	buf := make([]byte, headerSize)
 	if n, _ := io.ReadFull(p.t.src, buf); n != headerSize {
 		// No header present or read error.
-		return
+		return nil
 	}
-	p.t.hasHeader = bytes.Equal(buf[0:4], riffHeader) && bytes.Equal(buf[8:12], waveHeader)
+	if !(bytes.Equal(buf[0:4], riffHeader) && bytes.Equal(buf[8:12], waveHeader)) {
+		return nil
+	}
+	p.t.hasHeader = true
+	var format Format
+	switch channels, depth := buf[22], buf[34]; {
+	case channels == 1 && depth == 8:
+		format = Mono8
+	case channels == 1 && depth == 16:
+		format = Mono16
+	case channels == 2 && depth == 8:
+		format = Stereo8
+	case channels == 2 && depth == 16:
+		format = Stereo16
+	default:
+		return fmt.Errorf("audio: unsupported format; num of channels=%d, bit rate=%d", channels, depth)
+	}
+	if p.t.format == 0 {
+		p.t.format = format
+	}
+	if p.t.format != format {
+		return fmt.Errorf("audio: given format %v does not match header %v", p.t.format, format)
+	}
+	sampleRate := int64(buf[24]) | int64(buf[25])<<8 | int64(buf[26])<<16 | int64(buf[27]<<24)
+	if p.t.samplesPerSecond == 0 {
+		p.t.samplesPerSecond = sampleRate
+	}
+	if p.t.samplesPerSecond != sampleRate {
+		return fmt.Errorf("audio: given sample rate %v does not match header", p.t.samplesPerSecond, sampleRate)
+	}
+	return nil
 }
 
 func (p *Player) prepare(offset int64, force bool) error {

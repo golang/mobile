@@ -76,7 +76,7 @@ func start() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	player, err = audio.NewPlayer(rc, audio.Mono16, 44100)
+	player, err = audio.NewPlayer(rc, 0, 0)
 	if err != nil {
 		log.Fatal(err)
 	}
