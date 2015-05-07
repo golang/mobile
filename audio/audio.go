@@ -302,11 +302,12 @@ func (p *Player) State() State {
 	return codeToState[p.source.State()]
 }
 
-// Destroy frees the underlying resources used by the player.
+// Close closes the device and frees the underlying resources
+// used by the player.
 // It should be called as soon as the player is not in-use anymore.
-func (p *Player) Destroy() {
+func (p *Player) Close() error {
 	if p == nil {
-		return
+		return nil
 	}
 	if p.source != 0 {
 		al.DeleteSources(p.source)
@@ -317,6 +318,7 @@ func (p *Player) Destroy() {
 	}
 	p.mu.Unlock()
 	p.t.src.Close()
+	return nil
 }
 
 func byteOffsetToDur(t *track, offset int64) time.Duration {
@@ -336,4 +338,4 @@ func lastErr() error {
 	return nil
 }
 
-// TODO(jbd): Destroy context, close the device.
+// TODO(jbd): Close the device.

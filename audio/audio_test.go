@@ -36,5 +36,5 @@ func TestNoOp(t *testing.T) {
 	}
 	p.SetVolume(0.1)
 	p.Seek(1 * time.Second)
-	p.Destroy()
+	p.Close()
 }

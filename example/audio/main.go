@@ -83,7 +83,7 @@ func start() {
 }
 
 func stop() {
-	player.Destroy()
+	player.Close()
 }
 
 func draw() {
