@@ -243,12 +243,8 @@ var (
 )
 
 func initAL() {
-	state := app.GetConfig().(interface {
-		JavaVM() unsafe.Pointer
-		AndroidContext() unsafe.Pointer
-	})
-
-	alHandle = C.al_init(state.JavaVM(), state.AndroidContext())
+	cfg := app.GetConfig()
+	alHandle = C.al_init(cfg.JavaVM(), cfg.AndroidContext())
 	alEnableFunc = C.LPALENABLE(fn("alEnable"))
 	alDisableFunc = C.LPALDISABLE(fn("alDisable"))
 	alIsEnabledFunc = C.LPALISENABLED(fn("alIsEnabled"))
