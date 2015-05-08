@@ -8,16 +8,18 @@ package glutil
 
 import (
 	"encoding/binary"
+	"fmt"
 	"image"
+	"runtime"
 	"sync"
 
+	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/f32"
 	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/gl"
 )
 
 var glimage struct {
-	sync.Once
 	quadXY        gl.Buffer
 	quadUV        gl.Buffer
 	program       gl.Program
@@ -28,7 +30,14 @@ var glimage struct {
 	textureSample gl.Uniform
 }
 
-func glInit() {
+func init() {
+	app.Register(app.Callbacks{
+		Start: start,
+		Stop:  stop,
+	})
+}
+
+func start() {
 	var err error
 	glimage.program, err = CreateProgram(vertexShader, fragmentShader)
 	if err != nil {
@@ -48,6 +57,106 @@ func glInit() {
 	glimage.uvp = gl.GetUniformLocation(glimage.program, "uvp")
 	glimage.inUV = gl.GetAttribLocation(glimage.program, "inUV")
 	glimage.textureSample = gl.GetUniformLocation(glimage.program, "textureSample")
+
+	texmap.Lock()
+	defer texmap.Unlock()
+	for key, tex := range texmap.texs {
+		texmap.init(key)
+		tex.needsUpload = true
+	}
+}
+
+func stop() {
+	gl.DeleteProgram(glimage.program)
+	gl.DeleteBuffer(glimage.quadXY)
+	gl.DeleteBuffer(glimage.quadUV)
+
+	texmap.Lock()
+	for _, t := range texmap.texs {
+		if t.gltex.Value != 0 {
+			gl.DeleteTexture(t.gltex)
+		}
+		t.gltex = gl.Texture{}
+	}
+	texmap.Unlock()
+}
+
+type texture struct {
+	gltex       gl.Texture
+	width       int
+	height      int
+	needsUpload bool
+}
+
+var texmap = &texmapCache{
+	texs: make(map[texmapKey]*texture),
+	next: 1, // avoid using 0 to aid debugging
+}
+
+type texmapKey int
+
+type texmapCache struct {
+	sync.Mutex
+	texs map[texmapKey]*texture
+	next texmapKey
+
+	// TODO(crawshaw): This is a workaround for having nowhere better to clean up deleted textures.
+	// Better: app.UI(func() { gl.DeleteTexture(t) } in texmap.delete
+	// Best: Redesign the gl package to do away with this painful notion of a UI thread.
+	toDelete []gl.Texture
+}
+
+func (tm *texmapCache) create(dx, dy int) *texmapKey {
+	tm.Lock()
+	defer tm.Unlock()
+	key := tm.next
+	tm.next++
+	tm.texs[key] = &texture{
+		width:  dx,
+		height: dy,
+	}
+	tm.init(key)
+	return &key
+}
+
+// init creates an underlying GL texture for a key.
+// Must be called with a valid GL context.
+// Must hold tm.Mutex before calling.
+func (tm *texmapCache) init(key texmapKey) {
+	tex := tm.texs[key]
+	if tex.gltex.Value != 0 {
+		panic(fmt.Sprintf("attempting to init key (%v) with valid texture", key))
+	}
+	tex.gltex = gl.CreateTexture()
+
+	gl.BindTexture(gl.TEXTURE_2D, tex.gltex)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, tex.width, tex.height, gl.RGBA, gl.UNSIGNED_BYTE, nil)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+
+	for _, t := range tm.toDelete {
+		gl.DeleteTexture(t)
+	}
+	tm.toDelete = nil
+}
+
+func (tm *texmapCache) delete(key texmapKey) {
+	tm.Lock()
+	defer tm.Unlock()
+	tex := tm.texs[key]
+	delete(tm.texs, key)
+	if tex == nil {
+		return
+	}
+	tm.toDelete = append(tm.toDelete, tex.gltex)
+}
+
+func (tm *texmapCache) get(key texmapKey) *texture {
+	tm.Lock()
+	defer tm.Unlock()
+	return tm.texs[key]
 }
 
 // Image bridges between an *image.RGBA and an OpenGL texture.
@@ -59,10 +168,7 @@ func glInit() {
 // limit. The typical use of an Image is as a texture atlas.
 type Image struct {
 	*image.RGBA
-
-	Texture   gl.Texture
-	texWidth  int
-	texHeight int
+	key *texmapKey
 }
 
 // NewImage creates an Image of the given size.
@@ -77,23 +183,13 @@ func NewImage(w, h int) *Image {
 	// pixels on the host instead of the rounded up power 2 size.
 	m := image.NewRGBA(image.Rect(0, 0, dx, dy))
 
-	glimage.Do(glInit)
-
 	img := &Image{
-		RGBA:      m.SubImage(image.Rect(0, 0, w, h)).(*image.RGBA),
-		Texture:   gl.CreateTexture(),
-		texWidth:  dx,
-		texHeight: dy,
+		RGBA: m.SubImage(image.Rect(0, 0, w, h)).(*image.RGBA),
+		key:  texmap.create(dx, dy),
 	}
-	// TODO(crawshaw): We don't have the context on a finalizer. Find a way.
-	// runtime.SetFinalizer(img, func(img *Image) { gl.DeleteTexture(img.Texture) })
-	gl.BindTexture(gl.TEXTURE_2D, img.Texture)
-	gl.TexImage2D(gl.TEXTURE_2D, 0, dx, dy, gl.RGBA, gl.UNSIGNED_BYTE, nil)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-
+	runtime.SetFinalizer(img.key, func(key *texmapKey) {
+		texmap.delete(*key)
+	})
 	return img
 }
 
@@ -107,8 +203,15 @@ func roundToPower2(x int) int {
 
 // Upload copies the host image data to the GL device.
 func (img *Image) Upload() {
-	gl.BindTexture(gl.TEXTURE_2D, img.Texture)
-	gl.TexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, img.texWidth, img.texHeight, gl.RGBA, gl.UNSIGNED_BYTE, img.Pix)
+	tex := texmap.get(*img.key)
+	gl.BindTexture(gl.TEXTURE_2D, tex.gltex)
+	gl.TexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, tex.width, tex.height, gl.RGBA, gl.UNSIGNED_BYTE, img.Pix)
+}
+
+// Delete invalidates the Image and removes any underlying data structures.
+// The Image cannot be used after being deleted.
+func (img *Image) Delete() {
+	texmap.delete(*img.key)
 }
 
 // Draw draws the srcBounds part of the image onto a parallelogram, defined by
@@ -116,6 +219,11 @@ func (img *Image) Upload() {
 func (img *Image) Draw(topLeft, topRight, bottomLeft geom.Point, srcBounds image.Rectangle) {
 	// TODO(crawshaw): Adjust viewport for the top bar on android?
 	gl.UseProgram(glimage.program)
+	tex := texmap.get(*img.key)
+	if tex.needsUpload {
+		img.Upload()
+		tex.needsUpload = false
+	}
 
 	{
 		// We are drawing a parallelogram PQRS, defined by three of its
@@ -192,8 +300,8 @@ func (img *Image) Draw(topLeft, topRight, bottomLeft geom.Point, srcBounds image
 		//
 		// and the PQRS quad is always axis-aligned. First of all, convert
 		// from pixel space to texture space.
-		w := float32(img.texWidth)
-		h := float32(img.texHeight)
+		w := float32(tex.width)
+		h := float32(tex.height)
 		px := float32(srcBounds.Min.X-img.Rect.Min.X) / w
 		py := float32(srcBounds.Min.Y-img.Rect.Min.Y) / h
 		qx := float32(srcBounds.Max.X-img.Rect.Min.X) / w
@@ -219,7 +327,7 @@ func (img *Image) Draw(topLeft, topRight, bottomLeft geom.Point, srcBounds image
 	}
 
 	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, img.Texture)
+	gl.BindTexture(gl.TEXTURE_2D, tex.gltex)
 	gl.Uniform1i(glimage.textureSample, 0)
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, glimage.quadXY)
