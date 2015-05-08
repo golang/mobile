@@ -107,10 +107,6 @@ func runInit(cmd *command) error {
 	defer removeAll(tmpdir)
 
 	goroot := goEnv("GOROOT")
-	if err := checkVersionMatch(goroot, version); err != nil {
-		return err
-	}
-
 	tmpGoroot := filepath.Join(tmpdir, "go")
 	if err := copyGoroot(tmpGoroot, goroot); err != nil {
 		return err
@@ -149,6 +145,7 @@ func runInit(cmd *command) error {
 	make.Env = []string{
 		`PATH=` + envpath,
 		`GOOS=android`,
+		`GOROOT=` + tmpGoroot, // set to override any bad os.Environ
 		`GOARCH=arm`,
 		`GOARM=7`,
 		`CGO_ENABLED=1`,
@@ -179,6 +176,9 @@ func runInit(cmd *command) error {
 	if !buildN {
 		make.Env = environ(make.Env)
 		if err := make.Run(); err != nil {
+			return err
+		}
+		if err := checkVersionMatch(tmpGoroot, version); err != nil {
 			return err
 		}
 	}
@@ -377,33 +377,34 @@ func goVersion() ([]byte, error) {
 // This is typically not a problem when using the a release version, but
 // it is easy for development environments to drift, causing unexpected
 // errors.
-func checkVersionMatch(goroot string, version []byte) error {
+//
+// checkVersionMatch is run after the tmpGoroot is built, so the dist
+// command is available to call.
+func checkVersionMatch(tmpGoroot string, version []byte) error {
 	if buildN {
 		return nil
 	}
 	version = bytes.TrimPrefix(version, []byte("go version "))
 	version = bytes.Trim(version, "\n")
 
-	// Build a temporary copy of cmd/dist to get the version string
-	// associated with the goroot.
-	distv := filepath.Join(tmpdir, "distv.exe")
-	cmd := exec.Command("go", "build", "-o", distv)
-	cmd.Dir = filepath.Join(goroot, "src/cmd/dist")
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("cannot build cmd/dist: %v (%s)", err, out)
+	dist := filepath.Join(tmpGoroot, "pkg/tool/"+goEnv("GOOS")+"_"+goEnv("GOARCH")+"/dist")
+	if goos == "windows" {
+		dist += ".exe"
 	}
-
-	cmd = exec.Command(distv, "version")
-	cmd.Dir = goroot
-	out, err = cmd.Output()
+	cmd := exec.Command(dist, "version")
+	cmd.Dir = tmpGoroot
+	cmd.Env = []string{
+		"GOROOT=" + tmpGoroot,
+		`PATH=` + os.Getenv("PATH"),
+	}
+	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("cannot get cmd/dist version: %v (%s)", err, out)
 	}
 	out = bytes.Trim(out, "\n")
 
 	if !bytes.HasPrefix(version, out) {
-		return fmt.Errorf("Go command out of sync with GOROOT. The command `go version` reports:\n\t%s\nbut the GOROOT %q is version:\n\t%s\nRebuild Go.", version, goroot, out)
+		return fmt.Errorf("Go command out of sync with GOROOT. The command `go version` reports:\n\t%s\nbut the GOROOT %q is version:\n\t%s\nRebuild Go.", version, goEnv("GOROOT"), out)
 	}
 	return nil
 }
