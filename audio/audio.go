@@ -153,6 +153,8 @@ func NewPlayer(src ReadSeekCloser, format Format, samplesPerSecond int64) (*Play
 	return p, nil
 }
 
+// headerSize is the size of WAV headers.
+// See http://www.topherlee.com/software/pcm-tut-wavformat.html.
 const headerSize = 44
 
 var (
