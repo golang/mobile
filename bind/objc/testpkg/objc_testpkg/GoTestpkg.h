@@ -9,6 +9,7 @@
 
 #include "seq.h"
 
+FOUNDATION_EXPORT NSData *GoTestpkg_BytesAppend(NSData *a, NSData *b);
 FOUNDATION_EXPORT void GoTestpkg_Hi();
 FOUNDATION_EXPORT void GoTestpkg_Int(int32_t x);
 FOUNDATION_EXPORT int64_t GoTestpkg_Sum(int64_t x, int64_t y);

@@ -11,16 +11,30 @@
 
 #define _DESCRIPTOR_ "testpkg"
 
-#define _CALL_Hello_ 1
-#define _CALL_Hi_ 2
-#define _CALL_Int_ 3
-#define _CALL_Sum_ 4
+#define _CALL_BytesAppend_ 1
+#define _CALL_Hello_ 2
+#define _CALL_Hi_ 3
+#define _CALL_Int_ 4
+#define _CALL_Sum_ 5
 
 #define INIT_SEQ(X)                                                            \
   GoSeq X;                                                                     \
   X.mem_ptr = NULL;
 
 #define FREE_SEQ(X) go_seq_free(&X);
+
+NSData *GoTestpkg_BytesAppend(NSData *a, NSData *b) {
+  INIT_SEQ(in);
+  INIT_SEQ(out);
+  go_seq_writeByteArray(&in, a);
+  go_seq_writeByteArray(&in, b);
+  go_seq_send(_DESCRIPTOR_, _CALL_BytesAppend_, &in, &out);
+
+  NSData *ret = go_seq_readByteArray(&out);
+  FREE_SEQ(out);
+  FREE_SEQ(in);
+  return ret;
+}
 
 void GoTestpkg_Hi() {
   // No input, output.

@@ -23,3 +23,7 @@ func Sum(x, y int64) int64 {
 func Hello(s string) string {
 	return fmt.Sprintf("Hello, %s!", s)
 }
+
+func BytesAppend(a []byte, b []byte) []byte {
+	return append(a, b...)
+}
