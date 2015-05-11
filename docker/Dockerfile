@@ -26,6 +26,8 @@ RUN useradd -d /home/go -m -s /bin/bash go
 # Build 1.4.2 first
 WORKDIR /usr/local/go
 RUN git clone https://go.googlesource.com/go 14
+# Prepare source tree for Go 1.5
+RUN cp -r 14 15
 WORKDIR /usr/local/go/14
 RUN git checkout go1.4.2
 WORKDIR /usr/local/go/14/src
@@ -33,8 +35,6 @@ RUN ./make.bash
 
 # Build Go from tip
 ENV GOROOT_BOOTSTRAP /usr/local/go/14
-WORKDIR /usr/local/go
-RUN git clone https://go.googlesource.com/go 15
 WORKDIR /usr/local/go/15/src
 RUN ./make.bash
 
