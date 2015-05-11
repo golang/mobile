@@ -22,6 +22,7 @@ extern int64_t go_seq_readInt64(GoSeq *seq);
 extern float go_seq_readFloat32(GoSeq *seq);
 extern double go_seq_readFloat64(GoSeq *seq);
 extern NSString *go_seq_readUTF8(GoSeq *seq);
+extern NSData *go_seq_readByteArray(GoSeq *seq);
 
 extern void go_seq_writeInt8(GoSeq *seq, int8_t v);
 extern void go_seq_writeInt16(GoSeq *seq, int16_t v);
@@ -30,6 +31,10 @@ extern void go_seq_writeInt64(GoSeq *seq, int64_t v);
 extern void go_seq_writeFloat32(GoSeq *seq, float v);
 extern void go_seq_writeFloat64(GoSeq *seq, double v);
 extern void go_seq_writeUTF8(GoSeq *seq, NSString *v);
+
+// go_seq_writeByteArray writes the data bytes to the seq. Note that the
+// data should be valid until the the subsequent go_seq_send call completes.
+extern void go_seq_writeByteArray(GoSeq *seq, NSData *data);
 
 // go_seq_send sends a function invocation request to Go.
 // It blocks until the function completes.

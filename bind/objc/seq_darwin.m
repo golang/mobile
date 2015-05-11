@@ -191,6 +191,28 @@ void go_seq_writeUTF8(GoSeq *seq, NSString *s) {
   return;
 }
 
+NSData *go_seq_readByteArray(GoSeq *seq) {
+  int64_t sz = *MEM_READ(seq, int64_t);
+  if (sz == 0) {
+    return [NSData data];
+  }
+  // BUG(hyangah): it is possible that *ptr is already GC'd by Go runtime.
+  void *ptr = (void *)(*MEM_READ(seq, int64_t));
+  return [NSData dataWithBytes:ptr length:sz];
+}
+
+void go_seq_writeByteArray(GoSeq *seq, NSData *data) {
+  int64_t sz = data.length;
+  MEM_WRITE(seq, int64_t) = sz;
+  if (sz == 0) {
+    return;
+  }
+
+  int64_t ptr = data.bytes;
+  MEM_WRITE(seq, int64_t) = ptr;
+  return;
+}
+
 void go_seq_send(char *descriptor, int code, GoSeq *req_seq, GoSeq *res_seq) {
   if (descriptor == NULL) {
     LOG_FATAL(@"invalid NULL descriptor");

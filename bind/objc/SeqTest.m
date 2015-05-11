@@ -27,6 +27,18 @@ void testHello(NSString *input) {
   }
 }
 
+void testBytesAppend(NSString *a, NSString *b) {
+  NSData *data_a = [a dataUsingEncoding:NSUTF8StringEncoding];
+  NSData *data_b = [b dataUsingEncoding:NSUTF8StringEncoding];
+  NSData *gotData = GoTestpkg_BytesAppend(data_a, data_b);
+  NSString *got =
+      [[NSString alloc] initWithData:gotData encoding:NSUTF8StringEncoding];
+  NSString *want = [a stringByAppendingString:b];
+  if (![got isEqualToString:want]) {
+    ERROR(@"want %@\nGoTestpkg_BytesAppend(%@, %@) = %@", want, a, b, got);
+  }
+}
+
 // Invokes functions and object methods defined in Testpkg.h.
 //
 // TODO(hyangah): apply testing framework (e.g. XCTestCase)
@@ -48,6 +60,8 @@ int main(void) {
         0xD83D, 0xDCA9,
     }; // utf-16, pile of poo.
     testHello([NSString stringWithCharacters:t length:2]);
+
+    testBytesAppend(@"Foo", @"Bar");
   }
 
   fprintf(stderr, "%s\n", err ? "FAIL" : "PASS");
