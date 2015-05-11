@@ -22,3 +22,8 @@ documentation serves as a starting point:
 - [mobile/cmd/gobind](http://godoc.org/golang.org/x/mobile/cmd/gobind)
 
 Contributions to Go are appreciated. See https://golang.org/doc/contribute.html.
+
+* Bugs can be filed at the [Go issue tracker](https://golang.org/issue/new).
+* Feature requests should preliminary be discussed on
+[golang-nuts](https://groups.google.com/forum/#!forum/golang-nuts)
+mailing list.
