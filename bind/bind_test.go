@@ -24,6 +24,7 @@ var tests = []string{
 	"testdata/basictypes.go",
 	"testdata/structs.go",
 	"testdata/interfaces.go",
+	"testdata/issue10788.go",
 }
 
 var fset = token.NewFileSet()

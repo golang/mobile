@@ -23,6 +23,7 @@ type I interface {
 	VE() (int, error)
 	I() I
 	S() *S
+	StoString(*S) string
 
 	String() string
 }
@@ -118,4 +119,8 @@ func AppendToString(str string, someBytes []byte) []byte {
 	a := []byte(str)
 	fmt.Printf("str=%q (len=%d), someBytes=%v (len=%d)\n", str, len(str), someBytes, len(someBytes))
 	return append(a, someBytes...)
+}
+
+func UnnamedParams(_, _ int, p0 string) int {
+	return len(p0)
 }
