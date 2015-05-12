@@ -168,10 +168,12 @@ func (g *javaGen) genInterfaceStub(o *types.TypeName, m *types.Interface) {
 		g.Indent()
 
 		sig := f.Type().(*types.Signature)
-		for i := 0; i < sig.Params().Len(); i++ {
+		params := sig.Params()
+		for i := 0; i < params.Len(); i++ {
 			p := sig.Params().At(i)
 			jt := g.javaType(p.Type())
-			g.Printf("%s param_%s = in.read%s;\n", jt, p.Name(), seqRead(p.Type()))
+			g.Printf("%s param_%s;\n", jt, paramName(params, i))
+			g.genRead("param_"+paramName(params, i), "in", p.Type())
 		}
 
 		res := sig.Results()
@@ -193,11 +195,11 @@ func (g *javaGen) genInterfaceStub(o *types.TypeName, m *types.Interface) {
 		}
 
 		g.Printf("this.%s(", f.Name())
-		for i := 0; i < sig.Params().Len(); i++ {
+		for i := 0; i < params.Len(); i++ {
 			if i > 0 {
 				g.Printf(", ")
 			}
-			g.Printf("param_%s", sig.Params().At(i).Name())
+			g.Printf("param_%s", paramName(params, i))
 		}
 		g.Printf(");\n")
 
@@ -388,7 +390,7 @@ var paramRE = regexp.MustCompile(`^p[0-9]+$`)
 // TODO(crawshaw): Replace invalid unicode names.
 func paramName(params *types.Tuple, pos int) string {
 	name := params.At(pos).Name()
-	if name == "" || paramRE.MatchString(name) {
+	if name == "" || name == "_" || paramRE.MatchString(name) {
 		name = fmt.Sprintf("p%d", pos)
 	}
 	return name
@@ -476,7 +478,7 @@ func (g *javaGen) genFunc(o *types.Func, method bool) {
 	params := sig.Params()
 	for i := 0; i < params.Len(); i++ {
 		p := params.At(i)
-		g.Printf("_in.write%s;\n", seqWrite(p.Type(), p.Name()))
+		g.Printf("_in.write%s;\n", seqWrite(p.Type(), paramName(params, i)))
 	}
 	g.Printf("Seq.send(DESCRIPTOR, CALL_%s, _in, _out);\n", o.Name())
 	if resultType != nil {

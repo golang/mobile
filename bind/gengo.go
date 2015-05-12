@@ -47,7 +47,7 @@ func (g *goGen) genFuncBody(o *types.Func, selectorLHS string) {
 	params := sig.Params()
 	for i := 0; i < params.Len(); i++ {
 		p := params.At(i)
-		g.genRead("param_"+p.Name(), "in", p.Type())
+		g.genRead("param_"+paramName(params, i), "in", p.Type())
 	}
 
 	res := sig.Results()
@@ -76,7 +76,7 @@ func (g *goGen) genFuncBody(o *types.Func, selectorLHS string) {
 		if i > 0 {
 			g.Printf(", ")
 		}
-		g.Printf("param_%s", params.At(i).Name())
+		g.Printf("param_%s", paramName(params, i))
 	}
 	g.Printf(")\n")
 

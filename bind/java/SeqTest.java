@@ -137,6 +137,10 @@ public class SeqTest extends AndroidTestCase {
       return Testpkg.New();
     }
 
+    public String StoString(Testpkg.S s) {
+      return s.String();
+    }
+
     public long V() {
       return 1234;
     }
@@ -187,6 +191,14 @@ public class SeqTest extends AndroidTestCase {
     Testpkg.S s = Testpkg.CallS(obj);
   }
 
+  public void testInterfaceMethodTakesStructPointer() {
+    final AnI obj = new AnI();
+    Testpkg.S s = Testpkg.CallS(obj);
+    String got = obj.StoString(s);
+    String want = s.String();
+    assertEquals("Want AnI.StoString(s) to call s's String", want, got);
+  }
+
   public void testInterfaceMethodReturnsInt() {
     final AnI obj = new AnI();
     assertEquals("Values must match", 1234, Testpkg.CallV(obj));
@@ -231,4 +243,11 @@ public class SeqTest extends AndroidTestCase {
     System.gc();
     System.runFinalization();
   }
+
+  public void testUnnamedParams() {
+    final String msg = "1234567";
+    assertEquals("Want the length of \"1234567\" passed after unnamed params",
+		    7, Testpkg.UnnamedParams(10, 20, msg));
+  }
+
 }
