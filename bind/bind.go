@@ -4,7 +4,9 @@
 
 // Package bind implements a code generator for gobind.
 //
-// See the documentation on the gobind command for usage details.
+// See the documentation on the gobind command for usage details
+// and the list of currently supported types.
+// (http://godoc.org/golang.org/x/mobile/cmd/gobind)
 package bind // import "golang.org/x/mobile/bind"
 
 // TODO(crawshaw): slice support
