@@ -76,7 +76,11 @@ public void call(int code, go.Seq in, go.Seq out) {
 		g.Printf("Seq out = new Seq();\n")
 		g.Printf("in.writeRef(ref);\n")
 		g.Printf("Seq.send(DESCRIPTOR, FIELD_%s_GET, in, out);\n", f.Name())
-		g.Printf("return out.read%s;\n", seqRead(f.Type()))
+		if seqType(f.Type()) == "Ref" {
+			g.Printf("return new %s(out.read%s);\n", g.javaType(f.Type()), seqRead(f.Type()))
+		} else {
+			g.Printf("return out.read%s;\n", seqRead(f.Type()))
+		}
 		g.Outdent()
 		g.Printf("}\n\n")
 
@@ -88,9 +92,8 @@ public void call(int code, go.Seq in, go.Seq out) {
 		g.Printf("in.write%s;\n", seqWrite(f.Type(), "v"))
 		g.Printf("Seq.send(DESCRIPTOR, FIELD_%s_SET, in, out);\n", f.Name())
 		g.Outdent()
-		g.Printf("}\n")
+		g.Printf("}\n\n")
 	}
-	g.Printf("\n")
 
 	for _, m := range methods {
 		g.genFunc(m, true)
