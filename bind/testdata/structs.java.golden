@@ -42,6 +42,7 @@ public abstract class Structs {
             in.writeFloat64(v);
             Seq.send(DESCRIPTOR, FIELD_X_SET, in, out);
         }
+        
         public double getY() {
             Seq in = new Seq();
             Seq out = new Seq();

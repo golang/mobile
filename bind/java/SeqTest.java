@@ -246,8 +246,15 @@ public class SeqTest extends AndroidTestCase {
 
   public void testUnnamedParams() {
     final String msg = "1234567";
-    assertEquals("Want the length of \"1234567\" passed after unnamed params",
+    assertEquals("want the length of \"1234567\" passed after unnamed params",
 		    7, Testpkg.UnnamedParams(10, 20, msg));
   }
 
+  public void testPointerToStructAsField() {
+    Testpkg.Node a = Testpkg.NewNode("A");
+    Testpkg.Node b = Testpkg.NewNode("B");
+    a.setNext(b);
+    String got = a.String();
+    assertEquals("want Node A points to Node B", "A:B:<end>", got);
+  }
 }

@@ -124,3 +124,19 @@ func AppendToString(str string, someBytes []byte) []byte {
 func UnnamedParams(_, _ int, p0 string) int {
 	return len(p0)
 }
+
+type Node struct {
+	V    string
+	Next *Node
+}
+
+func NewNode(name string) *Node {
+	return &Node{V: name}
+}
+
+func (a *Node) String() string {
+	if a == nil {
+		return "<end>"
+	}
+	return a.V + ":" + a.Next.String()
+}
