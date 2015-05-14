@@ -11,3 +11,5 @@ func Error() error { return nil }
 func ErrorPair() (int, error) { return 0, nil }
 
 func ByteArrays(x []byte) []byte { return nil }
+
+func Bool(bool) bool { return true }

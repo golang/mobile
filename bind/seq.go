@@ -16,6 +16,8 @@ func seqType(t types.Type) string {
 	switch t := t.(type) {
 	case *types.Basic:
 		switch t.Kind() {
+		case types.Bool:
+			return "Bool"
 		case types.Int:
 			return "Int"
 		case types.Int8:
