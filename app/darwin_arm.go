@@ -44,7 +44,7 @@ func init() {
 	initThreadID = uint64(C.threadID())
 }
 
-func run(callbacks Callbacks) {
+func run(callbacks []Callbacks) {
 	if tid := uint64(C.threadID()); tid != initThreadID {
 		log.Fatalf("app.Run called on thread %d, but app.init ran on %d", tid, initThreadID)
 	}
@@ -112,15 +112,14 @@ func setGeom(width, height int) {
 	}
 	configAlt.Width = geom.Pt(float32(width) / geom.PixelsPerPt)
 	configAlt.Height = geom.Pt(float32(height) / geom.PixelsPerPt)
-	configSwap()
-
+	configSwap(cb)
 }
 
 func initGL() {
-	stateStart()
+	stateStart(cb)
 }
 
-var cb Callbacks
+var cb []Callbacks
 var initGLOnce sync.Once
 
 //export drawgl
@@ -137,8 +136,10 @@ func drawgl(ctx uintptr) {
 	// TODO not here?
 	gl.ClearColor(0, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	if cb.Draw != nil {
-		cb.Draw()
+	for _, c := range cb {
+		if c.Draw != nil {
+			c.Draw()
+		}
 	}
 
 	// TODO
