@@ -129,7 +129,7 @@ func runBind(cmd *command) error {
 
 	androidDir := filepath.Join(tmpdir, "android")
 
-	err = gobuild(mainFile, filepath.Join(androidDir, "src/main/jniLibs/armeabi-v7a/libgojni.so"))
+	err = goAndroidBuild(mainFile, filepath.Join(androidDir, "src/main/jniLibs/armeabi-v7a/libgojni.so"))
 	if err != nil {
 		return err
 	}
