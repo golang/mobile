@@ -17,6 +17,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -83,7 +84,7 @@ func runBuild(cmd *command) (err error) {
 
 	if pkg.Name != "main" {
 		// Not an app, don't build a final package.
-		return gobuild(pkg.ImportPath, "")
+		return goAndroidBuild(pkg.ImportPath, "")
 	}
 
 	// Building a program, make sure it is appropriate for mobile.
@@ -140,7 +141,7 @@ func runBuild(cmd *command) (err error) {
 	}
 	libPath := filepath.Join(tmpdir, "lib"+libName+".so")
 
-	if err := gobuild(pkg.ImportPath, libPath); err != nil {
+	if err := goAndroidBuild(pkg.ImportPath, libPath); err != nil {
 		return err
 	}
 	block, _ := pem.Decode([]byte(debugCert))
@@ -273,10 +274,13 @@ func runBuild(cmd *command) (err error) {
 
 	// TODO: add gdbserver to apk?
 
-	if buildN {
-		return nil
+	if !buildN {
+		if err := apkw.Close(); err != nil {
+			return err
+		}
 	}
-	return apkw.Close()
+
+	return nil
 }
 
 var xout io.Writer = os.Stderr
@@ -323,9 +327,59 @@ func addBuildFlagsNVX(cmd *command) {
 	cmd.flag.BoolVar(&buildX, "x", false, "")
 }
 
-// gobuild builds a package.
+// TODO(jbd): Build darwin/arm cross compiler during gomobile init.
+
+func goIOSBuild(src string) error {
+	// iOS builds are achievable only if the host machine is darwin.
+	if runtime.GOOS != "darwin" {
+		return nil
+	}
+
+	goroot := goEnv("GOROOT")
+	gopath := goEnv("GOPATH")
+	gocmd := exec.Command(
+		`go`,
+		`build`,
+		`-tags=`+strconv.Quote(strings.Join(ctx.BuildTags, ",")))
+	if buildV {
+		gocmd.Args = append(gocmd.Args, "-v")
+	}
+	if buildI {
+		gocmd.Args = append(gocmd.Args, "-i")
+	}
+	if buildX {
+		gocmd.Args = append(gocmd.Args, "-x")
+	}
+	gocmd.Args = append(gocmd.Args, src)
+	// TODO(jbd): Return a user-friendly error if xcode command line
+	// tools are not available.
+	gocmd.Stdout = os.Stdout
+	gocmd.Stderr = os.Stderr
+	gocmd.Env = []string{
+		`GOOS=darwin`,
+		`GOARCH=arm`, // TODO(jbd): Build for arm64
+		`GOARM=7`,
+		`CGO_ENABLED=1`,
+		`CC=` + filepath.Join(goroot, "misc/ios/clangwrap.sh"), // TODO(jbd): reimplement clangwrap here.
+		`CXX=` + filepath.Join(goroot, "misc/ios/clangwrap.sh"),
+		`GOROOT=` + goroot,
+		`GOPATH=` + gopath,
+	}
+	if buildX {
+		printcmd("%s", strings.Join(gocmd.Env, " ")+" "+strings.Join(gocmd.Args, " "))
+	}
+	if !buildN {
+		gocmd.Env = environ(gocmd.Env)
+		if err := gocmd.Run(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// goAndroidBuild builds a package.
 // If libPath is specified then it builds as a shared library.
-func gobuild(src, libPath string) error {
+func goAndroidBuild(src, libPath string) error {
 	version, err := goVersion()
 	if err != nil {
 		return err
