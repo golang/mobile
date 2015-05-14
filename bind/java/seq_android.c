@@ -250,6 +250,15 @@ Java_go_Seq_free(JNIEnv *env, jobject obj) {
 
 #define MEM_READ(obj, ty) ((ty*)mem_read(env, obj, sizeof(ty), sizeof(ty)))
 
+JNIEXPORT jboolean JNICALL
+Java_go_Seq_readBool(JNIEnv *env, jobject obj) {
+	int8_t *v = MEM_READ(obj, int8_t);
+	if (v == NULL) {
+		return 0;
+	}
+	return *v != 0 ? 1 : 0;
+}
+
 JNIEXPORT jbyte JNICALL
 Java_go_Seq_readInt8(JNIEnv *env, jobject obj) {
 	uint8_t *v = MEM_READ(obj, uint8_t);
@@ -313,6 +322,11 @@ Java_go_Seq_readByteArray(JNIEnv *env, jobject obj) {
 }
 
 #define MEM_WRITE(ty) (*(ty*)mem_write(env, obj, sizeof(ty), sizeof(ty)))
+
+JNIEXPORT void JNICALL
+Java_go_Seq_writeBool(JNIEnv *env, jobject obj, jboolean v) {
+	MEM_WRITE(int8_t) = v ? 1 : 0;
+}
 
 JNIEXPORT void JNICALL
 Java_go_Seq_writeInt8(JNIEnv *env, jobject obj, jbyte v) {

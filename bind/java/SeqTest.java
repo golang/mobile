@@ -22,6 +22,11 @@ public class SeqTest extends AndroidTestCase {
     assertEquals("Unexpected arithmetic failure", 7, res);
   }
 
+  public void testBool() {
+    assertTrue(Testpkg.Negate(false));
+    assertFalse(Testpkg.Negate(true));
+  }
+
   public void testShortString() {
     String want = "a short string";
     String got = Testpkg.StrDup(want);

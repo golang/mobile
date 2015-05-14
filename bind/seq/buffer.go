@@ -60,6 +60,26 @@ func align(offset, alignment int) int {
 	return pad + offset
 }
 
+func (b *Buffer) ReadInt8() int8 {
+	offset := b.Offset
+	if len(b.Data)-offset < 1 {
+		b.panic(1)
+	}
+	v := *(*int8)(unsafe.Pointer(&b.Data[offset]))
+	b.Offset++
+	return v
+}
+
+func (b *Buffer) ReadInt16() int16 {
+	offset := align(b.Offset, 2)
+	if len(b.Data)-offset < 2 {
+		b.panic(2)
+	}
+	v := *(*int16)(unsafe.Pointer(&b.Data[offset]))
+	b.Offset = offset + 2
+	return v
+}
+
 func (b *Buffer) ReadInt32() int32 {
 	offset := align(b.Offset, 4)
 	if len(b.Data)-offset < 4 {
@@ -80,7 +100,9 @@ func (b *Buffer) ReadInt64() int64 {
 	return v
 }
 
-// TODO(hyangah): int8, int16?
+func (b *Buffer) ReadBool() bool {
+	return b.ReadInt8() != 0
+}
 
 func (b *Buffer) ReadInt() int {
 	return int(b.ReadInt64())
@@ -136,6 +158,24 @@ func (b *Buffer) ReadString() string {
 	return DecString(b)
 }
 
+func (b *Buffer) WriteInt8(v int8) {
+	offset := b.Offset
+	if len(b.Data)-offset < 1 {
+		b.grow(offset + 1 - len(b.Data))
+	}
+	*(*int8)(unsafe.Pointer(&b.Data[offset])) = v
+	b.Offset++
+}
+
+func (b *Buffer) WriteInt16(v int16) {
+	offset := align(b.Offset, 2)
+	if len(b.Data)-offset < 2 {
+		b.grow(offset + 2 - len(b.Data))
+	}
+	*(*int16)(unsafe.Pointer(&b.Data[offset])) = v
+	b.Offset = offset + 2
+}
+
 func (b *Buffer) WriteInt32(v int32) {
 	offset := align(b.Offset, 4)
 	if len(b.Data)-offset < 4 {
@@ -152,6 +192,14 @@ func (b *Buffer) WriteInt64(v int64) {
 	}
 	*(*int64)(unsafe.Pointer(&b.Data[offset])) = v
 	b.Offset = offset + 8
+}
+
+func (b *Buffer) WriteBool(v bool) {
+	if v {
+		b.WriteInt8(1)
+	} else {
+		b.WriteInt8(0)
+	}
 }
 
 func (b *Buffer) WriteInt(v int) {

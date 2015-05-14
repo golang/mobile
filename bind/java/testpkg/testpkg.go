@@ -104,6 +104,10 @@ func StrDup(s string) string {
 	return s
 }
 
+func Negate(x bool) bool {
+	return !x
+}
+
 func Err(s string) error {
 	if s != "" {
 		return errors.New(s)
