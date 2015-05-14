@@ -7,13 +7,19 @@
 
 #include <Foundation/Foundation.h>
 
-// GoSeq is a sequence of machine-dependent encoded values.
+// GoSeq is a sequence of machine-dependent encoded values, which 
+// is a simple C equivalent of seq.Buffer.
 // Used by automatically generated language bindings to talk to Go.
-typedef struct GoSeq { void *mem_ptr; } GoSeq;
+typedef struct GoSeq {
+  uint8_t *buf;
+  size_t off;
+  size_t len;
+  size_t cap;
+} GoSeq;
 
-// go_seq_free frees resources of the GoSeq.
-// It does not free the GoSeq itself.
-extern void go_seq_free(GoSeq *seq);
+
+// go_seq_free releases resources of the GoSeq.
+extern void go_seq_free(GoSeq* seq);
 
 extern int8_t go_seq_readInt8(GoSeq *seq);
 extern int16_t go_seq_readInt16(GoSeq *seq);
