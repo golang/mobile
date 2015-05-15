@@ -29,8 +29,6 @@ import (
 	"golang.org/x/mobile/geom"
 )
 
-var callbacks []Callbacks
-
 func run(cbs []Callbacks) {
 	runtime.LockOSThread()
 	callbacks = cbs
@@ -99,7 +97,7 @@ func onDraw() {
 
 //export onStart
 func onStart() {
-	stateInit(callbacks)
+	stateStart(callbacks)
 }
 
 //export onStop
