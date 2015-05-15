@@ -46,12 +46,12 @@ func init() {
 	initThreadID = uint64(C.threadID())
 }
 
-func run(callbacks []Callbacks) {
+func run(cbs []Callbacks) {
 	if tid := uint64(C.threadID()); tid != initThreadID {
 		log.Fatalf("app.Run called on thread %d, but app.init ran on %d", tid, initThreadID)
 	}
-	cb = callbacks
 	close(mainCalled)
+	callbacks = cbs
 	C.runApp()
 }
 
@@ -118,10 +118,9 @@ func setGeom(width, height int) {
 	}
 	configAlt.Width = geom.Pt(float32(width) / geom.PixelsPerPt)
 	configAlt.Height = geom.Pt(float32(height) / geom.PixelsPerPt)
-	configSwap(cb)
+	configSwap(callbacks)
 }
 
-var cb []Callbacks
 var startedgl = false
 
 // touchIDs is the current active touches. The position in the array
@@ -200,9 +199,9 @@ func drawgl(ctx uintptr) {
 	// TODO not here?
 	gl.ClearColor(0, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	for _, c := range cb {
-		if c.Draw != nil {
-			c.Draw()
+	for _, cb := range callbacks {
+		if cb.Draw != nil {
+			cb.Draw()
 		}
 	}
 }
