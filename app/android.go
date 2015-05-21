@@ -30,6 +30,7 @@ package app
 #include <android/asset_manager.h>
 #include <android/configuration.h>
 #include <android/native_activity.h>
+#include <time.h>
 
 #include <jni.h>
 #include <pthread.h>
@@ -63,6 +64,7 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"time"
 	"unsafe"
 
 	"golang.org/x/mobile/app/internal/callfn"
@@ -76,6 +78,20 @@ func callMain(mainPC uintptr) {
 		os.Setenv(name, C.GoString(C.getenv(n)))
 		C.free(unsafe.Pointer(n))
 	}
+
+	// Set timezone.
+	//
+	// Note that Android zoneinfo is stored in /system/usr/share/zoneinfo,
+	// but it is in some kind of packed TZiff file that we do not support
+	// yet. As a stopgap, we build a fixed zone using the tm_zone name.
+	var curtime C.time_t
+	var curtm C.struct_tm
+	C.time(&curtime)
+	C.localtime_r(&curtime, &curtm)
+	tzOffset := int(curtm.tm_gmtoff)
+	tz := C.GoString(curtm.tm_zone)
+	time.Local = time.FixedZone(tz, tzOffset)
+
 	go callfn.CallFn(mainPC)
 	<-mainCalled
 	log.Print("app.Run called")
