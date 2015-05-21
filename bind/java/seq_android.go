@@ -15,7 +15,6 @@ import (
 	"sync"
 	"unsafe"
 
-	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/bind/seq"
 )
 
@@ -26,6 +25,7 @@ const debug = false
 // Send is called by Java to send a request to run a Go function.
 //export Send
 func Send(descriptor string, code int, req *C.uint8_t, reqlen C.size_t, res **C.uint8_t, reslen *C.size_t) {
+	<-running
 	fn := seq.Registry[descriptor][code]
 	if fn == nil {
 		panic(fmt.Sprintf("invalid descriptor(%s) and code(0x%x)", descriptor, code))
@@ -76,13 +76,6 @@ func init() {
 
 	res.cond.L = &res.Mutex
 	res.out = make(map[int32]*seq.Buffer)
-}
-
-func initSeq() {
-	vm := app.GetConfig().JavaVM()
-	classFinder := app.GetConfig().ClassFinder()
-
-	C.init_seq(vm, classFinder)
 }
 
 func seqToBuf(bufptr **C.uint8_t, lenptr *C.size_t, buf *seq.Buffer) {
