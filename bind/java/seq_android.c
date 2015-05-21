@@ -167,12 +167,8 @@ static void describe_exception(JNIEnv* env) {
 	}
 }
 
-// find_class_fn finds a class with the given name using the app class loader.
-// It is implemented in the app package and is initialized during the init_seq call.
-static jclass (*find_class_fn)(JNIEnv*, const char*);
-
 static jfieldID find_field(JNIEnv *env, const char *class_name, const char *field_name, const char *field_type) {
-	jclass clazz = find_class_fn(env, class_name);
+	jclass clazz = (*env)->FindClass(env, class_name);
 	if (clazz == NULL) {
 		describe_exception(env);
 		LOG_FATAL("cannot find %s", class_name);
@@ -188,7 +184,7 @@ static jfieldID find_field(JNIEnv *env, const char *class_name, const char *fiel
 }
 
 static jclass find_class(JNIEnv *env, const char *class_name) {
-	jclass clazz = find_class_fn(env, class_name);
+	jclass clazz = (*env)->FindClass(env, class_name);
 	if (clazz == NULL) {
 		describe_exception(env);
 		LOG_FATAL("cannot find %s", class_name);
@@ -197,19 +193,8 @@ static jclass find_class(JNIEnv *env, const char *class_name) {
 	return (*env)->NewGlobalRef(env, clazz);
 }
 
-void init_seq(void *javavm, void *classfinder) {
-	JavaVM *vm = (JavaVM*)javavm;
-	find_class_fn = (jclass (*)(JNIEnv*, const char*))classfinder;
-
-	JNIEnv *env;
-	int res = (*vm)->GetEnv(vm, (void**)&env, JNI_VERSION_1_6);
-	if (res == JNI_EDETACHED) {
-		if ((*vm)->AttachCurrentThread(vm, &env, NULL) != JNI_OK) {
-			LOG_FATAL("cannot attach to current_vm");
-		}
-	} else if (res != JNI_OK) {
-		LOG_FATAL("bad vm env: %d", res);
-	}
+JNIEXPORT void JNICALL
+Java_go_Seq_initSeq(JNIEnv *env, jclass clazz) {
 	memptr_id = find_field(env, "go/Seq", "memptr", "J");
 	receive_refnum_id = find_field(env, "go/Seq$Receive", "refnum", "I");
 	receive_handle_id = find_field(env, "go/Seq$Receive", "handle", "I");
@@ -219,14 +204,10 @@ void init_seq(void *javavm, void *classfinder) {
 	// its class info, because finding the jbyteArray class ("[B") using
 	// find_class_fn or JNIEnv's FindClass does not work on android-L.
 	jbyteArray a = (*env)->NewByteArray(env, 0);
-	jclass clazz = (*env)->GetObjectClass(env, a);
-	jbytearray_clazz = (*env)->NewGlobalRef(env, clazz);
+	jclass bclazz = (*env)->GetObjectClass(env, a);
+	jbytearray_clazz = (*env)->NewGlobalRef(env, bclazz);
 
 	LOG_INFO("loaded go/Seq");
-
-	if (res == JNI_EDETACHED) {
-		(*vm)->DetachCurrentThread(vm);
-	}
 }
 
 JNIEXPORT void JNICALL

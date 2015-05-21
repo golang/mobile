@@ -66,6 +66,12 @@ public class Seq {
 		return tracker.get(refnum);
 	}
 
+	static {
+		initSeq();
+	}
+
+	static native void initSeq();
+
 	// Informs the Go ref tracker that Java is done with this ref.
 	static native void destroyRef(int refnum);
 

@@ -12,5 +12,7 @@ package java
 // Init initializes communication with Java.
 // Typically called from the Start callback in app.Run.
 func Init() {
-	initSeq()
+	close(running)
 }
+
+var running = make(chan struct{})
