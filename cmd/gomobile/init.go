@@ -185,7 +185,7 @@ func runInit(cmd *command) error {
 
 	// Move the Go cross compiler toolchain into GOPATH.
 	gotoolsrc := filepath.Join(tmpGoroot, "pkg/tool", goos+"_"+goarch)
-	tools := []string{"5l", "5g", "asm", "cgo", "nm", "old5a", "pack", "link"}
+	tools := []string{"compile", "asm", "cgo", "nm", "old5a", "pack", "link"}
 	for i, name := range tools {
 		tools[i] = bin(name)
 	}
