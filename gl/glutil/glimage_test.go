@@ -42,6 +42,9 @@ func TestImage(t *testing.T) {
 	ctxGL := createContext()
 	defer ctxGL.destroy()
 
+	start()
+	defer stop()
+
 	const (
 		pixW = 100
 		pixH = 100
