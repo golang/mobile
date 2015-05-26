@@ -152,16 +152,7 @@ func runInit(cmd *command) error {
 		`CC_FOR_TARGET=` + filepath.Join(ndkccbin, bin("arm-linux-androideabi-gcc")),
 		`CXX_FOR_TARGET=` + filepath.Join(ndkccbin, bin("arm-linux-androideabi-g++")),
 	}
-	if goos == "windows" {
-		make.Env = append(make.Env, `TEMP=`+tmpdir)
-		make.Env = append(make.Env, `TMP=`+tmpdir)
-		make.Env = append(make.Env, `HOMEDRIVE=`+os.Getenv("HOMEDRIVE"))
-		make.Env = append(make.Env, `HOMEPATH=`+os.Getenv("HOMEPATH"))
-	} else {
-		make.Env = append(make.Env, `TMPDIR=`+tmpdir)
-		// for default the go1.4 bootstrap
-		make.Env = append(make.Env, `HOME=`+os.Getenv("HOME"))
-	}
+	make.Env = appendCommonEnv(make.Env)
 	if v := goEnv("GOROOT_BOOTSTRAP"); v != "" {
 		make.Env = append(make.Env, `GOROOT_BOOTSTRAP=`+v)
 	}
@@ -177,9 +168,9 @@ func runInit(cmd *command) error {
 		if err := make.Run(); err != nil {
 			return err
 		}
-		if err := checkVersionMatch(tmpGoroot, version); err != nil {
-			return err
-		}
+	}
+	if err := checkVersionMatch(tmpGoroot, version); err != nil {
+		return err
 	}
 
 	// Move the Go cross compiler toolchain into GOPATH.
@@ -258,6 +249,20 @@ Make GOROOT writable (possibly by becoming the super user, using sudo) and run:
 	}
 
 	return nil
+}
+
+func appendCommonEnv(env []string) []string {
+	if goos == "windows" {
+		env = append(env, `TEMP=`+tmpdir)
+		env = append(env, `TMP=`+tmpdir)
+		env = append(env, `HOMEDRIVE=`+os.Getenv("HOMEDRIVE"))
+		env = append(env, `HOMEPATH=`+os.Getenv("HOMEPATH"))
+	} else {
+		env = append(env, `TMPDIR=`+tmpdir)
+		// for default the go1.4 bootstrap
+		env = append(env, `HOME=`+os.Getenv("HOME"))
+	}
+	return env
 }
 
 // toolexec is the source of a small program designed to be passed to
@@ -396,6 +401,7 @@ func checkVersionMatch(tmpGoroot string, version []byte) error {
 		"GOROOT=" + tmpGoroot,
 		`PATH=` + os.Getenv("PATH"),
 	}
+	cmd.Env = appendCommonEnv(cmd.Env)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("cannot get cmd/dist version: %v (%s)", err, out)
