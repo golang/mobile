@@ -113,9 +113,8 @@ tar xfz $GOMOBILE/dl/gomobile-openal-soft-1.16.0.1.tar.gz
 mv $WORK/openal/include/AL $GOMOBILE/android-{{.NDK}}/arm/sysroot/usr/include/AL
 mkdir -p $GOMOBILE/android-{{.NDK}}/openal
 mv $WORK/openal/lib $GOMOBILE/android-{{.NDK}}/openal/lib
-PATH=$PATH GOOS=android GOARCH=arm GOARM=7 CGO_ENABLED=1 CC_FOR_TARGET=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-gcc{{.EXE}} CXX_FOR_TARGET=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-g++{{.EXE}} {{.BuildScript}}
-mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/5l{{.EXE}} $GOMOBILE/android-{{.NDK}}/arm/bin/5l{{.EXE}}
-mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/5g{{.EXE}} $GOMOBILE/android-{{.NDK}}/arm/bin/5g{{.EXE}}
+PATH=$PATH GOOS=android GOROOT=$WORK/go GOARCH=arm GOARM=7 CGO_ENABLED=1 CC_FOR_TARGET=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-gcc{{.EXE}} CXX_FOR_TARGET=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-g++{{.EXE}} {{.BuildScript}}
+mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/compile{{.EXE}} $GOMOBILE/android-{{.NDK}}/arm/bin/compile{{.EXE}}
 mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/asm{{.EXE}} $GOMOBILE/android-{{.NDK}}/arm/bin/asm{{.EXE}}
 mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/cgo{{.EXE}} $GOMOBILE/android-{{.NDK}}/arm/bin/cgo{{.EXE}}
 mv $WORK/go/pkg/tool/{{.GOOS}}_{{.GOARCH}}/nm{{.EXE}} $GOMOBILE/android-{{.NDK}}/arm/bin/nm{{.EXE}}
