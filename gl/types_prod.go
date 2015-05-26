@@ -11,7 +11,7 @@ package gl
 #ifdef os_linux
 #include <GLES2/gl2.h>
 #endif
-#ifdef os_darwin_arm
+#ifdef os_ios
 #include <OpenGLES/ES2/gl.h>
 #endif
 #ifdef os_darwin_amd64
