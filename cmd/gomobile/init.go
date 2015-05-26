@@ -174,7 +174,6 @@ func runInit(cmd *command) error {
 		printcmd("%s", strings.Join(make.Env, " ")+" "+strings.Join(make.Args, " "))
 	}
 	if !buildN {
-		make.Env = environ(make.Env)
 		if err := make.Run(); err != nil {
 			return err
 		}
