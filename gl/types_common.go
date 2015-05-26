@@ -12,16 +12,18 @@ package gl
 /*
 #cgo darwin,amd64  LDFLAGS: -framework OpenGL
 #cgo darwin,arm    LDFLAGS: -framework OpenGLES
+#cgo darwin,arm64  LDFLAGS: -framework OpenGLES
 #cgo linux         LDFLAGS: -lGLESv2
 
 #cgo darwin,amd64  CFLAGS: -Dos_darwin_amd64
-#cgo darwin,arm    CFLAGS: -Dos_darwin_arm
+#cgo darwin,arm    CFLAGS: -Dos_ios
+#cgo darwin,arm64  CFLAGS: -Dos_ios
 #cgo linux         CFLAGS: -Dos_linux
 
 #ifdef os_linux
 #include <GLES2/gl2.h>
 #endif
-#ifdef os_darwin_arm
+#ifdef os_ios
 #include <OpenGLES/ES2/gl.h>
 #endif
 #ifdef os_darwin_amd64
