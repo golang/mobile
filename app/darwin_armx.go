@@ -27,6 +27,7 @@ import (
 	"sync"
 	"unsafe"
 
+	"golang.org/x/mobile/event"
 	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/gl"
 )
@@ -50,6 +51,7 @@ func run(callbacks []Callbacks) {
 		log.Fatalf("app.Run called on thread %d, but app.init ran on %d", tid, initThreadID)
 	}
 	cb = callbacks
+	close(mainCalled)
 	C.runApp()
 }
 
@@ -123,6 +125,55 @@ func initGL() {
 var cb []Callbacks
 var initGLOnce sync.Once
 
+// touchIDs is the current active touches. The position in the array
+// is the ID, the value is the UITouch* pointer value.
+//
+// It is widely reported that the iPhone can handle up to 5 simultaneous
+// touch events, while the iPad can handle 11.
+var touchIDs [11]uintptr
+
+var touchEvents struct {
+	sync.Mutex
+	pending []event.Touch
+}
+
+//export sendTouch
+func sendTouch(touch uintptr, touchType int, x, y float32) {
+	id := -1
+	for i, val := range touchIDs {
+		if val == touch {
+			id = i
+			break
+		}
+	}
+	if id == -1 {
+		for i, val := range touchIDs {
+			if val == 0 {
+				touchIDs[i] = touch
+				id = i
+				break
+			}
+		}
+		panic("out of touchIDs")
+	}
+
+	ty := event.TouchType(touchType)
+	if ty == event.TouchEnd {
+		touchIDs[id] = 0
+	}
+
+	touchEvents.Lock()
+	touchEvents.pending = append(touchEvents.pending, event.Touch{
+		ID:   event.TouchSequenceID(id),
+		Type: ty,
+		Loc: geom.Point{
+			X: geom.Pt(x / geom.PixelsPerPt),
+			Y: geom.Pt(y / geom.PixelsPerPt),
+		},
+	})
+	touchEvents.Unlock()
+}
+
 //export drawgl
 func drawgl(ctx uintptr) {
 	// The call to lockContext loads the OpenGL context into
@@ -133,6 +184,18 @@ func drawgl(ctx uintptr) {
 	C.setContext(unsafe.Pointer(ctx))
 
 	initGLOnce.Do(initGL)
+
+	touchEvents.Lock()
+	pending := touchEvents.pending
+	touchEvents.pending = nil
+	touchEvents.Unlock()
+	for _, cb := range callbacks {
+		if cb.Touch != nil {
+			for _, e := range pending {
+				cb.Touch(e)
+			}
+		}
+	}
 
 	// TODO not here?
 	gl.ClearColor(0, 0, 0, 1)

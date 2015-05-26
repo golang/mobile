@@ -44,7 +44,9 @@ struct utsname sysInfo;
 	GLKView *view = (GLKView *)self.view;
 	view.context = self.context;
 	view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
+	view.multipleTouchEnabled = true; // TODO expose setting to user.
 }
+
 - (void)update {
 	GLKView *view = (GLKView *)self.view;
 	int w = [view drawableWidth];
@@ -52,6 +54,30 @@ struct utsname sysInfo;
 	setGeom(w, h);
 
 	drawgl((GoUintptr)self.context);
+}
+
+#define TOUCH_START 0 // event.TouchStart
+#define TOUCH_MOVE  1 // event.TouchMove
+#define TOUCH_END   2 // event.TouchEnd
+
+static void sendTouches(int ty, NSSet* touches) {
+	CGFloat scale = [UIScreen mainScreen].scale;
+	for (UITouch* touch in touches) {
+		CGPoint p = [touch locationInView:touch.view];
+		sendTouch((GoUintptr)touch, ty, p.x*scale, p.y*scale);
+	}
+}
+
+- (void)touchesBegan:(NSSet*)touches withEvent:(UIEvent*)event {
+	sendTouches(TOUCH_START, touches);
+}
+
+- (void)touchesMoved:(NSSet*)touches withEvent:(UIEvent*)event {
+	sendTouches(TOUCH_MOVE, touches);
+}
+
+- (void)touchesEnded:(NSSet*)touches withEvent:(UIEvent*)event {
+	sendTouches(TOUCH_END, touches);
 }
 @end
 
