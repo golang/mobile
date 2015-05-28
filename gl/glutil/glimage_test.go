@@ -39,11 +39,16 @@ func TestImage(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ctxGL := createContext()
-	defer ctxGL.destroy()
-
+	var ctxGL *contextGL
+	go gl.Start(func() {
+		ctxGL = createContext()
+	})
 	start()
-	defer stop()
+	defer func() {
+		stop()
+		gl.Stop()
+		ctxGL.destroy()
+	}()
 
 	const (
 		pixW = 100
@@ -69,7 +74,12 @@ func TestImage(t *testing.T) {
 		t.Fatalf("framebuffer create failed: %v", status)
 	}
 
-	gl.ClearColor(0, 0, 1, 1) // blue
+	allocs := testing.AllocsPerRun(100, func() {
+		gl.ClearColor(0, 0, 1, 1) // blue
+	})
+	if allocs != 0 {
+		t.Errorf("unexpected allocations from calling gl.ClearColor: %f", allocs)
+	}
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 	gl.Viewport(0, 0, pixW, pixH)
 

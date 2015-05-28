@@ -14,35 +14,33 @@ package gl
 //                 this seems natural in Go, but moves us slightly
 //                 further away from the underlying OpenGL spec.
 
-/*
-#include <stdlib.h>
-
-#ifdef os_linux
-#include <GLES2/gl2.h>
-#endif
-#ifdef os_ios
-#include <OpenGLES/ES2/glext.h>
-#endif
-#ifdef os_darwin_amd64
-#include <OpenGL/gl3.h>
-#endif
-*/
+// #include "work.h"
 import "C"
 
-import "unsafe"
+import (
+	"math"
+	"unsafe"
+)
 
 // ActiveTexture sets the active texture unit.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glActiveTexture.xhtml
 func ActiveTexture(texture Enum) {
-	C.glActiveTexture(texture.c())
+	var call call
+	call.args.fn = C.glfnActiveTexture
+	call.args.a0 = texture.c()
+	work <- call
 }
 
 // AttachShader attaches a shader to a program.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glAttachShader.xhtml
 func AttachShader(p Program, s Shader) {
-	C.glAttachShader(p.c(), s.c())
+	var call call
+	call.args.fn = C.glfnAttachShader
+	call.args.a0 = p.c()
+	call.args.a1 = s.c()
+	work <- call
 }
 
 // BindAttribLocation binds a vertex attribute index with a named
@@ -50,93 +48,157 @@ func AttachShader(p Program, s Shader) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glBindAttribLocation.xhtml
 func BindAttribLocation(p Program, a Attrib, name string) {
-	str := unsafe.Pointer(C.CString(name))
-	defer C.free(str)
-	C.glBindAttribLocation(p.c(), a.c(), (*C.GLchar)(str))
+	var call call
+	call.args.fn = C.glfnBindAttribLocation
+	call.args.a0 = p.c()
+	call.args.a1 = a.c()
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(C.CString(name))))
+	work <- call
 }
 
 // BindBuffer binds a buffer.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glBindBuffer.xhtml
 func BindBuffer(target Enum, b Buffer) {
-	C.glBindBuffer(target.c(), b.c())
+	var call call
+	call.args.fn = C.glfnBindBuffer
+	call.args.a0 = target.c()
+	call.args.a1 = b.c()
+	work <- call
 }
 
 // BindFramebuffer binds a framebuffer.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glBindFramebuffer.xhtml
 func BindFramebuffer(target Enum, fb Framebuffer) {
-	C.glBindFramebuffer(target.c(), fb.c())
+	var call call
+	call.args.fn = C.glfnBindFramebuffer
+	call.args.a0 = target.c()
+	call.args.a1 = fb.c()
+	work <- call
 }
 
 // BindRenderbuffer binds a render buffer.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glBindRenderbuffer.xhtml
 func BindRenderbuffer(target Enum, rb Renderbuffer) {
-	C.glBindRenderbuffer(target.c(), rb.c())
+	var call call
+	call.args.fn = C.glfnBindRenderbuffer
+	call.args.a0 = target.c()
+	call.args.a1 = rb.c()
+	work <- call
 }
 
 // BindTexture binds a texture.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glBindTexture.xhtml
 func BindTexture(target Enum, t Texture) {
-	C.glBindTexture(target.c(), t.c())
+	var call call
+	call.args.fn = C.glfnBindTexture
+	call.args.a0 = target.c()
+	call.args.a1 = t.c()
+	work <- call
 }
 
 // BlendColor sets the blend color.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glBlendColor.xhtml
 func BlendColor(red, green, blue, alpha float32) {
-	blendColor(red, green, blue, alpha)
+	var call call
+	call.args.fn = C.glfnBlendColor
+	call.args.a0 = C.uintptr_t(math.Float32bits(red))
+	call.args.a1 = C.uintptr_t(math.Float32bits(green))
+	call.args.a2 = C.uintptr_t(math.Float32bits(blue))
+	call.args.a3 = C.uintptr_t(math.Float32bits(alpha))
+	work <- call
 }
 
 // BlendEquation sets both RGB and alpha blend equations.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glBlendEquation.xhtml
 func BlendEquation(mode Enum) {
-	C.glBlendEquation(mode.c())
+	var call call
+	call.args.fn = C.glfnBlendEquation
+	call.args.a0 = mode.c()
+	work <- call
 }
 
 // BlendEquationSeparate sets RGB and alpha blend equations separately.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glBlendEquationSeparate.xhtml
 func BlendEquationSeparate(modeRGB, modeAlpha Enum) {
-	C.glBlendEquationSeparate(modeRGB.c(), modeAlpha.c())
+	var call call
+	call.args.fn = C.glfnBlendEquationSeparate
+	call.args.a0 = modeRGB.c()
+	call.args.a1 = modeAlpha.c()
+	work <- call
 }
 
 // BlendFunc sets the pixel blending factors.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glBlendFunc.xhtml
 func BlendFunc(sfactor, dfactor Enum) {
-	C.glBlendFunc(sfactor.c(), dfactor.c())
+	var call call
+	call.args.fn = C.glfnBlendFunc
+	call.args.a0 = sfactor.c()
+	call.args.a1 = dfactor.c()
+	work <- call
 }
 
 // BlendFunc sets the pixel RGB and alpha blending factors separately.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glBlendFuncSeparate.xhtml
 func BlendFuncSeparate(sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha Enum) {
-	C.glBlendFuncSeparate(sfactorRGB.c(), dfactorRGB.c(), sfactorAlpha.c(), dfactorAlpha.c())
+	var call call
+	call.args.fn = C.glfnBlendFuncSeparate
+	call.args.a0 = sfactorRGB.c()
+	call.args.a1 = dfactorRGB.c()
+	call.args.a2 = sfactorAlpha.c()
+	call.args.a3 = dfactorAlpha.c()
+	work <- call
 }
 
 // BufferData creates a new data store for the bound buffer object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glBufferData.xhtml
 func BufferData(target Enum, src []byte, usage Enum) {
-	C.glBufferData(target.c(), C.GLsizeiptr(len(src)), unsafe.Pointer(&src[0]), usage.c())
+	var call call
+	call.args.fn = C.glfnBufferData
+	call.blocking = true
+	call.args.a0 = target.c()
+	call.args.a1 = C.uintptr_t(len(src))
+	call.args.a2 = (C.uintptr_t)(uintptr(unsafe.Pointer(&src[0])))
+	call.args.a3 = usage.c()
+	work <- call
+	<-retvalue
 }
 
-// BufferInit creates a new unitialized data store for the bound buffer object.
+// BufferInit creates a new uninitialized data store for the bound buffer object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glBufferData.xhtml
 func BufferInit(target Enum, size int, usage Enum) {
-	C.glBufferData(target.c(), C.GLsizeiptr(size), nil, usage.c())
+	var call call
+	call.args.fn = C.glfnBufferData
+	call.args.a0 = target.c()
+	call.args.a1 = C.uintptr_t(size)
+	call.args.a2 = 0
+	call.args.a3 = usage.c()
+	work <- call
 }
 
 // BufferSubData sets some of data in the bound buffer object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glBufferSubData.xhtml
 func BufferSubData(target Enum, offset int, data []byte) {
-	C.glBufferSubData(target.c(), C.GLintptr(offset), C.GLsizeiptr(len(data)), unsafe.Pointer(&data[0]))
+	var call call
+	call.args.fn = C.glfnBufferSubData
+	call.blocking = true
+	call.args.a0 = target.c()
+	call.args.a1 = C.uintptr_t(offset)
+	call.args.a2 = C.uintptr_t(len(data))
+	call.args.a3 = (C.uintptr_t)(uintptr(unsafe.Pointer(&data[0])))
+	work <- call
+	<-retvalue
 }
 
 // CheckFramebufferStatus reports the completeness status of the
@@ -144,7 +206,12 @@ func BufferSubData(target Enum, offset int, data []byte) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glCheckFramebufferStatus.xhtml
 func CheckFramebufferStatus(target Enum) Enum {
-	return Enum(C.glCheckFramebufferStatus(target.c()))
+	var call call
+	call.args.fn = C.glfnCheckFramebufferStatus
+	call.blocking = true
+	call.args.a0 = target.c()
+	work <- call
+	return Enum(<-retvalue)
 }
 
 // Clear clears the window.
@@ -154,28 +221,43 @@ func CheckFramebufferStatus(target Enum) Enum {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glClear.xhtml
 func Clear(mask Enum) {
-	C.glClear(C.GLbitfield(mask))
+	var call call
+	call.args.fn = C.glfnClear
+	call.args.a0 = C.uintptr_t(mask)
+	work <- call
 }
 
 // ClearColor specifies the RGBA values used to clear color buffers.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glClearColor.xhtml
 func ClearColor(red, green, blue, alpha float32) {
-	clearColor(red, green, blue, alpha)
+	var call call
+	call.args.fn = C.glfnClearColor
+	call.args.a0 = C.uintptr_t(math.Float32bits(red))
+	call.args.a1 = C.uintptr_t(math.Float32bits(green))
+	call.args.a2 = C.uintptr_t(math.Float32bits(blue))
+	call.args.a3 = C.uintptr_t(math.Float32bits(alpha))
+	work <- call
 }
 
 // ClearDepthf sets the depth value used to clear the depth buffer.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glClearDepthf.xhtml
 func ClearDepthf(d float32) {
-	clearDepthf(d)
+	var call call
+	call.args.fn = C.glfnClearDepthf
+	call.args.a0 = C.uintptr_t(math.Float32bits(d))
+	work <- call
 }
 
 // ClearStencil sets the index used to clear the stencil buffer.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glClearStencil.xhtml
 func ClearStencil(s int) {
-	C.glClearStencil(C.GLint(s))
+	var call call
+	call.args.fn = C.glfnClearStencil
+	call.args.a0 = C.uintptr_t(s)
+	work <- call
 }
 
 // ColorMask specifies whether color components in the framebuffer
@@ -183,35 +265,79 @@ func ClearStencil(s int) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glColorMask.xhtml
 func ColorMask(red, green, blue, alpha bool) {
-	C.glColorMask(glBoolean(red), glBoolean(green), glBoolean(blue), glBoolean(alpha))
+	var call call
+	call.args.fn = C.glfnColorMask
+	call.args.a0 = glBoolean(red)
+	call.args.a1 = glBoolean(green)
+	call.args.a2 = glBoolean(blue)
+	call.args.a3 = glBoolean(alpha)
+	work <- call
 }
 
 // CompileShader compiles the source code of s.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glCompileShader.xhtml
 func CompileShader(s Shader) {
-	C.glCompileShader(s.c())
+	var call call
+	call.args.fn = C.glfnCompileShader
+	call.args.a0 = s.c()
+	work <- call
 }
 
 // CompressedTexImage2D writes a compressed 2D texture.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glCompressedTexImage2D.xhtml
 func CompressedTexImage2D(target Enum, level int, internalformat Enum, width, height, border int, data []byte) {
-	C.glCompressedTexImage2D(target.c(), C.GLint(level), internalformat.c(), C.GLsizei(width), C.GLsizei(height), C.GLint(border), C.GLsizei(len(data)), unsafe.Pointer(&data[0]))
+	var call call
+	call.args.fn = C.glfnCompressedTexImage2D
+	call.blocking = true
+	call.args.a0 = target.c()
+	call.args.a1 = C.uintptr_t(level)
+	call.args.a2 = internalformat.c()
+	call.args.a3 = C.uintptr_t(width)
+	call.args.a4 = C.uintptr_t(height)
+	call.args.a5 = C.uintptr_t(border)
+	call.args.a6 = C.uintptr_t(len(data))
+	call.args.a7 = C.uintptr_t(uintptr(unsafe.Pointer(&data[0])))
+	work <- call
+	<-retvalue
 }
 
 // CompressedTexSubImage2D writes a subregion of a compressed 2D texture.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glCompressedTexSubImage2D.xhtml
 func CompressedTexSubImage2D(target Enum, level, xoffset, yoffset, width, height int, format Enum, data []byte) {
-	C.glCompressedTexSubImage2D(target.c(), C.GLint(level), C.GLint(xoffset), C.GLint(yoffset), C.GLsizei(width), C.GLsizei(height), format.c(), C.GLsizei(len(data)), unsafe.Pointer(&data[0]))
+	var call call
+	call.args.fn = C.glfnCompressedTexSubImage2D
+	call.blocking = true
+	call.args.a0 = target.c()
+	call.args.a1 = C.uintptr_t(level)
+	call.args.a2 = C.uintptr_t(xoffset)
+	call.args.a3 = C.uintptr_t(yoffset)
+	call.args.a4 = C.uintptr_t(width)
+	call.args.a5 = C.uintptr_t(height)
+	call.args.a6 = format.c()
+	call.args.a7 = C.uintptr_t(len(data))
+	call.args.a8 = C.uintptr_t(uintptr(unsafe.Pointer(&data[0])))
+	work <- call
+	<-retvalue
 }
 
 // CopyTexImage2D writes a 2D texture from the current framebuffer.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glCopyTexImage2D.xhtml
 func CopyTexImage2D(target Enum, level int, internalformat Enum, x, y, width, height, border int) {
-	C.glCopyTexImage2D(target.c(), C.GLint(level), internalformat.c(), C.GLint(x), C.GLint(y), C.GLsizei(width), C.GLsizei(height), C.GLint(border))
+	var call call
+	call.args.fn = C.glfnCopyTexImage2D
+	call.args.a0 = target.c()
+	call.args.a1 = C.uintptr_t(level)
+	call.args.a2 = internalformat.c()
+	call.args.a3 = C.uintptr_t(x)
+	call.args.a4 = C.uintptr_t(y)
+	call.args.a5 = C.uintptr_t(width)
+	call.args.a6 = C.uintptr_t(height)
+	call.args.a7 = C.uintptr_t(border)
+	work <- call
 }
 
 // CopyTexSubImage2D writes a 2D texture subregion from the
@@ -219,57 +345,85 @@ func CopyTexImage2D(target Enum, level int, internalformat Enum, x, y, width, he
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glCopyTexSubImage2D.xhtml
 func CopyTexSubImage2D(target Enum, level, xoffset, yoffset, x, y, width, height int) {
-	C.glCopyTexSubImage2D(target.c(), C.GLint(level), C.GLint(xoffset), C.GLint(yoffset), C.GLint(x), C.GLint(y), C.GLsizei(width), C.GLsizei(height))
+	var call call
+	call.args.fn = C.glfnCopyTexSubImage2D
+	call.args.a0 = target.c()
+	call.args.a1 = C.uintptr_t(level)
+	call.args.a2 = C.uintptr_t(xoffset)
+	call.args.a3 = C.uintptr_t(yoffset)
+	call.args.a4 = C.uintptr_t(x)
+	call.args.a5 = C.uintptr_t(y)
+	call.args.a6 = C.uintptr_t(width)
+	call.args.a7 = C.uintptr_t(height)
+	work <- call
 }
 
 // CreateBuffer creates a buffer object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGenBuffers.xhtml
 func CreateBuffer() Buffer {
-	var b Buffer
-	C.glGenBuffers(1, (*C.GLuint)(&b.Value))
-	return b
+	var call call
+	call.args.fn = C.glfnGenBuffer
+	call.blocking = true
+	work <- call
+	return Buffer{Value: uint32(<-retvalue)}
 }
 
 // CreateFramebuffer creates a framebuffer object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGenFramebuffers.xhtml
 func CreateFramebuffer() Framebuffer {
-	var b Framebuffer
-	C.glGenFramebuffers(1, (*C.GLuint)(&b.Value))
-	return b
+	var call call
+	call.args.fn = C.glfnGenFramebuffer
+	call.blocking = true
+	work <- call
+	return Framebuffer{Value: uint32(<-retvalue)}
 }
 
 // CreateProgram creates a new empty program object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glCreateProgram.xhtml
 func CreateProgram() Program {
-	return Program{Value: uint32(C.glCreateProgram())}
+	var call call
+	call.args.fn = C.glfnCreateProgram
+	call.blocking = true
+	work <- call
+	return Program{Value: uint32(<-retvalue)}
 }
 
 // CreateRenderbuffer create a renderbuffer object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGenRenderbuffers.xhtml
 func CreateRenderbuffer() Renderbuffer {
-	var b Renderbuffer
-	C.glGenRenderbuffers(1, (*C.GLuint)(&b.Value))
-	return b
+	var call call
+	call.args.fn = C.glfnGenRenderbuffer
+	call.blocking = true
+	work <- call
+	return Renderbuffer{Value: uint32(<-retvalue)}
 }
 
 // CreateShader creates a new empty shader object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glCreateShader.xhtml
 func CreateShader(ty Enum) Shader {
-	return Shader{Value: uint32(C.glCreateShader(ty.c()))}
+	var call call
+	call.args.fn = C.glfnCreateShader
+	call.blocking = true
+	call.args.a0 = C.uintptr_t(ty)
+	work <- call
+	return Shader{Value: uint32(<-retvalue)}
+
 }
 
 // CreateTexture creates a texture object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGenTextures.xhtml
 func CreateTexture() Texture {
-	var t Texture
-	C.glGenTextures(1, (*C.GLuint)(&t.Value))
-	return t
+	var call call
+	call.args.fn = C.glfnGenTexture
+	call.blocking = true
+	work <- call
+	return Texture{Value: uint32(<-retvalue)}
 }
 
 // CullFace specifies which polygons are candidates for culling.
@@ -278,49 +432,70 @@ func CreateTexture() Texture {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glCullFace.xhtml
 func CullFace(mode Enum) {
-	C.glCullFace(mode.c())
+	var call call
+	call.args.fn = C.glfnCullFace
+	call.args.a0 = mode.c()
+	work <- call
 }
 
 // DeleteBuffer deletes the given buffer object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glDeleteBuffers.xhtml
 func DeleteBuffer(v Buffer) {
-	C.glDeleteBuffers(1, (*C.GLuint)(&v.Value))
+	var call call
+	call.args.fn = C.glfnDeleteBuffer
+	call.args.a0 = C.uintptr_t(v.Value)
+	work <- call
 }
 
 // DeleteFramebuffer deletes the given framebuffer object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glDeleteFramebuffers.xhtml
 func DeleteFramebuffer(v Framebuffer) {
-	C.glDeleteFramebuffers(1, (*C.GLuint)(&v.Value))
+	var call call
+	call.args.fn = C.glfnDeleteFramebuffer
+	call.args.a0 = C.uintptr_t(v.Value)
+	work <- call
 }
 
 // DeleteProgram deletes the given program object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glDeleteProgram.xhtml
 func DeleteProgram(p Program) {
-	C.glDeleteProgram(p.c())
+	var call call
+	call.args.fn = C.glfnDeleteProgram
+	call.args.a0 = p.c()
+	work <- call
 }
 
 // DeleteRenderbuffer deletes the given render buffer object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glDeleteRenderbuffers.xhtml
 func DeleteRenderbuffer(v Renderbuffer) {
-	C.glDeleteRenderbuffers(1, (*C.GLuint)(&v.Value))
+	var call call
+	call.args.fn = C.glfnDeleteRenderbuffer
+	call.args.a0 = v.c()
+	work <- call
 }
 
 // DeleteShader deletes shader s.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glDeleteShader.xhtml
 func DeleteShader(s Shader) {
-	C.glDeleteShader(s.c())
+	var call call
+	call.args.fn = C.glfnDeleteShader
+	call.args.a0 = s.c()
+	work <- call
 }
 
 // DeleteTexture deletes the given texture object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glDeleteTextures.xhtml
 func DeleteTexture(v Texture) {
-	C.glDeleteTextures(1, (*C.GLuint)(&v.Value))
+	var call call
+	call.args.fn = C.glfnDeleteTexture
+	call.args.a0 = v.c()
+	work <- call
 }
 
 // DepthFunc sets the function used for depth buffer comparisons.
@@ -337,14 +512,20 @@ func DeleteTexture(v Texture) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glDepthFunc.xhtml
 func DepthFunc(fn Enum) {
-	C.glDepthFunc(fn.c())
+	var call call
+	call.args.fn = C.glfnDepthFunc
+	call.args.a0 = fn.c()
+	work <- call
 }
 
 // DepthMask sets the depth buffer enabled for writing.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glDepthMask.xhtml
 func DepthMask(flag bool) {
-	C.glDepthMask(glBoolean(flag))
+	var call call
+	call.args.fn = C.glfnDepthMask
+	call.args.a0 = glBoolean(flag)
+	work <- call
 }
 
 // DepthRangef sets the mapping from normalized device coordinates to
@@ -352,40 +533,67 @@ func DepthMask(flag bool) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glDepthRangef.xhtml
 func DepthRangef(n, f float32) {
-	depthRangef(n, f)
+	var call call
+	call.args.fn = C.glfnDepthRangef
+	call.args.a0 = C.uintptr_t(math.Float32bits(n))
+	call.args.a1 = C.uintptr_t(math.Float32bits(f))
+	work <- call
 }
 
 // DetachShader detaches the shader s from the program p.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glDetachShader.xhtml
 func DetachShader(p Program, s Shader) {
-	C.glDetachShader(p.c(), s.c())
+	var call call
+	call.args.fn = C.glfnDetachShader
+	call.args.a0 = p.c()
+	call.args.a1 = s.c()
+	work <- call
 }
 
 // Disable disables various GL capabilities.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glDisable.xhtml
 func Disable(cap Enum) {
-	C.glDisable(cap.c())
+	var call call
+	call.args.fn = C.glfnDisable
+	call.args.a0 = cap.c()
+	work <- call
 }
 
+// DisableVertexAttribArray disables a vertex attribute array.
+//
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glDisableVertexAttribArray.xhtml
 func DisableVertexAttribArray(a Attrib) {
-	C.glDisableVertexAttribArray(a.c())
+	var call call
+	call.args.fn = C.glfnDisableVertexAttribArray
+	call.args.a0 = a.c()
+	work <- call
 }
 
 // DrawArrays renders geometric primitives from the bound data.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glDrawArrays.xhtml
 func DrawArrays(mode Enum, first, count int) {
-	C.glDrawArrays(mode.c(), C.GLint(first), C.GLsizei(count))
+	var call call
+	call.args.fn = C.glfnDrawArrays
+	call.args.a0 = mode.c()
+	call.args.a1 = C.uintptr_t(first)
+	call.args.a2 = C.uintptr_t(count)
+	work <- call
 }
 
 // DrawElements renders primitives from a bound buffer.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glDrawElements.xhtml
 func DrawElements(mode Enum, count int, ty Enum, offset int) {
-	C.glDrawElements(mode.c(), C.GLsizei(count), ty.c(), unsafe.Pointer(uintptr(offset)))
+	var call call
+	call.args.fn = C.glfnDrawElements
+	call.args.a0 = mode.c()
+	call.args.a1 = C.uintptr_t(count)
+	call.args.a2 = ty.c()
+	call.args.a3 = C.uintptr_t(offset)
+	work <- call
 }
 
 // TODO(crawshaw): consider DrawElements8 / DrawElements16 / DrawElements32
@@ -394,14 +602,20 @@ func DrawElements(mode Enum, count int, ty Enum, offset int) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glEnable.xhtml
 func Enable(cap Enum) {
-	C.glEnable(cap.c())
+	var call call
+	call.args.fn = C.glfnEnable
+	call.args.a0 = cap.c()
+	work <- call
 }
 
 // EnableVertexAttribArray enables a vertex attribute array.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glEnableVertexAttribArray.xhtml
 func EnableVertexAttribArray(a Attrib) {
-	C.glEnableVertexAttribArray(a.c())
+	var call call
+	call.args.fn = C.glfnEnableVertexAttribArray
+	call.args.a0 = a.c()
+	work <- call
 }
 
 // Finish blocks until the effects of all previously called GL
@@ -409,7 +623,11 @@ func EnableVertexAttribArray(a Attrib) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glFinish.xhtml
 func Finish() {
-	C.glFinish()
+	var call call
+	call.args.fn = C.glfnFinish
+	call.blocking = true
+	work <- call
+	<-retvalue
 }
 
 // Flush empties all buffers. It does not block.
@@ -419,21 +637,38 @@ func Finish() {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glFlush.xhtml
 func Flush() {
-	C.glFlush()
+	var call call
+	call.args.fn = C.glfnFlush
+	call.blocking = true
+	work <- call
+	<-retvalue
 }
 
 // FramebufferRenderbuffer attaches rb to the current frame buffer.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glFramebufferRenderbuffer.xhtml
 func FramebufferRenderbuffer(target, attachment, rbTarget Enum, rb Renderbuffer) {
-	C.glFramebufferRenderbuffer(target.c(), attachment.c(), rbTarget.c(), rb.c())
+	var call call
+	call.args.fn = C.glfnFramebufferRenderbuffer
+	call.args.a0 = target.c()
+	call.args.a1 = attachment.c()
+	call.args.a2 = rbTarget.c()
+	call.args.a3 = rb.c()
+	work <- call
 }
 
 // FramebufferTexture2D attaches the t to the current frame buffer.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glFramebufferTexture2D.xhtml
 func FramebufferTexture2D(target, attachment, texTarget Enum, t Texture, level int) {
-	C.glFramebufferTexture2D(target.c(), attachment.c(), texTarget.c(), t.c(), C.GLint(level))
+	var call call
+	call.args.fn = C.glfnFramebufferTexture2D
+	call.args.a0 = target.c()
+	call.args.a1 = attachment.c()
+	call.args.a2 = texTarget.c()
+	call.args.a3 = t.c()
+	call.args.a4 = C.uintptr_t(level)
+	work <- call
 }
 
 // FrontFace defines which polygons are front-facing.
@@ -442,14 +677,20 @@ func FramebufferTexture2D(target, attachment, texTarget Enum, t Texture, level i
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glFrontFace.xhtml
 func FrontFace(mode Enum) {
-	C.glFrontFace(mode.c())
+	var call call
+	call.args.fn = C.glfnFrontFace
+	call.args.a0 = mode.c()
+	work <- call
 }
 
 // GenerateMipmap generates mipmaps for the current texture.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGenerateMipmap.xhtml
 func GenerateMipmap(target Enum) {
-	C.glGenerateMipmap(target.c())
+	var call call
+	call.args.fn = C.glfnGenerateMipmap
+	call.args.a0 = target.c()
+	work <- call
 }
 
 // GetActiveAttrib returns details about an active attribute variable.
@@ -462,10 +703,22 @@ func GetActiveAttrib(p Program, index uint32) (name string, size int, ty Enum) {
 	bufSize := GetProgrami(p, ACTIVE_ATTRIBUTE_MAX_LENGTH)
 	buf := C.malloc(C.size_t(bufSize))
 	defer C.free(buf)
-
 	var cSize C.GLint
 	var cType C.GLenum
-	C.glGetActiveAttrib(p.c(), C.GLuint(index), C.GLsizei(bufSize), nil, &cSize, &cType, (*C.GLchar)(buf))
+
+	var call call
+	call.args.fn = C.glfnGetActiveAttrib
+	call.blocking = true
+	call.args.a0 = p.c()
+	call.args.a1 = C.uintptr_t(index)
+	call.args.a2 = C.uintptr_t(bufSize)
+	call.args.a3 = 0
+	call.args.a4 = C.uintptr_t(uintptr(unsafe.Pointer(&cSize)))
+	call.args.a5 = C.uintptr_t(uintptr(unsafe.Pointer(&cType)))
+	call.args.a6 = C.uintptr_t(uintptr(unsafe.Pointer(buf)))
+	work <- call
+	<-retvalue
+
 	return C.GoString((*C.char)(buf)), int(cSize), Enum(cType)
 }
 
@@ -479,11 +732,22 @@ func GetActiveUniform(p Program, index uint32) (name string, size int, ty Enum) 
 	bufSize := GetProgrami(p, ACTIVE_UNIFORM_MAX_LENGTH)
 	buf := C.malloc(C.size_t(bufSize))
 	defer C.free(buf)
-
 	var cSize C.GLint
 	var cType C.GLenum
 
-	C.glGetActiveUniform(p.c(), C.GLuint(index), C.GLsizei(bufSize), nil, &cSize, &cType, (*C.GLchar)(buf))
+	var call call
+	call.args.fn = C.glfnGetActiveUniform
+	call.blocking = true
+	call.args.a0 = p.c()
+	call.args.a1 = C.uintptr_t(index)
+	call.args.a2 = C.uintptr_t(bufSize)
+	call.args.a3 = 0
+	call.args.a4 = C.uintptr_t(uintptr(unsafe.Pointer(&cSize)))
+	call.args.a5 = C.uintptr_t(uintptr(unsafe.Pointer(&cType)))
+	call.args.a6 = C.uintptr_t(uintptr(unsafe.Pointer(buf)))
+	work <- call
+	<-retvalue
+
 	return C.GoString((*C.char)(buf)), int(cSize), Enum(cType)
 }
 
@@ -494,7 +758,16 @@ func GetAttachedShaders(p Program) []Shader {
 	shadersLen := GetProgrami(p, ATTACHED_SHADERS)
 	var n C.GLsizei
 	buf := make([]C.GLuint, shadersLen)
-	C.glGetAttachedShaders(p.c(), C.GLsizei(shadersLen), &n, &buf[0])
+	var call call
+	call.blocking = true
+	call.args.fn = C.glfnGetAttachedShaders
+	call.args.a0 = p.c()
+	call.args.a1 = C.uintptr_t(shadersLen)
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&n)))
+	call.args.a3 = C.uintptr_t(uintptr(unsafe.Pointer(&buf[0])))
+	work <- call
+	<-retvalue
+
 	buf = buf[:int(n)]
 	shaders := make([]Shader, len(buf))
 	for i, s := range buf {
@@ -507,9 +780,13 @@ func GetAttachedShaders(p Program) []Shader {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetAttribLocation.xhtml
 func GetAttribLocation(p Program, name string) Attrib {
-	str := unsafe.Pointer(C.CString(name))
-	defer C.free(str)
-	return Attrib{Value: uint(C.glGetAttribLocation(p.c(), (*C.GLchar)(str)))}
+	var call call
+	call.args.fn = C.glfnGetAttribLocation
+	call.blocking = true
+	call.args.a0 = p.c()
+	call.args.a1 = C.uintptr_t(uintptr(unsafe.Pointer(C.CString(name))))
+	work <- call
+	return Attrib{Value: uint(<-retvalue)}
 }
 
 // GetBooleanv returns the boolean values of parameter pname.
@@ -519,7 +796,15 @@ func GetAttribLocation(p Program, name string) Attrib {
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGet.xhtml
 func GetBooleanv(dst []bool, pname Enum) {
 	buf := make([]C.GLboolean, len(dst))
-	C.glGetBooleanv(pname.c(), &buf[0])
+
+	var call call
+	call.args.fn = C.glfnGetBooleanv
+	call.blocking = true
+	call.args.a0 = pname.c()
+	call.args.a1 = C.uintptr_t(uintptr(unsafe.Pointer(&buf[0])))
+	work <- call
+	<-retvalue
+
 	for i, v := range buf {
 		dst[i] = v != 0
 	}
@@ -529,7 +814,13 @@ func GetBooleanv(dst []bool, pname Enum) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGet.xhtml
 func GetFloatv(dst []float32, pname Enum) {
-	C.glGetFloatv(pname.c(), (*C.GLfloat)(&dst[0]))
+	var call call
+	call.args.fn = C.glfnGetFloatv
+	call.blocking = true
+	call.args.a0 = pname.c()
+	call.args.a1 = C.uintptr_t(uintptr(unsafe.Pointer(&dst[0])))
+	work <- call
+	<-retvalue
 }
 
 // GetIntegerv returns the int values of parameter pname.
@@ -537,11 +828,19 @@ func GetFloatv(dst []float32, pname Enum) {
 // Single values may be queried more easily using GetInteger.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGet.xhtml
-func GetIntegerv(pname Enum, data []int32) {
-	buf := make([]C.GLint, len(data))
-	C.glGetIntegerv(pname.c(), &buf[0])
+func GetIntegerv(dst []int32, pname Enum) {
+	buf := make([]C.GLint, len(dst))
+
+	var call call
+	call.args.fn = C.glfnGetIntegerv
+	call.blocking = true
+	call.args.a0 = pname.c()
+	call.args.a1 = C.uintptr_t(uintptr(unsafe.Pointer(&buf[0])))
+	work <- call
+	<-retvalue
+
 	for i, v := range buf {
-		data[i] = int32(v)
+		dst[i] = int32(v)
 	}
 }
 
@@ -549,25 +848,33 @@ func GetIntegerv(pname Enum, data []int32) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGet.xhtml
 func GetInteger(pname Enum) int {
-	var v C.GLint
-	C.glGetIntegerv(pname.c(), &v)
-	return int(v)
+	var v [1]int32
+	GetIntegerv(v[:], pname)
+	return int(v[0])
 }
 
 // GetBufferParameteri returns a parameter for the active buffer.
 //
-// http://www.khronos.org/opengles/sdk/docs/man3/html/glGetBufferParameteriv.xhtml
-func GetBufferParameteri(target, pname Enum) int {
-	var params C.GLint
-	C.glGetBufferParameteriv(target.c(), pname.c(), &params)
-	return int(params)
+// http://www.khronos.org/opengles/sdk/docs/man3/html/glGetBufferParameter.xhtml
+func GetBufferParameteri(target, value Enum) int {
+	var call call
+	call.args.fn = C.glfnGetBufferParameteri
+	call.blocking = true
+	call.args.a0 = target.c()
+	call.args.a1 = value.c()
+	work <- call
+	return int(<-retvalue)
 }
 
 // GetError returns the next error.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetError.xhtml
 func GetError() Enum {
-	return Enum(C.glGetError())
+	var call call
+	call.args.fn = C.glfnGetError
+	call.blocking = true
+	work <- call
+	return Enum(<-retvalue)
 }
 
 // GetFramebufferAttachmentParameteri returns attachment parameters
@@ -575,18 +882,27 @@ func GetError() Enum {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetFramebufferAttachmentParameteriv.xhtml
 func GetFramebufferAttachmentParameteri(target, attachment, pname Enum) int {
-	var params C.GLint
-	C.glGetFramebufferAttachmentParameteriv(target.c(), attachment.c(), pname.c(), &params)
-	return int(params)
+	var call call
+	call.args.fn = C.glfnGetFramebufferAttachmentParameteriv
+	call.blocking = true
+	call.args.a0 = target.c()
+	call.args.a1 = attachment.c()
+	call.args.a2 = pname.c()
+	work <- call
+	return int(<-retvalue)
 }
 
 // GetProgrami returns a parameter value for a program.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetProgramiv.xhtml
 func GetProgrami(p Program, pname Enum) int {
-	var params C.GLint
-	C.glGetProgramiv(p.c(), pname.c(), &params)
-	return int(params)
+	var call call
+	call.args.fn = C.glfnGetProgramiv
+	call.blocking = true
+	call.args.a0 = p.c()
+	call.args.a1 = pname.c()
+	work <- call
+	return int(<-retvalue)
 }
 
 // GetProgramInfoLog returns the information log for a program.
@@ -595,8 +911,17 @@ func GetProgrami(p Program, pname Enum) int {
 func GetProgramInfoLog(p Program) string {
 	infoLen := GetProgrami(p, INFO_LOG_LENGTH)
 	buf := C.malloc(C.size_t(infoLen))
-	C.free(buf)
-	C.glGetProgramInfoLog(p.c(), C.GLsizei(infoLen), nil, (*C.GLchar)(buf))
+	defer C.free(buf)
+
+	var call call
+	call.args.fn = C.glfnGetProgramInfoLog
+	call.blocking = true
+	call.args.a0 = p.c()
+	call.args.a1 = C.uintptr_t(infoLen)
+	call.args.a2 = 0
+	call.args.a3 = C.uintptr_t(uintptr(buf))
+	work <- call
+	<-retvalue
 	return C.GoString((*C.char)(buf))
 }
 
@@ -604,18 +929,26 @@ func GetProgramInfoLog(p Program) string {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetRenderbufferParameteriv.xhtml
 func GetRenderbufferParameteri(target, pname Enum) int {
-	var params C.GLint
-	C.glGetRenderbufferParameteriv(target.c(), pname.c(), &params)
-	return int(params)
+	var call call
+	call.args.fn = C.glfnGetRenderbufferParameteriv
+	call.blocking = true
+	call.args.a0 = target.c()
+	call.args.a1 = pname.c()
+	work <- call
+	return int(<-retvalue)
 }
 
-// GetRenderbufferParameteri returns a parameter value for a shader.
+// GetShaderi returns a parameter value for a shader.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetShaderiv.xhtml
 func GetShaderi(s Shader, pname Enum) int {
-	var params C.GLint
-	C.glGetShaderiv(s.c(), pname.c(), &params)
-	return int(params)
+	var call call
+	call.args.fn = C.glfnGetShaderiv
+	call.blocking = true
+	call.args.a0 = s.c()
+	call.args.a1 = pname.c()
+	work <- call
+	return int(<-retvalue)
 }
 
 // GetShaderInfoLog returns the information log for a shader.
@@ -625,20 +958,38 @@ func GetShaderInfoLog(s Shader) string {
 	infoLen := GetShaderi(s, INFO_LOG_LENGTH)
 	buf := C.malloc(C.size_t(infoLen))
 	defer C.free(buf)
-	C.glGetShaderInfoLog(s.c(), C.GLsizei(infoLen), nil, (*C.GLchar)(buf))
+
+	var call call
+	call.args.fn = C.glfnGetShaderInfoLog
+	call.blocking = true
+	call.args.a0 = s.c()
+	call.args.a1 = C.uintptr_t(infoLen)
+	call.args.a2 = 0
+	call.args.a3 = C.uintptr_t(uintptr(buf))
+	work <- call
+	<-retvalue
 	return C.GoString((*C.char)(buf))
 }
+
+///////////////
 
 // GetShaderPrecisionFormat returns range and precision limits for
 // shader types.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetShaderPrecisionFormat.xhtml
 func GetShaderPrecisionFormat(shadertype, precisiontype Enum) (rangeLow, rangeHigh, precision int) {
-	const glintSize = 4
 	var cRange [2]C.GLint
 	var cPrecision C.GLint
 
-	C.glGetShaderPrecisionFormat(shadertype.c(), precisiontype.c(), &cRange[0], &cPrecision)
+	var call call
+	call.args.fn = C.glfnGetShaderPrecisionFormat
+	call.blocking = true
+	call.args.a0 = shadertype.c()
+	call.args.a1 = precisiontype.c()
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&cRange[0])))
+	call.args.a3 = C.uintptr_t(uintptr(unsafe.Pointer(&cPrecision)))
+	work <- call
+	<-retvalue
 	return int(cRange[0]), int(cRange[1]), int(cPrecision)
 }
 
@@ -652,7 +1003,16 @@ func GetShaderSource(s Shader) string {
 	}
 	buf := C.malloc(C.size_t(sourceLen))
 	defer C.free(buf)
-	C.glGetShaderSource(s.c(), C.GLsizei(sourceLen), nil, (*C.GLchar)(buf))
+
+	var call call
+	call.args.fn = C.glfnGetShaderSource
+	call.blocking = true
+	call.args.a0 = s.c()
+	call.args.a1 = C.uintptr_t(sourceLen)
+	call.args.a2 = 0
+	call.args.a3 = C.uintptr_t(uintptr(buf))
+	work <- call
+	<-retvalue
 	return C.GoString((*C.char)(buf))
 }
 
@@ -667,78 +1027,127 @@ func GetShaderSource(s Shader) string {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetString.xhtml
 func GetString(pname Enum) string {
-	// Bounce through unsafe.Pointer, because on some platforms
-	// GetString returns an *unsigned char which doesn't convert.
-	return C.GoString((*C.char)((unsafe.Pointer)(C.glGetString(pname.c()))))
+	var call call
+	call.args.fn = C.glfnGetString
+	call.blocking = true
+	call.args.a0 = pname.c()
+	work <- call
+	return C.GoString((*C.char)((unsafe.Pointer(uintptr(<-retvalue)))))
 }
 
 // GetTexParameterfv returns the float values of a texture parameter.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetTexParameter.xhtml
 func GetTexParameterfv(dst []float32, target, pname Enum) {
-	C.glGetTexParameterfv(target.c(), pname.c(), (*C.GLfloat)(&dst[0]))
+	var call call
+	call.args.fn = C.glfnGetTexParameterfv
+	call.blocking = true
+	call.args.a0 = target.c()
+	call.args.a1 = pname.c()
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&dst[0])))
+	work <- call
+	<-retvalue
 }
 
 // GetTexParameteriv returns the int values of a texture parameter.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetTexParameter.xhtml
 func GetTexParameteriv(dst []int32, target, pname Enum) {
-	C.glGetTexParameteriv(target.c(), pname.c(), (*C.GLint)(&dst[0]))
+	var call call
+	call.args.fn = C.glfnGetTexParameteriv
+	call.blocking = true
+	call.args.a0 = target.c()
+	call.args.a1 = pname.c()
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&dst[0])))
+	work <- call
+	<-retvalue
 }
 
 // GetUniformfv returns the float values of a uniform variable.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetUniform.xhtml
 func GetUniformfv(dst []float32, src Uniform, p Program) {
-	C.glGetUniformfv(p.c(), src.c(), (*C.GLfloat)(&dst[0]))
+	var call call
+	call.args.fn = C.glfnGetUniformfv
+	call.blocking = true
+	call.args.a0 = p.c()
+	call.args.a1 = src.c()
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&dst[0])))
+	work <- call
+	<-retvalue
 }
 
 // GetUniformiv returns the float values of a uniform variable.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetUniform.xhtml
 func GetUniformiv(dst []int32, src Uniform, p Program) {
-	C.glGetUniformiv(p.c(), src.c(), (*C.GLint)(&dst[0]))
+	var call call
+	call.args.fn = C.glfnGetUniformiv
+	call.blocking = true
+	call.args.a0 = p.c()
+	call.args.a1 = src.c()
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&dst[0])))
+	work <- call
+	<-retvalue
 }
 
 // GetUniformLocation returns the location of a uniform variable.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetUniformLocation.xhtml
 func GetUniformLocation(p Program, name string) Uniform {
-	str := unsafe.Pointer(C.CString(name))
-	defer C.free(str)
-	return Uniform{Value: int32(C.glGetUniformLocation(p.c(), (*C.GLchar)(str)))}
+	var call call
+	call.blocking = true
+	call.args.fn = C.glfnGetUniformLocation
+	call.args.a0 = p.c()
+	call.args.a1 = C.uintptr_t(uintptr(unsafe.Pointer(C.CString(name))))
+	work <- call
+	return Uniform{Value: int32(<-retvalue)}
 }
 
 // GetVertexAttribf reads the float value of a vertex attribute.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetVertexAttrib.xhtml
 func GetVertexAttribf(src Attrib, pname Enum) float32 {
-	var params C.GLfloat
-	C.glGetVertexAttribfv(src.c(), pname.c(), &params)
-	return float32(params)
+	var params [1]float32
+	GetVertexAttribfv(params[:], src, pname)
+	return params[0]
 }
 
 // GetVertexAttribfv reads float values of a vertex attribute.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetVertexAttrib.xhtml
 func GetVertexAttribfv(dst []float32, src Attrib, pname Enum) {
-	C.glGetVertexAttribfv(src.c(), pname.c(), (*C.GLfloat)(&dst[0]))
+	var call call
+	call.args.fn = C.glfnGetVertexAttribfv
+	call.blocking = true
+	call.args.a0 = src.c()
+	call.args.a1 = pname.c()
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&dst[0])))
+	work <- call
+	<-retvalue
 }
 
 // GetVertexAttribi reads the int value of a vertex attribute.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetVertexAttrib.xhtml
 func GetVertexAttribi(src Attrib, pname Enum) int32 {
-	var params C.GLint
-	C.glGetVertexAttribiv(src.c(), pname.c(), &params)
-	return int32(params)
+	var params [1]int32
+	GetVertexAttribiv(params[:], src, pname)
+	return params[0]
 }
 
 // GetVertexAttribiv reads int values of a vertex attribute.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetVertexAttrib.xhtml
 func GetVertexAttribiv(dst []int32, src Attrib, pname Enum) {
-	C.glGetVertexAttribiv(src.c(), pname.c(), (*C.GLint)(&dst[0]))
+	var call call
+	call.args.fn = C.glfnGetVertexAttribiv
+	call.blocking = true
+	call.args.a0 = src.c()
+	call.args.a1 = pname.c()
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&dst[0])))
+	work <- call
+	<-retvalue
 }
 
 // TODO(crawshaw): glGetVertexAttribPointerv
@@ -747,84 +1156,137 @@ func GetVertexAttribiv(dst []int32, src Attrib, pname Enum) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glHint.xhtml
 func Hint(target, mode Enum) {
-	C.glHint(target.c(), mode.c())
+	var call call
+	call.args.fn = C.glfnHint
+	call.args.a0 = target.c()
+	call.args.a1 = mode.c()
+	work <- call
 }
 
 // IsBuffer reports if b is a valid buffer.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glIsBuffer.xhtml
 func IsBuffer(b Buffer) bool {
-	return C.glIsBuffer(b.c()) != 0
+	var call call
+	call.args.fn = C.glfnIsBuffer
+	call.blocking = true
+	call.args.a0 = b.c()
+	work <- call
+	return <-retvalue != 0
 }
 
 // IsEnabled reports if cap is an enabled capability.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glIsEnabled.xhtml
 func IsEnabled(cap Enum) bool {
-	return C.glIsEnabled(cap.c()) != 0
+	var call call
+	call.args.fn = C.glfnIsEnabled
+	call.blocking = true
+	call.args.a0 = cap.c()
+	work <- call
+	return <-retvalue != 0
 }
 
 // IsFramebuffer reports if fb is a valid frame buffer.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glIsFramebuffer.xhtml
 func IsFramebuffer(fb Framebuffer) bool {
-	return C.glIsFramebuffer(fb.c()) != 0
+	var call call
+	call.args.fn = C.glfnIsFramebuffer
+	call.blocking = true
+	call.args.a0 = fb.c()
+	work <- call
+	return <-retvalue != 0
 }
 
 // IsProgram reports if p is a valid program object.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glIsProgram.xhtml
 func IsProgram(p Program) bool {
-	return C.glIsProgram(p.c()) != 0
+	var call call
+	call.args.fn = C.glfnIsProgram
+	call.blocking = true
+	call.args.a0 = p.c()
+	work <- call
+	return <-retvalue != 0
 }
 
 // IsRenderbuffer reports if rb is a valid render buffer.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glIsRenderbuffer.xhtml
 func IsRenderbuffer(rb Renderbuffer) bool {
-	return C.glIsRenderbuffer(rb.c()) != 0
+	var call call
+	call.args.fn = C.glfnIsRenderbuffer
+	call.blocking = true
+	call.args.a0 = rb.c()
+	work <- call
+	return <-retvalue != 0
 }
 
 // IsShader reports if s is valid shader.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glIsShader.xhtml
 func IsShader(s Shader) bool {
-	return C.glIsShader(s.c()) != 0
+	var call call
+	call.args.fn = C.glfnIsShader
+	call.blocking = true
+	call.args.a0 = s.c()
+	work <- call
+	return <-retvalue != 0
 }
 
 // IsTexture reports if t is a valid texture.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glIsTexture.xhtml
 func IsTexture(t Texture) bool {
-	return C.glIsTexture(t.c()) != 0
+	var call call
+	call.args.fn = C.glfnIsTexture
+	call.blocking = true
+	call.args.a0 = t.c()
+	work <- call
+	return <-retvalue != 0
 }
 
 // LineWidth specifies the width of lines.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glLineWidth.xhtml
 func LineWidth(width float32) {
-	C.glLineWidth(C.GLfloat(width))
+	var call call
+	call.args.fn = C.glfnLineWidth
+	call.args.a0 = C.uintptr_t(math.Float32bits(width))
+	work <- call
 }
 
 // LinkProgram links the specified program.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glLinkProgram.xhtml
 func LinkProgram(p Program) {
-	C.glLinkProgram(p.c())
+	var call call
+	call.args.fn = C.glfnLinkProgram
+	call.args.a0 = p.c()
+	work <- call
 }
 
 // PixelStorei sets pixel storage parameters.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glPixelStorei.xhtml
 func PixelStorei(pname Enum, param int32) {
-	C.glPixelStorei(pname.c(), C.GLint(param))
+	var call call
+	call.args.fn = C.glfnPixelStorei
+	call.args.a0 = pname.c()
+	call.args.a1 = C.uintptr_t(param)
+	work <- call
 }
 
 // PolygonOffset sets the scaling factors for depth offsets.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glPolygonOffset.xhtml
 func PolygonOffset(factor, units float32) {
-	C.glPolygonOffset(C.GLfloat(factor), C.GLfloat(units))
+	var call call
+	call.args.fn = C.glfnPolygonOffset
+	call.args.a0 = C.uintptr_t(math.Float32bits(factor))
+	call.args.a1 = C.uintptr_t(math.Float32bits(units))
+	work <- call
 }
 
 // ReadPixels returns pixel data from a buffer.
@@ -833,15 +1295,28 @@ func PolygonOffset(factor, units float32) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glReadPixels.xhtml
 func ReadPixels(dst []byte, x, y, width, height int, format, ty Enum) {
+	var call call
+	call.args.fn = C.glfnReadPixels
+	call.blocking = true
 	// TODO(crawshaw): support PIXEL_PACK_BUFFER in GLES3, uses offset.
-	C.glReadPixels(C.GLint(x), C.GLint(y), C.GLsizei(width), C.GLsizei(height), format.c(), ty.c(), unsafe.Pointer(&dst[0]))
+	call.args.a0 = C.uintptr_t(x)
+	call.args.a1 = C.uintptr_t(y)
+	call.args.a2 = C.uintptr_t(width)
+	call.args.a3 = C.uintptr_t(height)
+	call.args.a4 = format.c()
+	call.args.a5 = ty.c()
+	call.args.a6 = C.uintptr_t(uintptr(unsafe.Pointer(&dst[0])))
+	work <- call
+	<-retvalue
 }
 
 // ReleaseShaderCompiler frees resources allocated by the shader compiler.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glReleaseShaderCompiler.xhtml
 func ReleaseShaderCompiler() {
-	C.glReleaseShaderCompiler()
+	var call call
+	call.args.fn = C.glfnReleaseShaderCompiler
+	work <- call
 }
 
 // RenderbufferStorage establishes the data storage, format, and
@@ -849,22 +1324,40 @@ func ReleaseShaderCompiler() {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glRenderbufferStorage.xhtml
 func RenderbufferStorage(target, internalFormat Enum, width, height int) {
-	C.glRenderbufferStorage(target.c(), internalFormat.c(), C.GLsizei(width), C.GLsizei(height))
+	var call call
+	call.args.fn = C.glfnRenderbufferStorage
+	call.args.a0 = target.c()
+	call.args.a1 = internalFormat.c()
+	call.args.a2 = C.uintptr_t(width)
+	call.args.a3 = C.uintptr_t(height)
+	work <- call
 }
 
 // SampleCoverage sets multisample coverage parameters.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glSampleCoverage.xhtml
 func SampleCoverage(value float32, invert bool) {
-	sampleCoverage(value, invert)
+	var call call
+	call.args.fn = C.glfnSampleCoverage
+	call.args.a0 = C.uintptr_t(math.Float32bits(value))
+	call.args.a1 = glBoolean(invert)
+	work <- call
 }
 
 // Scissor defines the scissor box rectangle, in window coordinates.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glScissor.xhtml
 func Scissor(x, y, width, height int32) {
-	C.glScissor(C.GLint(x), C.GLint(y), C.GLsizei(width), C.GLsizei(height))
+	var call call
+	call.args.fn = C.glfnScissor
+	call.args.a0 = C.uintptr_t(x)
+	call.args.a1 = C.uintptr_t(y)
+	call.args.a2 = C.uintptr_t(width)
+	call.args.a3 = C.uintptr_t(height)
+	work <- call
 }
+
+var escape unsafe.Pointer
 
 // TODO(crawshaw): ShaderBinary
 
@@ -872,111 +1365,217 @@ func Scissor(x, y, width, height int32) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glShaderSource.xhtml
 func ShaderSource(s Shader, src string) {
-	str := (*C.GLchar)(C.CString(src))
-	defer C.free(unsafe.Pointer(str))
-	C.glShaderSource(s.c(), 1, &str, nil)
+	var call call
+	call.args.fn = C.glfnShaderSource
+	call.args.a0 = s.c()
+	call.args.a1 = 1
+
+	// We are passing a char**. Make sure both the string and its
+	// containing 1-element array are off the stack. Both are freed
+	// in work.c.
+	cstr := C.CString(src)
+	cstrp := (**C.char)(C.malloc(C.size_t(unsafe.Sizeof(cstr))))
+	*cstrp = cstr
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(cstrp)))
+	work <- call
 }
 
+// StencilFunc sets the front and back stencil test reference value.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glStencilFunc.xhtml
 func StencilFunc(fn Enum, ref int, mask uint32) {
-	C.glStencilFunc(fn.c(), C.GLint(ref), C.GLuint(mask))
+	var call call
+	call.args.fn = C.glfnStencilFunc
+	call.args.a0 = fn.c()
+	call.args.a1 = C.uintptr_t(ref)
+	call.args.a2 = C.uintptr_t(mask)
+	work <- call
 }
 
+// StencilFunc sets the front or back stencil test reference value.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glStencilFuncSeparate.xhtml
 func StencilFuncSeparate(face, fn Enum, ref int, mask uint32) {
-	C.glStencilFuncSeparate(face.c(), fn.c(), C.GLint(ref), C.GLuint(mask))
+	var call call
+	call.args.fn = C.glfnStencilFuncSeparate
+	call.args.a0 = face.c()
+	call.args.a1 = fn.c()
+	call.args.a2 = C.uintptr_t(ref)
+	call.args.a3 = C.uintptr_t(mask)
+	work <- call
 }
 
 // StencilMask controls the writing of bits in the stencil planes.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glStencilMask.xhtml
 func StencilMask(mask uint32) {
-	C.glStencilMask(C.GLuint(mask))
+	var call call
+	call.args.fn = C.glfnStencilMask
+	call.args.a0 = C.uintptr_t(mask)
+	work <- call
 }
 
 // StencilMaskSeparate controls the writing of bits in the stencil planes.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glStencilMaskSeparate.xhtml
 func StencilMaskSeparate(face Enum, mask uint32) {
-	C.glStencilMaskSeparate(face.c(), C.GLuint(mask))
+	var call call
+	call.args.fn = C.glfnStencilMaskSeparate
+	call.args.a0 = face.c()
+	call.args.a1 = C.uintptr_t(mask)
+	work <- call
 }
 
 // StencilOp sets front and back stencil test actions.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glStencilOp.xhtml
 func StencilOp(fail, zfail, zpass Enum) {
-	C.glStencilOp(fail.c(), zfail.c(), zpass.c())
+	var call call
+	call.args.fn = C.glfnStencilOp
+	call.args.a0 = fail.c()
+	call.args.a1 = zfail.c()
+	call.args.a2 = zpass.c()
+	work <- call
 }
 
 // StencilOpSeparate sets front or back stencil tests.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glStencilOpSeparate.xhtml
 func StencilOpSeparate(face, sfail, dpfail, dppass Enum) {
-	C.glStencilOpSeparate(face.c(), sfail.c(), dpfail.c(), dppass.c())
+	var call call
+	call.args.fn = C.glfnStencilOpSeparate
+	call.args.a0 = face.c()
+	call.args.a1 = sfail.c()
+	call.args.a2 = dpfail.c()
+	call.args.a3 = dppass.c()
+	work <- call
 }
 
 // TexImage2D writes a 2D texture image.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glTexImage2D.xhtml
 func TexImage2D(target Enum, level int, width, height int, format Enum, ty Enum, data []byte) {
+	// It is common to pass TexImage2D a nil data, indicating that a
+	// bound GL buffer is being used as the source. In that case, it
+	// is not necessary to block.
+	var call call
+	call.args.fn = C.glfnTexImage2D
 	// TODO(crawshaw): GLES3 offset for PIXEL_UNPACK_BUFFER and PIXEL_PACK_BUFFER.
-	p := unsafe.Pointer(nil)
+	call.args.a0 = target.c()
+	call.args.a1 = C.uintptr_t(level)
+	call.args.a2 = C.uintptr_t(format)
+	call.args.a3 = C.uintptr_t(width)
+	call.args.a4 = C.uintptr_t(height)
+	call.args.a5 = format.c()
+	call.args.a6 = ty.c()
 	if len(data) > 0 {
-		p = unsafe.Pointer(&data[0])
+		call.blocking = true
+		call.args.a7 = C.uintptr_t(uintptr(unsafe.Pointer(&data[0])))
+	} else {
+		call.args.a7 = 0
 	}
-	C.glTexImage2D(target.c(), C.GLint(level), C.GLint(format), C.GLsizei(width), C.GLsizei(height), 0, format.c(), ty.c(), p)
+	work <- call
+	if call.blocking {
+		<-retvalue
+	}
 }
 
 // TexSubImage2D writes a subregion of a 2D texture image.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glTexSubImage2D.xhtml
 func TexSubImage2D(target Enum, level int, x, y, width, height int, format, ty Enum, data []byte) {
+	var call call
+	call.args.fn = C.glfnTexSubImage2D
+	call.blocking = true
 	// TODO(crawshaw): GLES3 offset for PIXEL_UNPACK_BUFFER and PIXEL_PACK_BUFFER.
-	C.glTexSubImage2D(target.c(), C.GLint(level), C.GLint(x), C.GLint(y), C.GLsizei(width), C.GLsizei(height), format.c(), ty.c(), unsafe.Pointer(&data[0]))
+	call.args.a0 = target.c()
+	call.args.a1 = C.uintptr_t(level)
+	call.args.a2 = C.uintptr_t(x)
+	call.args.a3 = C.uintptr_t(y)
+	call.args.a4 = C.uintptr_t(width)
+	call.args.a5 = C.uintptr_t(height)
+	call.args.a6 = format.c()
+	call.args.a7 = ty.c()
+	call.args.a8 = C.uintptr_t(uintptr(unsafe.Pointer(&data[0])))
+	work <- call
+	<-retvalue
 }
 
 // TexParameterf sets a float texture parameter.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glTexParameter.xhtml
 func TexParameterf(target, pname Enum, param float32) {
-	C.glTexParameterf(target.c(), pname.c(), C.GLfloat(param))
+	var call call
+	call.args.fn = C.glfnTexParameterf
+	call.args.a0 = target.c()
+	call.args.a1 = pname.c()
+	call.args.a2 = C.uintptr_t(math.Float32bits(param))
+	work <- call
 }
 
 // TexParameterfv sets a float texture parameter array.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glTexParameter.xhtml
 func TexParameterfv(target, pname Enum, params []float32) {
-	C.glTexParameterfv(target.c(), pname.c(), (*C.GLfloat)(&params[0]))
+	var call call
+	call.args.fn = C.glfnTexParameterfv
+	call.blocking = true
+	call.args.a0 = target.c()
+	call.args.a1 = pname.c()
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&params[0])))
+	work <- call
+	<-retvalue
 }
 
 // TexParameteri sets an integer texture parameter.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glTexParameter.xhtml
 func TexParameteri(target, pname Enum, param int) {
-	C.glTexParameteri(target.c(), pname.c(), C.GLint(param))
+	var call call
+	call.args.fn = C.glfnTexParameteri
+	call.args.a0 = target.c()
+	call.args.a1 = pname.c()
+	call.args.a2 = C.uintptr_t(param)
+	work <- call
 }
 
 // TexParameteriv sets an integer texture parameter array.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glTexParameter.xhtml
 func TexParameteriv(target, pname Enum, params []int32) {
-	C.glTexParameteriv(target.c(), pname.c(), (*C.GLint)(&params[0]))
+	var call call
+	call.args.fn = C.glfnTexParameteriv
+	call.blocking = true
+	call.args.a0 = target.c()
+	call.args.a1 = pname.c()
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&params[0])))
+	work <- call
+	<-retvalue
 }
 
 // Uniform1f writes a float uniform variable.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func Uniform1f(dst Uniform, v float32) {
-	C.glUniform1f(dst.c(), C.GLfloat(v))
+	var call call
+	call.args.fn = C.glfnUniform1f
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(math.Float32bits(v))
+	work <- call
 }
 
 // Uniform1fv writes a [len(src)]float uniform array.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func Uniform1fv(dst Uniform, src []float32) {
-	C.glUniform1fv(dst.c(), C.GLsizei(len(src)), (*C.GLfloat)(&src[0]))
+	var call call
+	call.args.fn = C.glfnUniform1fv
+	call.blocking = true
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(len(src))
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
+	work <- call
+	<-retvalue
 }
 
 // Uniform1i writes an int uniform variable.
@@ -987,7 +1586,11 @@ func Uniform1fv(dst Uniform, src []float32) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func Uniform1i(dst Uniform, v int) {
-	C.glUniform1i(dst.c(), C.GLint(v))
+	var call call
+	call.args.fn = C.glfnUniform1i
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(v)
+	work <- call
 }
 
 // Uniform1iv writes a int uniform array of len(src) elements.
@@ -998,91 +1601,176 @@ func Uniform1i(dst Uniform, v int) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func Uniform1iv(dst Uniform, src []int32) {
-	C.glUniform1iv(dst.c(), C.GLsizei(len(src)), (*C.GLint)(&src[0]))
+	var call call
+	call.args.fn = C.glfnUniform1iv
+	call.blocking = true
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(len(src))
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
+	work <- call
+	<-retvalue
 }
 
 // Uniform2f writes a vec2 uniform variable.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func Uniform2f(dst Uniform, v0, v1 float32) {
-	C.glUniform2f(dst.c(), C.GLfloat(v0), C.GLfloat(v1))
+	var call call
+	call.args.fn = C.glfnUniform2f
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(math.Float32bits(v0))
+	call.args.a2 = C.uintptr_t(math.Float32bits(v1))
+	work <- call
 }
 
 // Uniform2fv writes a vec2 uniform array of len(src)/2 elements.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func Uniform2fv(dst Uniform, src []float32) {
-	C.glUniform2fv(dst.c(), C.GLsizei(len(src)/2), (*C.GLfloat)(&src[0]))
+	var call call
+	call.args.fn = C.glfnUniform2fv
+	call.blocking = true
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(len(src) / 2)
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
+	work <- call
+	<-retvalue
 }
 
 // Uniform2i writes an ivec2 uniform variable.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func Uniform2i(dst Uniform, v0, v1 int) {
-	C.glUniform2i(dst.c(), C.GLint(v0), C.GLint(v1))
+	var call call
+	call.args.fn = C.glfnUniform2i
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(v0)
+	call.args.a2 = C.uintptr_t(v1)
+	work <- call
 }
 
 // Uniform2iv writes an ivec2 uniform array of len(src)/2 elements.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func Uniform2iv(dst Uniform, src []int32) {
-	C.glUniform2iv(dst.c(), C.GLsizei(len(src)/2), (*C.GLint)(&src[0]))
+	var call call
+	call.args.fn = C.glfnUniform2iv
+	call.blocking = true
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(len(src) / 2)
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
+	work <- call
+	<-retvalue
 }
 
 // Uniform3f writes a vec3 uniform variable.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func Uniform3f(dst Uniform, v0, v1, v2 float32) {
-	C.glUniform3f(dst.c(), C.GLfloat(v0), C.GLfloat(v1), C.GLfloat(v2))
+	var call call
+	call.args.fn = C.glfnUniform3f
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(math.Float32bits(v0))
+	call.args.a2 = C.uintptr_t(math.Float32bits(v1))
+	call.args.a3 = C.uintptr_t(math.Float32bits(v2))
+	work <- call
 }
 
 // Uniform3fv writes a vec3 uniform array of len(src)/3 elements.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func Uniform3fv(dst Uniform, src []float32) {
-	C.glUniform3fv(dst.c(), C.GLsizei(len(src)/3), (*C.GLfloat)(&src[0]))
+	var call call
+	call.args.fn = C.glfnUniform3fv
+	call.blocking = true
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(len(src) / 3)
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
+	work <- call
+	<-retvalue
 }
 
 // Uniform3i writes an ivec3 uniform variable.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func Uniform3i(dst Uniform, v0, v1, v2 int32) {
-	C.glUniform3i(dst.c(), C.GLint(v0), C.GLint(v1), C.GLint(v2))
+	var call call
+	call.args.fn = C.glfnUniform3i
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(v0)
+	call.args.a2 = C.uintptr_t(v1)
+	call.args.a3 = C.uintptr_t(v2)
+	work <- call
 }
 
 // Uniform3iv writes an ivec3 uniform array of len(src)/3 elements.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func Uniform3iv(dst Uniform, src []int32) {
-	C.glUniform3iv(dst.c(), C.GLsizei(len(src)/3), (*C.GLint)(&src[0]))
+	var call call
+	call.args.fn = C.glfnUniform3iv
+	call.blocking = true
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(len(src) / 3)
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
+	work <- call
+	<-retvalue
 }
 
 // Uniform4f writes a vec4 uniform variable.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func Uniform4f(dst Uniform, v0, v1, v2, v3 float32) {
-	C.glUniform4f(dst.c(), C.GLfloat(v0), C.GLfloat(v1), C.GLfloat(v2), C.GLfloat(v3))
+	var call call
+	call.args.fn = C.glfnUniform4f
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(math.Float32bits(v0))
+	call.args.a2 = C.uintptr_t(math.Float32bits(v1))
+	call.args.a3 = C.uintptr_t(math.Float32bits(v2))
+	call.args.a4 = C.uintptr_t(math.Float32bits(v3))
+	work <- call
 }
 
 // Uniform4fv writes a vec4 uniform array of len(src)/4 elements.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func Uniform4fv(dst Uniform, src []float32) {
-	C.glUniform4fv(dst.c(), C.GLsizei(len(src)/4), (*C.GLfloat)(&src[0]))
+	var call call
+	call.args.fn = C.glfnUniform4fv
+	call.blocking = true
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(len(src) / 4)
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
+	work <- call
+	<-retvalue
 }
 
 // Uniform4i writes an ivec4 uniform variable.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func Uniform4i(dst Uniform, v0, v1, v2, v3 int32) {
-	C.glUniform4i(dst.c(), C.GLint(v0), C.GLint(v1), C.GLint(v2), C.GLint(v3))
+	var call call
+	call.args.fn = C.glfnUniform4i
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(v0)
+	call.args.a2 = C.uintptr_t(v1)
+	call.args.a3 = C.uintptr_t(v2)
+	call.args.a4 = C.uintptr_t(v3)
+	work <- call
 }
 
 // Uniform4i writes an ivec4 uniform array of len(src)/4 elements.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func Uniform4iv(dst Uniform, src []int32) {
-	C.glUniform4iv(dst.c(), C.GLsizei(len(src)/4), (*C.GLint)(&src[0]))
+	var call call
+	call.args.fn = C.glfnUniform4iv
+	call.blocking = true
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(len(src) / 4)
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
+	work <- call
+	<-retvalue
 }
 
 // UniformMatrix2fv writes 2x2 matrices. Each matrix uses four
@@ -1092,8 +1780,15 @@ func Uniform4iv(dst Uniform, src []int32) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func UniformMatrix2fv(dst Uniform, src []float32) {
+	var call call
+	call.args.fn = C.glfnUniformMatrix2fv
+	call.blocking = true
 	/// OpenGL ES 2 does not support transpose.
-	C.glUniformMatrix2fv(dst.c(), C.GLsizei(len(src)/4), 0, (*C.GLfloat)(&src[0]))
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(len(src) / 4)
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
+	work <- call
+	<-retvalue
 }
 
 // UniformMatrix3fv writes 3x3 matrices. Each matrix uses nine
@@ -1103,7 +1798,14 @@ func UniformMatrix2fv(dst Uniform, src []float32) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func UniformMatrix3fv(dst Uniform, src []float32) {
-	C.glUniformMatrix3fv(dst.c(), C.GLsizei(len(src)/9), 0, (*C.GLfloat)(&src[0]))
+	var call call
+	call.args.fn = C.glfnUniformMatrix3fv
+	call.blocking = true
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(len(src) / 9)
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
+	work <- call
+	<-retvalue
 }
 
 // UniformMatrix4fv writes 4x4 matrices. Each matrix uses 16
@@ -1113,14 +1815,24 @@ func UniformMatrix3fv(dst Uniform, src []float32) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 func UniformMatrix4fv(dst Uniform, src []float32) {
-	C.glUniformMatrix4fv(dst.c(), C.GLsizei(len(src)/16), 0, (*C.GLfloat)(&src[0]))
+	var call call
+	call.args.fn = C.glfnUniformMatrix4fv
+	call.blocking = true
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(len(src) / 16)
+	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
+	work <- call
+	<-retvalue
 }
 
 // UseProgram sets the active program.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glUseProgram.xhtml
 func UseProgram(p Program) {
-	C.glUseProgram(p.c())
+	var call call
+	call.args.fn = C.glfnUseProgram
+	call.args.a0 = p.c()
+	work <- call
 }
 
 // ValidateProgram checks to see whether the executables contained in
@@ -1130,63 +1842,112 @@ func UseProgram(p Program) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glValidateProgram.xhtml
 func ValidateProgram(p Program) {
-	C.glValidateProgram(p.c())
+	var call call
+	call.args.fn = C.glfnValidateProgram
+	call.args.a0 = p.c()
+	work <- call
 }
 
 // VertexAttrib1f writes a float vertex attribute.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glVertexAttrib.xhtml
 func VertexAttrib1f(dst Attrib, x float32) {
-	C.glVertexAttrib1f(dst.c(), C.GLfloat(x))
+	var call call
+	call.args.fn = C.glfnVertexAttrib1f
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(math.Float32bits(x))
+	work <- call
 }
 
 // VertexAttrib1fv writes a float vertex attribute.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glVertexAttrib.xhtml
 func VertexAttrib1fv(dst Attrib, src []float32) {
-	C.glVertexAttrib1fv(dst.c(), (*C.GLfloat)(&src[0]))
+	var call call
+	call.args.fn = C.glfnVertexAttrib1fv
+	call.blocking = true
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
+	work <- call
+	<-retvalue
 }
 
 // VertexAttrib2f writes a vec2 vertex attribute.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glVertexAttrib.xhtml
 func VertexAttrib2f(dst Attrib, x, y float32) {
-	C.glVertexAttrib2f(dst.c(), C.GLfloat(x), C.GLfloat(y))
+	var call call
+	call.args.fn = C.glfnVertexAttrib2f
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(math.Float32bits(x))
+	call.args.a2 = C.uintptr_t(math.Float32bits(y))
+	work <- call
 }
 
 // VertexAttrib2fv writes a vec2 vertex attribute.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glVertexAttrib.xhtml
 func VertexAttrib2fv(dst Attrib, src []float32) {
-	C.glVertexAttrib2fv(dst.c(), (*C.GLfloat)(&src[0]))
+	var call call
+	call.args.fn = C.glfnVertexAttrib2fv
+	call.blocking = true
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
+	work <- call
+	<-retvalue
 }
 
 // VertexAttrib3f writes a vec3 vertex attribute.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glVertexAttrib.xhtml
 func VertexAttrib3f(dst Attrib, x, y, z float32) {
-	C.glVertexAttrib3f(dst.c(), C.GLfloat(x), C.GLfloat(y), C.GLfloat(z))
+	var call call
+	call.args.fn = C.glfnVertexAttrib3f
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(math.Float32bits(x))
+	call.args.a2 = C.uintptr_t(math.Float32bits(y))
+	call.args.a3 = C.uintptr_t(math.Float32bits(z))
+	work <- call
 }
 
 // VertexAttrib3fv writes a vec3 vertex attribute.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glVertexAttrib.xhtml
 func VertexAttrib3fv(dst Attrib, src []float32) {
-	C.glVertexAttrib3fv(dst.c(), (*C.GLfloat)(&src[0]))
+	var call call
+	call.args.fn = C.glfnVertexAttrib3fv
+	call.blocking = true
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
+	work <- call
+	<-retvalue
 }
 
 // VertexAttrib4f writes a vec4 vertex attribute.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glVertexAttrib.xhtml
 func VertexAttrib4f(dst Attrib, x, y, z, w float32) {
-	C.glVertexAttrib4f(dst.c(), C.GLfloat(x), C.GLfloat(y), C.GLfloat(z), C.GLfloat(w))
+	var call call
+	call.args.fn = C.glfnVertexAttrib4f
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(math.Float32bits(x))
+	call.args.a2 = C.uintptr_t(math.Float32bits(y))
+	call.args.a3 = C.uintptr_t(math.Float32bits(z))
+	call.args.a4 = C.uintptr_t(math.Float32bits(w))
+	work <- call
 }
 
 // VertexAttrib4fv writes a vec4 vertex attribute.
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glVertexAttrib.xhtml
 func VertexAttrib4fv(dst Attrib, src []float32) {
-	C.glVertexAttrib4fv(dst.c(), (*C.GLfloat)(&src[0]))
+	var call call
+	call.args.fn = C.glfnVertexAttrib4fv
+	call.blocking = true
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
+	work <- call
+	<-retvalue
 }
 
 // VertexAttribPointer uses a bound buffer to define vertex attribute data.
@@ -1201,9 +1962,15 @@ func VertexAttrib4fv(dst Attrib, src []float32) {
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glVertexAttribPointer.xhtml
 func VertexAttribPointer(dst Attrib, size int, ty Enum, normalized bool, stride, offset int) {
-	n := glBoolean(normalized)
-	s := C.GLsizei(stride)
-	C.glVertexAttribPointer(dst.c(), C.GLint(size), ty.c(), n, s, unsafe.Pointer(uintptr(offset)))
+	var call call
+	call.args.fn = C.glfnVertexAttribPointer
+	call.args.a0 = dst.c()
+	call.args.a1 = C.uintptr_t(size)
+	call.args.a2 = ty.c()
+	call.args.a3 = glBoolean(normalized)
+	call.args.a4 = C.uintptr_t(stride)
+	call.args.a5 = C.uintptr_t(offset)
+	work <- call
 }
 
 // Viewport sets the viewport, an affine transformation that
@@ -1211,5 +1978,11 @@ func VertexAttribPointer(dst Attrib, size int, ty Enum, normalized bool, stride,
 //
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glViewport.xhtml
 func Viewport(x, y, width, height int) {
-	C.glViewport(C.GLint(x), C.GLint(y), C.GLsizei(width), C.GLsizei(height))
+	var call call
+	call.args.fn = C.glfnViewport
+	call.args.a0 = C.uintptr_t(x)
+	call.args.a1 = C.uintptr_t(y)
+	call.args.a2 = C.uintptr_t(width)
+	call.args.a3 = C.uintptr_t(height)
+	work <- call
 }

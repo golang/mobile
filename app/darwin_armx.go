@@ -24,7 +24,6 @@ import "C"
 import (
 	"log"
 	"runtime"
-	"sync"
 	"unsafe"
 
 	"golang.org/x/mobile/event"
@@ -121,12 +120,8 @@ func setGeom(width, height int) {
 	configSwap(cb)
 }
 
-func initGL() {
-	stateStart(cb)
-}
-
 var cb []Callbacks
-var initGLOnce sync.Once
+var startedgl = false
 
 // touchIDs is the current active touches. The position in the array
 // is the ID, the value is the UITouch* pointer value.
@@ -181,14 +176,13 @@ func sendTouch(touch uintptr, touchType int, x, y float32) {
 
 //export drawgl
 func drawgl(ctx uintptr) {
-	// The call to lockContext loads the OpenGL context into
-	// thread-local storage for use by the underlying GL calls
-	// done in the user's Draw function. We need to stay on
-	// the same thread throughout Draw, so we LockOSThread.
-	runtime.LockOSThread()
-	C.setContext(unsafe.Pointer(ctx))
-
-	initGLOnce.Do(initGL)
+	if !startedgl {
+		startedgl = true
+		go gl.Start(func() {
+			C.setContext(unsafe.Pointer(ctx))
+		})
+		stateStart(cb)
+	}
 
 	touchEvents.Lock()
 	pending := touchEvents.pending
@@ -210,12 +204,4 @@ func drawgl(ctx uintptr) {
 			c.Draw()
 		}
 	}
-
-	// TODO
-	//C.unlockContext(ctx)
-
-	// This may unlock the original main thread, but that's OK,
-	// because by the time it does the thread has already entered
-	// C.runApp, which won't give the thread up.
-	runtime.UnlockOSThread()
 }

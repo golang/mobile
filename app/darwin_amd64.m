@@ -22,17 +22,9 @@ static CVReturn displayLinkDraw(CVDisplayLinkRef displayLink, const CVTimeStamp*
 	return kCVReturnSuccess;
 }
 
-void lockContext(GLintptr context) {
+void makeCurrentContext(GLintptr context) {
 	NSOpenGLContext* ctx = (NSOpenGLContext*)context;
 	[ctx makeCurrentContext];
-	CGLLockContext([ctx CGLContextObj]);
-}
-
-void unlockContext(GLintptr context) {
-	NSOpenGLContext* ctx = (NSOpenGLContext*)context;
-	[ctx flushBuffer];
-	CGLUnlockContext([ctx CGLContextObj]);
-
 }
 
 uint64 threadID() {

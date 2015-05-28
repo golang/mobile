@@ -7,17 +7,7 @@
 
 package gl
 
-/*
-#ifdef os_linux
-#include <GLES2/gl2.h>
-#endif
-#ifdef os_ios
-#include <OpenGLES/ES2/gl.h>
-#endif
-#ifdef os_darwin_amd64
-#include <OpenGL/gl3.h>
-#endif
-*/
+// #include "work.h"
 import "C"
 import "fmt"
 
@@ -68,15 +58,15 @@ type Uniform struct {
 	Value int32
 }
 
-func (v Attrib) c() C.GLuint       { return C.GLuint(v.Value) }
-func (v Enum) c() C.GLenum         { return C.GLenum(v) }
-func (v Program) c() C.GLuint      { return C.GLuint(v.Value) }
-func (v Shader) c() C.GLuint       { return C.GLuint(v.Value) }
-func (v Buffer) c() C.GLuint       { return C.GLuint(v.Value) }
-func (v Framebuffer) c() C.GLuint  { return C.GLuint(v.Value) }
-func (v Renderbuffer) c() C.GLuint { return C.GLuint(v.Value) }
-func (v Texture) c() C.GLuint      { return C.GLuint(v.Value) }
-func (v Uniform) c() C.GLint       { return C.GLint(v.Value) }
+func (v Attrib) c() C.uintptr_t       { return C.uintptr_t(v.Value) }
+func (v Enum) c() C.uintptr_t         { return C.uintptr_t(v) }
+func (v Program) c() C.uintptr_t      { return C.uintptr_t(v.Value) }
+func (v Shader) c() C.uintptr_t       { return C.uintptr_t(v.Value) }
+func (v Buffer) c() C.uintptr_t       { return C.uintptr_t(v.Value) }
+func (v Framebuffer) c() C.uintptr_t  { return C.uintptr_t(v.Value) }
+func (v Renderbuffer) c() C.uintptr_t { return C.uintptr_t(v.Value) }
+func (v Texture) c() C.uintptr_t      { return C.uintptr_t(v.Value) }
+func (v Uniform) c() C.uintptr_t      { return C.uintptr_t(v.Value) }
 
 func (v Attrib) String() string       { return fmt.Sprintf("Attrib(%d)", v.Value) }
 func (v Program) String() string      { return fmt.Sprintf("Program(%d)", v.Value) }

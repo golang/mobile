@@ -10,20 +10,7 @@ package gl
 // Alternate versions of the types defined in types.go with extra
 // debugging information attached. For documentation, see types.go.
 
-/*
-#cgo darwin  LDFLAGS: -framework OpenGL
-#cgo linux   LDFLAGS: -lGLESv2
-#cgo darwin  CFLAGS: -DGOOS_darwin
-#cgo linux   CFLAGS: -DGOOS_linux
-
-#ifdef GOOS_linux
-#include <GLES2/gl2.h>
-#endif
-
-#ifdef GOOS_darwin
-#include <OpenGL/gl3.h>
-#endif
-*/
+// #include "work.h"
 import "C"
 import "fmt"
 
@@ -63,15 +50,15 @@ type Uniform struct {
 	name  string
 }
 
-func (v Attrib) c() C.GLuint       { return C.GLuint(v.Value) }
-func (v Enum) c() C.GLenum         { return C.GLenum(v) }
-func (v Program) c() C.GLuint      { return C.GLuint(v.Value) }
-func (v Shader) c() C.GLuint       { return C.GLuint(v.Value) }
-func (v Buffer) c() C.GLuint       { return C.GLuint(v.Value) }
-func (v Framebuffer) c() C.GLuint  { return C.GLuint(v.Value) }
-func (v Renderbuffer) c() C.GLuint { return C.GLuint(v.Value) }
-func (v Texture) c() C.GLuint      { return C.GLuint(v.Value) }
-func (v Uniform) c() C.GLint       { return C.GLint(v.Value) }
+func (v Attrib) c() C.uintptr_t       { return C.uintptr_t(v.Value) }
+func (v Enum) c() C.uintptr_t         { return C.uintptr_t(v) }
+func (v Program) c() C.uintptr_t      { return C.uintptr_t(v.Value) }
+func (v Shader) c() C.uintptr_t       { return C.uintptr_t(v.Value) }
+func (v Buffer) c() C.uintptr_t       { return C.uintptr_t(v.Value) }
+func (v Framebuffer) c() C.uintptr_t  { return C.uintptr_t(v.Value) }
+func (v Renderbuffer) c() C.uintptr_t { return C.uintptr_t(v.Value) }
+func (v Texture) c() C.uintptr_t      { return C.uintptr_t(v.Value) }
+func (v Uniform) c() C.uintptr_t      { return C.uintptr_t(v.Value) }
 
 func (v Attrib) String() string       { return fmt.Sprintf("Attrib(%d:%s)", v.Value, v.name) }
 func (v Program) String() string      { return fmt.Sprintf("Program(%d)", v.Value) }

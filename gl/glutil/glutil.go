@@ -8,6 +8,7 @@ package glutil // import "golang.org/x/mobile/gl/glutil"
 import (
 	"fmt"
 
+	"golang.org/x/mobile/f32"
 	"golang.org/x/mobile/gl"
 )
 
@@ -55,4 +56,19 @@ func loadShader(shaderType gl.Enum, src string) (gl.Shader, error) {
 		return gl.Shader{}, fmt.Errorf("shader compile: %s", gl.GetShaderInfoLog(shader))
 	}
 	return shader, nil
+}
+
+// writeAffine writes the contents of an Affine to a 3x3 matrix GL uniform.
+func writeAffine(u gl.Uniform, a *f32.Affine) {
+	var m [9]float32
+	m[0*3+0] = a[0][0]
+	m[0*3+1] = a[1][0]
+	m[0*3+2] = 0
+	m[1*3+0] = a[0][1]
+	m[1*3+1] = a[1][1]
+	m[1*3+2] = 0
+	m[2*3+0] = a[0][2]
+	m[2*3+1] = a[1][2]
+	m[2*3+2] = 1
+	gl.UniformMatrix3fv(u, m[:])
 }

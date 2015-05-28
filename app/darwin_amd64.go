@@ -21,8 +21,7 @@ void glGenVertexArrays(GLsizei n, GLuint* array);
 void glBindVertexArray(GLuint array);
 
 void runApp(void);
-void lockContext(GLintptr);
-void unlockContext(GLintptr);
+void makeCurrentContext(GLintptr);
 double backingScaleFactor();
 uint64 threadID();
 
@@ -71,17 +70,6 @@ func setGeom(pixelsPerPt float32, width, height int) {
 	configSwap(callbacks)
 }
 
-func initGL() {
-	// Using attribute arrays in OpenGL 3.3 requires the use of a VBA.
-	// But VBAs don't exist in ES 2. So we bind a default one.
-	var id C.GLuint
-	C.glGenVertexArrays(1, &id)
-	C.glBindVertexArray(id)
-	stateStart(callbacks)
-}
-
-var initGLOnce sync.Once
-
 var touchEvents struct {
 	sync.Mutex
 	pending []event.Touch
@@ -109,16 +97,25 @@ func eventMouseDragged(x, y float32) { sendTouch(event.TouchMove, x, y) }
 //export eventMouseEnd
 func eventMouseEnd(x, y float32) { sendTouch(event.TouchEnd, x, y) }
 
+var startedgl = false
+
 //export drawgl
 func drawgl(ctx C.GLintptr) {
-	// The call to lockContext loads the OpenGL context into
-	// thread-local storage for use by the underlying GL calls
-	// done in the user's Draw function. We need to stay on
-	// the same thread throughout Draw, so we LockOSThread.
-	runtime.LockOSThread()
-	C.lockContext(ctx)
+	if !startedgl {
+		startedgl = true
+		go gl.Start(func() {
+			C.makeCurrentContext(ctx)
 
-	initGLOnce.Do(initGL)
+			// Using attribute arrays in OpenGL 3.3 requires the use of a VBA.
+			// But VBAs don't exist in ES 2. So we bind a default one.
+			var id C.GLuint
+			C.glGenVertexArrays(1, &id)
+			C.glBindVertexArray(id)
+
+		})
+
+		stateStart(callbacks)
+	}
 
 	touchEvents.Lock()
 	pending := touchEvents.pending
@@ -140,11 +137,7 @@ func drawgl(ctx C.GLintptr) {
 			cb.Draw()
 		}
 	}
-
-	C.unlockContext(ctx)
-
-	// This may unlock the original main thread, but that's OK,
-	// because by the time it does the thread has already entered
-	// C.runApp, which won't give the thread up.
-	runtime.UnlockOSThread()
+	gl.Do(func() {
+		C.CGLFlushDrawable(C.CGLGetCurrentContext())
+	})
 }
