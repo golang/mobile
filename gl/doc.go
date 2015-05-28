@@ -14,6 +14,10 @@ https://www.khronos.org/opengles/sdk/docs/man/
 One notable departure from the C API is the introduction of types
 to represent common uses of GLint: Texture, Surface, Buffer, etc.
 
+Calls are not safe for concurrent use. However calls can be made from
+any goroutine, the gl package removes the notion of thread-local
+context.
+
 A tracing version of the OpenGL bindings is behind the `gldebug` build
 tag. It acts as a simplified version of apitrace. Build your Go binary
 with
@@ -33,5 +37,24 @@ The gldebug tracing has very high overhead, so make sure to remove
 the build tag before deploying any binaries.
 */
 package gl // import "golang.org/x/mobile/gl"
+
+/*
+Implementation details.
+
+All GL function calls fill out a C.struct_fnargs and drop it on the work
+queue. The Start function drains the work queue and hands over a batch
+of calls to C.process which runs them. This allows multiple GL calls to
+be executed in a single cgo call.
+
+A GL call is marked as blocking if it returns a value, or if it takes a
+Go pointer. In this case the call will not return until C.process sends a
+value on the retvalue channel.
+
+This implementation ensures any goroutine can make GL calls, but it does
+not make the GL interface safe for simultaneous use by multiple goroutines.
+For the purpose of analyzing this code for race conditions, picture two
+separate goroutines: one blocked on gl.Start, and another making calls to
+the gl package exported functions.
+*/
 
 //go:generate go run gendebug.go -o gldebug.go

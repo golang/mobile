@@ -154,42 +154,49 @@ func main() {
 		}
 		fmt.Fprintf(buf, ") {\n")
 
-		// Insert a defer block for tracing.
-		fmt.Fprintf(buf, "defer func() {\n")
-		fmt.Fprintf(buf, "\terrstr := errDrain()\n")
-		switch fn.Name.Name {
-		case "GetUniformLocation", "GetAttribLocation":
-			fmt.Fprintf(buf, "\tr0.name = name\n")
-		}
-		fmt.Fprintf(buf, "\tlog.Printf(\"gl.%s(", fn.Name.Name)
-		for i, p := range paramTypes {
-			if i > 0 {
-				fmt.Fprint(buf, ", ")
+		// gl.GetError is used by errDrain, which will be made part of
+		// all functions. So do not apply it to gl.GetError to avoid
+		// infinite recursion.
+		skip := fn.Name.Name == "GetError"
+
+		if !skip {
+			// Insert a defer block for tracing.
+			fmt.Fprintf(buf, "defer func() {\n")
+			fmt.Fprintf(buf, "\terrstr := errDrain()\n")
+			switch fn.Name.Name {
+			case "GetUniformLocation", "GetAttribLocation":
+				fmt.Fprintf(buf, "\tr0.name = name\n")
 			}
-			fmt.Fprint(buf, typePrinter(p))
-		}
-		fmt.Fprintf(buf, ") ")
-		if len(resultTypes) > 1 {
-			fmt.Fprint(buf, "(")
-		}
-		for i, r := range resultTypes {
-			if i > 0 {
-				fmt.Fprint(buf, ", ")
+			fmt.Fprintf(buf, "\tlog.Printf(\"gl.%s(", fn.Name.Name)
+			for i, p := range paramTypes {
+				if i > 0 {
+					fmt.Fprint(buf, ", ")
+				}
+				fmt.Fprint(buf, typePrinter(p))
 			}
-			fmt.Fprint(buf, typePrinter(r))
+			fmt.Fprintf(buf, ") ")
+			if len(resultTypes) > 1 {
+				fmt.Fprint(buf, "(")
+			}
+			for i, r := range resultTypes {
+				if i > 0 {
+					fmt.Fprint(buf, ", ")
+				}
+				fmt.Fprint(buf, typePrinter(r))
+			}
+			if len(resultTypes) > 1 {
+				fmt.Fprint(buf, ") ")
+			}
+			fmt.Fprintf(buf, "%%v\"")
+			for i, p := range paramTypes {
+				fmt.Fprintf(buf, ", %s", typePrinterArg(p, params[i]))
+			}
+			for i, r := range resultTypes {
+				fmt.Fprintf(buf, ", %s", typePrinterArg(r, results[i]))
+			}
+			fmt.Fprintf(buf, ", errstr)\n")
+			fmt.Fprintf(buf, "}()\n")
 		}
-		if len(resultTypes) > 1 {
-			fmt.Fprint(buf, ") ")
-		}
-		fmt.Fprintf(buf, "%%v\"")
-		for i, p := range paramTypes {
-			fmt.Fprintf(buf, ", %s", typePrinterArg(p, params[i]))
-		}
-		for i, r := range resultTypes {
-			fmt.Fprintf(buf, ", %s", typePrinterArg(r, results[i]))
-		}
-		fmt.Fprintf(buf, ", errstr)\n")
-		fmt.Fprintf(buf, "}()\n")
 
 		// Print original body of function.
 		for _, s := range fn.Body.List {
@@ -226,31 +233,20 @@ const preamble = `// Copyright 2014 The Go Authors.  All rights reserved.
 
 package gl
 
-/*
-#include <stdlib.h>
-
-#ifdef os_linux
-#include <GLES2/gl2.h>
-#endif
-#ifdef os_ios
-#include <OpenGLES/ES2/gl.h>
-#endif
-#ifdef os_darwin_amd64
-#include <OpenGL/gl3.h>
-#endif
-*/
+// #include "work.h"
 import "C"
 
 import (
 	"fmt"
 	"log"
+	"math"
 	"unsafe"
 )
 
 func errDrain() string {
 	var errs []Enum
 	for {
-		e := Enum(C.glGetError())
+		e := GetError()
 		if e == 0 {
 			break
 		}

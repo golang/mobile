@@ -280,7 +280,7 @@ func (img *Image) Draw(topLeft, topRight, bottomLeft geom.Point, srcBounds image
 		// which gives:
 		//	a00 = (2*qx2 - 2*px2) / 2 = qx2 - px2
 		// and similarly for the other elements of a.
-		glimage.mvp.WriteAffine(&f32.Affine{{
+		writeAffine(glimage.mvp, &f32.Affine{{
 			qx2 - px2,
 			px2 - sx2,
 			qx2 + sx2,
@@ -315,7 +315,7 @@ func (img *Image) Draw(topLeft, topRight, bottomLeft geom.Point, srcBounds image
 		//	a10 +   0 + a12 = qy = py
 		//	  0 + a01 + a02 = sx = px
 		//	  0 + a11 + a12 = sy
-		glimage.uvp.WriteAffine(&f32.Affine{{
+		writeAffine(glimage.uvp, &f32.Affine{{
 			qx - px,
 			0,
 			px,

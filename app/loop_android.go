@@ -91,12 +91,14 @@ import (
 )
 
 func windowDraw(callbacks []Callbacks, w *C.ANativeWindow, queue *C.AInputQueue) {
-	C.createEGLWindow(w)
+	go gl.Start(func() {
+		C.createEGLWindow(w)
+	})
 
 	// TODO: is the library or the app responsible for clearing the buffers?
 	gl.ClearColor(0, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	C.eglSwapBuffers(C.display, C.surface)
+	gl.Do(func() { C.eglSwapBuffers(C.display, C.surface) })
 
 	if errv := gl.GetError(); errv != gl.NO_ERROR {
 		log.Printf("GL initialization error: %s", errv)
@@ -121,6 +123,7 @@ func windowDraw(callbacks []Callbacks, w *C.ANativeWindow, queue *C.AInputQueue)
 			configSwap(callbacks)
 		case <-windowDestroyed:
 			stateStop(callbacks)
+			gl.Stop()
 			return
 		default:
 			for _, cb := range callbacks {
@@ -128,7 +131,7 @@ func windowDraw(callbacks []Callbacks, w *C.ANativeWindow, queue *C.AInputQueue)
 					cb.Draw()
 				}
 			}
-			C.eglSwapBuffers(C.display, C.surface)
+			gl.Do(func() { C.eglSwapBuffers(C.display, C.surface) })
 		}
 	}
 }
