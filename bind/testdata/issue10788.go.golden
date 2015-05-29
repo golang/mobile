@@ -10,12 +10,12 @@ import (
 )
 
 const (
-	proxyTestInterfaceDescriptor                = "go.issue10788.TestInterface"
-	proxyTestInterfaceDoSomeWorkCode            = 0x10a
-	proxyTestInterfaceMultipleUnnamedParamsCode = 0x20a
+	proxyTestInterface_Descriptor                 = "go.issue10788.TestInterface"
+	proxyTestInterface_DoSomeWork_Code            = 0x10a
+	proxyTestInterface_MultipleUnnamedParams_Code = 0x20a
 )
 
-func proxyTestInterfaceDoSomeWork(out, in *seq.Buffer) {
+func proxyTestInterface_DoSomeWork(out, in *seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(issue10788.TestInterface)
 	// Must be a Go object
@@ -24,7 +24,7 @@ func proxyTestInterfaceDoSomeWork(out, in *seq.Buffer) {
 	v.DoSomeWork(param_s)
 }
 
-func proxyTestInterfaceMultipleUnnamedParams(out, in *seq.Buffer) {
+func proxyTestInterface_MultipleUnnamedParams(out, in *seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(issue10788.TestInterface)
 	param_p0 := in.ReadInt()
@@ -34,8 +34,8 @@ func proxyTestInterfaceMultipleUnnamedParams(out, in *seq.Buffer) {
 }
 
 func init() {
-	seq.Register(proxyTestInterfaceDescriptor, proxyTestInterfaceDoSomeWorkCode, proxyTestInterfaceDoSomeWork)
-	seq.Register(proxyTestInterfaceDescriptor, proxyTestInterfaceMultipleUnnamedParamsCode, proxyTestInterfaceMultipleUnnamedParams)
+	seq.Register(proxyTestInterface_Descriptor, proxyTestInterface_DoSomeWork_Code, proxyTestInterface_DoSomeWork)
+	seq.Register(proxyTestInterface_Descriptor, proxyTestInterface_MultipleUnnamedParams_Code, proxyTestInterface_MultipleUnnamedParams)
 }
 
 type proxyTestInterface seq.Ref
@@ -43,7 +43,7 @@ type proxyTestInterface seq.Ref
 func (p *proxyTestInterface) DoSomeWork(s *issue10788.TestStruct) {
 	in := new(seq.Buffer)
 	in.WriteGoRef(s)
-	seq.Transact((*seq.Ref)(p), proxyTestInterfaceDoSomeWorkCode, in)
+	seq.Transact((*seq.Ref)(p), proxyTestInterface_DoSomeWork_Code, in)
 }
 
 func (p *proxyTestInterface) MultipleUnnamedParams(p0 int, p1 string, p2 int64) {
@@ -51,32 +51,32 @@ func (p *proxyTestInterface) MultipleUnnamedParams(p0 int, p1 string, p2 int64) 
 	in.WriteInt(p0)
 	in.WriteString(p1)
 	in.WriteInt64(p2)
-	seq.Transact((*seq.Ref)(p), proxyTestInterfaceMultipleUnnamedParamsCode, in)
+	seq.Transact((*seq.Ref)(p), proxyTestInterface_MultipleUnnamedParams_Code, in)
 }
 
 const (
-	proxyTestStructDescriptor   = "go.issue10788.TestStruct"
-	proxyTestStructValueGetCode = 0x00f
-	proxyTestStructValueSetCode = 0x01f
+	proxyTestStruct_Descriptor     = "go.issue10788.TestStruct"
+	proxyTestStruct_Value_Get_Code = 0x00f
+	proxyTestStruct_Value_Set_Code = 0x01f
 )
 
 type proxyTestStruct seq.Ref
 
-func proxyTestStructValueSet(out, in *seq.Buffer) {
+func proxyTestStruct_Value_Set(out, in *seq.Buffer) {
 	ref := in.ReadRef()
 	v := in.ReadString()
 	ref.Get().(*issue10788.TestStruct).Value = v
 }
 
-func proxyTestStructValueGet(out, in *seq.Buffer) {
+func proxyTestStruct_Value_Get(out, in *seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(*issue10788.TestStruct).Value
 	out.WriteString(v)
 }
 
 func init() {
-	seq.Register(proxyTestStructDescriptor, proxyTestStructValueSetCode, proxyTestStructValueSet)
-	seq.Register(proxyTestStructDescriptor, proxyTestStructValueGetCode, proxyTestStructValueGet)
+	seq.Register(proxyTestStruct_Descriptor, proxyTestStruct_Value_Set_Code, proxyTestStruct_Value_Set)
+	seq.Register(proxyTestStruct_Descriptor, proxyTestStruct_Value_Get_Code, proxyTestStruct_Value_Get)
 }
 
 func init() {
