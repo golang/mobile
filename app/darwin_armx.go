@@ -154,7 +154,9 @@ func sendTouch(touch uintptr, touchType int, x, y float32) {
 				break
 			}
 		}
-		panic("out of touchIDs")
+		if id == -1 {
+			panic("out of touchIDs")
+		}
 	}
 
 	ty := event.TouchType(touchType)
