@@ -86,6 +86,8 @@ var machinePPI = map[string]int{
 	"iPad4,3":   264, // iPad Air LTE China
 	"iPad4,4":   326, // iPad Mini gen2 wifi
 	"iPad4,5":   326, // iPad Mini gen2 LTE
+	"iPad4,6":   326, // iPad Mini 3
+	"iPad4,7":   326, // iPad Mini 3
 	"iPhone3,1": 326, // iPhone 4
 	"iPhone4,1": 326, // iPhone 4S
 	"iPhone5,1": 326, // iPhone 5
@@ -103,7 +105,8 @@ func ppi() int {
 	name := C.GoString(&C.sysInfo.machine[0])
 	v, ok := machinePPI[name]
 	if !ok {
-		log.Fatalf("unknown machine: %s", name)
+		log.Printf("unknown machine: %s", name)
+		v = 163 // emergency fallback
 	}
 	return v
 }
