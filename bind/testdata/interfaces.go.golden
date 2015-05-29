@@ -22,11 +22,11 @@ func proxy_Add3(out, in *seq.Buffer) {
 }
 
 const (
-	proxyIDescriptor = "go.interfaces.I"
-	proxyIRandCode   = 0x10a
+	proxyI_Descriptor = "go.interfaces.I"
+	proxyI_Rand_Code  = 0x10a
 )
 
-func proxyIRand(out, in *seq.Buffer) {
+func proxyI_Rand(out, in *seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(interfaces.I)
 	res := v.Rand()
@@ -34,14 +34,14 @@ func proxyIRand(out, in *seq.Buffer) {
 }
 
 func init() {
-	seq.Register(proxyIDescriptor, proxyIRandCode, proxyIRand)
+	seq.Register(proxyI_Descriptor, proxyI_Rand_Code, proxyI_Rand)
 }
 
 type proxyI seq.Ref
 
 func (p *proxyI) Rand() int32 {
 	in := new(seq.Buffer)
-	out := seq.Transact((*seq.Ref)(p), proxyIRandCode, in)
+	out := seq.Transact((*seq.Ref)(p), proxyI_Rand_Code, in)
 	res_0 := out.ReadInt32()
 	return res_0
 }

@@ -168,13 +168,13 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 
 	g.Printf("const (\n")
 	g.Indent()
-	g.Printf("proxy%sDescriptor = \"go.%s.%s\"\n", obj.Name(), g.pkg.Name(), obj.Name())
+	g.Printf("proxy%s_Descriptor = \"go.%s.%s\"\n", obj.Name(), g.pkg.Name(), obj.Name())
 	for i, f := range fields {
-		g.Printf("proxy%s%sGetCode = 0x%x0f\n", obj.Name(), f.Name(), i)
-		g.Printf("proxy%s%sSetCode = 0x%x1f\n", obj.Name(), f.Name(), i)
+		g.Printf("proxy%s_%s_Get_Code = 0x%x0f\n", obj.Name(), f.Name(), i)
+		g.Printf("proxy%s_%s_Set_Code = 0x%x1f\n", obj.Name(), f.Name(), i)
 	}
 	for i, m := range methods {
-		g.Printf("proxy%s%sCode = 0x%x0c\n", obj.Name(), m.Name(), i)
+		g.Printf("proxy%s_%s_Code = 0x%x0c\n", obj.Name(), m.Name(), i)
 	}
 	g.Outdent()
 	g.Printf(")\n\n")
@@ -184,7 +184,7 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 	for _, f := range fields {
 		seqTyp := seqType(f.Type())
 
-		g.Printf("func proxy%s%sSet(out, in *seq.Buffer) {\n", obj.Name(), f.Name())
+		g.Printf("func proxy%s_%s_Set(out, in *seq.Buffer) {\n", obj.Name(), f.Name())
 		g.Indent()
 		g.Printf("ref := in.ReadRef()\n")
 		g.Printf("v := in.Read%s()\n", seqTyp)
@@ -197,7 +197,7 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 		g.Outdent()
 		g.Printf("}\n\n")
 
-		g.Printf("func proxy%s%sGet(out, in *seq.Buffer) {\n", obj.Name(), f.Name())
+		g.Printf("func proxy%s_%s_Get(out, in *seq.Buffer) {\n", obj.Name(), f.Name())
 		g.Indent()
 		g.Printf("ref := in.ReadRef()\n")
 		g.Printf("v := ref.Get().(*%s.%s).%s\n", g.pkg.Name(), obj.Name(), f.Name())
@@ -211,7 +211,7 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 	}
 
 	for _, m := range methods {
-		g.Printf("func proxy%s%s(out, in *seq.Buffer) {\n", obj.Name(), m.Name())
+		g.Printf("func proxy%s_%s(out, in *seq.Buffer) {\n", obj.Name(), m.Name())
 		g.Indent()
 		g.Printf("ref := in.ReadRef()\n")
 		g.Printf("v := ref.Get().(*%s.%s)\n", g.pkg.Name(), obj.Name())
@@ -224,12 +224,12 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 	g.Indent()
 	for _, f := range fields {
 		n := f.Name()
-		g.Printf("seq.Register(proxy%sDescriptor, proxy%s%sSetCode, proxy%s%sSet)\n", obj.Name(), obj.Name(), n, obj.Name(), n)
-		g.Printf("seq.Register(proxy%sDescriptor, proxy%s%sGetCode, proxy%s%sGet)\n", obj.Name(), obj.Name(), n, obj.Name(), n)
+		g.Printf("seq.Register(proxy%s_Descriptor, proxy%s_%s_Set_Code, proxy%s_%s_Set)\n", obj.Name(), obj.Name(), n, obj.Name(), n)
+		g.Printf("seq.Register(proxy%s_Descriptor, proxy%s_%s_Get_Code, proxy%s_%s_Get)\n", obj.Name(), obj.Name(), n, obj.Name(), n)
 	}
 	for _, m := range methods {
 		n := m.Name()
-		g.Printf("seq.Register(proxy%sDescriptor, proxy%s%sCode, proxy%s%s)\n", obj.Name(), obj.Name(), n, obj.Name(), n)
+		g.Printf("seq.Register(proxy%s_Descriptor, proxy%s_%s_Code, proxy%s_%s)\n", obj.Name(), obj.Name(), n, obj.Name(), n)
 	}
 	g.Outdent()
 	g.Printf("}\n\n")
@@ -241,9 +241,9 @@ func (g *goGen) genInterface(obj *types.TypeName) {
 	// Descriptor and code for interface methods.
 	g.Printf("const (\n")
 	g.Indent()
-	g.Printf("proxy%sDescriptor = \"go.%s.%s\"\n", obj.Name(), g.pkg.Name(), obj.Name())
+	g.Printf("proxy%s_Descriptor = \"go.%s.%s\"\n", obj.Name(), g.pkg.Name(), obj.Name())
 	for i := 0; i < iface.NumMethods(); i++ {
-		g.Printf("proxy%s%sCode = 0x%x0a\n", obj.Name(), iface.Method(i).Name(), i+1)
+		g.Printf("proxy%s_%s_Code = 0x%x0a\n", obj.Name(), iface.Method(i).Name(), i+1)
 	}
 	g.Outdent()
 	g.Printf(")\n\n")
@@ -251,7 +251,7 @@ func (g *goGen) genInterface(obj *types.TypeName) {
 	// Define the entry points.
 	for i := 0; i < iface.NumMethods(); i++ {
 		m := iface.Method(i)
-		g.Printf("func proxy%s%s(out, in *seq.Buffer) {\n", obj.Name(), m.Name())
+		g.Printf("func proxy%s_%s(out, in *seq.Buffer) {\n", obj.Name(), m.Name())
 		g.Indent()
 		g.Printf("ref := in.ReadRef()\n")
 		g.Printf("v := ref.Get().(%s.%s)\n", g.pkg.Name(), obj.Name())
@@ -264,7 +264,7 @@ func (g *goGen) genInterface(obj *types.TypeName) {
 	g.Printf("func init() {\n")
 	g.Indent()
 	for i := 0; i < iface.NumMethods(); i++ {
-		g.Printf("seq.Register(proxy%sDescriptor, proxy%s%sCode, proxy%s%s)\n",
+		g.Printf("seq.Register(proxy%s_Descriptor, proxy%s_%s_Code, proxy%s_%s)\n",
 			obj.Name(), obj.Name(), iface.Method(i).Name(), obj.Name(), iface.Method(i).Name())
 	}
 	g.Outdent()
@@ -308,9 +308,9 @@ func (g *goGen) genInterface(obj *types.TypeName) {
 		}
 
 		if res.Len() == 0 {
-			g.Printf("seq.Transact((*seq.Ref)(p), proxy%s%sCode, in)\n", obj.Name(), m.Name())
+			g.Printf("seq.Transact((*seq.Ref)(p), proxy%s_%s_Code, in)\n", obj.Name(), m.Name())
 		} else {
-			g.Printf("out := seq.Transact((*seq.Ref)(p), proxy%s%sCode, in)\n", obj.Name(), m.Name())
+			g.Printf("out := seq.Transact((*seq.Ref)(p), proxy%s_%s_Code, in)\n", obj.Name(), m.Name())
 			var rvs []string
 			for i := 0; i < res.Len(); i++ {
 				rv := fmt.Sprintf("res_%d", i)

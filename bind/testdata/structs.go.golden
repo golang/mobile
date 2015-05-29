@@ -10,41 +10,41 @@ import (
 )
 
 const (
-	proxySDescriptor = "go.structs.S"
-	proxySXGetCode   = 0x00f
-	proxySXSetCode   = 0x01f
-	proxySYGetCode   = 0x10f
-	proxySYSetCode   = 0x11f
-	proxySSumCode    = 0x00c
+	proxyS_Descriptor = "go.structs.S"
+	proxyS_X_Get_Code = 0x00f
+	proxyS_X_Set_Code = 0x01f
+	proxyS_Y_Get_Code = 0x10f
+	proxyS_Y_Set_Code = 0x11f
+	proxyS_Sum_Code   = 0x00c
 )
 
 type proxyS seq.Ref
 
-func proxySXSet(out, in *seq.Buffer) {
+func proxyS_X_Set(out, in *seq.Buffer) {
 	ref := in.ReadRef()
 	v := in.ReadFloat64()
 	ref.Get().(*structs.S).X = v
 }
 
-func proxySXGet(out, in *seq.Buffer) {
+func proxyS_X_Get(out, in *seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(*structs.S).X
 	out.WriteFloat64(v)
 }
 
-func proxySYSet(out, in *seq.Buffer) {
+func proxyS_Y_Set(out, in *seq.Buffer) {
 	ref := in.ReadRef()
 	v := in.ReadFloat64()
 	ref.Get().(*structs.S).Y = v
 }
 
-func proxySYGet(out, in *seq.Buffer) {
+func proxyS_Y_Get(out, in *seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(*structs.S).Y
 	out.WriteFloat64(v)
 }
 
-func proxySSum(out, in *seq.Buffer) {
+func proxyS_Sum(out, in *seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(*structs.S)
 	res := v.Sum()
@@ -52,11 +52,11 @@ func proxySSum(out, in *seq.Buffer) {
 }
 
 func init() {
-	seq.Register(proxySDescriptor, proxySXSetCode, proxySXSet)
-	seq.Register(proxySDescriptor, proxySXGetCode, proxySXGet)
-	seq.Register(proxySDescriptor, proxySYSetCode, proxySYSet)
-	seq.Register(proxySDescriptor, proxySYGetCode, proxySYGet)
-	seq.Register(proxySDescriptor, proxySSumCode, proxySSum)
+	seq.Register(proxyS_Descriptor, proxyS_X_Set_Code, proxyS_X_Set)
+	seq.Register(proxyS_Descriptor, proxyS_X_Get_Code, proxyS_X_Get)
+	seq.Register(proxyS_Descriptor, proxyS_Y_Set_Code, proxyS_Y_Set)
+	seq.Register(proxyS_Descriptor, proxyS_Y_Get_Code, proxyS_Y_Get)
+	seq.Register(proxyS_Descriptor, proxyS_Sum_Code, proxyS_Sum)
 }
 
 func init() {
