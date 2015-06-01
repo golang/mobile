@@ -185,7 +185,7 @@ func onInputQueueCreated(activity *C.ANativeActivity, q *C.AInputQueue) {
 }
 
 //export onInputQueueDestroyed
-func onInputQueueDestroyed(activity *C.ANativeActivity, queue *C.AInputQueue) {
+func onInputQueueDestroyed(activity *C.ANativeActivity, q *C.AInputQueue) {
 	queue = nil
 }
 
