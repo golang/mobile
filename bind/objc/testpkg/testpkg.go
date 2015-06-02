@@ -27,3 +27,16 @@ func Hello(s string) string {
 func BytesAppend(a []byte, b []byte) []byte {
 	return append(a, b...)
 }
+
+type S struct {
+	X, Y       float64
+	unexported bool
+}
+
+func NewS(x, y float64) *S {
+	return &S{X: x, Y: y}
+}
+
+func (s *S) Sum() float64 {
+	return s.X + s.Y
+}

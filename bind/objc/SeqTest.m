@@ -39,6 +39,27 @@ void testBytesAppend(NSString *a, NSString *b) {
   }
 }
 
+void testStruct() {
+  GoTestpkg_S *s = GoTestpkg_NewS(10.0, 100.0);
+  if (!s) {
+    ERROR(@"GoTestpkg_NewS returned NULL");
+  }
+  double x = [s X];
+  double y = [s Y];
+  double sum = [s Sum];
+  if (x != 10.0 || y != 100.0 || sum != 110.0) {
+    ERROR(@"GoTestpkg_S(10.0, 100.0).X=%f Y=%f SUM=%f; want 10, 100, 110", x, y, sum);
+  }
+  [s setX:7];
+  [s setY:70];
+  x = [s X];
+  y = [s Y];
+  sum = [s Sum];
+  if (x != 7 || y != 70 || sum != 77) {
+    ERROR(@"GoTestpkg_S(7, 70).X=%f Y=%f SUM=%f; want 7, 70, 77", x, y, sum);
+  }
+}
+
 // Invokes functions and object methods defined in Testpkg.h.
 //
 // TODO(hyangah): apply testing framework (e.g. XCTestCase)
@@ -62,6 +83,8 @@ int main(void) {
     testHello([NSString stringWithCharacters:t length:2]);
 
     testBytesAppend(@"Foo", @"Bar");
+
+    testStruct();
   }
 
   fprintf(stderr, "%s\n", err ? "FAIL" : "PASS");
