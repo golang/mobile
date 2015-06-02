@@ -35,10 +35,9 @@ func (list ErrorList) Error() string {
 
 type javaGen struct {
 	*printer
-	nextCode int
-	fset     *token.FileSet
-	pkg      *types.Package
-	err      ErrorList
+	fset *token.FileSet
+	pkg  *types.Package
+	err  ErrorList
 }
 
 func (g *javaGen) genStruct(obj *types.TypeName, T *types.Struct) {
