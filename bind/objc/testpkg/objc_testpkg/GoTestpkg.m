@@ -1,4 +1,3 @@
-
 // Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
@@ -15,7 +14,8 @@
 #define _CALL_Hello_ 2
 #define _CALL_Hi_ 3
 #define _CALL_Int_ 4
-#define _CALL_Sum_ 5
+#define _CALL_NewS_ 5
+#define _CALL_Sum_ 6
 
 NSData *GoTestpkg_BytesAppend(NSData *a, NSData *b) {
   GoSeq in = {};
@@ -70,3 +70,83 @@ NSString *GoTestpkg_Hello(NSString *s) {
   go_seq_free(&in);
   return res;
 }
+
+GoTestpkg_S *GoTestpkg_NewS(double x, double y) {
+  GoSeq in = {};
+  GoSeq out = {};
+  go_seq_writeFloat64(&in, x);
+  go_seq_writeFloat64(&in, y);
+  go_seq_send(_DESCRIPTOR_, _CALL_NewS_, &in, &out);
+  GoSeqRef *ref = go_seq_readRef(&out);
+  GoTestpkg_S *ret = ref.obj;
+  if (ret == NULL) { // Go object.
+    ret = [[GoTestpkg_S alloc] initWithRef:ref];
+  }
+  ref = NULL;
+  go_seq_free(&out);
+  go_seq_free(&in);
+  return ret;
+}
+
+#define _GO_TESTPKG_S_DESCRIPTOR_ "go.testpkg.S"
+#define _GO_TESTPKG_S_FIELD_X_GET_ 0x00f
+#define _GO_TESTPKG_S_FIELD_X_SET_ 0x01f
+#define _GO_TESTPKG_S_FIELD_Y_GET_ 0x10f
+#define _GO_TESTPKG_S_FIELD_Y_SET_ 0x11f
+#define _GO_TESTPKG_S_SUM_ 0x00c
+
+@implementation GoTestpkg_S {
+}
+- (double)X {
+  GoSeq in = {};
+  GoSeq out = {};
+  go_seq_writeRef(&in, self.ref);
+  go_seq_send(_GO_TESTPKG_S_DESCRIPTOR_, _GO_TESTPKG_S_FIELD_X_GET_, &in, &out);
+  double res = go_seq_readFloat64(&out);
+  go_seq_free(&out);
+  go_seq_free(&in);
+  return res;
+}
+
+- (void)setX:(double)x {
+  GoSeq in = {};
+  GoSeq out = {};
+  go_seq_writeRef(&in, self.ref);
+  go_seq_writeFloat64(&in, x);
+  go_seq_send(_GO_TESTPKG_S_DESCRIPTOR_, _GO_TESTPKG_S_FIELD_X_SET_, &in, &out);
+  go_seq_free(&out);
+  go_seq_free(&in);
+}
+
+- (double)Y {
+  GoSeq in = {};
+  GoSeq out = {};
+  go_seq_writeRef(&in, self.ref);
+  go_seq_send(_GO_TESTPKG_S_DESCRIPTOR_, _GO_TESTPKG_S_FIELD_Y_GET_, &in, &out);
+  double res = go_seq_readFloat64(&out);
+  go_seq_free(&out);
+  go_seq_free(&in);
+  return res;
+}
+- (void)setY:(double)y {
+  GoSeq in = {};
+  GoSeq out = {};
+  go_seq_writeRef(&in, self.ref);
+  go_seq_writeFloat64(&in, y);
+  go_seq_send(_GO_TESTPKG_S_DESCRIPTOR_, _GO_TESTPKG_S_FIELD_Y_SET_, &in, &out);
+  go_seq_free(&out);
+  go_seq_free(&in);
+}
+
+- (double)Sum {
+  GoSeq in = {};
+  GoSeq out = {};
+  go_seq_writeRef(&in, self.ref);
+  go_seq_send(_GO_TESTPKG_S_DESCRIPTOR_, _GO_TESTPKG_S_SUM_, &in, &out);
+  double res = go_seq_readFloat64(&out);
+  go_seq_free(&out);
+  go_seq_free(&in);
+  return res;
+}
+
+@end

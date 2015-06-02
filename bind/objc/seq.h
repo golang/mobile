@@ -7,7 +7,7 @@
 
 #include <Foundation/Foundation.h>
 
-// GoSeq is a sequence of machine-dependent encoded values, which 
+// GoSeq is a sequence of machine-dependent encoded values, which
 // is a simple C equivalent of seq.Buffer.
 // Used by automatically generated language bindings to talk to Go.
 typedef struct GoSeq {
@@ -17,9 +17,25 @@ typedef struct GoSeq {
   size_t cap;
 } GoSeq;
 
+// GoSeqRef is an object tagged with an integer for passing back and
+// forth across the language boundary. A GoSeqRef may represent either
+// an instance of a Go object, or an Objective-C object passed to Go.
+// The explicit allocation of a GoSeqRef is used to pin a Go object
+// when it is passed to Objective-C. The Go seq package maintains a
+// reference to the Go object in a map keyed by the refnum. When the
+// GoSeqRef is deallocated, the Go seq package will clear the
+// corresponding entry in the map.
+// TODO(hyangah): update the doc as golang.org/issue/10933 is fixed.
+@interface GoSeqRef : NSObject {
+}
+@property int32_t refnum;
+@property(strong) id obj; // NULL when representing a Go object.
+
+- (id)initWithRefnum:(int32_t)refnum obj:(id)obj;
+@end
 
 // go_seq_free releases resources of the GoSeq.
-extern void go_seq_free(GoSeq* seq);
+extern void go_seq_free(GoSeq *seq);
 
 extern int8_t go_seq_readInt8(GoSeq *seq);
 extern int16_t go_seq_readInt16(GoSeq *seq);
@@ -27,6 +43,7 @@ extern int32_t go_seq_readInt32(GoSeq *seq);
 extern int64_t go_seq_readInt64(GoSeq *seq);
 extern float go_seq_readFloat32(GoSeq *seq);
 extern double go_seq_readFloat64(GoSeq *seq);
+extern GoSeqRef *go_seq_readRef(GoSeq *seq);
 extern NSString *go_seq_readUTF8(GoSeq *seq);
 extern NSData *go_seq_readByteArray(GoSeq *seq);
 
@@ -36,6 +53,7 @@ extern void go_seq_writeInt32(GoSeq *seq, int32_t v);
 extern void go_seq_writeInt64(GoSeq *seq, int64_t v);
 extern void go_seq_writeFloat32(GoSeq *seq, float v);
 extern void go_seq_writeFloat64(GoSeq *seq, double v);
+extern void go_seq_writeRef(GoSeq *seq, GoSeqRef *v);
 extern void go_seq_writeUTF8(GoSeq *seq, NSString *v);
 
 // go_seq_writeByteArray writes the data bytes to the seq. Note that the
@@ -47,5 +65,13 @@ extern void go_seq_writeByteArray(GoSeq *seq, NSData *data);
 // If the request is for a method, the first element in req is
 // a Ref to the receiver.
 extern void go_seq_send(char *descriptor, int code, GoSeq *req, GoSeq *res);
+
+// GoSeqProxyObject is the base class for proxies of Go object instances.
+@interface GoSeqProxyObject : NSObject {
+}
+@property(strong, readonly) GoSeqRef *ref;
+
+- (id)initWithRef:(GoSeqRef *)ref;
+@end
 
 #endif // __GO_SEQ_HDR__

@@ -67,7 +67,9 @@ static uint8_t *mem_write(GoSeq *m, uint32_t size, uint32_t alignment) {
   }
   uint32_t offset = align(m->off, alignment);
   uint32_t cap = m->cap;
-  if (cap == 0) { cap = 64; }
+  if (cap == 0) {
+    cap = 64;
+  }
   while (offset + size > cap) {
     cap *= 2;
   }
@@ -79,7 +81,7 @@ static uint8_t *mem_write(GoSeq *m, uint32_t size, uint32_t alignment) {
 }
 
 // extern
-void go_seq_free(GoSeq* m) {
+void go_seq_free(GoSeq *m) {
   if (m != NULL) {
     free(m->buf);
   }
@@ -176,7 +178,7 @@ void go_seq_writeByteArray(GoSeq *seq, NSData *data) {
     return;
   }
 
-  int64_t ptr = data.bytes;
+  int64_t ptr = (int64_t)data.bytes;
   MEM_WRITE(seq, int64_t) = ptr;
   return;
 }
@@ -205,3 +207,153 @@ void go_seq_send(char *descriptor, int code, GoSeq *req, GoSeq *res) {
   desc.n = strlen(descriptor);
   Send(desc, (GoInt)code, req_buf, req_len, res_buf, res_len);
 }
+
+#define IS_FROM_GO(refnum) refnum < 0
+
+@interface RefTracker : NSObject {
+  NSMutableDictionary *_goObjs; // map: refnum -> ref count.
+}
+// TODO: NSMutableDictionary *_objcObjs;
+@end
+
+static RefTracker *tracker = NULL;
+
+// init_seq is called when the Go side is initialized.
+void init_seq() {
+  tracker = [[RefTracker alloc] init];
+
+  LOG_INFO(@"loaded go/Seq");
+}
+
+@implementation RefTracker
+
+- (id)init {
+  self = [super init];
+  if (self) {
+    _goObjs = [[NSMutableDictionary alloc] init];
+  }
+  return self;
+}
+
+// inc is called when a GoSeqRef is allocated.
+- (void)inc:(int32_t)refnum {
+  if (!IS_FROM_GO(refnum)) {
+    LOG_FATAL(@"Not implemented");
+    return;
+  }
+
+  @synchronized(self) {
+    id key = @(refnum);
+    id val = [_goObjs objectForKey:key];
+    int n = 0;
+    if (val) {
+      n = [val intValue];
+      if (n == INT_MAX) {
+        LOG_FATAL(@"refnum count reached int max");
+      }
+    }
+    _goObjs[key] = @(n + 1);
+  }
+}
+
+// dec is called when a GoSeqRef is deallocated.
+- (void)dec:(int32_t)refnum {
+  if (!IS_FROM_GO(refnum)) {
+    LOG_FATAL(@"Not implemented");
+    return;
+  }
+
+  BOOL destroy = NO;
+  @synchronized(self) {
+    id key = @(refnum);
+    id val = [_goObjs objectForKey:key];
+    int n = 0;
+    if (val) {
+      n = [val intValue];
+    }
+    if (n <= 0) {
+      LOG_FATAL(@"refnum count underflow");
+    } else if (n == 1) {
+      LOG_DEBUG(@"remove the object %d", refnum);
+      [_goObjs removeObjectForKey:key];
+      destroy = YES;
+    } else {
+      _goObjs[key] = @(n - 1);
+    }
+  }
+  if (destroy) {
+    // go_seq_destroy_ref(refnum);
+    DestroyRef(refnum);
+  }
+}
+
+// get is called by readRef.
+- (GoSeqRef *)get:(int32_t)refnum {
+  if (!IS_FROM_GO(refnum)) {
+    LOG_FATAL(@"Not implemented");
+    return NULL;
+  }
+  return [[GoSeqRef alloc] initWithRefnum:refnum obj:NULL];
+}
+
+@end
+
+@implementation GoSeqProxyObject {
+}
+@synthesize ref = _ref;
+
+- (id)initWithRef:(GoSeqRef *)ref {
+  if (ref.obj != NULL) {
+    LOG_FATAL(@"GoSeqProxyObject around non-Go object is disallowed");
+    return nil;
+  }
+  self = [super init];
+  if (self) {
+    _ref = ref;
+  }
+  return self;
+}
+
+- (int32_t)refnum {
+  return _ref.refnum;
+}
+@end
+
+GoSeqRef *go_seq_readRef(GoSeq *seq) {
+  int32_t refnum = go_seq_readInt32(seq);
+  return [tracker get:refnum];
+}
+
+void go_seq_writeRef(GoSeq *seq, GoSeqRef *v) {
+  go_seq_writeInt32(seq, v.refnum);
+}
+
+@implementation GoSeqRef {
+}
+@synthesize refnum = _refnum;
+@synthesize obj = _obj;
+
+- (id)init {
+  LOG_FATAL(@"GoSeqRef init is disallowed");
+  return nil;
+}
+
+- (id)initWithRefnum:(int32_t)refnum obj:(id)obj {
+  if (!IS_FROM_GO(refnum)) {
+    LOG_FATAL(@"GoSeqRef init with non-Go object reference (refnum: %d)",
+              refnum);
+    return nil;
+  }
+  self = [super init];
+  if (self) {
+    _refnum = refnum;
+    _obj = obj;
+    [tracker inc:refnum];
+  }
+  return self;
+}
+
+- (void)dealloc {
+  [tracker dec:_refnum];
+}
+@end
