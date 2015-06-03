@@ -4,6 +4,7 @@
 
 package go;
 
+import android.util.Log;
 import android.test.suitebuilder.annotation.Suppress;
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
@@ -122,8 +123,6 @@ public class SeqTest extends AndroidTestCase {
     assertEquals("S should be collected", 1, collected);
   }
 
-  boolean finalizedAnI;
-
   private class AnI extends Testpkg.I.Stub {
     public void E() throws Exception {
       throw new Exception("my exception from E");
@@ -160,12 +159,8 @@ public class SeqTest extends AndroidTestCase {
       return name;
     }
 
-    @Override
-    public void finalize() throws Throwable {
-      finalizedAnI = true;
-      super.finalize();
-    }
   }
+
   // TODO(hyangah): add tests for methods that take parameters.
 
   public void testInterfaceMethodReturnsError() {
@@ -189,11 +184,19 @@ public class SeqTest extends AndroidTestCase {
     obj.name = "testing AnI.I";
     Testpkg.I i = Testpkg.CallI(obj);
     assertEquals("Want AnI.I to return itself", i.String(), obj.String());
+
+    runGC();
+
+    i = Testpkg.CallI(obj);
+    assertEquals("Want AnI.I to return itself", i.String(), obj.String());
   }
 
   public void testInterfaceMethodReturnsStructPointer() {
     final AnI obj = new AnI();
-    Testpkg.S s = Testpkg.CallS(obj);
+    for (int i = 0; i < 5; i++) {
+    	Testpkg.S s = Testpkg.CallS(obj);
+	runGC();
+    }
   }
 
   public void testInterfaceMethodTakesStructPointer() {
@@ -219,14 +222,22 @@ public class SeqTest extends AndroidTestCase {
     }
   }
 
-  /* Suppress this test for now; it's flaky or broken. */
-  @Suppress
+  boolean finalizedAnI;
+
+  private class AnI_Traced extends AnI {
+    @Override
+    public void finalize() throws Throwable {
+      finalizedAnI = true;
+      super.finalize();
+    }
+  }
+
   public void testJavaRefGC() {
     finalizedAnI = false;
-    AnI obj = new AnI();
-    runGC();
+    AnI obj = new AnI_Traced();
     Testpkg.CallF(obj);
     assertTrue("want F to be called", obj.calledF);
+    Testpkg.CallF(obj);
     obj = null;
     runGC();
     assertTrue("want obj to be collected", finalizedAnI);
@@ -234,7 +245,15 @@ public class SeqTest extends AndroidTestCase {
 
   public void testJavaRefKeep() {
     finalizedAnI = false;
-    AnI obj = new AnI();
+    AnI obj = new AnI_Traced();
+    Testpkg.CallF(obj);
+    Testpkg.CallF(obj);
+    obj = null;
+    runGC();
+    assertTrue("want obj not to be kept by Go", finalizedAnI);
+
+    finalizedAnI = false;
+    obj = new AnI_Traced();
     Testpkg.Keep(obj);
     obj = null;
     runGC();

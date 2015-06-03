@@ -58,6 +58,7 @@ public class Seq {
 	public native void writeByteArray(byte[] v);
 
 	public void writeRef(Ref ref) {
+		tracker.inc(ref);
 		writeInt32(ref.refnum);
 	}
 
@@ -160,20 +161,26 @@ public class Seq {
 	// keyed by the Ref number. When the JVM calls finalize, we ask Go
 	// to clear the entry in the map.
 	public static final class Ref {
-		// ref < 0: Go object tracked by Java
-		// ref > 0: Java object tracked by Go
+		// refnum < 0: Go object tracked by Java
+		// refnum > 0: Java object tracked by Go
 		int refnum;
-		public Seq.Object obj;
+
+		int refcnt;  // for Java obj: track how many times sent to Go.
+
+		public Seq.Object obj;  // for Java obj: pointers to the Java obj.
 
 		private Ref(int refnum, Seq.Object o) {
 			this.refnum = refnum;
+			this.refcnt = 0;
 			this.obj = o;
-			tracker.inc(refnum);
 		}
 
 		@Override
 		protected void finalize() throws Throwable {
-			tracker.dec(refnum);
+			if (refnum < 0) {
+				// Go object: signal Go to decrement the reference count.
+				Seq.destroyRef(refnum);
+			}
 			super.finalize();
 		}
 	}
@@ -188,53 +195,50 @@ public class Seq {
 		// to make debugging by reading Seq hex a little easier.
 		private int next = 42; // next Java object ref
 
-		// TODO(crawshaw): We could cut down allocations for frequently
-		// sent Go objects by maintaining a map to weak references. This
-		// however, would require allocating two objects per reference
-		// instead of one. It also introduces weak references, the bane
-		// of any Java debugging session.
-		//
-		// When we have real code, examine the tradeoffs.
-
-		// Number of active references to a Go object. refnum -> count
-		private SparseIntArray goObjs = new SparseIntArray();
-
 		// Java objects that have been passed to Go. refnum -> Ref
 		// The Ref obj field is non-null.
 		// This map pins Java objects so they don't get GCed while the
 		// only reference to them is held by Go code.
 		private SparseArray<Ref> javaObjs = new SparseArray<Ref>();
 
-		// inc increments the reference count to a Go object.
-		synchronized void inc(int refnum) {
-			if (refnum > 0) {
-				return; // we don't count java objects
-			}
-			int count = goObjs.get(refnum);
-			if (count == Integer.MAX_VALUE) {
-				throw new RuntimeException("refnum " + refnum + " overflow");
-			}
-			goObjs.put(refnum, count+1);
-		}
-
-		// dec decrements the reference count to a Go object.
-		// If the count reaches zero, the Go reference tracker is informed.
-		synchronized void dec(int refnum) {
-			if (refnum > 0) {
-				// Java objects are removed on request of Go.
-				javaObjs.remove(refnum);
+		// inc increments the reference count of a Java object when it
+		// is sent to Go.
+		synchronized void inc(Ref ref) {
+			int refnum = ref.refnum;
+			if (refnum <= 0) {
+				// We don't keep track of the Go object.
 				return;
 			}
-			int count = goObjs.get(refnum);
-			if (count == 0) {
-				throw new RuntimeException("refnum " + refnum + " underflow");
+			// Count Java objects passed to Go.
+			if (ref.refcnt == Integer.MAX_VALUE) {
+				throw new RuntimeException("refnum " + refnum + " overflow");
 			}
-			count--;
-			if (count <= 0) {
-				goObjs.delete(refnum);
-				Seq.destroyRef(refnum);
-			} else {
-				goObjs.put(refnum, count);
+			ref.refcnt++;
+			Ref obj = javaObjs.get(refnum);
+			if (obj == null) {
+				javaObjs.put(refnum, ref);
+			}
+		}
+
+		// dec decrements the reference count of a Java object when
+		// Go signals a corresponding proxy object is finalized.
+		// If the count reaches zero, the Java object is removed
+		// from the javaObjs map.
+		synchronized void dec(int refnum) {
+			if (refnum <= 0) {
+				// We don't keep track of the Go object.
+				// This must not happen.
+				Log.wtf("Seq", "dec request for Go object "+ refnum);
+				return;
+			}
+			// Java objects are removed on request of Go.
+			Ref obj = javaObjs.get(refnum);
+			if (obj == null) {
+				throw new RuntimeException("referenced Java object is not found: refnum="+refnum);
+			}
+			obj.refcnt--;
+			if (obj.refcnt <= 0) {
+				javaObjs.remove(refnum);
 			}
 		}
 
@@ -251,6 +255,14 @@ public class Seq {
 
 		// get returns an existing Ref to either a Java or Go object.
 		// It may be the first time we have seen the Go object.
+		//
+		// TODO(crawshaw): We could cut down allocations for frequently
+		// sent Go objects by maintaining a map to weak references. This
+		// however, would require allocating two objects per reference
+		// instead of one. It also introduces weak references, the bane
+		// of any Java debugging session.
+		//
+		// When we have real code, examine the tradeoffs.
 		synchronized Ref get(int refnum) {
 			if (refnum > 0) {
 				Ref ref = javaObjs.get(refnum);
@@ -258,8 +270,10 @@ public class Seq {
 					throw new RuntimeException("unknown java Ref: "+refnum);
 				}
 				return ref;
+			} else {
+				// Go object.
+				return new Ref(refnum, null);
 			}
-			return new Ref(refnum, null);
 		}
 	}
 }

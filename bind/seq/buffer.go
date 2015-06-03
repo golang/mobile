@@ -244,14 +244,17 @@ func (b *Buffer) WriteString(v string) {
 func (b *Buffer) WriteGoRef(obj interface{}) {
 	refs.Lock()
 	num := refs.refs[obj]
-	if num == 0 {
+	if num != 0 {
+		s := refs.objs[num]
+		refs.objs[num] = countedObj{s.obj, s.cnt + 1}
+	} else {
 		num = refs.next
 		refs.next--
 		if refs.next > 0 {
 			panic("refs.next underflow")
 		}
 		refs.refs[obj] = num
-		refs.objs[num] = obj
+		refs.objs[num] = countedObj{obj, 1}
 	}
 	refs.Unlock()
 
