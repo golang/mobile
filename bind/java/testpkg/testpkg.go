@@ -76,7 +76,7 @@ func (s *S) String() string {
 	return s.name
 }
 
-func finalizeInner(*int) {
+func finalizeInner(a *int) {
 	numSCollected++
 }
 
@@ -143,4 +143,16 @@ func (a *Node) String() string {
 		return "<end>"
 	}
 	return a.V + ":" + a.Next.String()
+}
+
+type Receiver interface {
+	Hello(message string)
+}
+
+func Hello(r Receiver, name string) {
+	r.Hello(fmt.Sprintf("Hello, %s!\n", name))
+}
+
+func GarbageCollect() {
+	runtime.GC()
 }
