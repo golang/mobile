@@ -18,7 +18,9 @@ sudo apt-get install libegl1-mesa-dev libgles2-mesa-dev libx11-dev
 /*
 #cgo LDFLAGS: -lEGL -lGLESv2 -lX11
 
-void runApp(void);
+void createWindow(void);
+void eventLoop(void);
+void swapBuffers(void);
 */
 import "C"
 import (
@@ -27,12 +29,20 @@ import (
 
 	"golang.org/x/mobile/event"
 	"golang.org/x/mobile/geom"
+	"golang.org/x/mobile/gl"
 )
 
 func run(cbs []Callbacks) {
 	runtime.LockOSThread()
 	callbacks = cbs
-	C.runApp()
+
+	go gl.Start(func() {
+		C.createWindow()
+	})
+
+	close(mainCalled)
+	stateStart(callbacks)
+	C.eventLoop()
 }
 
 //export onResize
@@ -45,6 +55,7 @@ func onResize(w, h int) {
 	configAlt.Width = geom.Pt(w)
 	configAlt.Height = geom.Pt(h)
 	configSwap(callbacks)
+	gl.Viewport(0, 0, w, h)
 }
 
 var touchEvents struct {
@@ -59,7 +70,7 @@ func sendTouch(ty event.TouchType, x, y float32) {
 		Type: ty,
 		Loc: geom.Point{
 			X: geom.Pt(x / geom.PixelsPerPt),
-			Y: geom.Height - geom.Pt(y/geom.PixelsPerPt),
+			Y: geom.Pt(y / geom.PixelsPerPt),
 		},
 	})
 	touchEvents.Unlock()
@@ -93,11 +104,10 @@ func onDraw() {
 			cb.Draw()
 		}
 	}
-}
 
-//export onStart
-func onStart() {
-	stateStart(callbacks)
+	gl.Do(func() {
+		C.swapBuffers()
+	})
 }
 
 //export onStop

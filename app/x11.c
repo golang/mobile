@@ -87,14 +87,20 @@ new_window(Display *x_dpy, EGLDisplay e_dpy, int w, int h, EGLContext *ctx, EGLS
 	return win;
 }
 
+Display *x_dpy;
+EGLDisplay e_dpy;
+EGLContext e_ctx;
+EGLSurface e_surf;
+Window win;
+
 void
-runApp(void) {
-	Display *x_dpy = XOpenDisplay(NULL);
+createWindow(void) {
+	x_dpy = XOpenDisplay(NULL);
 	if (!x_dpy) {
 		fprintf(stderr, "XOpenDisplay failed\n");
 		exit(1);
 	}
-	EGLDisplay e_dpy = eglGetDisplay(x_dpy);
+	e_dpy = eglGetDisplay(x_dpy);
 	if (!e_dpy) {
 		fprintf(stderr, "eglGetDisplay failed\n");
 		exit(1);
@@ -105,9 +111,7 @@ runApp(void) {
 		exit(1);
 	}
 	eglBindAPI(EGL_OPENGL_ES_API);
-	EGLContext e_ctx;
-	EGLSurface e_surf;
-	Window win = new_window(x_dpy, e_dpy, 400, 400, &e_ctx, &e_surf);
+	win = new_window(x_dpy, e_dpy, 400, 400, &e_ctx, &e_surf);
 
 	wm_delete_window = XInternAtom(x_dpy, "WM_DELETE_WINDOW", True);
 	if (wm_delete_window != None) {
@@ -119,9 +123,10 @@ runApp(void) {
 		fprintf(stderr, "eglMakeCurrent failed\n");
 		exit(1);
 	}
+}
 
-	onStart();
-
+void
+eventLoop(void) {
 	while (1) {
 		XEvent ev;
 		XNextEvent(x_dpy, &ev);
@@ -137,7 +142,6 @@ runApp(void) {
 			break;
 		case Expose:
 			onDraw();
-			eglSwapBuffers(e_dpy, e_surf);
 
 			// TODO(nigeltao): subscribe to vblank events instead of forcing another
 			// expose event to keep the event loop ticking over.
@@ -152,7 +156,6 @@ runApp(void) {
 			break;
 		case ConfigureNotify:
 			onResize(ev.xconfigure.width, ev.xconfigure.height);
-			glViewport(0, 0, (GLint)ev.xconfigure.width, (GLint)ev.xconfigure.height);
 			break;
 		case ClientMessage:
 			if (wm_delete_window != None && (Atom)ev.xclient.data.l[0] == wm_delete_window) {
@@ -161,5 +164,13 @@ runApp(void) {
 			}
 			break;
 		}
+	}
+}
+
+void
+swapBuffers(void) {
+	if(eglSwapBuffers(e_dpy, e_surf) == EGL_FALSE) {
+		fprintf(stderr, "eglSwapBuffer failed\n");
+		exit(1);
 	}
 }
