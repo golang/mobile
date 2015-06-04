@@ -385,7 +385,7 @@ func (g *javaGen) javaTypeDefault(T types.Type) string {
 	}
 }
 
-var paramRE = regexp.MustCompile(`^p[0-9]+$`)
+var paramRE = regexp.MustCompile(`^p[0-9]*$`)
 
 // paramName replaces incompatible name with a p0-pN name.
 // Missing names, or existing names of the form p[0-9] are incompatible.
