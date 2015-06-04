@@ -37,6 +37,8 @@ typedef struct GoSeq {
 // go_seq_free releases resources of the GoSeq.
 extern void go_seq_free(GoSeq *seq);
 
+extern BOOL go_seq_readBool(GoSeq *seq);
+extern int go_seq_readInt(GoSeq *seq);
 extern int8_t go_seq_readInt8(GoSeq *seq);
 extern int16_t go_seq_readInt16(GoSeq *seq);
 extern int32_t go_seq_readInt32(GoSeq *seq);
@@ -47,6 +49,8 @@ extern GoSeqRef *go_seq_readRef(GoSeq *seq);
 extern NSString *go_seq_readUTF8(GoSeq *seq);
 extern NSData *go_seq_readByteArray(GoSeq *seq);
 
+extern void go_seq_writeBool(GoSeq *seq, BOOL v);
+extern void go_seq_writeInt(GoSeq *seq, int v);
 extern void go_seq_writeInt8(GoSeq *seq, int8_t v);
 extern void go_seq_writeInt16(GoSeq *seq, int16_t v);
 extern void go_seq_writeInt32(GoSeq *seq, int32_t v);
