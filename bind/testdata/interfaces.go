@@ -19,3 +19,7 @@ type seven struct{}
 func (seven) Rand() int32 { return 7 }
 
 func Seven() I { return seven{} }
+
+type WithParam interface {
+	HasParam(p bool)
+}

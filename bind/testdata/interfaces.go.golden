@@ -51,6 +51,30 @@ func proxy_Seven(out, in *seq.Buffer) {
 	out.WriteGoRef(res)
 }
 
+const (
+	proxyWithParam_Descriptor    = "go.interfaces.WithParam"
+	proxyWithParam_HasParam_Code = 0x10a
+)
+
+func proxyWithParam_HasParam(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := ref.Get().(interfaces.WithParam)
+	param_p0 := in.ReadBool()
+	v.HasParam(param_p0)
+}
+
+func init() {
+	seq.Register(proxyWithParam_Descriptor, proxyWithParam_HasParam_Code, proxyWithParam_HasParam)
+}
+
+type proxyWithParam seq.Ref
+
+func (p *proxyWithParam) HasParam(p0 bool) {
+	in := new(seq.Buffer)
+	in.WriteBool(p0)
+	seq.Transact((*seq.Ref)(p), proxyWithParam_HasParam_Code, in)
+}
+
 func init() {
 	seq.Register("interfaces", 1, proxy_Add3)
 	seq.Register("interfaces", 2, proxy_Seven)
