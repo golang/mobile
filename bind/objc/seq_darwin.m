@@ -90,6 +90,24 @@ void go_seq_free(GoSeq *m) {
 #define MEM_READ(seq, ty) ((ty *)mem_read(seq, sizeof(ty), sizeof(ty)))
 #define MEM_WRITE(seq, ty) (*(ty *)mem_write(seq, sizeof(ty), sizeof(ty)))
 
+int go_seq_readInt(GoSeq *seq) {
+  int64_t v = go_seq_readInt64(seq);
+  return v;  // Assume that Go-side used WriteInt to encode 'int' value.
+}
+
+void go_seq_writeInt(GoSeq *seq, int v) {
+  go_seq_writeInt64(seq, v);
+}
+
+BOOL go_seq_readBool(GoSeq *seq) {
+  int8_t v = go_seq_readInt8(seq);
+  return v ? YES : NO;
+}
+
+void go_seq_writeBool(GoSeq *seq, BOOL v) {
+  go_seq_writeInt8(seq, v ? 1 : 0);
+}
+
 int8_t go_seq_readInt8(GoSeq *seq) {
   int8_t *v = MEM_READ(seq, int8_t);
   return v == NULL ? 0 : *v;
