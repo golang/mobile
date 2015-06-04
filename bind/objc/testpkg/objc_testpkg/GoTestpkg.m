@@ -11,11 +11,13 @@
 #define _DESCRIPTOR_ "testpkg"
 
 #define _CALL_BytesAppend_ 1
-#define _CALL_Hello_ 2
-#define _CALL_Hi_ 3
-#define _CALL_Int_ 4
-#define _CALL_NewS_ 5
-#define _CALL_Sum_ 6
+#define _CALL_CallSSum_ 2
+#define _CALL_CollectS_ 3
+#define _CALL_Hello_ 4
+#define _CALL_Hi_ 5
+#define _CALL_Int_ 6
+#define _CALL_NewS_ 7
+#define _CALL_Sum_ 8
 
 NSData *GoTestpkg_BytesAppend(NSData *a, NSData *b) {
   GoSeq in = {};
@@ -25,6 +27,17 @@ NSData *GoTestpkg_BytesAppend(NSData *a, NSData *b) {
   go_seq_send(_DESCRIPTOR_, _CALL_BytesAppend_, &in, &out);
 
   NSData *ret = go_seq_readByteArray(&out);
+  go_seq_free(&out);
+  go_seq_free(&in);
+  return ret;
+}
+
+double GoTestpkg_CallSSum(GoTestpkg_S* s) {
+  GoSeq in = {};
+  GoSeq out = {};
+  go_seq_writeRef(&in, s.ref);
+  go_seq_send(_DESCRIPTOR_, _CALL_CallSSum_, &in, &out);
+  double ret = go_seq_readFloat64(&out);
   go_seq_free(&out);
   go_seq_free(&in);
   return ret;
@@ -88,6 +101,18 @@ GoTestpkg_S *GoTestpkg_NewS(double x, double y) {
   return ret;
 }
 
+int GoTestpkg_CollectS(int want, int timeoutSec) {
+  GoSeq in = {};
+  GoSeq out = {};
+  go_seq_writeInt64(&in, want);
+  go_seq_writeInt64(&in, timeoutSec);
+  go_seq_send(_DESCRIPTOR_, _CALL_CollectS_, &in, &out);
+  int ret = go_seq_readInt64(&out);
+  go_seq_free(&out);
+  go_seq_free(&in);
+  return ret;
+}
+
 #define _GO_TESTPKG_S_DESCRIPTOR_ "go.testpkg.S"
 #define _GO_TESTPKG_S_FIELD_X_GET_ 0x00f
 #define _GO_TESTPKG_S_FIELD_X_SET_ 0x01f
@@ -97,6 +122,15 @@ GoTestpkg_S *GoTestpkg_NewS(double x, double y) {
 
 @implementation GoTestpkg_S {
 }
+
+- (id)initWithRef:(GoSeqRef*)ref {
+  self = [super init];
+  if (self) {
+	  _ref = ref;
+  }
+  return self;
+}
+
 - (double)X {
   GoSeq in = {};
   GoSeq out = {};

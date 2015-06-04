@@ -70,12 +70,4 @@ extern void go_seq_writeByteArray(GoSeq *seq, NSData *data);
 // a Ref to the receiver.
 extern void go_seq_send(char *descriptor, int code, GoSeq *req, GoSeq *res);
 
-// GoSeqProxyObject is the base class for proxies of Go object instances.
-@interface GoSeqProxyObject : NSObject {
-}
-@property(strong, readonly) GoSeqRef *ref;
-
-- (id)initWithRef:(GoSeqRef *)ref;
-@end
-
 #endif // __GO_SEQ_HDR__
