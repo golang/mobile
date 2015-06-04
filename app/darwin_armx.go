@@ -24,6 +24,7 @@ import "C"
 import (
 	"log"
 	"runtime"
+	"sync"
 	"unsafe"
 
 	"golang.org/x/mobile/event"
