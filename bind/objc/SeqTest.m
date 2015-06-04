@@ -44,12 +44,19 @@ void testStruct() {
   if (!s) {
     ERROR(@"GoTestpkg_NewS returned NULL");
   }
+
   double x = [s X];
   double y = [s Y];
   double sum = [s Sum];
   if (x != 10.0 || y != 100.0 || sum != 110.0) {
     ERROR(@"GoTestpkg_S(10.0, 100.0).X=%f Y=%f SUM=%f; want 10, 100, 110", x, y, sum);
   }
+
+  double sum2 = GoTestpkg_CallSSum(s);
+  if (sum != sum2) {
+    ERROR(@"GoTestpkg_CallSSum(s)=%f; want %f as returned by s.Sum", sum2, sum);
+  }
+
   [s setX:7];
   [s setY:70];
   x = [s X];
@@ -85,6 +92,10 @@ int main(void) {
     testBytesAppend(@"Foo", @"Bar");
 
     testStruct();
+    int numS = GoTestpkg_CollectS(1, 10); // within 10 seconds, collect the S used in testStruct.
+    if (numS != 1) {
+      ERROR(@"%d S objects were collected; S used in testStruct is supposed to be collected.", numS);
+    }
   }
 
   fprintf(stderr, "%s\n", err ? "FAIL" : "PASS");
