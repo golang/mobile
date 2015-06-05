@@ -9,6 +9,14 @@ import (
 	"structs"
 )
 
+func proxy_Identity(out, in *seq.Buffer) {
+	// Must be a Go object
+	param_s_ref := in.ReadRef()
+	param_s := param_s_ref.Get().(*structs.S)
+	res := structs.Identity(param_s)
+	out.WriteGoRef(res)
+}
+
 const (
 	proxyS_Descriptor = "go.structs.S"
 	proxyS_X_Get_Code = 0x00f
@@ -60,4 +68,5 @@ func init() {
 }
 
 func init() {
+	seq.Register("structs", 1, proxy_Identity)
 }

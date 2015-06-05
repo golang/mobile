@@ -56,3 +56,24 @@ func GenGo(w io.Writer, fset *token.FileSet, pkg *types.Package) error {
 	_, err = w.Write(srcf)
 	return err
 }
+
+// GenObjc generates the Objective-C API from a Go package.
+func GenObjc(w io.Writer, fset *token.FileSet, pkg *types.Package, isHeader bool) error {
+	buf := new(bytes.Buffer)
+	g := &objcGen{
+		printer: &printer{buf: buf, indentEach: []byte("\t")},
+		fset:    fset,
+		pkg:     pkg,
+	}
+	var err error
+	if isHeader {
+		err = g.genH()
+	} else {
+		err = g.genM()
+	}
+	if err != nil {
+		return err
+	}
+	_, err = io.Copy(w, buf)
+	return err
+}

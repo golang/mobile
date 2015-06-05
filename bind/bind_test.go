@@ -7,6 +7,7 @@ import (
 	"go/parser"
 	"go/token"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,6 +18,10 @@ import (
 	_ "golang.org/x/tools/go/gcimporter"
 	"golang.org/x/tools/go/types"
 )
+
+func init() {
+	log.SetFlags(log.Lshortfile)
+}
 
 var updateFlag = flag.Bool("update", false, "Update the golden files.")
 
@@ -78,6 +83,38 @@ func writeTempFile(t *testing.T, name string, contents []byte) string {
 		t.Fatal(err)
 	}
 	return f.Name()
+}
+
+func TestGenObjc(t *testing.T) {
+	var suffixes = map[bool]string{
+		true:  ".objc.h.golden",
+		false: ".objc.m.golden",
+	}
+
+	for _, filename := range tests {
+		pkg := typeCheck(t, filename)
+
+		for isHeader, suffix := range suffixes {
+			var buf bytes.Buffer
+			if err := GenObjc(&buf, fset, pkg, isHeader); err != nil {
+				t.Errorf("%s: %v", filename, err)
+				continue
+			}
+			out := writeTempFile(t, "generated"+suffix, buf.Bytes())
+			defer os.Remove(out)
+			golden := filename[:len(filename)-len(".go")] + suffix
+			if diffstr := diff(golden, out); diffstr != "" {
+				t.Errorf("%s: does not match Objective-C golden:\n%s", filename, diffstr)
+				if *updateFlag {
+					t.Logf("Updating %s...", golden)
+					err := exec.Command("/bin/cp", out, golden).Run()
+					if err != nil {
+						t.Errorf("Update failed: %s", err)
+					}
+				}
+			}
+		}
+	}
 }
 
 func TestGenJava(t *testing.T) {
