@@ -10,7 +10,6 @@
 #include <X11/Xlib.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 static Atom wm_delete_window;
 
@@ -123,11 +122,23 @@ createWindow(void) {
 		fprintf(stderr, "eglMakeCurrent failed\n");
 		exit(1);
 	}
+
+	// Window size and DPI should be initialized before starting app.
+	XEvent ev;
+	while (1) {
+		if (XCheckMaskEvent(x_dpy, StructureNotifyMask, &ev) == False) {
+			continue;
+		}
+		if (ev.type == ConfigureNotify) {
+			onResize(ev.xconfigure.width, ev.xconfigure.height);
+			break;
+		}
+	}
 }
 
 void
-eventLoop(void) {
-	while (1) {
+processEvents(void) {
+	while (XPending(x_dpy)) {
 		XEvent ev;
 		XNextEvent(x_dpy, &ev);
 		switch (ev.type) {
@@ -139,20 +150,6 @@ eventLoop(void) {
 			break;
 		case MotionNotify:
 			onTouchMove((float)ev.xmotion.x, (float)ev.xmotion.y);
-			break;
-		case Expose:
-			onDraw();
-
-			// TODO(nigeltao): subscribe to vblank events instead of forcing another
-			// expose event to keep the event loop ticking over.
-			// TODO(nigeltao): no longer #include <string.h> when we don't use memset.
-			XExposeEvent fakeEvent;
-			memset(&fakeEvent, 0, sizeof(XExposeEvent));
-			fakeEvent.type = Expose;
-			fakeEvent.window = win;
-			XSendEvent(x_dpy, win, 0, 0, (XEvent*)&fakeEvent);
-			XFlush(x_dpy);
-
 			break;
 		case ConfigureNotify:
 			onResize(ev.xconfigure.width, ev.xconfigure.height);
