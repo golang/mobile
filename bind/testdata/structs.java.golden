@@ -9,6 +9,16 @@ import go.Seq;
 public abstract class Structs {
     private Structs() {} // uninstantiable
     
+    public static S Identity(S s) {
+        go.Seq _in = new go.Seq();
+        go.Seq _out = new go.Seq();
+        S _result;
+        _in.writeRef(s.ref());
+        Seq.send(DESCRIPTOR, CALL_Identity, _in, _out);
+        _result = new S(_out.readRef());
+        return _result;
+    }
+    
     public static final class S implements go.Seq.Object {
         private static final String DESCRIPTOR = "go.structs.S";
         private static final int FIELD_X_GET = 0x00f;
@@ -101,5 +111,6 @@ public abstract class Structs {
         
     }
     
+    private static final int CALL_Identity = 1;
     private static final String DESCRIPTOR = "structs";
 }
