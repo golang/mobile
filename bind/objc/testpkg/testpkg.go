@@ -5,6 +5,7 @@
 package testpkg
 
 //go:generate gobind -lang=go -outdir=go_testpkg .
+//go:generate gobind -lang=objc -outdir=objc_testpkg .
 
 import (
 	"fmt"
