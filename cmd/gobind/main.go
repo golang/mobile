@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	lang   = flag.String("lang", "java", "target language for bindings, either java or go.")
+	lang   = flag.String("lang", "java", "target language for bindings, either java, go, or objc (experimental).")
 	outdir = flag.String("outdir", "", "result will be written to the directory instead of stdout.")
 )
 
