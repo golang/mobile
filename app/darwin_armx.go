@@ -181,7 +181,7 @@ func drawgl(ctx uintptr) {
 		go gl.Start(func() {
 			C.setContext(unsafe.Pointer(ctx))
 		})
-		stateStart(cb)
+		stateStart(callbacks)
 	}
 
 	touchEvents.Lock()
