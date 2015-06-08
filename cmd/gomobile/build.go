@@ -17,7 +17,6 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 )
@@ -325,56 +324,6 @@ func addBuildFlagsNVX(cmd *command) {
 	cmd.flag.BoolVar(&buildN, "n", false, "")
 	cmd.flag.BoolVar(&buildV, "v", false, "")
 	cmd.flag.BoolVar(&buildX, "x", false, "")
-}
-
-// TODO(jbd): Build darwin/arm cross compiler during gomobile init.
-
-func goIOSBuild(src string) error {
-	// iOS builds are achievable only if the host machine is darwin.
-	if runtime.GOOS != "darwin" {
-		return nil
-	}
-
-	goroot := goEnv("GOROOT")
-	gopath := goEnv("GOPATH")
-	gocmd := exec.Command(
-		`go`,
-		`build`,
-		`-tags=`+strconv.Quote(strings.Join(ctx.BuildTags, ",")))
-	if buildV {
-		gocmd.Args = append(gocmd.Args, "-v")
-	}
-	if buildI {
-		gocmd.Args = append(gocmd.Args, "-i")
-	}
-	if buildX {
-		gocmd.Args = append(gocmd.Args, "-x")
-	}
-	gocmd.Args = append(gocmd.Args, src)
-	// TODO(jbd): Return a user-friendly error if xcode command line
-	// tools are not available.
-	gocmd.Stdout = os.Stdout
-	gocmd.Stderr = os.Stderr
-	gocmd.Env = []string{
-		`GOOS=darwin`,
-		`GOARCH=arm`, // TODO(jbd): Build for arm64
-		`GOARM=7`,
-		`CGO_ENABLED=1`,
-		`CC=` + filepath.Join(goroot, "misc/ios/clangwrap.sh"), // TODO(jbd): reimplement clangwrap here.
-		`CXX=` + filepath.Join(goroot, "misc/ios/clangwrap.sh"),
-		`GOROOT=` + goroot,
-		`GOPATH=` + gopath,
-	}
-	if buildX {
-		printcmd("%s", strings.Join(gocmd.Env, " ")+" "+strings.Join(gocmd.Args, " "))
-	}
-	if !buildN {
-		gocmd.Env = environ(gocmd.Env)
-		if err := gocmd.Run(); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // goAndroidBuild builds a package.
