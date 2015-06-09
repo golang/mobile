@@ -15,29 +15,29 @@
 
 struct utsname sysInfo;
 
-@interface AppController : GLKViewController
+@interface GoAppAppController : GLKViewController
 @end
 
-@interface AppDelegate : UIResponder<UIApplicationDelegate>
+@interface GoAppAppDelegate : UIResponder<UIApplicationDelegate>
 @property (strong, nonatomic) UIWindow *window;
-@property (strong, nonatomic) AppController *controller;
+@property (strong, nonatomic) GoAppAppController *controller;
 @end
 
-@implementation AppDelegate
+@implementation GoAppAppDelegate
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 	self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-	self.controller = [[AppController alloc] initWithNibName:nil bundle:nil];
+	self.controller = [[GoAppAppController alloc] initWithNibName:nil bundle:nil];
 	self.window.rootViewController = self.controller;
 	[self.window makeKeyAndVisible];
 	return YES;
 }
 @end
 
-@interface AppController ()
+@interface GoAppAppController ()
 @property (strong, nonatomic) EAGLContext *context;
 @end
 
-@implementation AppController
+@implementation GoAppAppController
 - (void)viewDidLoad {
 	[super viewDidLoad];
 	self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
@@ -83,7 +83,7 @@ static void sendTouches(int ty, NSSet* touches) {
 
 void runApp(void) {
 	@autoreleasepool {
-		UIApplicationMain(0, nil, nil, NSStringFromClass([AppDelegate class]));
+		UIApplicationMain(0, nil, nil, NSStringFromClass([GoAppAppDelegate class]));
 	}
 }
 
