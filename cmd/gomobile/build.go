@@ -429,10 +429,7 @@ func goAndroidBuild(src, libPath string) error {
 			gocmd.Args = append(gocmd.Args, `-o`, *buildO)
 		}
 	} else {
-		gocmd.Args = append(gocmd.Args,
-			`-ldflags="-shared"`,
-			`-o`, libPath,
-		)
+		gocmd.Args = append(gocmd.Args, "-buildmode=c-shared", "-o", libPath)
 	}
 
 	gocmd.Args = append(gocmd.Args, src)
