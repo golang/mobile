@@ -16,3 +16,7 @@ func (s *S) Sum() float64 {
 func Identity(s *S) *S {
 	return s
 }
+
+func IdentityWithError(s *S) (*S, error) {
+	return s, nil
+}
