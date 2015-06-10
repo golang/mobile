@@ -17,6 +17,19 @@ func proxy_Identity(out, in *seq.Buffer) {
 	out.WriteGoRef(res)
 }
 
+func proxy_IdentityWithError(out, in *seq.Buffer) {
+	// Must be a Go object
+	param_s_ref := in.ReadRef()
+	param_s := param_s_ref.Get().(*structs.S)
+	res, err := structs.IdentityWithError(param_s)
+	out.WriteGoRef(res)
+	if err == nil {
+		out.WriteString("")
+	} else {
+		out.WriteString(err.Error())
+	}
+}
+
 const (
 	proxyS_Descriptor = "go.structs.S"
 	proxyS_X_Get_Code = 0x00f
@@ -69,4 +82,5 @@ func init() {
 
 func init() {
 	seq.Register("structs", 1, proxy_Identity)
+	seq.Register("structs", 2, proxy_IdentityWithError)
 }

@@ -12,6 +12,7 @@ static NSString *errDomain = @"go.structs";
 #define _DESCRIPTOR_ "structs"
 
 #define _CALL_Identity_ 1
+#define _CALL_IdentityWithError_ 2
 
 #define _GO_structs_S_DESCRIPTOR_ "go.structs.S"
 #define _GO_structs_S_FIELD_X_GET_ (0x00f)
@@ -97,5 +98,28 @@ GoStructs_S* GoStructs_Identity(GoStructs_S* s) {
 	go_seq_free(&in_);
 	go_seq_free(&out_);
 	return ret0_;
+}
+
+BOOL GoStructs_IdentityWithError(GoStructs_S* s, GoStructs_S** ret0_, NSError** error) {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	go_seq_writeRef(&in_, s.ref);
+	go_seq_send(_DESCRIPTOR_, _CALL_IdentityWithError_, &in_, &out_);
+	GoSeqRef* ret0__ref = go_seq_readRef(&out_);
+	if (ret0_ != NULL) {
+		*ret0_ = ret0__ref.obj;
+		if (*ret0_ == NULL) {
+			*ret0_ = [[GoStructs_S alloc] initWithRef:ret0__ref];
+		}
+	}
+	NSString* _error = go_seq_readUTF8(&out_);
+	if ([_error length] != 0 && error != nil) {
+		NSMutableDictionary *details = [NSMutableDictionary dictionary];
+		[details setValue:_error forKey:NSLocalizedDescriptionKey];
+		*error = [NSError errorWithDomain:errDomain code:1 userInfo:details];
+	}
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+	return ([_error length] == 0);
 }
 

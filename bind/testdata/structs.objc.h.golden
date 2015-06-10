@@ -24,4 +24,6 @@
 
 FOUNDATION_EXPORT GoStructs_S* GoStructs_Identity(GoStructs_S* s);
 
+FOUNDATION_EXPORT BOOL GoStructs_IdentityWithError(GoStructs_S* s, GoStructs_S** ret0_, NSError** error);
+
 #endif
