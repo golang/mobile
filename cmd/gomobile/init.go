@@ -40,9 +40,12 @@ var (
 )
 
 func init() {
-	if runtime.GOARCH == "amd64" {
+	switch runtime.GOARCH {
+	case "amd64":
 		ndkarch = "x86_64"
-	} else {
+	case "386":
+		ndkarch = "x86"
+	default:
 		ndkarch = runtime.GOARCH
 	}
 }
