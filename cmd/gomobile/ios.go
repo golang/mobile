@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -74,18 +75,49 @@ func goIOSBuild(src string) error {
 		printcmd("xcrun lipo -create %s %s -o %s", armPath, arm64Path, filepath.Join(dir, "main/main"))
 	}
 	if !buildN {
-		err := exec.Command(
+		cmd := exec.Command(
 			"xcrun", "lipo",
 			"-create", armPath, arm64Path,
 			"-o", filepath.Join(dir, "main/main"),
-		).Run()
-		if err != nil {
+		)
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
 			return err
 		}
 	}
 
-	// TODO(jbd): Copy assets.
-	// TODO(jbd): Run xcodebuild and move the build to the desired output directory.
+	// TODO(jbd): Copy assets, set the launcher icon.
+
+	// Build and move the release build to the output directory.
+	if buildX {
+		printcmd("xcrun xcodebuild -configuration Release -project %s", dir+"/main.xcodeproj")
+	}
+	if !buildN {
+		cmd := exec.Command(
+			"xcrun", "xcodebuild",
+			"-configuration", "Release",
+			"-project", dir+"/main.xcodeproj",
+		)
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			return err
+		}
+	}
+
+	// TODO(jbd): Fallback to copying if renaming fails.
+	out := path.Base(pkg.ImportPath) + ".app"
+	if *buildO != "" {
+		out = filepath.Join(*buildO, out)
+	}
+	if buildX {
+		printcmd("mv %s %s", dir+"/build/Release-iphoneos/main.app", out)
+	}
+	if !buildN {
+		if err := os.Rename(dir+"/build/Release-iphoneos/main.app", out); err != nil {
+			return err
+		}
+	}
+
 	// TODO(jbd): Remove the temp dir.
 	return nil
 }
@@ -114,6 +146,7 @@ func goBuild(src, o string, env []string) error {
 		`GOROOT=` + goroot,
 		`GOPATH=` + gopath,
 	}...)
+	cmd.Stderr = os.Stderr
 	if buildX {
 		printcmd("%s", strings.Join(cmd.Env, " ")+" "+strings.Join(cmd.Args, " "))
 	}
