@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"code.google.com/p/freetype-go/freetype"
-	"golang.org/x/mobile/font"
+	"golang.org/x/mobile/exp/font"
 	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/gl/glutil"
 )
