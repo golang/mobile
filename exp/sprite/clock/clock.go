@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // Package clock provides a clock and time functions for a sprite engine.
-package clock // import "golang.org/x/mobile/sprite/clock"
+package clock // import "golang.org/x/mobile/exp/sprite/clock"
 
 // A Time represents an instant in sprite time.
 //
