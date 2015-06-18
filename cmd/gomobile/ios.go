@@ -5,6 +5,7 @@
 package main
 
 import (
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -86,7 +87,10 @@ func goIOSBuild(src string) error {
 		}
 	}
 
-	// TODO(jbd): Copy assets, set the launcher icon.
+	// TODO(jbd): Set the launcher icon.
+	if err := iosCopyAssets(dir); err != nil {
+		return err
+	}
 
 	// Build and move the release build to the output directory.
 	if buildX {
@@ -119,6 +123,56 @@ func goIOSBuild(src string) error {
 	}
 
 	// TODO(jbd): Remove the temp dir.
+	return nil
+}
+
+func iosCopyAssets(xcodeProjDir string) error {
+	assetsDir := filepath.Join(pkg.Dir, "assets")
+	assetsDirExists := true
+	fi, err := os.Stat(assetsDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			assetsDirExists = false
+		} else {
+			return err
+		}
+	} else {
+		assetsDirExists = fi.IsDir()
+	}
+	if !assetsDirExists {
+		return nil
+	}
+
+	if buildX {
+		printcmd("cp -R %s %s", filepath.Join(pkg.Dir, "assets"), xcodeProjDir+"/main/assets")
+	}
+	if buildN {
+		return nil
+	}
+
+	return filepath.Walk(assetsDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		dst := xcodeProjDir + "/main/assets/" + path[len(assetsDir)+1:]
+		if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+			return err
+		}
+		f, err := os.Create(dst)
+		if err != nil {
+			return err
+		}
+		w, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		_, err = io.Copy(w, f)
+		return err
+	})
 	return nil
 }
 
@@ -211,20 +265,26 @@ const projPbxproj = `// !$*UTF8*$!
   };
   objectVersion = 46;
   objects = {
+
 /* Begin PBXBuildFile section */
     254BB84F1B1FD08900C56DE9 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 254BB84E1B1FD08900C56DE9 /* Images.xcassets */; };
     254BB8681B1FD16500C56DE9 /* main in Resources */ = {isa = PBXBuildFile; fileRef = 254BB8671B1FD16500C56DE9 /* main */; };
+    25FB30331B30FDEE0005924C /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 25FB30321B30FDEE0005924C /* assets */; };
 /* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
     254BB83E1B1FD08900C56DE9 /* main.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = main.app; sourceTree = BUILT_PRODUCTS_DIR; };
     254BB8421B1FD08900C56DE9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
     254BB84E1B1FD08900C56DE9 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
     254BB8671B1FD16500C56DE9 /* main */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; path = main; sourceTree = "<group>"; };
+    25FB30321B30FDEE0005924C /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = assets; path = main/assets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
 /* Begin PBXGroup section */
     254BB8351B1FD08900C56DE9 = {
       isa = PBXGroup;
       children = (
+        25FB30321B30FDEE0005924C /* assets */,
         254BB8401B1FD08900C56DE9 /* main */,
         254BB83F1B1FD08900C56DE9 /* Products */,
       );
@@ -258,6 +318,7 @@ const projPbxproj = `// !$*UTF8*$!
       sourceTree = "<group>";
     };
 /* End PBXGroup section */
+
 /* Begin PBXNativeTarget section */
     254BB83D1B1FD08900C56DE9 /* main */ = {
       isa = PBXNativeTarget;
@@ -275,6 +336,7 @@ const projPbxproj = `// !$*UTF8*$!
       productType = "com.apple.product-type.application";
     };
 /* End PBXNativeTarget section */
+
 /* Begin PBXProject section */
     254BB8361B1FD08900C56DE9 /* Project object */ = {
       isa = PBXProject;
@@ -304,17 +366,20 @@ const projPbxproj = `// !$*UTF8*$!
       );
     };
 /* End PBXProject section */
+
 /* Begin PBXResourcesBuildPhase section */
     254BB83C1B1FD08900C56DE9 /* Resources */ = {
       isa = PBXResourcesBuildPhase;
       buildActionMask = 2147483647;
       files = (
+        25FB30331B30FDEE0005924C /* assets in Resources */,
         254BB8681B1FD16500C56DE9 /* main in Resources */,
         254BB84F1B1FD08900C56DE9 /* Images.xcassets in Resources */,
       );
       runOnlyForDeploymentPostprocessing = 0;
     };
 /* End PBXResourcesBuildPhase section */
+
 /* Begin XCBuildConfiguration section */
     254BB85F1B1FD08900C56DE9 /* Debug */ = {
       isa = XCBuildConfiguration;
@@ -419,6 +484,7 @@ const projPbxproj = `// !$*UTF8*$!
       name = Release;
     };
 /* End XCBuildConfiguration section */
+
 /* Begin XCConfigurationList section */
     254BB8391B1FD08900C56DE9 /* Build configuration list for PBXProject "main" */ = {
       isa = XCConfigurationList;
