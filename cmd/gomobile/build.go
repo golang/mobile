@@ -129,8 +129,8 @@ func runBuild(cmd *command) (err error) {
 		buf.WriteString(`<?xml version="1.0" encoding="utf-8"?>`)
 		err := manifestTmpl.Execute(buf, manifestTmplData{
 			// TODO(crawshaw): a better package path.
-			JavaPkgPath: "org.golang.todo." + pkg.Name,
-			Name:        strings.ToUpper(pkg.Name[:1]) + pkg.Name[1:],
+			JavaPkgPath: "org.golang.todo." + libName,
+			Name:        libName,
 			LibName:     libName,
 		})
 		if err != nil {
