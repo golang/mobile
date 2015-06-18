@@ -37,11 +37,11 @@ import (
 	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/app/debug"
 	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/exp/sprite"
+	"golang.org/x/mobile/exp/sprite/clock"
+	"golang.org/x/mobile/exp/sprite/glsprite"
 	"golang.org/x/mobile/f32"
 	"golang.org/x/mobile/gl"
-	"golang.org/x/mobile/sprite"
-	"golang.org/x/mobile/sprite/clock"
-	"golang.org/x/mobile/sprite/glsprite"
 )
 
 var (

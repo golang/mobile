@@ -15,7 +15,7 @@ documentation serves as a starting point:
 
 - [mobile/app](http://godoc.org/golang.org/x/mobile/app)
 - [mobile/gl](http://godoc.org/golang.org/x/mobile/gl)
-- [mobile/sprite](http://godoc.org/golang.org/x/mobile/sprite)
+- [mobile/exp/sprite](http://godoc.org/golang.org/x/mobile/exp/sprite)
 - [mobile/audio](http://godoc.org/golang.org/x/mobile/audio)
 - [mobile/sensor](http://godoc.org/golang.org/x/mobile/sensor)
 - [mobile/cmd/gomobile](http://godoc.org/golang.org/x/mobile/cmd/gomobile)
