@@ -13,20 +13,23 @@ import (
 	"text/template"
 )
 
+var gopath string
+
 func TestInit(t *testing.T) {
 	buf := new(bytes.Buffer)
-	gopath := os.Getenv("GOPATH")
+	gopathorig := os.Getenv("GOPATH")
 	defer func() {
 		xout = os.Stderr
 		buildN = false
 		buildX = false
-		os.Setenv("GOPATH", gopath)
+		os.Setenv("GOPATH", gopathorig)
 	}()
 	xout = buf
 	buildN = true
 	buildX = true
 	// Test that first GOPATH element is chosen correctly.
-	paths := []string{"GOPATH1", "/path2", "/path3"}
+	gopath = "/GOPATH1"
+	paths := []string{"/GOPATH1", "/path2", "/path3"}
 	os.Setenv("GOPATH", strings.Join(paths, string(os.PathListSeparator)))
 	os.Setenv("GOROOT_BOOTSTRAP", "go1.4")
 	if goos == "windows" {
@@ -55,6 +58,7 @@ func diffOutput(got string, wantTmpl *template.Template) (string, error) {
 		NDK:         ndkVersion,
 		GOOS:        goos,
 		GOARCH:      goarch,
+		GOPATH:      gopath,
 		NDKARCH:     ndkarch,
 		BuildScript: unixBuildScript,
 	}
@@ -76,6 +80,7 @@ type outputData struct {
 	NDK         string
 	GOOS        string
 	GOARCH      string
+	GOPATH      string
 	NDKARCH     string
 	EXE         string // .extension for executables. (ex. ".exe" for windows)
 	BuildScript string
@@ -86,9 +91,9 @@ const (
 	windowsBuildScript = `TEMP=$WORK TMP=$WORK HOMEDRIVE=C: HOMEPATH=$HOMEPATH GOROOT_BOOTSTRAP=go1.4 $WORK/go/src/make.bat --no-clean`
 )
 
-var initTmpl = template.Must(template.New("output").Parse(`GOMOBILE=GOPATH1/pkg/gomobile
+var initTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
 mkdir -p $GOMOBILE/android-{{.NDK}}
-WORK=GOPATH1/pkg/gomobile/work
+WORK=/GOPATH1/pkg/gomobile/work
 mkdir -p $WORK/go/pkg
 cp -a $GOROOT/lib $WORK/go/lib
 cp -a $GOROOT/src $WORK/go/src
