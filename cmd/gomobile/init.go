@@ -250,7 +250,58 @@ Make GOROOT writable (possibly by becoming the super user, using sudo) and run:
 			return err
 		}
 	}
+	return nil
+}
 
+// TODO(jbd): buildDarwinARMCC is not invoked from anywhere yet.
+// Once it is stable, it will be invoked from runInit.
+
+func buildDarwinARMCC() error {
+	tmpGoroot := filepath.Join(tmpdir, "go")
+
+	makeCC := func(arch string) error {
+		m := exec.Command(filepath.Join(tmpGoroot, "src/make.bash"), "--no-clean")
+		m.Dir = filepath.Join(tmpGoroot, "src")
+		m.Env = []string{
+			`PATH=` + os.Getenv("PATH"),
+			`GOOS=darwin`,
+			`GOROOT=` + tmpGoroot, // set to override any bad os.Environ
+			`GOARCH=` + arch,
+			`CGO_ENABLED=1`,
+			`CC_FOR_TARGET=` + filepath.Join(tmpGoroot, "misc/ios/clangwrap.sh"),
+			`CXX_FOR_TARGET=` + filepath.Join(tmpGoroot, "misc/ios/clangwrap.sh"),
+		}
+		if arch == "arm" {
+			m.Env = append(m.Env, "GOARM=7")
+		}
+		m.Env = appendCommonEnv(m.Env)
+		if v := goEnv("GOROOT_BOOTSTRAP"); v != "" {
+			m.Env = append(m.Env, `GOROOT_BOOTSTRAP=`+v)
+		}
+		if buildV {
+			fmt.Fprintf(os.Stderr, "building darwin/arm cross compiler\n")
+			m.Stdout = os.Stdout
+			m.Stderr = os.Stderr
+		}
+		if buildX {
+			printcmd("%s", strings.Join(m.Env, " ")+" "+strings.Join(m.Args, " "))
+		}
+		if !buildN {
+			if err := m.Run(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	if err := makeCC("arm"); err != nil {
+		return nil
+	}
+	if err := makeCC("arm64"); err != nil {
+		return nil
+	}
+	// TODO(jbd): Move the prebuilt library to the GOROOT.
+	// mv tmpGoroot/pkg/darwin_arm   GOROOT/pkg/darwin_arm
+	// mv tmpGoroot/pkg/darwin_arm64 GOROOT/pkg/darwin_arm64
 	return nil
 }
 
@@ -655,7 +706,7 @@ func copyGoroot(dst, src string) error {
 	if err := mkdir(filepath.Join(dst, "pkg")); err != nil {
 		return err
 	}
-	for _, dir := range []string{"lib", "src"} {
+	for _, dir := range []string{"lib", "src", "misc"} {
 		if err := copyAll(filepath.Join(dst, dir), filepath.Join(src, dir)); err != nil {
 			return err
 		}
