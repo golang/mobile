@@ -73,7 +73,7 @@ func TestWriter(t *testing.T) {
 
 	if aaptGot != aaptWant {
 		t.Errorf("unexpected output from aapt")
-		d, err := diff(aaptWant, aaptGot)
+		d, err := diff(aaptGot, aaptWant)
 		if err != nil {
 			t.Errorf("diff failed: %v", err)
 		} else {
