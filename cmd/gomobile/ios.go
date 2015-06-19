@@ -26,6 +26,7 @@ func goIOSBuild(src string) error {
 			return err
 		}
 		dir = tmp
+		defer os.RemoveAll(dir)
 	}
 	if buildX {
 		printcmd("mkdir %s", dir)
@@ -121,8 +122,6 @@ func goIOSBuild(src string) error {
 			return err
 		}
 	}
-
-	// TODO(jbd): Remove the temp dir.
 	return nil
 }
 
