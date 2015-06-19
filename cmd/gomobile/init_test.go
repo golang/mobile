@@ -97,6 +97,7 @@ WORK=/GOPATH1/pkg/gomobile/work
 mkdir -p $WORK/go/pkg
 cp -a $GOROOT/lib $WORK/go/lib
 cp -a $GOROOT/src $WORK/go/src
+cp -a $GOROOT/misc $WORK/go/misc
 ln -s $GOROOT/.git $WORK/go/.git
 mkdir -p $GOMOBILE/dl
 curl -o$GOMOBILE/dl/gomobile-{{.NDK}}-{{.GOOS}}-{{.NDKARCH}}.tar.gz https://dl.google.com/go/mobile/gomobile-{{.NDK}}-{{.GOOS}}-{{.NDKARCH}}.tar.gz
