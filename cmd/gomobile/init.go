@@ -208,38 +208,14 @@ func runInit(cmd *command) error {
 		}
 	}
 
-	// Move pre-compiled stdlib for android into GOROOT. This is
-	// the only time we modify the user's GOROOT.
-	cannotRemove := false
-	if err := removeAll(filepath.Join(goroot, "pkg/android_arm")); err != nil {
-		cannotRemove = true
+	if err := installCC("android", "arm"); err != nil {
+		return err
 	}
-	if err := move(filepath.Join(goroot, "pkg"), filepath.Join(tmpGoroot, "pkg"), "android_arm"); err != nil {
-		// Move android_arm into a temp directory that outlives
-		// this process and give the user installation instructions.
-		dir, err := ioutil.TempDir("", "gomobile-")
-		if err != nil {
+
+	if runtime.GOOS == "darwin" {
+		if err := buildDarwinARMCC(); err != nil {
 			return err
 		}
-		if err := move(dir, filepath.Join(tmpGoroot, "pkg"), "android_arm"); err != nil {
-			return err
-		}
-		remove := ""
-		if cannotRemove {
-			if goos == "windows" {
-				remove = "\trd /s /q %s\\pkg\\android_arm\n"
-			} else {
-				remove = "\trm -r -f %s/pkg/android_arm\n"
-			}
-		}
-		return fmt.Errorf(
-			`Cannot install android/arm in GOROOT.
-Make GOROOT writable (possibly by becoming the super user, using sudo) and run:
-%s	mv %s %s`,
-			remove,
-			filepath.Join(dir, "android_arm"),
-			filepath.Join(goroot, "pkg"),
-		)
 	}
 
 	if buildX {
@@ -253,17 +229,18 @@ Make GOROOT writable (possibly by becoming the super user, using sudo) and run:
 	return nil
 }
 
-// TODO(jbd): buildDarwinARMCC is not invoked from anywhere yet.
-// Once it is stable, it will be invoked from runInit.
-
 func buildDarwinARMCC() error {
+	envpath := os.Getenv("PATH")
+	if buildN {
+		envpath = "$PATH"
+	}
 	tmpGoroot := filepath.Join(tmpdir, "go")
 
 	makeCC := func(arch string) error {
 		m := exec.Command(filepath.Join(tmpGoroot, "src/make.bash"), "--no-clean")
 		m.Dir = filepath.Join(tmpGoroot, "src")
 		m.Env = []string{
-			`PATH=` + os.Getenv("PATH"),
+			`PATH=` + envpath,
 			`GOOS=darwin`,
 			`GOROOT=` + tmpGoroot, // set to override any bad os.Environ
 			`GOARCH=` + arch,
@@ -299,9 +276,24 @@ func buildDarwinARMCC() error {
 	if err := makeCC("arm64"); err != nil {
 		return nil
 	}
-	// TODO(jbd): Move the prebuilt library to the GOROOT.
-	// mv tmpGoroot/pkg/darwin_arm   GOROOT/pkg/darwin_arm
-	// mv tmpGoroot/pkg/darwin_arm64 GOROOT/pkg/darwin_arm64
+	if err := installCC("darwin", "arm"); err != nil {
+		return err
+	}
+	return installCC("darwin", "arm64")
+}
+
+func installCC(goos, goarch string) error {
+	goroot := goEnv("GOROOT")
+	tmpGoroot := filepath.Join(tmpdir, "go")
+	// Move pre-compiled stdlib for GOROOT. This is
+	// the only time we modify the user's GOROOT.
+	name := goos + "_" + goarch
+	if err := removeAll(filepath.Join(goroot, "pkg", name)); err != nil {
+		return fmt.Errorf("GOROOT is not writable: %v", err)
+	}
+	if err := move(filepath.Join(goroot, "pkg"), filepath.Join(tmpGoroot, "pkg"), name); err != nil {
+		return fmt.Errorf("GOROOT is not writable: %v", err)
+	}
 	return nil
 }
 
