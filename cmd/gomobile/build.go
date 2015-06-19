@@ -30,36 +30,35 @@ var tmpdir string
 var cmdBuild = &command{
 	run:   runBuild,
 	Name:  "build",
-	Usage: "[-o output] [-i] [build flags] [package]",
+	Usage: "[-target android|ios] [-o output] [build flags] [package]",
 	Short: "compile android APK and iOS app",
 	Long: `
 Build compiles and encodes the app named by the import path.
 
 The named package must define a main function.
 
-If an AndroidManifest.xml is defined in the package directory, it is
-added to the APK file. Otherwise, a default manifest is generated.
+The -target flag takes a target system name, either android (the
+default) or ios.
+
+For -target android, if an AndroidManifest.xml is defined in the
+package directory, it is added to the APK output. Otherwise, a default
+manifest is generated.
+
+For -target ios, gomobile must be run on an OS X machine with Xcode
+installed. Support is not complete.
 
 If the package directory contains an assets subdirectory, its contents
-are copied into the APK file.
+are copied into the output.
 
 The -o flag specifies the output file name. If not specified, the
-output file name depends on the package built. The output file must end
-in '.apk'.
+output file name depends on the package built.
 
 The -v flag provides verbose output, including the list of packages built.
 
-These build flags are shared by the build, install, and test commands.
-For documentation, see 'go help build':
-	-a
-	-i
-	-n
-	-x
-	-tags 'tag list'
+The build flags -a, -i, -n, -x, and -tags are shared with the build command.
+For documentation, see 'go help build'.
 `,
 }
-
-// TODO: -mobile
 
 func runBuild(cmd *command) (err error) {
 	cwd, err := os.Getwd()
@@ -79,6 +78,15 @@ func runBuild(cmd *command) (err error) {
 	}
 	if err != nil {
 		return err
+	}
+
+	switch *buildTarget {
+	case "android":
+		// implementation is below
+	case "ios":
+		return fmt.Errorf(`-target=ios not yet supported`)
+	default:
+		return fmt.Errorf(`unknown -target, %q.`, *buildTarget)
 	}
 
 	if pkg.Name != "main" {
@@ -108,7 +116,7 @@ func runBuild(cmd *command) (err error) {
 	}
 	defer removeAll(tmpdir)
 	if buildX {
-		fmt.Fprintln(os.Stderr, "WORK="+tmpdir)
+		fmt.Fprintln(xout, "WORK="+tmpdir)
 	}
 
 	libName := path.Base(pkg.ImportPath)
@@ -306,15 +314,19 @@ func printcmd(format string, args ...interface{}) {
 
 // "Build flags", used by multiple commands.
 var (
-	buildA bool    // -a
-	buildI bool    // -i
-	buildN bool    // -n
-	buildV bool    // -v
-	buildX bool    // -x
-	buildO *string // -o
+	buildA      bool    // -a
+	buildI      bool    // -i
+	buildN      bool    // -n
+	buildV      bool    // -v
+	buildX      bool    // -x
+	buildO      *string // -o
+	buildTarget *string // -target
 )
 
 func addBuildFlags(cmd *command) {
+	buildO = cmd.flag.String("o", "", "")
+	buildTarget = cmd.flag.String("target", "android", "")
+
 	cmd.flag.BoolVar(&buildA, "a", false, "")
 	cmd.flag.BoolVar(&buildI, "i", false, "")
 	cmd.flag.Var((*stringsFlag)(&ctx.BuildTags), "tags", "")
@@ -438,7 +450,6 @@ func pkgImportsAudio(pkg *build.Package) bool {
 }
 
 func init() {
-	buildO = cmdBuild.flag.String("o", "", "output file")
 	addBuildFlags(cmdBuild)
 	addBuildFlagsNVX(cmdBuild)
 

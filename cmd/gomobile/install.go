@@ -13,15 +13,16 @@ import (
 var cmdInstall = &command{
 	run:   runInstall,
 	Name:  "install",
-	Usage: "[package]",
+	Usage: "[-target android] [build flags] [package]",
 	Short: "compile android APK and iOS app and install on device",
 	Long: `
 Install compiles and installs the app named by the import path on the
 attached mobile device.
 
-This command requires the 'adb' tool on the PATH.
+Only -target android is supported. The 'adb' tool must be on the PATH.
 
-See the build command help for common flags and common behavior.
+The build flags -a, -i, -n, -x, and -tags are shared with the build command.
+For documentation, see 'go help build'.
 `,
 }
 

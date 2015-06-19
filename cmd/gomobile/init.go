@@ -76,7 +76,7 @@ func init() {
 func runInit(cmd *command) error {
 	version, err := goVersion()
 	if err != nil {
-		return err
+		return fmt.Errorf("%v: %s", err, version)
 	}
 
 	gopaths := filepath.SplitList(goEnv("GOPATH"))
@@ -426,7 +426,7 @@ func goVersion() ([]byte, error) {
 	if !bytes.Contains(buildHelp, []byte("-toolexec")) {
 		return nil, fmt.Errorf("installed Go tool does not support -toolexec")
 	}
-	return exec.Command(gobin, "version").Output()
+	return exec.Command(gobin, "version").CombinedOutput()
 }
 
 // checkVersionMatch makes sure that the go command in the path matches

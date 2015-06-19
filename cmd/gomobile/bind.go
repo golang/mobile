@@ -35,42 +35,38 @@ import (
 var cmdBind = &command{
 	run:   runBind,
 	Name:  "bind",
-	Usage: "[package]",
+	Usage: "[-target android|ios] [-o output] [build flags] [package]",
 	Short: "build a shared library for android APK and iOS app",
 	Long: `
-Bind generates language bindings like gobind (golang.org/x/mobile/cmd/gobind)
-for a package and builds a shared library for each platform from the go binding
-code.
+Bind generates language bindings for the package named by the import
+path, and compiles a library for the named target system.
 
-For Android, the bind command produces an AAR (Android ARchive) file that
-archives the precompiled Java API stub classes, the compiled shared libraries,
-and all asset files in the /assets subdirectory under the package directory.
-The output AAR file name is '<package_name>.aar'.
+The -target flag takes a target system name, either android (the
+default) or ios.
 
-The AAR file is commonly used for binary distribution of an Android library
-project and most Android IDEs support AAR import. For example, in Android
-Studio (1.2+), an AAR file can be imported using the module import wizard
-(File > New > New Module > Import .JAR or .AAR package), and setting it as
-a new dependency (File > Project Structure > Dependencies).
+For -target android, the bind command produces an AAR (Android ARchive)
+file that archives the precompiled Java API stub classes, the compiled
+shared libraries, and all asset files in the /assets subdirectory under
+the package directory. The output is named '<package_name>.aar' by
+default. This AAR file is commonly used for binary distribution of an
+Android library project and most Android IDEs support AAR import. For
+example, in Android Studio (1.2+), an AAR file can be imported using
+the module import wizard (File > New > New Module > Import .JAR or
+.AAR package), and setting it as a new dependency
+(File > Project Structure > Dependencies).  This requires 'javac'
+(version 1.7+) and Android SDK (API level 9 or newer) to build the
+library for Android. The environment variable ANDROID_HOME must be set
+to the path to Android SDK.
 
-This command requires 'javac' (version 1.7+) and Android SDK (API level 9
-or newer) to build the library for Android. The environment variable
-ANDROID_HOME must be set to the path to Android SDK.
+For -target ios, gomobile must be run on an OS X machine with Xcode
+installed. Support is not complete.
 
 The -v flag provides verbose output, including the list of packages built.
 
-These build flags are shared by the build command.
-For documentation, see 'go help build':
-	-a
-	-i
-	-n
-	-x
-	-tags 'tag list'
+The build flags -a, -i, -n, -x, and -tags are shared with the build command.
+For documentation, see 'go help build'.
 `,
 }
-
-// TODO: -mobile
-// TODO: reuse the -o option to specify the output file name?
 
 func runBind(cmd *command) error {
 	cwd, err := os.Getwd()
@@ -91,6 +87,15 @@ func runBind(cmd *command) error {
 	}
 	if err != nil {
 		return err
+	}
+
+	switch *buildTarget {
+	case "android":
+		// implementation is below
+	case "ios":
+		return fmt.Errorf(`-target=ios not yet supported`)
+	default:
+		return fmt.Errorf(`unknown -target, %q.`, *buildTarget)
 	}
 
 	if sdkDir := os.Getenv("ANDROID_HOME"); sdkDir == "" {
@@ -318,8 +323,14 @@ func main() {
 // javac and jar commands are needed to build classes.jar.
 func buildAAR(androidDir string, pkg *build.Package) (err error) {
 	var out io.Writer = ioutil.Discard
+	if *buildO == "" {
+		*buildO = pkg.Name + ".aar"
+	}
+	if !strings.HasSuffix(*buildO, ".apk") {
+		return fmt.Errorf("output file name %q does not end in '.aar'", *buildO)
+	}
 	if !buildN {
-		f, err := os.Create(pkg.Name + ".aar")
+		f, err := os.Create(*buildO)
 		if err != nil {
 			return err
 		}
