@@ -326,7 +326,7 @@ func buildAAR(androidDir string, pkg *build.Package) (err error) {
 	if *buildO == "" {
 		*buildO = pkg.Name + ".aar"
 	}
-	if !strings.HasSuffix(*buildO, ".apk") {
+	if !strings.HasSuffix(*buildO, ".aar") {
 		return fmt.Errorf("output file name %q does not end in '.aar'", *buildO)
 	}
 	if !buildN {
