@@ -357,15 +357,15 @@ func goAndroidBuild(src, libPath string) error {
 		}
 	}
 	if err != nil || gomobilepath == "" {
-		return errors.New("android toolchain not installed, run:\n\tgomobile init")
+		return errors.New("toolchain not installed, run:\n\tgomobile init")
 	}
 	verpath := filepath.Join(gomobilepath, "version")
 	installedVersion, err := ioutil.ReadFile(verpath)
 	if err != nil {
-		return errors.New("android toolchain partially installed, run:\n\tgomobile init")
+		return errors.New("toolchain partially installed, run:\n\tgomobile init")
 	}
 	if !bytes.Equal(installedVersion, version) {
-		return errors.New("android toolchain out of date, run:\n\tgomobile init")
+		return errors.New("toolchain out of date, run:\n\tgomobile init")
 	}
 
 	ndkccpath = filepath.Join(gomobilepath, "android-"+ndkVersion)
