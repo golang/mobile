@@ -15,11 +15,12 @@ documentation serves as a starting point:
 
 - [mobile/app](http://godoc.org/golang.org/x/mobile/app)
 - [mobile/gl](http://godoc.org/golang.org/x/mobile/gl)
-- [mobile/exp/sprite](http://godoc.org/golang.org/x/mobile/exp/sprite)
-- [mobile/audio](http://godoc.org/golang.org/x/mobile/audio)
-- [mobile/sensor](http://godoc.org/golang.org/x/mobile/sensor)
 - [mobile/cmd/gomobile](http://godoc.org/golang.org/x/mobile/cmd/gomobile)
 - [mobile/cmd/gobind](http://godoc.org/golang.org/x/mobile/cmd/gobind)
+
+- [mobile/exp/audio](http://godoc.org/golang.org/x/mobile/exp/audio)
+- [mobile/exp/sensor](http://godoc.org/golang.org/x/mobile/exp/sensor)
+- [mobile/exp/sprite](http://godoc.org/golang.org/x/mobile/exp/sprite)
 
 Contributions to Go are appreciated. See https://golang.org/doc/contribute.html.
 
