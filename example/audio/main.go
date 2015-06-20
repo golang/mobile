@@ -39,7 +39,7 @@ import (
 
 	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/app/debug"
-	"golang.org/x/mobile/audio"
+	"golang.org/x/mobile/exp/audio"
 	"golang.org/x/mobile/exp/sprite"
 	"golang.org/x/mobile/exp/sprite/clock"
 	"golang.org/x/mobile/exp/sprite/glsprite"

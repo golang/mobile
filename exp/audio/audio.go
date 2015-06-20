@@ -18,7 +18,7 @@
 // application.
 // OpenAL Soft's license file could be found at
 // http://repo.or.cz/w/openal-soft.git/blob/HEAD:/COPYING.
-package audio // import "golang.org/x/mobile/audio"
+package audio // import "golang.org/x/mobile/exp/audio"
 
 import (
 	"bytes"
@@ -28,7 +28,7 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/mobile/audio/al"
+	"golang.org/x/mobile/exp/audio/al"
 )
 
 // ReadSeekCloser is an io.ReadSeeker and io.Closer.
