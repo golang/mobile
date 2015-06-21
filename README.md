@@ -8,7 +8,7 @@ Follow the build instructions on
 to install the gomobile command and
 [build the basic example](http://godoc.org/golang.org/x/mobile/example/basic).
 
---
+---
 
 APIs are currently very limited, but under active development. Package
 documentation serves as a starting point:
@@ -17,6 +17,8 @@ documentation serves as a starting point:
 - [mobile/gl](http://godoc.org/golang.org/x/mobile/gl)
 - [mobile/cmd/gomobile](http://godoc.org/golang.org/x/mobile/cmd/gomobile)
 - [mobile/cmd/gobind](http://godoc.org/golang.org/x/mobile/cmd/gobind)
+
+---
 
 - [mobile/exp/audio](http://godoc.org/golang.org/x/mobile/exp/audio)
 - [mobile/exp/sensor](http://godoc.org/golang.org/x/mobile/exp/sensor)
