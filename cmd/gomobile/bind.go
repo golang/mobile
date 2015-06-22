@@ -193,7 +193,7 @@ func (b *binder) GenJava(outdir string) error {
 
 func (b *binder) GenGo(outdir string) error {
 	pkgName := "go_" + b.pkg.Name()
-	goFile := filepath.Join(outdir, pkgName, pkgName+".go")
+	goFile := filepath.Join(outdir, pkgName, pkgName+"main.go")
 
 	if buildX {
 		printcmd("gobind -lang=go %s > %s", b.pkg.Path(), goFile)
