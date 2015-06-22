@@ -198,6 +198,9 @@ func goBuild(src, o string, env []string) error {
 		`CGO_ENABLED=1`,
 		`GOROOT=` + goroot,
 		`GOPATH=` + gopath,
+		`CCFLAGS="-fPIC -marm -pthread -fno-caret-diagnostics -Qunused-arguments -fmessage-length=0 -fno-common"`,
+		`CC_FOR_TARGET=` + filepath.Join(goroot, "misc/ios/clangwrap.sh"),
+		`CXX_FOR_TARGET=` + filepath.Join(goroot, "misc/ios/clangwrap.sh"),
 	}...)
 	cmd.Stderr = os.Stderr
 	if buildX {
