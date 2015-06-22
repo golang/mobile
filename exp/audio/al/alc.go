@@ -13,11 +13,10 @@ import (
 )
 
 var (
-	mu sync.Mutex // mu protects Device and context
+	mu sync.Mutex // mu protects device.
 
 	// device is the currently open audio device or nil.
-	device  unsafe.Pointer
-	context unsafe.Pointer
+	device unsafe.Pointer
 )
 
 // DeviceError returns the last known error from the current device.
@@ -25,10 +24,18 @@ func DeviceError() int32 {
 	return alcGetError(device)
 }
 
+// Context represents an OpenAL context. The listener always
+// operates on the current context. In order to make a context
+// current, use MakeContextCurrent.
+type Context struct {
+	ptr unsafe.Pointer
+}
+
 // TODO(jbd): Investigate the cases where multiple audio output
 // devices might be needed.
 
 // OpenDevice opens the default audio device.
+// Calls to OpenDevice are safe for concurrent use.
 func OpenDevice() error {
 	mu.Lock()
 	defer mu.Unlock()
@@ -42,28 +49,40 @@ func OpenDevice() error {
 	if ptr == nil {
 		return errors.New("al: cannot open the default audio device")
 	}
-	ctx := alcCreateContext(ptr, nil)
-	if ctx == nil {
-		alcCloseDevice(ptr)
-		return errors.New("al: cannot create a new context")
-	}
-	alcMakeContextCurrent(ctx)
 	device = ptr
-	context = ctx
 	return nil
 }
 
+// CreateContext creates a new context.
+func CreateContext() (*Context, error) {
+	ctx := alcCreateContext(device, nil)
+	if ctx == nil {
+		return nil, errors.New("al: cannot create a new context")
+	}
+	return Context{ptr: ctx}, nil
+}
+
+// Destroy destroys the context and frees the underlying resources.
+// The current context cannot be destroyed. Use MakeContextCurrent
+// to make a new context current or use nil.
+func (c *Context) Destroy() {
+	alcDestroyContext(c.ptr)
+}
+
+// MakeContextCurrent makes the given context current. The current
+// context can be nil.
+func MakeContextCurrent(c *Context) bool {
+	if c == nil {
+		return alcMakeContextCurrent(nil)
+	}
+	return alcMakeContextCurrent(c.ptr)
+}
+
 // CloseDevice closes the device and frees related resources.
+// Calls to CloseDevice are safe for concurrent use.
 func CloseDevice() {
 	mu.Lock()
 	defer mu.Unlock()
-
-	alcMakeContextCurrent(nil)
-
-	if context != nil {
-		alcDestroyContext(context)
-		context = nil
-	}
 
 	if device != nil {
 		alcCloseDevice(device)

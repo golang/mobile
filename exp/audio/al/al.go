@@ -6,6 +6,8 @@
 
 // Package al provides OpenAL Soft bindings for Go.
 //
+// Calls are not safe for concurrent use.
+//
 // More information about OpenAL Soft is available at
 // http://www.openal.org/documentation/openal-1.1-specification.pdf.
 //
