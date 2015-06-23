@@ -228,11 +228,10 @@ func (s *funcSummary) asFunc(g *objcGen) string {
 	for _, p := range s.params {
 		params = append(params, g.objcType(p.typ)+" "+p.name)
 	}
-	for i, p := range s.retParams {
-		if i == len(s.retParams)-1 && !isErrorType(p.typ) {
-			break
+	if !s.returnsVal() {
+		for _, p := range s.retParams {
+			params = append(params, g.objcType(p.typ)+"* "+p.name)
 		}
-		params = append(params, g.objcType(p.typ)+"* "+p.name)
 	}
 	return fmt.Sprintf("%s %s_%s(%s)", s.ret, g.namePrefix, s.name, strings.Join(params, ", "))
 }
@@ -246,17 +245,20 @@ func (s *funcSummary) asMethod(g *objcGen) string {
 		}
 		params = append(params, fmt.Sprintf("%s:(%s)%s", key, g.objcType(p.typ), p.name))
 	}
-	for i, p := range s.retParams {
-		if i == len(s.retParams)-1 && !isErrorType(p.typ) {
-			break
+	if !s.returnsVal() {
+		for _, p := range s.retParams {
+			var key string
+			if len(params) > 0 {
+				key = p.name
+			}
+			params = append(params, fmt.Sprintf("%s:(%s)%s", key, g.objcType(p.typ)+"*", p.name))
 		}
-		var key string
-		if len(params) > 0 || i > 0 {
-			key = p.name
-		}
-		params = append(params, fmt.Sprintf("%s:(%s)%s", key, g.objcType(p.typ)+"*", p.name))
 	}
 	return fmt.Sprintf("(%s)%s%s", s.ret, s.name, strings.Join(params, " "))
+}
+
+func (s *funcSummary) returnsVal() bool {
+	return len(s.retParams) == 1 && !isErrorType(s.retParams[0].typ)
 }
 
 func (g *objcGen) genFuncH(obj *types.Func) {
@@ -302,19 +304,11 @@ func (g *objcGen) genFunc(pkgDesc, callDesc string, s *funcSummary, isMethod boo
 	}
 	g.Printf("go_seq_send(%s, %s, &in_, &out_);\n", pkgDesc, callDesc)
 
-	for i, p := range s.retParams {
-		if isErrorType(p.typ) {
-			g.Printf("NSString* _%s = go_seq_readUTF8(&out_);\n", p.name)
-			g.Printf("if ([_%s length] != 0 && %s != nil) {\n", p.name, p.name)
-			g.Indent()
-			g.Printf("NSMutableDictionary *details = [NSMutableDictionary dictionary];\n")
-			g.Printf("[details setValue:_%s forKey:NSLocalizedDescriptionKey];\n", p.name)
-			g.Printf("*%s = [NSError errorWithDomain:errDomain code:1 userInfo:details];\n", p.name)
-			g.Outdent()
-			g.Printf("}\n")
-		} else if seqTyp := g.seqType(p.typ); seqTyp != "Ref" {
+	if s.returnsVal() {
+		p := s.retParams[0]
+		if seqTyp := g.seqType(p.typ); seqTyp != "Ref" {
 			g.Printf("%s %s = go_seq_read%s(&out_);\n", g.objcType(p.typ), p.name, g.seqType(p.typ))
-		} else if i == len(s.retParams)-1 { // last, non-error type param.
+		} else {
 			ptype := g.objcType(p.typ)
 			g.Printf("GoSeqRef* %s_ref = go_seq_readRef(&out_);\n", p.name)
 			g.Printf("%s %s = %s_ref.obj;\n", ptype, p.name, p.name)
@@ -323,19 +317,39 @@ func (g *objcGen) genFunc(pkgDesc, callDesc string, s *funcSummary, isMethod boo
 			g.Printf("%s = [[%s alloc] initWithRef:%s_ref];\n", p.name, ptype[:len(ptype)-1], p.name)
 			g.Outdent()
 			g.Printf("}\n")
-		} else {
-			ptype := g.objcType(p.typ)
-			g.Printf("GoSeqRef* %s_ref = go_seq_readRef(&out_);\n", p.name)
-			g.Printf("if (%s != NULL) {\n", p.name)
-			g.Indent()
-			g.Printf("*%s = %s_ref.obj;\n", p.name, p.name)
-			g.Printf("if (*%s == NULL) {\n", p.name)
-			g.Indent()
-			g.Printf("*%s = [[%s alloc] initWithRef:%s_ref];\n", p.name, ptype[:len(ptype)-1], p.name)
-			g.Outdent()
-			g.Printf("}\n")
-			g.Outdent()
-			g.Printf("}\n")
+		}
+	} else {
+		for _, p := range s.retParams {
+			if isErrorType(p.typ) {
+				g.Printf("NSString* _%s = go_seq_readUTF8(&out_);\n", p.name)
+				g.Printf("if ([_%s length] != 0 && %s != nil) {\n", p.name, p.name)
+				g.Indent()
+				g.Printf("NSMutableDictionary *details = [NSMutableDictionary dictionary];\n")
+				g.Printf("[details setValue:_%s forKey:NSLocalizedDescriptionKey];\n", p.name)
+				g.Printf("*%s = [NSError errorWithDomain:errDomain code:1 userInfo:details];\n", p.name)
+				g.Outdent()
+				g.Printf("}\n")
+			} else if seqTyp := g.seqType(p.typ); seqTyp != "Ref" {
+				g.Printf("%s _%s = go_seq_read%s(&out_);\n", g.objcType(p.typ), p.name, g.seqType(p.typ))
+				g.Printf("if (%s != NULL) {\n", p.name)
+				g.Indent()
+				g.Printf("*%s = _%s;\n", p.name, p.name)
+				g.Outdent()
+				g.Printf("}\n")
+			} else {
+				ptype := g.objcType(p.typ)
+				g.Printf("GoSeqRef* %s_ref = go_seq_readRef(&out_);\n", p.name)
+				g.Printf("if (%s != NULL) {\n", p.name)
+				g.Indent()
+				g.Printf("*%s = %s_ref.obj;\n", p.name, p.name)
+				g.Printf("if (*%s == NULL) {\n", p.name)
+				g.Indent()
+				g.Printf("*%s = [[%s alloc] initWithRef:%s_ref];\n", p.name, ptype[:len(ptype)-1], p.name)
+				g.Outdent()
+				g.Printf("}\n")
+				g.Outdent()
+				g.Printf("}\n")
+			}
 		}
 	}
 
