@@ -8,6 +8,7 @@ package testpkg
 //go:generate gobind -lang=objc -outdir=objc_testpkg .
 
 import (
+	"errors"
 	"fmt"
 	"runtime"
 	"time"
@@ -31,6 +32,13 @@ func Hello(s string) string {
 
 func BytesAppend(a []byte, b []byte) []byte {
 	return append(a, b...)
+}
+
+func ReturnsError(b bool) (string, error) {
+	if b {
+		return "", errors.New("Error")
+	}
+	return "OK", nil
 }
 
 var collectS = make(chan struct{}, 100)

@@ -39,6 +39,17 @@ void testBytesAppend(NSString *a, NSString *b) {
   }
 }
 
+void testReturnsError() {
+  NSString *value;
+  NSError *error;
+  GoTestpkg_ReturnsError(TRUE, &value, &error);
+  NSString *got = [error.userInfo valueForKey:NSLocalizedDescriptionKey];
+  NSString *want = @"Error";
+  if (![got isEqualToString:want]) {
+    ERROR(@"want %@\nGoTestpkg_ReturnsError(TRUE) = (%@, %@)", want, value, got);
+  }
+}
+
 void testStruct() {
   GoTestpkg_S *s = GoTestpkg_NewS(10.0, 100.0);
   if (!s) {

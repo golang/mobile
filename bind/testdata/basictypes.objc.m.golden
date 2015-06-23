@@ -58,7 +58,10 @@ BOOL GoBasictypes_ErrorPair(int* ret0_, NSError** error) {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send(_DESCRIPTOR_, _CALL_ErrorPair_, &in_, &out_);
-	int ret0_ = go_seq_readInt(&out_);
+	int _ret0_ = go_seq_readInt(&out_);
+	if (ret0_ != NULL) {
+		*ret0_ = _ret0_;
+	}
 	NSString* _error = go_seq_readUTF8(&out_);
 	if ([_error length] != 0 && error != nil) {
 		NSMutableDictionary *details = [NSMutableDictionary dictionary];
