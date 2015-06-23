@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"code.google.com/p/freetype-go/freetype"
+	"golang.org/x/mobile/event"
 	"golang.org/x/mobile/exp/font"
 	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/gl/glutil"
@@ -25,13 +26,16 @@ var lastDraw = time.Now()
 var monofont = freetype.NewContext()
 
 var fps struct {
-	sync.Once
-	*glutil.Image
+	mu sync.Mutex
+	c  event.Config
+	m  *glutil.Image
 }
 
 // TODO(crawshaw): It looks like we need a gl.RegisterInit feature.
 // TODO(crawshaw): The gldebug mode needs to complain loudly when GL functions
 //                 are called before init, because often they fail silently.
+// TODO(nigeltao): no need to re-load the font on every config change (e.g.
+//                 phone rotation between portrait and landscape).
 func fpsInit() {
 	b := font.Monospace()
 	f, err := freetype.ParseFont(b)
@@ -42,35 +46,41 @@ func fpsInit() {
 	monofont.SetSrc(image.Black)
 	monofont.SetHinting(freetype.FullHinting)
 
-	toPx := func(x geom.Pt) int { return int(math.Ceil(float64(geom.Pt(x).Px()))) }
-	fps.Image = glutil.NewImage(toPx(50), toPx(12))
-	monofont.SetDst(fps.Image.RGBA)
-	monofont.SetClip(fps.Bounds())
-	monofont.SetDPI(72 * float64(geom.PixelsPerPt))
+	toPx := func(x geom.Pt) int { return int(math.Ceil(float64(geom.Pt(x).Px(fps.c.PixelsPerPt)))) }
+	fps.m = glutil.NewImage(toPx(50), toPx(12))
+	monofont.SetDst(fps.m.RGBA)
+	monofont.SetClip(fps.m.Bounds())
+	monofont.SetDPI(72 * float64(fps.c.PixelsPerPt))
 	monofont.SetFontSize(12)
 }
 
 // DrawFPS draws the per second framerate in the bottom-left of the screen.
-func DrawFPS() {
-	fps.Do(fpsInit)
+func DrawFPS(c event.Config) {
+	fps.mu.Lock()
+	if fps.c != c || fps.m == nil {
+		fps.c = c
+		fpsInit()
+	}
+	fps.mu.Unlock()
 
 	now := time.Now()
 	diff := now.Sub(lastDraw)
 	str := fmt.Sprintf("%.0f FPS", float32(time.Second)/float32(diff))
-	draw.Draw(fps.Image.RGBA, fps.Image.Rect, image.White, image.Point{}, draw.Src)
+	draw.Draw(fps.m.RGBA, fps.m.Rect, image.White, image.Point{}, draw.Src)
 
-	ftpt12 := freetype.Pt(0, int(12*geom.PixelsPerPt))
+	ftpt12 := freetype.Pt(0, int(12*c.PixelsPerPt))
 	if _, err := monofont.DrawString(str, ftpt12); err != nil {
 		log.Printf("DrawFPS: %v", err)
 		return
 	}
 
-	fps.Upload()
-	fps.Draw(
-		geom.Point{0, geom.Height - 12},
-		geom.Point{50, geom.Height - 12},
-		geom.Point{0, geom.Height},
-		fps.Bounds(),
+	fps.m.Upload()
+	fps.m.Draw(
+		c,
+		geom.Point{0, c.Height - 12},
+		geom.Point{50, c.Height - 12},
+		geom.Point{0, c.Height},
+		fps.m.Bounds(),
 	)
 
 	lastDraw = now

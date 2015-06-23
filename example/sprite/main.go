@@ -45,41 +45,26 @@ import (
 )
 
 var (
-	start     = time.Now()
-	lastClock = clock.Time(-1)
-
-	eng   = glsprite.Engine()
-	scene *sprite.Node
+	startTime = time.Now()
+	eng       = glsprite.Engine()
+	scene     *sprite.Node
 )
 
 func main() {
 	app.Run(app.Callbacks{
-		Draw:  draw,
-		Touch: touch,
+		Draw: draw,
 	})
 }
 
-func draw() {
+func draw(c event.Config) {
 	if scene == nil {
 		loadScene()
 	}
-
-	now := clock.Time(time.Since(start) * 60 / time.Second)
-	if now == lastClock {
-		// TODO: figure out how to limit draw callbacks to 60Hz instead of
-		// burning the CPU as fast as possible.
-		// TODO: (relatedly??) sync to vblank?
-		return
-	}
-	lastClock = now
-
 	gl.ClearColor(1, 1, 1, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
-	eng.Render(scene, now)
-	debug.DrawFPS()
-}
-
-func touch(t event.Touch) {
+	now := clock.Time(time.Since(startTime) * 60 / time.Second)
+	eng.Render(scene, now, c)
+	debug.DrawFPS(c)
 }
 
 func newNode() *sprite.Node {

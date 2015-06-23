@@ -13,10 +13,10 @@ import (
 	"image"
 	"image/draw"
 
+	"golang.org/x/mobile/event"
 	"golang.org/x/mobile/exp/sprite"
 	"golang.org/x/mobile/exp/sprite/clock"
 	"golang.org/x/mobile/f32"
-	"golang.org/x/mobile/geom"
 )
 
 // Engine builds a sprite Engine that renders onto dst.
@@ -92,13 +92,13 @@ func (e *engine) SetTransform(n *sprite.Node, m f32.Affine) {
 	e.nodes[n.EngineFields.Index].relTransform = m
 }
 
-func (e *engine) Render(scene *sprite.Node, t clock.Time) {
+func (e *engine) Render(scene *sprite.Node, t clock.Time, cfg event.Config) {
 	// Affine transforms are done in geom.Pt. When finally drawing
 	// the geom.Pt onto an image.Image we need to convert to system
-	// pixels. We scale by geom.PixelsPerPt to do this.
+	// pixels. We scale by cfg.PixelsPerPt to do this.
 	e.absTransforms = append(e.absTransforms[:0], f32.Affine{
-		{geom.PixelsPerPt, 0, 0},
-		{0, geom.PixelsPerPt, 0},
+		{cfg.PixelsPerPt, 0, 0},
+		{0, cfg.PixelsPerPt, 0},
 	})
 	e.render(scene, t)
 }
@@ -128,7 +128,7 @@ func (e *engine) render(n *sprite.Node, t clock.Time) {
 		// should have the dimensions (1pt, 1pt). To do this we divide
 		// by the pixel width and height, reducing the texture to
 		// (1px, 1px) of the destination image. Multiplying by
-		// geom.PixelsPerPt, done in Render above, makes it (1pt, 1pt).
+		// cfg.PixelsPerPt, done in Render above, makes it (1pt, 1pt).
 		dx, dy := x.R.Dx(), x.R.Dy()
 		if dx > 0 && dy > 0 {
 			m.Scale(&m, 1/float32(dx), 1/float32(dy))

@@ -193,9 +193,12 @@ ALboolean call_alIsBuffer(LPALISBUFFER fn, ALuint b) {
 }
 */
 import "C"
-import "unsafe"
+import (
+	"log"
+	"unsafe"
 
-import "golang.org/x/mobile/app"
+	"golang.org/x/mobile/app"
+)
 
 var (
 	alHandle                   unsafe.Pointer
@@ -243,8 +246,8 @@ var (
 )
 
 func initAL() {
-	cfg := app.GetConfig()
-	alHandle = C.al_init(cfg.JavaVM(), cfg.AndroidContext())
+	ctx := app.Context{}
+	alHandle = C.al_init(ctx.JavaVM(), ctx.AndroidContext())
 	alEnableFunc = C.LPALENABLE(fn("alEnable"))
 	alDisableFunc = C.LPALDISABLE(fn("alDisable"))
 	alIsEnabledFunc = C.LPALISENABLED(fn("alIsEnabled"))
@@ -286,6 +289,8 @@ func initAL() {
 	alcCreateContextFunc = C.LPALCCREATECONTEXT(fn("alcCreateContext"))
 	alcMakeContextCurrentFunc = C.LPALCMAKECONTEXTCURRENT(fn("alcMakeContextCurrent"))
 	alcDestroyContextFunc = C.LPALCDESTROYCONTEXT(fn("alcDestroyContext"))
+
+	log.Printf("alcOpenDeviceFunc=%v", alcOpenDeviceFunc)
 }
 
 func fn(fname string) unsafe.Pointer {

@@ -90,79 +90,113 @@ import (
 	"golang.org/x/mobile/gl"
 )
 
-func windowDraw(callbacks []Callbacks, w *C.ANativeWindow, queue *C.AInputQueue) {
-	go gl.Start(func() {
-		C.createEGLWindow(w)
-	})
+var firstWindowDraw = true
+
+func windowDraw(w *C.ANativeWindow, queue *C.AInputQueue, donec chan error) (done bool, err error) {
+	C.createEGLWindow(w)
 
 	// TODO: is the library or the app responsible for clearing the buffers?
-	gl.ClearColor(0, 0, 0, 1)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	gl.Do(func() { C.eglSwapBuffers(C.display, C.surface) })
-
-	if errv := gl.GetError(); errv != gl.NO_ERROR {
-		log.Printf("GL initialization error: %s", errv)
+	// The first thing that the example apps' draw functions do is their own
+	// gl.ClearColor + gl.Clear calls, so this one here seems redundant.
+	{
+		c := make(chan struct{})
+		go func() {
+			gl.ClearColor(0, 0, 0, 1)
+			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+			if errv := gl.GetError(); errv != gl.NO_ERROR {
+				log.Printf("GL initialization error: %s", errv)
+			}
+			close(c)
+		}()
+	loop0:
+		for {
+			select {
+			case <-gl.WorkAvailable:
+				gl.DoWork()
+			case <-c:
+				break loop0
+			}
+		}
+		C.eglSwapBuffers(C.display, C.surface)
 	}
 
-	configAlt.Width = geom.Pt(float32(C.windowWidth) / geom.PixelsPerPt)
-	configAlt.Height = geom.Pt(float32(C.windowHeight) / geom.PixelsPerPt)
-	configSwap(callbacks)
-
-	// Wait until geometry and GL is initialized before cb.Start.
-	stateStart(callbacks)
+	// TODO: is this needed if we also have the "case <-windowRedrawNeeded:" below??
+	sendLifecycle(event.LifecycleStageFocused)
+	eventsIn <- event.Config{
+		Width:       geom.Pt(float32(C.windowWidth) / pixelsPerPt),
+		Height:      geom.Pt(float32(C.windowHeight) / pixelsPerPt),
+		PixelsPerPt: pixelsPerPt,
+	}
+	if firstWindowDraw {
+		firstWindowDraw = false
+		// TODO: be more principled about when to send a draw event.
+		eventsIn <- event.Draw{}
+	}
 
 	for {
-		processEvents(callbacks, queue)
+		processEvents(queue)
 		select {
+		case err := <-donec:
+			return true, err
 		case <-windowRedrawNeeded:
 			// Re-query the width and height.
 			C.querySurfaceWidthAndHeight()
-			configAlt.Width = geom.Pt(float32(C.windowWidth) / geom.PixelsPerPt)
-			configAlt.Height = geom.Pt(float32(C.windowHeight) / geom.PixelsPerPt)
-			gl.Viewport(0, 0, int(C.windowWidth), int(C.windowHeight))
-			configSwap(callbacks)
-		case <-windowDestroyed:
-			stateStop(callbacks)
-			gl.Stop()
-			return
-		default:
-			for _, cb := range callbacks {
-				if cb.Draw != nil {
-					cb.Draw()
+			sendLifecycle(event.LifecycleStageFocused)
+			eventsIn <- event.Config{
+				Width:       geom.Pt(float32(C.windowWidth) / pixelsPerPt),
+				Height:      geom.Pt(float32(C.windowHeight) / pixelsPerPt),
+				PixelsPerPt: pixelsPerPt,
+			}
+			// This gl.Viewport call has to be in a separate goroutine because any gl
+			// call can block until gl.DoWork is called, but this goroutine is the one
+			// responsible for calling gl.DoWork.
+			// TODO: again, should x/mobile/app be responsible for calling GL code, or
+			// should package gl instead call event.RegisterFilter?
+			{
+				c := make(chan struct{})
+				go func() {
+					gl.Viewport(0, 0, int(C.windowWidth), int(C.windowHeight))
+					close(c)
+				}()
+			loop1:
+				for {
+					select {
+					case <-gl.WorkAvailable:
+						gl.DoWork()
+					case <-c:
+						break loop1
+					}
 				}
 			}
-			gl.Do(func() { C.eglSwapBuffers(C.display, C.surface) })
+		case <-windowDestroyed:
+			sendLifecycle(event.LifecycleStageAlive)
+			return false, nil
+		case <-gl.WorkAvailable:
+			gl.DoWork()
+		case <-endDraw:
+			// eglSwapBuffers blocks until vsync.
+			C.eglSwapBuffers(C.display, C.surface)
+			eventsIn <- event.Draw{}
 		}
 	}
 }
 
-func processEvents(callbacks []Callbacks, queue *C.AInputQueue) {
+func processEvents(queue *C.AInputQueue) {
 	var event *C.AInputEvent
 	for C.AInputQueue_getEvent(queue, &event) >= 0 {
 		if C.AInputQueue_preDispatchEvent(queue, event) != 0 {
 			continue
 		}
-		processEvent(callbacks, event)
+		processEvent(event)
 		C.AInputQueue_finishEvent(queue, event, 0)
 	}
 }
 
-func processEvent(callbacks []Callbacks, e *C.AInputEvent) {
+func processEvent(e *C.AInputEvent) {
 	switch C.AInputEvent_getType(e) {
 	case C.AINPUT_EVENT_TYPE_KEY:
 		log.Printf("TODO input event: key")
 	case C.AINPUT_EVENT_TYPE_MOTION:
-		// TODO: calculate hasTouch once in run
-		hasTouch := false
-		for _, cb := range callbacks {
-			if cb.Touch != nil {
-				hasTouch = true
-			}
-		}
-		if !hasTouch {
-			return
-		}
-
 		// At most one of the events in this batch is an up or down event; get its index and type.
 		upDownIndex := C.size_t(C.AMotionEvent_getAction(e)&C.AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> C.AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT
 		upDownTyp := event.TouchMove
@@ -178,18 +212,13 @@ func processEvent(callbacks []Callbacks, e *C.AInputEvent) {
 			if i == upDownIndex {
 				typ = upDownTyp
 			}
-			t := event.Touch{
+			eventsIn <- event.Touch{
 				ID:   event.TouchSequenceID(C.AMotionEvent_getPointerId(e, i)),
 				Type: typ,
 				Loc: geom.Point{
-					X: geom.Pt(float32(C.AMotionEvent_getX(e, i)) / geom.PixelsPerPt),
-					Y: geom.Pt(float32(C.AMotionEvent_getY(e, i)) / geom.PixelsPerPt),
+					X: geom.Pt(float32(C.AMotionEvent_getX(e, i)) / pixelsPerPt),
+					Y: geom.Pt(float32(C.AMotionEvent_getY(e, i)) / pixelsPerPt),
 				},
-			}
-			for _, cb := range callbacks {
-				if cb.Touch != nil {
-					cb.Touch(t)
-				}
 			}
 		}
 	default:

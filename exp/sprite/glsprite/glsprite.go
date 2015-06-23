@@ -12,6 +12,7 @@ import (
 	"image"
 	"image/draw"
 
+	"golang.org/x/mobile/event"
 	"golang.org/x/mobile/exp/sprite"
 	"golang.org/x/mobile/exp/sprite/clock"
 	"golang.org/x/mobile/f32"
@@ -90,15 +91,15 @@ func (e *engine) SetTransform(n *sprite.Node, m f32.Affine) {
 	e.nodes[n.EngineFields.Index].relTransform = m
 }
 
-func (e *engine) Render(scene *sprite.Node, t clock.Time) {
+func (e *engine) Render(scene *sprite.Node, t clock.Time, cfg event.Config) {
 	e.absTransforms = append(e.absTransforms[:0], f32.Affine{
 		{1, 0, 0},
 		{0, 1, 0},
 	})
-	e.render(scene, t)
+	e.render(scene, t, cfg)
 }
 
-func (e *engine) render(n *sprite.Node, t clock.Time) {
+func (e *engine) render(n *sprite.Node, t clock.Time, cfg event.Config) {
 	if n.EngineFields.Index == 0 {
 		panic("glsprite: sprite.Node not registered")
 	}
@@ -115,6 +116,7 @@ func (e *engine) render(n *sprite.Node, t clock.Time) {
 
 	if x := n.EngineFields.SubTex; x.T != nil {
 		x.T.(*texture).glImage.Draw(
+			cfg,
 			geom.Point{
 				geom.Pt(m[0][2]),
 				geom.Pt(m[1][2]),
@@ -132,7 +134,7 @@ func (e *engine) render(n *sprite.Node, t clock.Time) {
 	}
 
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		e.render(c, t)
+		e.render(c, t, cfg)
 	}
 
 	// Pop absTransforms.

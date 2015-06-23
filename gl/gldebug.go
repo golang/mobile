@@ -635,10 +635,12 @@ func ActiveTexture(texture Enum) {
 		errstr := errDrain()
 		log.Printf("gl.ActiveTexture(%v) %v", texture, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnActiveTexture
-	call.args.a0 = texture.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnActiveTexture,
+			a0: texture.c(),
+		},
+	})
 }
 
 func AttachShader(p Program, s Shader) {
@@ -646,11 +648,13 @@ func AttachShader(p Program, s Shader) {
 		errstr := errDrain()
 		log.Printf("gl.AttachShader(%v, %v) %v", p, s, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnAttachShader
-	call.args.a0 = p.c()
-	call.args.a1 = s.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnAttachShader,
+			a0: p.c(),
+			a1: s.c(),
+		},
+	})
 }
 
 func BindAttribLocation(p Program, a Attrib, name string) {
@@ -658,12 +662,14 @@ func BindAttribLocation(p Program, a Attrib, name string) {
 		errstr := errDrain()
 		log.Printf("gl.BindAttribLocation(%v, %v, %v) %v", p, a, name, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnBindAttribLocation
-	call.args.a0 = p.c()
-	call.args.a1 = a.c()
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(C.CString(name))))
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnBindAttribLocation,
+			a0: p.c(),
+			a1: a.c(),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(C.CString(name)))),
+		},
+	})
 }
 
 func BindBuffer(target Enum, b Buffer) {
@@ -671,11 +677,13 @@ func BindBuffer(target Enum, b Buffer) {
 		errstr := errDrain()
 		log.Printf("gl.BindBuffer(%v, %v) %v", target, b, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnBindBuffer
-	call.args.a0 = target.c()
-	call.args.a1 = b.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnBindBuffer,
+			a0: target.c(),
+			a1: b.c(),
+		},
+	})
 }
 
 func BindFramebuffer(target Enum, fb Framebuffer) {
@@ -683,11 +691,13 @@ func BindFramebuffer(target Enum, fb Framebuffer) {
 		errstr := errDrain()
 		log.Printf("gl.BindFramebuffer(%v, %v) %v", target, fb, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnBindFramebuffer
-	call.args.a0 = target.c()
-	call.args.a1 = fb.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnBindFramebuffer,
+			a0: target.c(),
+			a1: fb.c(),
+		},
+	})
 }
 
 func BindRenderbuffer(target Enum, rb Renderbuffer) {
@@ -695,11 +705,13 @@ func BindRenderbuffer(target Enum, rb Renderbuffer) {
 		errstr := errDrain()
 		log.Printf("gl.BindRenderbuffer(%v, %v) %v", target, rb, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnBindRenderbuffer
-	call.args.a0 = target.c()
-	call.args.a1 = rb.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnBindRenderbuffer,
+			a0: target.c(),
+			a1: rb.c(),
+		},
+	})
 }
 
 func BindTexture(target Enum, t Texture) {
@@ -707,11 +719,13 @@ func BindTexture(target Enum, t Texture) {
 		errstr := errDrain()
 		log.Printf("gl.BindTexture(%v, %v) %v", target, t, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnBindTexture
-	call.args.a0 = target.c()
-	call.args.a1 = t.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnBindTexture,
+			a0: target.c(),
+			a1: t.c(),
+		},
+	})
 }
 
 func BlendColor(red, green, blue, alpha float32) {
@@ -719,13 +733,15 @@ func BlendColor(red, green, blue, alpha float32) {
 		errstr := errDrain()
 		log.Printf("gl.BlendColor(%v, %v, %v, %v) %v", red, green, blue, alpha, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnBlendColor
-	call.args.a0 = C.uintptr_t(math.Float32bits(red))
-	call.args.a1 = C.uintptr_t(math.Float32bits(green))
-	call.args.a2 = C.uintptr_t(math.Float32bits(blue))
-	call.args.a3 = C.uintptr_t(math.Float32bits(alpha))
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnBlendColor,
+			a0: C.uintptr_t(math.Float32bits(red)),
+			a1: C.uintptr_t(math.Float32bits(green)),
+			a2: C.uintptr_t(math.Float32bits(blue)),
+			a3: C.uintptr_t(math.Float32bits(alpha)),
+		},
+	})
 }
 
 func BlendEquation(mode Enum) {
@@ -733,10 +749,12 @@ func BlendEquation(mode Enum) {
 		errstr := errDrain()
 		log.Printf("gl.BlendEquation(%v) %v", mode, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnBlendEquation
-	call.args.a0 = mode.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnBlendEquation,
+			a0: mode.c(),
+		},
+	})
 }
 
 func BlendEquationSeparate(modeRGB, modeAlpha Enum) {
@@ -744,11 +762,13 @@ func BlendEquationSeparate(modeRGB, modeAlpha Enum) {
 		errstr := errDrain()
 		log.Printf("gl.BlendEquationSeparate(%v, %v) %v", modeRGB, modeAlpha, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnBlendEquationSeparate
-	call.args.a0 = modeRGB.c()
-	call.args.a1 = modeAlpha.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnBlendEquationSeparate,
+			a0: modeRGB.c(),
+			a1: modeAlpha.c(),
+		},
+	})
 }
 
 func BlendFunc(sfactor, dfactor Enum) {
@@ -756,11 +776,13 @@ func BlendFunc(sfactor, dfactor Enum) {
 		errstr := errDrain()
 		log.Printf("gl.BlendFunc(%v, %v) %v", sfactor, dfactor, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnBlendFunc
-	call.args.a0 = sfactor.c()
-	call.args.a1 = dfactor.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnBlendFunc,
+			a0: sfactor.c(),
+			a1: dfactor.c(),
+		},
+	})
 }
 
 func BlendFuncSeparate(sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha Enum) {
@@ -768,13 +790,15 @@ func BlendFuncSeparate(sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha Enum) 
 		errstr := errDrain()
 		log.Printf("gl.BlendFuncSeparate(%v, %v, %v, %v) %v", sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnBlendFuncSeparate
-	call.args.a0 = sfactorRGB.c()
-	call.args.a1 = dfactorRGB.c()
-	call.args.a2 = sfactorAlpha.c()
-	call.args.a3 = dfactorAlpha.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnBlendFuncSeparate,
+			a0: sfactorRGB.c(),
+			a1: dfactorRGB.c(),
+			a2: sfactorAlpha.c(),
+			a3: dfactorAlpha.c(),
+		},
+	})
 }
 
 func BufferData(target Enum, src []byte, usage Enum) {
@@ -782,15 +806,16 @@ func BufferData(target Enum, src []byte, usage Enum) {
 		errstr := errDrain()
 		log.Printf("gl.BufferData(%v, len(%d), %v) %v", target, len(src), usage, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnBufferData
-	call.blocking = true
-	call.args.a0 = target.c()
-	call.args.a1 = C.uintptr_t(len(src))
-	call.args.a2 = (C.uintptr_t)(uintptr(unsafe.Pointer(&src[0])))
-	call.args.a3 = usage.c()
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnBufferData,
+			a0: target.c(),
+			a1: C.uintptr_t(len(src)),
+			a2: (C.uintptr_t)(uintptr(unsafe.Pointer(&src[0]))),
+			a3: usage.c(),
+		},
+		blocking: true,
+	})
 }
 
 func BufferInit(target Enum, size int, usage Enum) {
@@ -798,13 +823,15 @@ func BufferInit(target Enum, size int, usage Enum) {
 		errstr := errDrain()
 		log.Printf("gl.BufferInit(%v, %v, %v) %v", target, size, usage, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnBufferData
-	call.args.a0 = target.c()
-	call.args.a1 = C.uintptr_t(size)
-	call.args.a2 = 0
-	call.args.a3 = usage.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnBufferData,
+			a0: target.c(),
+			a1: C.uintptr_t(size),
+			a2: 0,
+			a3: usage.c(),
+		},
+	})
 }
 
 func BufferSubData(target Enum, offset int, data []byte) {
@@ -812,15 +839,16 @@ func BufferSubData(target Enum, offset int, data []byte) {
 		errstr := errDrain()
 		log.Printf("gl.BufferSubData(%v, %v, len(%d)) %v", target, offset, len(data), errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnBufferSubData
-	call.blocking = true
-	call.args.a0 = target.c()
-	call.args.a1 = C.uintptr_t(offset)
-	call.args.a2 = C.uintptr_t(len(data))
-	call.args.a3 = (C.uintptr_t)(uintptr(unsafe.Pointer(&data[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnBufferSubData,
+			a0: target.c(),
+			a1: C.uintptr_t(offset),
+			a2: C.uintptr_t(len(data)),
+			a3: (C.uintptr_t)(uintptr(unsafe.Pointer(&data[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func CheckFramebufferStatus(target Enum) (r0 Enum) {
@@ -828,12 +856,13 @@ func CheckFramebufferStatus(target Enum) (r0 Enum) {
 		errstr := errDrain()
 		log.Printf("gl.CheckFramebufferStatus(%v) %v%v", target, r0, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnCheckFramebufferStatus
-	call.blocking = true
-	call.args.a0 = target.c()
-	work <- call
-	return Enum(<-retvalue)
+	return Enum(enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnCheckFramebufferStatus,
+			a0: target.c(),
+		},
+		blocking: true,
+	}))
 }
 
 func Clear(mask Enum) {
@@ -841,10 +870,12 @@ func Clear(mask Enum) {
 		errstr := errDrain()
 		log.Printf("gl.Clear(%v) %v", mask, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnClear
-	call.args.a0 = C.uintptr_t(mask)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnClear,
+			a0: C.uintptr_t(mask),
+		},
+	})
 }
 
 func ClearColor(red, green, blue, alpha float32) {
@@ -852,13 +883,15 @@ func ClearColor(red, green, blue, alpha float32) {
 		errstr := errDrain()
 		log.Printf("gl.ClearColor(%v, %v, %v, %v) %v", red, green, blue, alpha, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnClearColor
-	call.args.a0 = C.uintptr_t(math.Float32bits(red))
-	call.args.a1 = C.uintptr_t(math.Float32bits(green))
-	call.args.a2 = C.uintptr_t(math.Float32bits(blue))
-	call.args.a3 = C.uintptr_t(math.Float32bits(alpha))
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnClearColor,
+			a0: C.uintptr_t(math.Float32bits(red)),
+			a1: C.uintptr_t(math.Float32bits(green)),
+			a2: C.uintptr_t(math.Float32bits(blue)),
+			a3: C.uintptr_t(math.Float32bits(alpha)),
+		},
+	})
 }
 
 func ClearDepthf(d float32) {
@@ -866,10 +899,12 @@ func ClearDepthf(d float32) {
 		errstr := errDrain()
 		log.Printf("gl.ClearDepthf(%v) %v", d, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnClearDepthf
-	call.args.a0 = C.uintptr_t(math.Float32bits(d))
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnClearDepthf,
+			a0: C.uintptr_t(math.Float32bits(d)),
+		},
+	})
 }
 
 func ClearStencil(s int) {
@@ -877,10 +912,12 @@ func ClearStencil(s int) {
 		errstr := errDrain()
 		log.Printf("gl.ClearStencil(%v) %v", s, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnClearStencil
-	call.args.a0 = C.uintptr_t(s)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnClearStencil,
+			a0: C.uintptr_t(s),
+		},
+	})
 }
 
 func ColorMask(red, green, blue, alpha bool) {
@@ -888,13 +925,15 @@ func ColorMask(red, green, blue, alpha bool) {
 		errstr := errDrain()
 		log.Printf("gl.ColorMask(%v, %v, %v, %v) %v", red, green, blue, alpha, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnColorMask
-	call.args.a0 = glBoolean(red)
-	call.args.a1 = glBoolean(green)
-	call.args.a2 = glBoolean(blue)
-	call.args.a3 = glBoolean(alpha)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnColorMask,
+			a0: glBoolean(red),
+			a1: glBoolean(green),
+			a2: glBoolean(blue),
+			a3: glBoolean(alpha),
+		},
+	})
 }
 
 func CompileShader(s Shader) {
@@ -902,10 +941,12 @@ func CompileShader(s Shader) {
 		errstr := errDrain()
 		log.Printf("gl.CompileShader(%v) %v", s, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnCompileShader
-	call.args.a0 = s.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnCompileShader,
+			a0: s.c(),
+		},
+	})
 }
 
 func CompressedTexImage2D(target Enum, level int, internalformat Enum, width, height, border int, data []byte) {
@@ -913,19 +954,20 @@ func CompressedTexImage2D(target Enum, level int, internalformat Enum, width, he
 		errstr := errDrain()
 		log.Printf("gl.CompressedTexImage2D(%v, %v, %v, %v, %v, %v, len(%d)) %v", target, level, internalformat, width, height, border, len(data), errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnCompressedTexImage2D
-	call.blocking = true
-	call.args.a0 = target.c()
-	call.args.a1 = C.uintptr_t(level)
-	call.args.a2 = internalformat.c()
-	call.args.a3 = C.uintptr_t(width)
-	call.args.a4 = C.uintptr_t(height)
-	call.args.a5 = C.uintptr_t(border)
-	call.args.a6 = C.uintptr_t(len(data))
-	call.args.a7 = C.uintptr_t(uintptr(unsafe.Pointer(&data[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnCompressedTexImage2D,
+			a0: target.c(),
+			a1: C.uintptr_t(level),
+			a2: internalformat.c(),
+			a3: C.uintptr_t(width),
+			a4: C.uintptr_t(height),
+			a5: C.uintptr_t(border),
+			a6: C.uintptr_t(len(data)),
+			a7: C.uintptr_t(uintptr(unsafe.Pointer(&data[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func CompressedTexSubImage2D(target Enum, level, xoffset, yoffset, width, height int, format Enum, data []byte) {
@@ -933,20 +975,21 @@ func CompressedTexSubImage2D(target Enum, level, xoffset, yoffset, width, height
 		errstr := errDrain()
 		log.Printf("gl.CompressedTexSubImage2D(%v, %v, %v, %v, %v, %v, %v, len(%d)) %v", target, level, xoffset, yoffset, width, height, format, len(data), errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnCompressedTexSubImage2D
-	call.blocking = true
-	call.args.a0 = target.c()
-	call.args.a1 = C.uintptr_t(level)
-	call.args.a2 = C.uintptr_t(xoffset)
-	call.args.a3 = C.uintptr_t(yoffset)
-	call.args.a4 = C.uintptr_t(width)
-	call.args.a5 = C.uintptr_t(height)
-	call.args.a6 = format.c()
-	call.args.a7 = C.uintptr_t(len(data))
-	call.args.a8 = C.uintptr_t(uintptr(unsafe.Pointer(&data[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnCompressedTexSubImage2D,
+			a0: target.c(),
+			a1: C.uintptr_t(level),
+			a2: C.uintptr_t(xoffset),
+			a3: C.uintptr_t(yoffset),
+			a4: C.uintptr_t(width),
+			a5: C.uintptr_t(height),
+			a6: format.c(),
+			a7: C.uintptr_t(len(data)),
+			a8: C.uintptr_t(uintptr(unsafe.Pointer(&data[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func CopyTexImage2D(target Enum, level int, internalformat Enum, x, y, width, height, border int) {
@@ -954,17 +997,19 @@ func CopyTexImage2D(target Enum, level int, internalformat Enum, x, y, width, he
 		errstr := errDrain()
 		log.Printf("gl.CopyTexImage2D(%v, %v, %v, %v, %v, %v, %v, %v) %v", target, level, internalformat, x, y, width, height, border, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnCopyTexImage2D
-	call.args.a0 = target.c()
-	call.args.a1 = C.uintptr_t(level)
-	call.args.a2 = internalformat.c()
-	call.args.a3 = C.uintptr_t(x)
-	call.args.a4 = C.uintptr_t(y)
-	call.args.a5 = C.uintptr_t(width)
-	call.args.a6 = C.uintptr_t(height)
-	call.args.a7 = C.uintptr_t(border)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnCopyTexImage2D,
+			a0: target.c(),
+			a1: C.uintptr_t(level),
+			a2: internalformat.c(),
+			a3: C.uintptr_t(x),
+			a4: C.uintptr_t(y),
+			a5: C.uintptr_t(width),
+			a6: C.uintptr_t(height),
+			a7: C.uintptr_t(border),
+		},
+	})
 }
 
 func CopyTexSubImage2D(target Enum, level, xoffset, yoffset, x, y, width, height int) {
@@ -972,17 +1017,19 @@ func CopyTexSubImage2D(target Enum, level, xoffset, yoffset, x, y, width, height
 		errstr := errDrain()
 		log.Printf("gl.CopyTexSubImage2D(%v, %v, %v, %v, %v, %v, %v, %v) %v", target, level, xoffset, yoffset, x, y, width, height, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnCopyTexSubImage2D
-	call.args.a0 = target.c()
-	call.args.a1 = C.uintptr_t(level)
-	call.args.a2 = C.uintptr_t(xoffset)
-	call.args.a3 = C.uintptr_t(yoffset)
-	call.args.a4 = C.uintptr_t(x)
-	call.args.a5 = C.uintptr_t(y)
-	call.args.a6 = C.uintptr_t(width)
-	call.args.a7 = C.uintptr_t(height)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnCopyTexSubImage2D,
+			a0: target.c(),
+			a1: C.uintptr_t(level),
+			a2: C.uintptr_t(xoffset),
+			a3: C.uintptr_t(yoffset),
+			a4: C.uintptr_t(x),
+			a5: C.uintptr_t(y),
+			a6: C.uintptr_t(width),
+			a7: C.uintptr_t(height),
+		},
+	})
 }
 
 func CreateBuffer() (r0 Buffer) {
@@ -990,11 +1037,12 @@ func CreateBuffer() (r0 Buffer) {
 		errstr := errDrain()
 		log.Printf("gl.CreateBuffer() %v%v", r0, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnGenBuffer
-	call.blocking = true
-	work <- call
-	return Buffer{Value: uint32(<-retvalue)}
+	return Buffer{Value: uint32(enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGenBuffer,
+		},
+		blocking: true,
+	}))}
 }
 
 func CreateFramebuffer() (r0 Framebuffer) {
@@ -1002,11 +1050,12 @@ func CreateFramebuffer() (r0 Framebuffer) {
 		errstr := errDrain()
 		log.Printf("gl.CreateFramebuffer() %v%v", r0, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnGenFramebuffer
-	call.blocking = true
-	work <- call
-	return Framebuffer{Value: uint32(<-retvalue)}
+	return Framebuffer{Value: uint32(enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGenFramebuffer,
+		},
+		blocking: true,
+	}))}
 }
 
 func CreateProgram() (r0 Program) {
@@ -1014,11 +1063,12 @@ func CreateProgram() (r0 Program) {
 		errstr := errDrain()
 		log.Printf("gl.CreateProgram() %v%v", r0, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnCreateProgram
-	call.blocking = true
-	work <- call
-	return Program{Value: uint32(<-retvalue)}
+	return Program{Value: uint32(enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnCreateProgram,
+		},
+		blocking: true,
+	}))}
 }
 
 func CreateRenderbuffer() (r0 Renderbuffer) {
@@ -1026,11 +1076,12 @@ func CreateRenderbuffer() (r0 Renderbuffer) {
 		errstr := errDrain()
 		log.Printf("gl.CreateRenderbuffer() %v%v", r0, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnGenRenderbuffer
-	call.blocking = true
-	work <- call
-	return Renderbuffer{Value: uint32(<-retvalue)}
+	return Renderbuffer{Value: uint32(enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGenRenderbuffer,
+		},
+		blocking: true,
+	}))}
 }
 
 func CreateShader(ty Enum) (r0 Shader) {
@@ -1038,12 +1089,13 @@ func CreateShader(ty Enum) (r0 Shader) {
 		errstr := errDrain()
 		log.Printf("gl.CreateShader(%v) %v%v", ty, r0, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnCreateShader
-	call.blocking = true
-	call.args.a0 = C.uintptr_t(ty)
-	work <- call
-	return Shader{Value: uint32(<-retvalue)}
+	return Shader{Value: uint32(enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnCreateShader,
+			a0: C.uintptr_t(ty),
+		},
+		blocking: true,
+	}))}
 }
 
 func CreateTexture() (r0 Texture) {
@@ -1051,11 +1103,12 @@ func CreateTexture() (r0 Texture) {
 		errstr := errDrain()
 		log.Printf("gl.CreateTexture() %v%v", r0, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnGenTexture
-	call.blocking = true
-	work <- call
-	return Texture{Value: uint32(<-retvalue)}
+	return Texture{Value: uint32(enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGenTexture,
+		},
+		blocking: true,
+	}))}
 }
 
 func CullFace(mode Enum) {
@@ -1063,10 +1116,12 @@ func CullFace(mode Enum) {
 		errstr := errDrain()
 		log.Printf("gl.CullFace(%v) %v", mode, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnCullFace
-	call.args.a0 = mode.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnCullFace,
+			a0: mode.c(),
+		},
+	})
 }
 
 func DeleteBuffer(v Buffer) {
@@ -1074,10 +1129,12 @@ func DeleteBuffer(v Buffer) {
 		errstr := errDrain()
 		log.Printf("gl.DeleteBuffer(%v) %v", v, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnDeleteBuffer
-	call.args.a0 = C.uintptr_t(v.Value)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnDeleteBuffer,
+			a0: C.uintptr_t(v.Value),
+		},
+	})
 }
 
 func DeleteFramebuffer(v Framebuffer) {
@@ -1085,10 +1142,12 @@ func DeleteFramebuffer(v Framebuffer) {
 		errstr := errDrain()
 		log.Printf("gl.DeleteFramebuffer(%v) %v", v, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnDeleteFramebuffer
-	call.args.a0 = C.uintptr_t(v.Value)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnDeleteFramebuffer,
+			a0: C.uintptr_t(v.Value),
+		},
+	})
 }
 
 func DeleteProgram(p Program) {
@@ -1096,10 +1155,12 @@ func DeleteProgram(p Program) {
 		errstr := errDrain()
 		log.Printf("gl.DeleteProgram(%v) %v", p, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnDeleteProgram
-	call.args.a0 = p.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnDeleteProgram,
+			a0: p.c(),
+		},
+	})
 }
 
 func DeleteRenderbuffer(v Renderbuffer) {
@@ -1107,10 +1168,12 @@ func DeleteRenderbuffer(v Renderbuffer) {
 		errstr := errDrain()
 		log.Printf("gl.DeleteRenderbuffer(%v) %v", v, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnDeleteRenderbuffer
-	call.args.a0 = v.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnDeleteRenderbuffer,
+			a0: v.c(),
+		},
+	})
 }
 
 func DeleteShader(s Shader) {
@@ -1118,10 +1181,12 @@ func DeleteShader(s Shader) {
 		errstr := errDrain()
 		log.Printf("gl.DeleteShader(%v) %v", s, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnDeleteShader
-	call.args.a0 = s.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnDeleteShader,
+			a0: s.c(),
+		},
+	})
 }
 
 func DeleteTexture(v Texture) {
@@ -1129,10 +1194,12 @@ func DeleteTexture(v Texture) {
 		errstr := errDrain()
 		log.Printf("gl.DeleteTexture(%v) %v", v, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnDeleteTexture
-	call.args.a0 = v.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnDeleteTexture,
+			a0: v.c(),
+		},
+	})
 }
 
 func DepthFunc(fn Enum) {
@@ -1140,10 +1207,12 @@ func DepthFunc(fn Enum) {
 		errstr := errDrain()
 		log.Printf("gl.DepthFunc(%v) %v", fn, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnDepthFunc
-	call.args.a0 = fn.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnDepthFunc,
+			a0: fn.c(),
+		},
+	})
 }
 
 func DepthMask(flag bool) {
@@ -1151,10 +1220,12 @@ func DepthMask(flag bool) {
 		errstr := errDrain()
 		log.Printf("gl.DepthMask(%v) %v", flag, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnDepthMask
-	call.args.a0 = glBoolean(flag)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnDepthMask,
+			a0: glBoolean(flag),
+		},
+	})
 }
 
 func DepthRangef(n, f float32) {
@@ -1162,11 +1233,13 @@ func DepthRangef(n, f float32) {
 		errstr := errDrain()
 		log.Printf("gl.DepthRangef(%v, %v) %v", n, f, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnDepthRangef
-	call.args.a0 = C.uintptr_t(math.Float32bits(n))
-	call.args.a1 = C.uintptr_t(math.Float32bits(f))
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnDepthRangef,
+			a0: C.uintptr_t(math.Float32bits(n)),
+			a1: C.uintptr_t(math.Float32bits(f)),
+		},
+	})
 }
 
 func DetachShader(p Program, s Shader) {
@@ -1174,11 +1247,13 @@ func DetachShader(p Program, s Shader) {
 		errstr := errDrain()
 		log.Printf("gl.DetachShader(%v, %v) %v", p, s, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnDetachShader
-	call.args.a0 = p.c()
-	call.args.a1 = s.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnDetachShader,
+			a0: p.c(),
+			a1: s.c(),
+		},
+	})
 }
 
 func Disable(cap Enum) {
@@ -1186,10 +1261,12 @@ func Disable(cap Enum) {
 		errstr := errDrain()
 		log.Printf("gl.Disable(%v) %v", cap, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnDisable
-	call.args.a0 = cap.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnDisable,
+			a0: cap.c(),
+		},
+	})
 }
 
 func DisableVertexAttribArray(a Attrib) {
@@ -1197,10 +1274,12 @@ func DisableVertexAttribArray(a Attrib) {
 		errstr := errDrain()
 		log.Printf("gl.DisableVertexAttribArray(%v) %v", a, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnDisableVertexAttribArray
-	call.args.a0 = a.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnDisableVertexAttribArray,
+			a0: a.c(),
+		},
+	})
 }
 
 func DrawArrays(mode Enum, first, count int) {
@@ -1208,12 +1287,14 @@ func DrawArrays(mode Enum, first, count int) {
 		errstr := errDrain()
 		log.Printf("gl.DrawArrays(%v, %v, %v) %v", mode, first, count, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnDrawArrays
-	call.args.a0 = mode.c()
-	call.args.a1 = C.uintptr_t(first)
-	call.args.a2 = C.uintptr_t(count)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnDrawArrays,
+			a0: mode.c(),
+			a1: C.uintptr_t(first),
+			a2: C.uintptr_t(count),
+		},
+	})
 }
 
 func DrawElements(mode Enum, count int, ty Enum, offset int) {
@@ -1221,13 +1302,15 @@ func DrawElements(mode Enum, count int, ty Enum, offset int) {
 		errstr := errDrain()
 		log.Printf("gl.DrawElements(%v, %v, %v, %v) %v", mode, count, ty, offset, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnDrawElements
-	call.args.a0 = mode.c()
-	call.args.a1 = C.uintptr_t(count)
-	call.args.a2 = ty.c()
-	call.args.a3 = C.uintptr_t(offset)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnDrawElements,
+			a0: mode.c(),
+			a1: C.uintptr_t(count),
+			a2: ty.c(),
+			a3: C.uintptr_t(offset),
+		},
+	})
 }
 
 func Enable(cap Enum) {
@@ -1235,10 +1318,12 @@ func Enable(cap Enum) {
 		errstr := errDrain()
 		log.Printf("gl.Enable(%v) %v", cap, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnEnable
-	call.args.a0 = cap.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnEnable,
+			a0: cap.c(),
+		},
+	})
 }
 
 func EnableVertexAttribArray(a Attrib) {
@@ -1246,10 +1331,12 @@ func EnableVertexAttribArray(a Attrib) {
 		errstr := errDrain()
 		log.Printf("gl.EnableVertexAttribArray(%v) %v", a, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnEnableVertexAttribArray
-	call.args.a0 = a.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnEnableVertexAttribArray,
+			a0: a.c(),
+		},
+	})
 }
 
 func Finish() {
@@ -1257,11 +1344,12 @@ func Finish() {
 		errstr := errDrain()
 		log.Printf("gl.Finish() %v", errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnFinish
-	call.blocking = true
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnFinish,
+		},
+		blocking: true,
+	})
 }
 
 func Flush() {
@@ -1269,11 +1357,12 @@ func Flush() {
 		errstr := errDrain()
 		log.Printf("gl.Flush() %v", errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnFlush
-	call.blocking = true
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnFlush,
+		},
+		blocking: true,
+	})
 }
 
 func FramebufferRenderbuffer(target, attachment, rbTarget Enum, rb Renderbuffer) {
@@ -1281,13 +1370,15 @@ func FramebufferRenderbuffer(target, attachment, rbTarget Enum, rb Renderbuffer)
 		errstr := errDrain()
 		log.Printf("gl.FramebufferRenderbuffer(%v, %v, %v, %v) %v", target, attachment, rbTarget, rb, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnFramebufferRenderbuffer
-	call.args.a0 = target.c()
-	call.args.a1 = attachment.c()
-	call.args.a2 = rbTarget.c()
-	call.args.a3 = rb.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnFramebufferRenderbuffer,
+			a0: target.c(),
+			a1: attachment.c(),
+			a2: rbTarget.c(),
+			a3: rb.c(),
+		},
+	})
 }
 
 func FramebufferTexture2D(target, attachment, texTarget Enum, t Texture, level int) {
@@ -1295,14 +1386,16 @@ func FramebufferTexture2D(target, attachment, texTarget Enum, t Texture, level i
 		errstr := errDrain()
 		log.Printf("gl.FramebufferTexture2D(%v, %v, %v, %v, %v) %v", target, attachment, texTarget, t, level, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnFramebufferTexture2D
-	call.args.a0 = target.c()
-	call.args.a1 = attachment.c()
-	call.args.a2 = texTarget.c()
-	call.args.a3 = t.c()
-	call.args.a4 = C.uintptr_t(level)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnFramebufferTexture2D,
+			a0: target.c(),
+			a1: attachment.c(),
+			a2: texTarget.c(),
+			a3: t.c(),
+			a4: C.uintptr_t(level),
+		},
+	})
 }
 
 func FrontFace(mode Enum) {
@@ -1310,10 +1403,12 @@ func FrontFace(mode Enum) {
 		errstr := errDrain()
 		log.Printf("gl.FrontFace(%v) %v", mode, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnFrontFace
-	call.args.a0 = mode.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnFrontFace,
+			a0: mode.c(),
+		},
+	})
 }
 
 func GenerateMipmap(target Enum) {
@@ -1321,10 +1416,12 @@ func GenerateMipmap(target Enum) {
 		errstr := errDrain()
 		log.Printf("gl.GenerateMipmap(%v) %v", target, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnGenerateMipmap
-	call.args.a0 = target.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGenerateMipmap,
+			a0: target.c(),
+		},
+	})
 }
 
 func GetActiveAttrib(p Program, index uint32) (name string, size int, ty Enum) {
@@ -1337,18 +1434,19 @@ func GetActiveAttrib(p Program, index uint32) (name string, size int, ty Enum) {
 	defer C.free(buf)
 	var cSize C.GLint
 	var cType C.GLenum
-	var call call
-	call.args.fn = C.glfnGetActiveAttrib
-	call.blocking = true
-	call.args.a0 = p.c()
-	call.args.a1 = C.uintptr_t(index)
-	call.args.a2 = C.uintptr_t(bufSize)
-	call.args.a3 = 0
-	call.args.a4 = C.uintptr_t(uintptr(unsafe.Pointer(&cSize)))
-	call.args.a5 = C.uintptr_t(uintptr(unsafe.Pointer(&cType)))
-	call.args.a6 = C.uintptr_t(uintptr(unsafe.Pointer(buf)))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetActiveAttrib,
+			a0: p.c(),
+			a1: C.uintptr_t(index),
+			a2: C.uintptr_t(bufSize),
+			a3: 0,
+			a4: C.uintptr_t(uintptr(unsafe.Pointer(&cSize))),
+			a5: C.uintptr_t(uintptr(unsafe.Pointer(&cType))),
+			a6: C.uintptr_t(uintptr(unsafe.Pointer(buf))),
+		},
+		blocking: true,
+	})
 	return C.GoString((*C.char)(buf)), int(cSize), Enum(cType)
 }
 
@@ -1362,18 +1460,19 @@ func GetActiveUniform(p Program, index uint32) (name string, size int, ty Enum) 
 	defer C.free(buf)
 	var cSize C.GLint
 	var cType C.GLenum
-	var call call
-	call.args.fn = C.glfnGetActiveUniform
-	call.blocking = true
-	call.args.a0 = p.c()
-	call.args.a1 = C.uintptr_t(index)
-	call.args.a2 = C.uintptr_t(bufSize)
-	call.args.a3 = 0
-	call.args.a4 = C.uintptr_t(uintptr(unsafe.Pointer(&cSize)))
-	call.args.a5 = C.uintptr_t(uintptr(unsafe.Pointer(&cType)))
-	call.args.a6 = C.uintptr_t(uintptr(unsafe.Pointer(buf)))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetActiveUniform,
+			a0: p.c(),
+			a1: C.uintptr_t(index),
+			a2: C.uintptr_t(bufSize),
+			a3: 0,
+			a4: C.uintptr_t(uintptr(unsafe.Pointer(&cSize))),
+			a5: C.uintptr_t(uintptr(unsafe.Pointer(&cType))),
+			a6: C.uintptr_t(uintptr(unsafe.Pointer(buf))),
+		},
+		blocking: true,
+	})
 	return C.GoString((*C.char)(buf)), int(cSize), Enum(cType)
 }
 
@@ -1385,15 +1484,16 @@ func GetAttachedShaders(p Program) (r0 []Shader) {
 	shadersLen := GetProgrami(p, ATTACHED_SHADERS)
 	var n C.GLsizei
 	buf := make([]C.GLuint, shadersLen)
-	var call call
-	call.blocking = true
-	call.args.fn = C.glfnGetAttachedShaders
-	call.args.a0 = p.c()
-	call.args.a1 = C.uintptr_t(shadersLen)
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&n)))
-	call.args.a3 = C.uintptr_t(uintptr(unsafe.Pointer(&buf[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetAttachedShaders,
+			a0: p.c(),
+			a1: C.uintptr_t(shadersLen),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(&n))),
+			a3: C.uintptr_t(uintptr(unsafe.Pointer(&buf[0]))),
+		},
+		blocking: true,
+	})
 	buf = buf[:int(n)]
 	shaders := make([]Shader, len(buf))
 	for i, s := range buf {
@@ -1408,13 +1508,14 @@ func GetAttribLocation(p Program, name string) (r0 Attrib) {
 		r0.name = name
 		log.Printf("gl.GetAttribLocation(%v, %v) %v%v", p, name, r0, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnGetAttribLocation
-	call.blocking = true
-	call.args.a0 = p.c()
-	call.args.a1 = C.uintptr_t(uintptr(unsafe.Pointer(C.CString(name))))
-	work <- call
-	return Attrib{Value: uint(<-retvalue)}
+	return Attrib{Value: uint(enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetAttribLocation,
+			a0: p.c(),
+			a1: C.uintptr_t(uintptr(unsafe.Pointer(C.CString(name)))),
+		},
+		blocking: true,
+	}))}
 }
 
 func GetBooleanv(dst []bool, pname Enum) {
@@ -1423,13 +1524,14 @@ func GetBooleanv(dst []bool, pname Enum) {
 		log.Printf("gl.GetBooleanv(%v, %v) %v", dst, pname, errstr)
 	}()
 	buf := make([]C.GLboolean, len(dst))
-	var call call
-	call.args.fn = C.glfnGetBooleanv
-	call.blocking = true
-	call.args.a0 = pname.c()
-	call.args.a1 = C.uintptr_t(uintptr(unsafe.Pointer(&buf[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetBooleanv,
+			a0: pname.c(),
+			a1: C.uintptr_t(uintptr(unsafe.Pointer(&buf[0]))),
+		},
+		blocking: true,
+	})
 	for i, v := range buf {
 		dst[i] = v != 0
 	}
@@ -1440,13 +1542,14 @@ func GetFloatv(dst []float32, pname Enum) {
 		errstr := errDrain()
 		log.Printf("gl.GetFloatv(len(%d), %v) %v", len(dst), pname, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnGetFloatv
-	call.blocking = true
-	call.args.a0 = pname.c()
-	call.args.a1 = C.uintptr_t(uintptr(unsafe.Pointer(&dst[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetFloatv,
+			a0: pname.c(),
+			a1: C.uintptr_t(uintptr(unsafe.Pointer(&dst[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func GetIntegerv(dst []int32, pname Enum) {
@@ -1455,13 +1558,14 @@ func GetIntegerv(dst []int32, pname Enum) {
 		log.Printf("gl.GetIntegerv(%v, %v) %v", dst, pname, errstr)
 	}()
 	buf := make([]C.GLint, len(dst))
-	var call call
-	call.args.fn = C.glfnGetIntegerv
-	call.blocking = true
-	call.args.a0 = pname.c()
-	call.args.a1 = C.uintptr_t(uintptr(unsafe.Pointer(&buf[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetIntegerv,
+			a0: pname.c(),
+			a1: C.uintptr_t(uintptr(unsafe.Pointer(&buf[0]))),
+		},
+		blocking: true,
+	})
 	for i, v := range buf {
 		dst[i] = int32(v)
 	}
@@ -1482,21 +1586,23 @@ func GetBufferParameteri(target, value Enum) (r0 int) {
 		errstr := errDrain()
 		log.Printf("gl.GetBufferParameteri(%v, %v) %v%v", target, value, r0, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnGetBufferParameteri
-	call.blocking = true
-	call.args.a0 = target.c()
-	call.args.a1 = value.c()
-	work <- call
-	return int(<-retvalue)
+	return int(enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetBufferParameteri,
+			a0: target.c(),
+			a1: value.c(),
+		},
+		blocking: true,
+	}))
 }
 
 func GetError() (r0 Enum) {
-	var call call
-	call.args.fn = C.glfnGetError
-	call.blocking = true
-	work <- call
-	return Enum(<-retvalue)
+	return Enum(enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetError,
+		},
+		blocking: true,
+	}))
 }
 
 func GetFramebufferAttachmentParameteri(target, attachment, pname Enum) (r0 int) {
@@ -1504,14 +1610,15 @@ func GetFramebufferAttachmentParameteri(target, attachment, pname Enum) (r0 int)
 		errstr := errDrain()
 		log.Printf("gl.GetFramebufferAttachmentParameteri(%v, %v, %v) %v%v", target, attachment, pname, r0, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnGetFramebufferAttachmentParameteriv
-	call.blocking = true
-	call.args.a0 = target.c()
-	call.args.a1 = attachment.c()
-	call.args.a2 = pname.c()
-	work <- call
-	return int(<-retvalue)
+	return int(enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetFramebufferAttachmentParameteriv,
+			a0: target.c(),
+			a1: attachment.c(),
+			a2: pname.c(),
+		},
+		blocking: true,
+	}))
 }
 
 func GetProgrami(p Program, pname Enum) (r0 int) {
@@ -1519,13 +1626,14 @@ func GetProgrami(p Program, pname Enum) (r0 int) {
 		errstr := errDrain()
 		log.Printf("gl.GetProgrami(%v, %v) %v%v", p, pname, r0, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnGetProgramiv
-	call.blocking = true
-	call.args.a0 = p.c()
-	call.args.a1 = pname.c()
-	work <- call
-	return int(<-retvalue)
+	return int(enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetProgramiv,
+			a0: p.c(),
+			a1: pname.c(),
+		},
+		blocking: true,
+	}))
 }
 
 func GetProgramInfoLog(p Program) (r0 string) {
@@ -1536,15 +1644,16 @@ func GetProgramInfoLog(p Program) (r0 string) {
 	infoLen := GetProgrami(p, INFO_LOG_LENGTH)
 	buf := C.malloc(C.size_t(infoLen))
 	defer C.free(buf)
-	var call call
-	call.args.fn = C.glfnGetProgramInfoLog
-	call.blocking = true
-	call.args.a0 = p.c()
-	call.args.a1 = C.uintptr_t(infoLen)
-	call.args.a2 = 0
-	call.args.a3 = C.uintptr_t(uintptr(buf))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetProgramInfoLog,
+			a0: p.c(),
+			a1: C.uintptr_t(infoLen),
+			a2: 0,
+			a3: C.uintptr_t(uintptr(buf)),
+		},
+		blocking: true,
+	})
 	return C.GoString((*C.char)(buf))
 }
 
@@ -1553,13 +1662,14 @@ func GetRenderbufferParameteri(target, pname Enum) (r0 int) {
 		errstr := errDrain()
 		log.Printf("gl.GetRenderbufferParameteri(%v, %v) %v%v", target, pname, r0, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnGetRenderbufferParameteriv
-	call.blocking = true
-	call.args.a0 = target.c()
-	call.args.a1 = pname.c()
-	work <- call
-	return int(<-retvalue)
+	return int(enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetRenderbufferParameteriv,
+			a0: target.c(),
+			a1: pname.c(),
+		},
+		blocking: true,
+	}))
 }
 
 func GetShaderi(s Shader, pname Enum) (r0 int) {
@@ -1567,13 +1677,14 @@ func GetShaderi(s Shader, pname Enum) (r0 int) {
 		errstr := errDrain()
 		log.Printf("gl.GetShaderi(%v, %v) %v%v", s, pname, r0, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnGetShaderiv
-	call.blocking = true
-	call.args.a0 = s.c()
-	call.args.a1 = pname.c()
-	work <- call
-	return int(<-retvalue)
+	return int(enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetShaderiv,
+			a0: s.c(),
+			a1: pname.c(),
+		},
+		blocking: true,
+	}))
 }
 
 func GetShaderInfoLog(s Shader) (r0 string) {
@@ -1584,15 +1695,16 @@ func GetShaderInfoLog(s Shader) (r0 string) {
 	infoLen := GetShaderi(s, INFO_LOG_LENGTH)
 	buf := C.malloc(C.size_t(infoLen))
 	defer C.free(buf)
-	var call call
-	call.args.fn = C.glfnGetShaderInfoLog
-	call.blocking = true
-	call.args.a0 = s.c()
-	call.args.a1 = C.uintptr_t(infoLen)
-	call.args.a2 = 0
-	call.args.a3 = C.uintptr_t(uintptr(buf))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetShaderInfoLog,
+			a0: s.c(),
+			a1: C.uintptr_t(infoLen),
+			a2: 0,
+			a3: C.uintptr_t(uintptr(buf)),
+		},
+		blocking: true,
+	})
 	return C.GoString((*C.char)(buf))
 }
 
@@ -1603,15 +1715,16 @@ func GetShaderPrecisionFormat(shadertype, precisiontype Enum) (rangeLow, rangeHi
 	}()
 	var cRange [2]C.GLint
 	var cPrecision C.GLint
-	var call call
-	call.args.fn = C.glfnGetShaderPrecisionFormat
-	call.blocking = true
-	call.args.a0 = shadertype.c()
-	call.args.a1 = precisiontype.c()
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&cRange[0])))
-	call.args.a3 = C.uintptr_t(uintptr(unsafe.Pointer(&cPrecision)))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetShaderPrecisionFormat,
+			a0: shadertype.c(),
+			a1: precisiontype.c(),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(&cRange[0]))),
+			a3: C.uintptr_t(uintptr(unsafe.Pointer(&cPrecision))),
+		},
+		blocking: true,
+	})
 	return int(cRange[0]), int(cRange[1]), int(cPrecision)
 }
 
@@ -1626,15 +1739,16 @@ func GetShaderSource(s Shader) (r0 string) {
 	}
 	buf := C.malloc(C.size_t(sourceLen))
 	defer C.free(buf)
-	var call call
-	call.args.fn = C.glfnGetShaderSource
-	call.blocking = true
-	call.args.a0 = s.c()
-	call.args.a1 = C.uintptr_t(sourceLen)
-	call.args.a2 = 0
-	call.args.a3 = C.uintptr_t(uintptr(buf))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetShaderSource,
+			a0: s.c(),
+			a1: C.uintptr_t(sourceLen),
+			a2: 0,
+			a3: C.uintptr_t(uintptr(buf)),
+		},
+		blocking: true,
+	})
 	return C.GoString((*C.char)(buf))
 }
 
@@ -1643,12 +1757,14 @@ func GetString(pname Enum) (r0 string) {
 		errstr := errDrain()
 		log.Printf("gl.GetString(%v) %v%v", pname, r0, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnGetString
-	call.blocking = true
-	call.args.a0 = pname.c()
-	work <- call
-	return C.GoString((*C.char)((unsafe.Pointer(uintptr(<-retvalue)))))
+	ret := enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetString,
+			a0: pname.c(),
+		},
+		blocking: true,
+	})
+	return C.GoString((*C.char)((unsafe.Pointer(uintptr(ret)))))
 }
 
 func GetTexParameterfv(dst []float32, target, pname Enum) {
@@ -1656,14 +1772,15 @@ func GetTexParameterfv(dst []float32, target, pname Enum) {
 		errstr := errDrain()
 		log.Printf("gl.GetTexParameterfv(len(%d), %v, %v) %v", len(dst), target, pname, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnGetTexParameterfv
-	call.blocking = true
-	call.args.a0 = target.c()
-	call.args.a1 = pname.c()
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&dst[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetTexParameterfv,
+			a0: target.c(),
+			a1: pname.c(),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(&dst[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func GetTexParameteriv(dst []int32, target, pname Enum) {
@@ -1671,14 +1788,15 @@ func GetTexParameteriv(dst []int32, target, pname Enum) {
 		errstr := errDrain()
 		log.Printf("gl.GetTexParameteriv(%v, %v, %v) %v", dst, target, pname, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnGetTexParameteriv
-	call.blocking = true
-	call.args.a0 = target.c()
-	call.args.a1 = pname.c()
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&dst[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetTexParameteriv,
+			a0: target.c(),
+			a1: pname.c(),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(&dst[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func GetUniformfv(dst []float32, src Uniform, p Program) {
@@ -1686,14 +1804,15 @@ func GetUniformfv(dst []float32, src Uniform, p Program) {
 		errstr := errDrain()
 		log.Printf("gl.GetUniformfv(len(%d), %v, %v) %v", len(dst), src, p, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnGetUniformfv
-	call.blocking = true
-	call.args.a0 = p.c()
-	call.args.a1 = src.c()
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&dst[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetUniformfv,
+			a0: p.c(),
+			a1: src.c(),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(&dst[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func GetUniformiv(dst []int32, src Uniform, p Program) {
@@ -1701,14 +1820,15 @@ func GetUniformiv(dst []int32, src Uniform, p Program) {
 		errstr := errDrain()
 		log.Printf("gl.GetUniformiv(%v, %v, %v) %v", dst, src, p, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnGetUniformiv
-	call.blocking = true
-	call.args.a0 = p.c()
-	call.args.a1 = src.c()
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&dst[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetUniformiv,
+			a0: p.c(),
+			a1: src.c(),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(&dst[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func GetUniformLocation(p Program, name string) (r0 Uniform) {
@@ -1717,13 +1837,14 @@ func GetUniformLocation(p Program, name string) (r0 Uniform) {
 		r0.name = name
 		log.Printf("gl.GetUniformLocation(%v, %v) %v%v", p, name, r0, errstr)
 	}()
-	var call call
-	call.blocking = true
-	call.args.fn = C.glfnGetUniformLocation
-	call.args.a0 = p.c()
-	call.args.a1 = C.uintptr_t(uintptr(unsafe.Pointer(C.CString(name))))
-	work <- call
-	return Uniform{Value: int32(<-retvalue)}
+	return Uniform{Value: int32(enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetUniformLocation,
+			a0: p.c(),
+			a1: C.uintptr_t(uintptr(unsafe.Pointer(C.CString(name)))),
+		},
+		blocking: true,
+	}))}
 }
 
 func GetVertexAttribf(src Attrib, pname Enum) (r0 float32) {
@@ -1741,14 +1862,15 @@ func GetVertexAttribfv(dst []float32, src Attrib, pname Enum) {
 		errstr := errDrain()
 		log.Printf("gl.GetVertexAttribfv(len(%d), %v, %v) %v", len(dst), src, pname, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnGetVertexAttribfv
-	call.blocking = true
-	call.args.a0 = src.c()
-	call.args.a1 = pname.c()
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&dst[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetVertexAttribfv,
+			a0: src.c(),
+			a1: pname.c(),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(&dst[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func GetVertexAttribi(src Attrib, pname Enum) (r0 int32) {
@@ -1766,14 +1888,15 @@ func GetVertexAttribiv(dst []int32, src Attrib, pname Enum) {
 		errstr := errDrain()
 		log.Printf("gl.GetVertexAttribiv(%v, %v, %v) %v", dst, src, pname, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnGetVertexAttribiv
-	call.blocking = true
-	call.args.a0 = src.c()
-	call.args.a1 = pname.c()
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&dst[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnGetVertexAttribiv,
+			a0: src.c(),
+			a1: pname.c(),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(&dst[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func Hint(target, mode Enum) {
@@ -1781,11 +1904,13 @@ func Hint(target, mode Enum) {
 		errstr := errDrain()
 		log.Printf("gl.Hint(%v, %v) %v", target, mode, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnHint
-	call.args.a0 = target.c()
-	call.args.a1 = mode.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnHint,
+			a0: target.c(),
+			a1: mode.c(),
+		},
+	})
 }
 
 func IsBuffer(b Buffer) (r0 bool) {
@@ -1793,12 +1918,13 @@ func IsBuffer(b Buffer) (r0 bool) {
 		errstr := errDrain()
 		log.Printf("gl.IsBuffer(%v) %v%v", b, r0, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnIsBuffer
-	call.blocking = true
-	call.args.a0 = b.c()
-	work <- call
-	return <-retvalue != 0
+	return 0 != enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnIsBuffer,
+			a0: b.c(),
+		},
+		blocking: true,
+	})
 }
 
 func IsEnabled(cap Enum) (r0 bool) {
@@ -1806,12 +1932,13 @@ func IsEnabled(cap Enum) (r0 bool) {
 		errstr := errDrain()
 		log.Printf("gl.IsEnabled(%v) %v%v", cap, r0, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnIsEnabled
-	call.blocking = true
-	call.args.a0 = cap.c()
-	work <- call
-	return <-retvalue != 0
+	return 0 != enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnIsEnabled,
+			a0: cap.c(),
+		},
+		blocking: true,
+	})
 }
 
 func IsFramebuffer(fb Framebuffer) (r0 bool) {
@@ -1819,12 +1946,13 @@ func IsFramebuffer(fb Framebuffer) (r0 bool) {
 		errstr := errDrain()
 		log.Printf("gl.IsFramebuffer(%v) %v%v", fb, r0, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnIsFramebuffer
-	call.blocking = true
-	call.args.a0 = fb.c()
-	work <- call
-	return <-retvalue != 0
+	return 0 != enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnIsFramebuffer,
+			a0: fb.c(),
+		},
+		blocking: true,
+	})
 }
 
 func IsProgram(p Program) (r0 bool) {
@@ -1832,12 +1960,13 @@ func IsProgram(p Program) (r0 bool) {
 		errstr := errDrain()
 		log.Printf("gl.IsProgram(%v) %v%v", p, r0, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnIsProgram
-	call.blocking = true
-	call.args.a0 = p.c()
-	work <- call
-	return <-retvalue != 0
+	return 0 != enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnIsProgram,
+			a0: p.c(),
+		},
+		blocking: true,
+	})
 }
 
 func IsRenderbuffer(rb Renderbuffer) (r0 bool) {
@@ -1845,12 +1974,13 @@ func IsRenderbuffer(rb Renderbuffer) (r0 bool) {
 		errstr := errDrain()
 		log.Printf("gl.IsRenderbuffer(%v) %v%v", rb, r0, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnIsRenderbuffer
-	call.blocking = true
-	call.args.a0 = rb.c()
-	work <- call
-	return <-retvalue != 0
+	return 0 != enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnIsRenderbuffer,
+			a0: rb.c(),
+		},
+		blocking: true,
+	})
 }
 
 func IsShader(s Shader) (r0 bool) {
@@ -1858,12 +1988,13 @@ func IsShader(s Shader) (r0 bool) {
 		errstr := errDrain()
 		log.Printf("gl.IsShader(%v) %v%v", s, r0, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnIsShader
-	call.blocking = true
-	call.args.a0 = s.c()
-	work <- call
-	return <-retvalue != 0
+	return 0 != enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnIsShader,
+			a0: s.c(),
+		},
+		blocking: true,
+	})
 }
 
 func IsTexture(t Texture) (r0 bool) {
@@ -1871,12 +2002,13 @@ func IsTexture(t Texture) (r0 bool) {
 		errstr := errDrain()
 		log.Printf("gl.IsTexture(%v) %v%v", t, r0, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnIsTexture
-	call.blocking = true
-	call.args.a0 = t.c()
-	work <- call
-	return <-retvalue != 0
+	return 0 != enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnIsTexture,
+			a0: t.c(),
+		},
+		blocking: true,
+	})
 }
 
 func LineWidth(width float32) {
@@ -1884,10 +2016,12 @@ func LineWidth(width float32) {
 		errstr := errDrain()
 		log.Printf("gl.LineWidth(%v) %v", width, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnLineWidth
-	call.args.a0 = C.uintptr_t(math.Float32bits(width))
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnLineWidth,
+			a0: C.uintptr_t(math.Float32bits(width)),
+		},
+	})
 }
 
 func LinkProgram(p Program) {
@@ -1895,10 +2029,12 @@ func LinkProgram(p Program) {
 		errstr := errDrain()
 		log.Printf("gl.LinkProgram(%v) %v", p, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnLinkProgram
-	call.args.a0 = p.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnLinkProgram,
+			a0: p.c(),
+		},
+	})
 }
 
 func PixelStorei(pname Enum, param int32) {
@@ -1906,11 +2042,13 @@ func PixelStorei(pname Enum, param int32) {
 		errstr := errDrain()
 		log.Printf("gl.PixelStorei(%v, %v) %v", pname, param, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnPixelStorei
-	call.args.a0 = pname.c()
-	call.args.a1 = C.uintptr_t(param)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnPixelStorei,
+			a0: pname.c(),
+			a1: C.uintptr_t(param),
+		},
+	})
 }
 
 func PolygonOffset(factor, units float32) {
@@ -1918,11 +2056,13 @@ func PolygonOffset(factor, units float32) {
 		errstr := errDrain()
 		log.Printf("gl.PolygonOffset(%v, %v) %v", factor, units, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnPolygonOffset
-	call.args.a0 = C.uintptr_t(math.Float32bits(factor))
-	call.args.a1 = C.uintptr_t(math.Float32bits(units))
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnPolygonOffset,
+			a0: C.uintptr_t(math.Float32bits(factor)),
+			a1: C.uintptr_t(math.Float32bits(units)),
+		},
+	})
 }
 
 func ReadPixels(dst []byte, x, y, width, height int, format, ty Enum) {
@@ -1930,18 +2070,20 @@ func ReadPixels(dst []byte, x, y, width, height int, format, ty Enum) {
 		errstr := errDrain()
 		log.Printf("gl.ReadPixels(len(%d), %v, %v, %v, %v, %v, %v) %v", len(dst), x, y, width, height, format, ty, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnReadPixels
-	call.blocking = true
-	call.args.a0 = C.uintptr_t(x)
-	call.args.a1 = C.uintptr_t(y)
-	call.args.a2 = C.uintptr_t(width)
-	call.args.a3 = C.uintptr_t(height)
-	call.args.a4 = format.c()
-	call.args.a5 = ty.c()
-	call.args.a6 = C.uintptr_t(uintptr(unsafe.Pointer(&dst[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnReadPixels,
+
+			a0: C.uintptr_t(x),
+			a1: C.uintptr_t(y),
+			a2: C.uintptr_t(width),
+			a3: C.uintptr_t(height),
+			a4: format.c(),
+			a5: ty.c(),
+			a6: C.uintptr_t(uintptr(unsafe.Pointer(&dst[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func ReleaseShaderCompiler() {
@@ -1949,9 +2091,11 @@ func ReleaseShaderCompiler() {
 		errstr := errDrain()
 		log.Printf("gl.ReleaseShaderCompiler() %v", errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnReleaseShaderCompiler
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnReleaseShaderCompiler,
+		},
+	})
 }
 
 func RenderbufferStorage(target, internalFormat Enum, width, height int) {
@@ -1959,13 +2103,15 @@ func RenderbufferStorage(target, internalFormat Enum, width, height int) {
 		errstr := errDrain()
 		log.Printf("gl.RenderbufferStorage(%v, %v, %v, %v) %v", target, internalFormat, width, height, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnRenderbufferStorage
-	call.args.a0 = target.c()
-	call.args.a1 = internalFormat.c()
-	call.args.a2 = C.uintptr_t(width)
-	call.args.a3 = C.uintptr_t(height)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnRenderbufferStorage,
+			a0: target.c(),
+			a1: internalFormat.c(),
+			a2: C.uintptr_t(width),
+			a3: C.uintptr_t(height),
+		},
+	})
 }
 
 func SampleCoverage(value float32, invert bool) {
@@ -1973,11 +2119,13 @@ func SampleCoverage(value float32, invert bool) {
 		errstr := errDrain()
 		log.Printf("gl.SampleCoverage(%v, %v) %v", value, invert, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnSampleCoverage
-	call.args.a0 = C.uintptr_t(math.Float32bits(value))
-	call.args.a1 = glBoolean(invert)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnSampleCoverage,
+			a0: C.uintptr_t(math.Float32bits(value)),
+			a1: glBoolean(invert),
+		},
+	})
 }
 
 func Scissor(x, y, width, height int32) {
@@ -1985,13 +2133,15 @@ func Scissor(x, y, width, height int32) {
 		errstr := errDrain()
 		log.Printf("gl.Scissor(%v, %v, %v, %v) %v", x, y, width, height, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnScissor
-	call.args.a0 = C.uintptr_t(x)
-	call.args.a1 = C.uintptr_t(y)
-	call.args.a2 = C.uintptr_t(width)
-	call.args.a3 = C.uintptr_t(height)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnScissor,
+			a0: C.uintptr_t(x),
+			a1: C.uintptr_t(y),
+			a2: C.uintptr_t(width),
+			a3: C.uintptr_t(height),
+		},
+	})
 }
 
 func ShaderSource(s Shader, src string) {
@@ -1999,15 +2149,17 @@ func ShaderSource(s Shader, src string) {
 		errstr := errDrain()
 		log.Printf("gl.ShaderSource(%v, %v) %v", s, src, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnShaderSource
-	call.args.a0 = s.c()
-	call.args.a1 = 1
 	cstr := C.CString(src)
 	cstrp := (**C.char)(C.malloc(C.size_t(unsafe.Sizeof(cstr))))
 	*cstrp = cstr
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(cstrp)))
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnShaderSource,
+			a0: s.c(),
+			a1: 1,
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(cstrp))),
+		},
+	})
 }
 
 func StencilFunc(fn Enum, ref int, mask uint32) {
@@ -2015,12 +2167,14 @@ func StencilFunc(fn Enum, ref int, mask uint32) {
 		errstr := errDrain()
 		log.Printf("gl.StencilFunc(%v, %v, %v) %v", fn, ref, mask, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnStencilFunc
-	call.args.a0 = fn.c()
-	call.args.a1 = C.uintptr_t(ref)
-	call.args.a2 = C.uintptr_t(mask)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnStencilFunc,
+			a0: fn.c(),
+			a1: C.uintptr_t(ref),
+			a2: C.uintptr_t(mask),
+		},
+	})
 }
 
 func StencilFuncSeparate(face, fn Enum, ref int, mask uint32) {
@@ -2028,13 +2182,15 @@ func StencilFuncSeparate(face, fn Enum, ref int, mask uint32) {
 		errstr := errDrain()
 		log.Printf("gl.StencilFuncSeparate(%v, %v, %v, %v) %v", face, fn, ref, mask, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnStencilFuncSeparate
-	call.args.a0 = face.c()
-	call.args.a1 = fn.c()
-	call.args.a2 = C.uintptr_t(ref)
-	call.args.a3 = C.uintptr_t(mask)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnStencilFuncSeparate,
+			a0: face.c(),
+			a1: fn.c(),
+			a2: C.uintptr_t(ref),
+			a3: C.uintptr_t(mask),
+		},
+	})
 }
 
 func StencilMask(mask uint32) {
@@ -2042,10 +2198,12 @@ func StencilMask(mask uint32) {
 		errstr := errDrain()
 		log.Printf("gl.StencilMask(%v) %v", mask, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnStencilMask
-	call.args.a0 = C.uintptr_t(mask)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnStencilMask,
+			a0: C.uintptr_t(mask),
+		},
+	})
 }
 
 func StencilMaskSeparate(face Enum, mask uint32) {
@@ -2053,11 +2211,13 @@ func StencilMaskSeparate(face Enum, mask uint32) {
 		errstr := errDrain()
 		log.Printf("gl.StencilMaskSeparate(%v, %v) %v", face, mask, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnStencilMaskSeparate
-	call.args.a0 = face.c()
-	call.args.a1 = C.uintptr_t(mask)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnStencilMaskSeparate,
+			a0: face.c(),
+			a1: C.uintptr_t(mask),
+		},
+	})
 }
 
 func StencilOp(fail, zfail, zpass Enum) {
@@ -2065,12 +2225,14 @@ func StencilOp(fail, zfail, zpass Enum) {
 		errstr := errDrain()
 		log.Printf("gl.StencilOp(%v, %v, %v) %v", fail, zfail, zpass, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnStencilOp
-	call.args.a0 = fail.c()
-	call.args.a1 = zfail.c()
-	call.args.a2 = zpass.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnStencilOp,
+			a0: fail.c(),
+			a1: zfail.c(),
+			a2: zpass.c(),
+		},
+	})
 }
 
 func StencilOpSeparate(face, sfail, dpfail, dppass Enum) {
@@ -2078,13 +2240,15 @@ func StencilOpSeparate(face, sfail, dpfail, dppass Enum) {
 		errstr := errDrain()
 		log.Printf("gl.StencilOpSeparate(%v, %v, %v, %v) %v", face, sfail, dpfail, dppass, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnStencilOpSeparate
-	call.args.a0 = face.c()
-	call.args.a1 = sfail.c()
-	call.args.a2 = dpfail.c()
-	call.args.a3 = dppass.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnStencilOpSeparate,
+			a0: face.c(),
+			a1: sfail.c(),
+			a2: dpfail.c(),
+			a3: dppass.c(),
+		},
+	})
 }
 
 func TexImage2D(target Enum, level int, width, height int, format Enum, ty Enum, data []byte) {
@@ -2092,28 +2256,25 @@ func TexImage2D(target Enum, level int, width, height int, format Enum, ty Enum,
 		errstr := errDrain()
 		log.Printf("gl.TexImage2D(%v, %v, %v, %v, %v, %v, len(%d)) %v", target, level, width, height, format, ty, len(data), errstr)
 	}()
-	// It is common to pass TexImage2D a nil data, indicating that a
-	// bound GL buffer is being used as the source. In that case, it
-	// is not necessary to block.
-	var call call
-	call.args.fn = C.glfnTexImage2D
-	call.args.a0 = target.c()
-	call.args.a1 = C.uintptr_t(level)
-	call.args.a2 = C.uintptr_t(format)
-	call.args.a3 = C.uintptr_t(width)
-	call.args.a4 = C.uintptr_t(height)
-	call.args.a5 = format.c()
-	call.args.a6 = ty.c()
+	blocking, a7 := false, C.uintptr_t(0)
 	if len(data) > 0 {
-		call.blocking = true
-		call.args.a7 = C.uintptr_t(uintptr(unsafe.Pointer(&data[0])))
-	} else {
-		call.args.a7 = 0
+		blocking, a7 = true, C.uintptr_t(uintptr(unsafe.Pointer(&data[0])))
 	}
-	work <- call
-	if call.blocking {
-		<-retvalue
-	}
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnTexImage2D,
+
+			a0: target.c(),
+			a1: C.uintptr_t(level),
+			a2: C.uintptr_t(format),
+			a3: C.uintptr_t(width),
+			a4: C.uintptr_t(height),
+			a5: format.c(),
+			a6: ty.c(),
+			a7: a7,
+		},
+		blocking: blocking,
+	})
 }
 
 func TexSubImage2D(target Enum, level int, x, y, width, height int, format, ty Enum, data []byte) {
@@ -2121,20 +2282,22 @@ func TexSubImage2D(target Enum, level int, x, y, width, height int, format, ty E
 		errstr := errDrain()
 		log.Printf("gl.TexSubImage2D(%v, %v, %v, %v, %v, %v, %v, %v, len(%d)) %v", target, level, x, y, width, height, format, ty, len(data), errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnTexSubImage2D
-	call.blocking = true
-	call.args.a0 = target.c()
-	call.args.a1 = C.uintptr_t(level)
-	call.args.a2 = C.uintptr_t(x)
-	call.args.a3 = C.uintptr_t(y)
-	call.args.a4 = C.uintptr_t(width)
-	call.args.a5 = C.uintptr_t(height)
-	call.args.a6 = format.c()
-	call.args.a7 = ty.c()
-	call.args.a8 = C.uintptr_t(uintptr(unsafe.Pointer(&data[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnTexSubImage2D,
+
+			a0: target.c(),
+			a1: C.uintptr_t(level),
+			a2: C.uintptr_t(x),
+			a3: C.uintptr_t(y),
+			a4: C.uintptr_t(width),
+			a5: C.uintptr_t(height),
+			a6: format.c(),
+			a7: ty.c(),
+			a8: C.uintptr_t(uintptr(unsafe.Pointer(&data[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func TexParameterf(target, pname Enum, param float32) {
@@ -2142,12 +2305,14 @@ func TexParameterf(target, pname Enum, param float32) {
 		errstr := errDrain()
 		log.Printf("gl.TexParameterf(%v, %v, %v) %v", target, pname, param, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnTexParameterf
-	call.args.a0 = target.c()
-	call.args.a1 = pname.c()
-	call.args.a2 = C.uintptr_t(math.Float32bits(param))
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnTexParameterf,
+			a0: target.c(),
+			a1: pname.c(),
+			a2: C.uintptr_t(math.Float32bits(param)),
+		},
+	})
 }
 
 func TexParameterfv(target, pname Enum, params []float32) {
@@ -2155,14 +2320,15 @@ func TexParameterfv(target, pname Enum, params []float32) {
 		errstr := errDrain()
 		log.Printf("gl.TexParameterfv(%v, %v, len(%d)) %v", target, pname, len(params), errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnTexParameterfv
-	call.blocking = true
-	call.args.a0 = target.c()
-	call.args.a1 = pname.c()
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&params[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnTexParameterfv,
+			a0: target.c(),
+			a1: pname.c(),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(&params[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func TexParameteri(target, pname Enum, param int) {
@@ -2170,12 +2336,14 @@ func TexParameteri(target, pname Enum, param int) {
 		errstr := errDrain()
 		log.Printf("gl.TexParameteri(%v, %v, %v) %v", target, pname, param, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnTexParameteri
-	call.args.a0 = target.c()
-	call.args.a1 = pname.c()
-	call.args.a2 = C.uintptr_t(param)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnTexParameteri,
+			a0: target.c(),
+			a1: pname.c(),
+			a2: C.uintptr_t(param),
+		},
+	})
 }
 
 func TexParameteriv(target, pname Enum, params []int32) {
@@ -2183,14 +2351,15 @@ func TexParameteriv(target, pname Enum, params []int32) {
 		errstr := errDrain()
 		log.Printf("gl.TexParameteriv(%v, %v, %v) %v", target, pname, params, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnTexParameteriv
-	call.blocking = true
-	call.args.a0 = target.c()
-	call.args.a1 = pname.c()
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&params[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnTexParameteriv,
+			a0: target.c(),
+			a1: pname.c(),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(&params[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func Uniform1f(dst Uniform, v float32) {
@@ -2198,11 +2367,13 @@ func Uniform1f(dst Uniform, v float32) {
 		errstr := errDrain()
 		log.Printf("gl.Uniform1f(%v, %v) %v", dst, v, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnUniform1f
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(math.Float32bits(v))
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnUniform1f,
+			a0: dst.c(),
+			a1: C.uintptr_t(math.Float32bits(v)),
+		},
+	})
 }
 
 func Uniform1fv(dst Uniform, src []float32) {
@@ -2210,14 +2381,15 @@ func Uniform1fv(dst Uniform, src []float32) {
 		errstr := errDrain()
 		log.Printf("gl.Uniform1fv(%v, len(%d)) %v", dst, len(src), errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnUniform1fv
-	call.blocking = true
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(len(src))
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnUniform1fv,
+			a0: dst.c(),
+			a1: C.uintptr_t(len(src)),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func Uniform1i(dst Uniform, v int) {
@@ -2225,11 +2397,13 @@ func Uniform1i(dst Uniform, v int) {
 		errstr := errDrain()
 		log.Printf("gl.Uniform1i(%v, %v) %v", dst, v, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnUniform1i
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(v)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnUniform1i,
+			a0: dst.c(),
+			a1: C.uintptr_t(v),
+		},
+	})
 }
 
 func Uniform1iv(dst Uniform, src []int32) {
@@ -2237,14 +2411,15 @@ func Uniform1iv(dst Uniform, src []int32) {
 		errstr := errDrain()
 		log.Printf("gl.Uniform1iv(%v, %v) %v", dst, src, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnUniform1iv
-	call.blocking = true
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(len(src))
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnUniform1iv,
+			a0: dst.c(),
+			a1: C.uintptr_t(len(src)),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func Uniform2f(dst Uniform, v0, v1 float32) {
@@ -2252,12 +2427,14 @@ func Uniform2f(dst Uniform, v0, v1 float32) {
 		errstr := errDrain()
 		log.Printf("gl.Uniform2f(%v, %v, %v) %v", dst, v0, v1, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnUniform2f
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(math.Float32bits(v0))
-	call.args.a2 = C.uintptr_t(math.Float32bits(v1))
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnUniform2f,
+			a0: dst.c(),
+			a1: C.uintptr_t(math.Float32bits(v0)),
+			a2: C.uintptr_t(math.Float32bits(v1)),
+		},
+	})
 }
 
 func Uniform2fv(dst Uniform, src []float32) {
@@ -2265,14 +2442,15 @@ func Uniform2fv(dst Uniform, src []float32) {
 		errstr := errDrain()
 		log.Printf("gl.Uniform2fv(%v, len(%d)) %v", dst, len(src), errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnUniform2fv
-	call.blocking = true
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(len(src) / 2)
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnUniform2fv,
+			a0: dst.c(),
+			a1: C.uintptr_t(len(src) / 2),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func Uniform2i(dst Uniform, v0, v1 int) {
@@ -2280,12 +2458,14 @@ func Uniform2i(dst Uniform, v0, v1 int) {
 		errstr := errDrain()
 		log.Printf("gl.Uniform2i(%v, %v, %v) %v", dst, v0, v1, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnUniform2i
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(v0)
-	call.args.a2 = C.uintptr_t(v1)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnUniform2i,
+			a0: dst.c(),
+			a1: C.uintptr_t(v0),
+			a2: C.uintptr_t(v1),
+		},
+	})
 }
 
 func Uniform2iv(dst Uniform, src []int32) {
@@ -2293,14 +2473,15 @@ func Uniform2iv(dst Uniform, src []int32) {
 		errstr := errDrain()
 		log.Printf("gl.Uniform2iv(%v, %v) %v", dst, src, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnUniform2iv
-	call.blocking = true
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(len(src) / 2)
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnUniform2iv,
+			a0: dst.c(),
+			a1: C.uintptr_t(len(src) / 2),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func Uniform3f(dst Uniform, v0, v1, v2 float32) {
@@ -2308,13 +2489,15 @@ func Uniform3f(dst Uniform, v0, v1, v2 float32) {
 		errstr := errDrain()
 		log.Printf("gl.Uniform3f(%v, %v, %v, %v) %v", dst, v0, v1, v2, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnUniform3f
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(math.Float32bits(v0))
-	call.args.a2 = C.uintptr_t(math.Float32bits(v1))
-	call.args.a3 = C.uintptr_t(math.Float32bits(v2))
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnUniform3f,
+			a0: dst.c(),
+			a1: C.uintptr_t(math.Float32bits(v0)),
+			a2: C.uintptr_t(math.Float32bits(v1)),
+			a3: C.uintptr_t(math.Float32bits(v2)),
+		},
+	})
 }
 
 func Uniform3fv(dst Uniform, src []float32) {
@@ -2322,14 +2505,15 @@ func Uniform3fv(dst Uniform, src []float32) {
 		errstr := errDrain()
 		log.Printf("gl.Uniform3fv(%v, len(%d)) %v", dst, len(src), errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnUniform3fv
-	call.blocking = true
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(len(src) / 3)
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnUniform3fv,
+			a0: dst.c(),
+			a1: C.uintptr_t(len(src) / 3),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func Uniform3i(dst Uniform, v0, v1, v2 int32) {
@@ -2337,13 +2521,15 @@ func Uniform3i(dst Uniform, v0, v1, v2 int32) {
 		errstr := errDrain()
 		log.Printf("gl.Uniform3i(%v, %v, %v, %v) %v", dst, v0, v1, v2, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnUniform3i
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(v0)
-	call.args.a2 = C.uintptr_t(v1)
-	call.args.a3 = C.uintptr_t(v2)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnUniform3i,
+			a0: dst.c(),
+			a1: C.uintptr_t(v0),
+			a2: C.uintptr_t(v1),
+			a3: C.uintptr_t(v2),
+		},
+	})
 }
 
 func Uniform3iv(dst Uniform, src []int32) {
@@ -2351,14 +2537,15 @@ func Uniform3iv(dst Uniform, src []int32) {
 		errstr := errDrain()
 		log.Printf("gl.Uniform3iv(%v, %v) %v", dst, src, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnUniform3iv
-	call.blocking = true
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(len(src) / 3)
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnUniform3iv,
+			a0: dst.c(),
+			a1: C.uintptr_t(len(src) / 3),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func Uniform4f(dst Uniform, v0, v1, v2, v3 float32) {
@@ -2366,14 +2553,16 @@ func Uniform4f(dst Uniform, v0, v1, v2, v3 float32) {
 		errstr := errDrain()
 		log.Printf("gl.Uniform4f(%v, %v, %v, %v, %v) %v", dst, v0, v1, v2, v3, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnUniform4f
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(math.Float32bits(v0))
-	call.args.a2 = C.uintptr_t(math.Float32bits(v1))
-	call.args.a3 = C.uintptr_t(math.Float32bits(v2))
-	call.args.a4 = C.uintptr_t(math.Float32bits(v3))
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnUniform4f,
+			a0: dst.c(),
+			a1: C.uintptr_t(math.Float32bits(v0)),
+			a2: C.uintptr_t(math.Float32bits(v1)),
+			a3: C.uintptr_t(math.Float32bits(v2)),
+			a4: C.uintptr_t(math.Float32bits(v3)),
+		},
+	})
 }
 
 func Uniform4fv(dst Uniform, src []float32) {
@@ -2381,14 +2570,15 @@ func Uniform4fv(dst Uniform, src []float32) {
 		errstr := errDrain()
 		log.Printf("gl.Uniform4fv(%v, len(%d)) %v", dst, len(src), errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnUniform4fv
-	call.blocking = true
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(len(src) / 4)
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnUniform4fv,
+			a0: dst.c(),
+			a1: C.uintptr_t(len(src) / 4),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func Uniform4i(dst Uniform, v0, v1, v2, v3 int32) {
@@ -2396,14 +2586,16 @@ func Uniform4i(dst Uniform, v0, v1, v2, v3 int32) {
 		errstr := errDrain()
 		log.Printf("gl.Uniform4i(%v, %v, %v, %v, %v) %v", dst, v0, v1, v2, v3, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnUniform4i
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(v0)
-	call.args.a2 = C.uintptr_t(v1)
-	call.args.a3 = C.uintptr_t(v2)
-	call.args.a4 = C.uintptr_t(v3)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnUniform4i,
+			a0: dst.c(),
+			a1: C.uintptr_t(v0),
+			a2: C.uintptr_t(v1),
+			a3: C.uintptr_t(v2),
+			a4: C.uintptr_t(v3),
+		},
+	})
 }
 
 func Uniform4iv(dst Uniform, src []int32) {
@@ -2411,14 +2603,15 @@ func Uniform4iv(dst Uniform, src []int32) {
 		errstr := errDrain()
 		log.Printf("gl.Uniform4iv(%v, %v) %v", dst, src, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnUniform4iv
-	call.blocking = true
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(len(src) / 4)
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnUniform4iv,
+			a0: dst.c(),
+			a1: C.uintptr_t(len(src) / 4),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func UniformMatrix2fv(dst Uniform, src []float32) {
@@ -2426,14 +2619,16 @@ func UniformMatrix2fv(dst Uniform, src []float32) {
 		errstr := errDrain()
 		log.Printf("gl.UniformMatrix2fv(%v, len(%d)) %v", dst, len(src), errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnUniformMatrix2fv
-	call.blocking = true
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(len(src) / 4)
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnUniformMatrix2fv,
+
+			a0: dst.c(),
+			a1: C.uintptr_t(len(src) / 4),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func UniformMatrix3fv(dst Uniform, src []float32) {
@@ -2441,14 +2636,15 @@ func UniformMatrix3fv(dst Uniform, src []float32) {
 		errstr := errDrain()
 		log.Printf("gl.UniformMatrix3fv(%v, len(%d)) %v", dst, len(src), errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnUniformMatrix3fv
-	call.blocking = true
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(len(src) / 9)
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnUniformMatrix3fv,
+			a0: dst.c(),
+			a1: C.uintptr_t(len(src) / 9),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func UniformMatrix4fv(dst Uniform, src []float32) {
@@ -2456,14 +2652,15 @@ func UniformMatrix4fv(dst Uniform, src []float32) {
 		errstr := errDrain()
 		log.Printf("gl.UniformMatrix4fv(%v, len(%d)) %v", dst, len(src), errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnUniformMatrix4fv
-	call.blocking = true
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(len(src) / 16)
-	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnUniformMatrix4fv,
+			a0: dst.c(),
+			a1: C.uintptr_t(len(src) / 16),
+			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func UseProgram(p Program) {
@@ -2471,10 +2668,12 @@ func UseProgram(p Program) {
 		errstr := errDrain()
 		log.Printf("gl.UseProgram(%v) %v", p, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnUseProgram
-	call.args.a0 = p.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnUseProgram,
+			a0: p.c(),
+		},
+	})
 }
 
 func ValidateProgram(p Program) {
@@ -2482,10 +2681,12 @@ func ValidateProgram(p Program) {
 		errstr := errDrain()
 		log.Printf("gl.ValidateProgram(%v) %v", p, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnValidateProgram
-	call.args.a0 = p.c()
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnValidateProgram,
+			a0: p.c(),
+		},
+	})
 }
 
 func VertexAttrib1f(dst Attrib, x float32) {
@@ -2493,11 +2694,13 @@ func VertexAttrib1f(dst Attrib, x float32) {
 		errstr := errDrain()
 		log.Printf("gl.VertexAttrib1f(%v, %v) %v", dst, x, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnVertexAttrib1f
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(math.Float32bits(x))
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnVertexAttrib1f,
+			a0: dst.c(),
+			a1: C.uintptr_t(math.Float32bits(x)),
+		},
+	})
 }
 
 func VertexAttrib1fv(dst Attrib, src []float32) {
@@ -2505,13 +2708,14 @@ func VertexAttrib1fv(dst Attrib, src []float32) {
 		errstr := errDrain()
 		log.Printf("gl.VertexAttrib1fv(%v, len(%d)) %v", dst, len(src), errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnVertexAttrib1fv
-	call.blocking = true
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnVertexAttrib1fv,
+			a0: dst.c(),
+			a1: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func VertexAttrib2f(dst Attrib, x, y float32) {
@@ -2519,12 +2723,14 @@ func VertexAttrib2f(dst Attrib, x, y float32) {
 		errstr := errDrain()
 		log.Printf("gl.VertexAttrib2f(%v, %v, %v) %v", dst, x, y, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnVertexAttrib2f
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(math.Float32bits(x))
-	call.args.a2 = C.uintptr_t(math.Float32bits(y))
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnVertexAttrib2f,
+			a0: dst.c(),
+			a1: C.uintptr_t(math.Float32bits(x)),
+			a2: C.uintptr_t(math.Float32bits(y)),
+		},
+	})
 }
 
 func VertexAttrib2fv(dst Attrib, src []float32) {
@@ -2532,13 +2738,14 @@ func VertexAttrib2fv(dst Attrib, src []float32) {
 		errstr := errDrain()
 		log.Printf("gl.VertexAttrib2fv(%v, len(%d)) %v", dst, len(src), errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnVertexAttrib2fv
-	call.blocking = true
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnVertexAttrib2fv,
+			a0: dst.c(),
+			a1: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func VertexAttrib3f(dst Attrib, x, y, z float32) {
@@ -2546,13 +2753,15 @@ func VertexAttrib3f(dst Attrib, x, y, z float32) {
 		errstr := errDrain()
 		log.Printf("gl.VertexAttrib3f(%v, %v, %v, %v) %v", dst, x, y, z, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnVertexAttrib3f
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(math.Float32bits(x))
-	call.args.a2 = C.uintptr_t(math.Float32bits(y))
-	call.args.a3 = C.uintptr_t(math.Float32bits(z))
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnVertexAttrib3f,
+			a0: dst.c(),
+			a1: C.uintptr_t(math.Float32bits(x)),
+			a2: C.uintptr_t(math.Float32bits(y)),
+			a3: C.uintptr_t(math.Float32bits(z)),
+		},
+	})
 }
 
 func VertexAttrib3fv(dst Attrib, src []float32) {
@@ -2560,13 +2769,14 @@ func VertexAttrib3fv(dst Attrib, src []float32) {
 		errstr := errDrain()
 		log.Printf("gl.VertexAttrib3fv(%v, len(%d)) %v", dst, len(src), errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnVertexAttrib3fv
-	call.blocking = true
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnVertexAttrib3fv,
+			a0: dst.c(),
+			a1: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func VertexAttrib4f(dst Attrib, x, y, z, w float32) {
@@ -2574,14 +2784,16 @@ func VertexAttrib4f(dst Attrib, x, y, z, w float32) {
 		errstr := errDrain()
 		log.Printf("gl.VertexAttrib4f(%v, %v, %v, %v, %v) %v", dst, x, y, z, w, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnVertexAttrib4f
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(math.Float32bits(x))
-	call.args.a2 = C.uintptr_t(math.Float32bits(y))
-	call.args.a3 = C.uintptr_t(math.Float32bits(z))
-	call.args.a4 = C.uintptr_t(math.Float32bits(w))
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnVertexAttrib4f,
+			a0: dst.c(),
+			a1: C.uintptr_t(math.Float32bits(x)),
+			a2: C.uintptr_t(math.Float32bits(y)),
+			a3: C.uintptr_t(math.Float32bits(z)),
+			a4: C.uintptr_t(math.Float32bits(w)),
+		},
+	})
 }
 
 func VertexAttrib4fv(dst Attrib, src []float32) {
@@ -2589,13 +2801,14 @@ func VertexAttrib4fv(dst Attrib, src []float32) {
 		errstr := errDrain()
 		log.Printf("gl.VertexAttrib4fv(%v, len(%d)) %v", dst, len(src), errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnVertexAttrib4fv
-	call.blocking = true
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
-	work <- call
-	<-retvalue
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnVertexAttrib4fv,
+			a0: dst.c(),
+			a1: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
+		},
+		blocking: true,
+	})
 }
 
 func VertexAttribPointer(dst Attrib, size int, ty Enum, normalized bool, stride, offset int) {
@@ -2603,15 +2816,17 @@ func VertexAttribPointer(dst Attrib, size int, ty Enum, normalized bool, stride,
 		errstr := errDrain()
 		log.Printf("gl.VertexAttribPointer(%v, %v, %v, %v, %v, %v) %v", dst, size, ty, normalized, stride, offset, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnVertexAttribPointer
-	call.args.a0 = dst.c()
-	call.args.a1 = C.uintptr_t(size)
-	call.args.a2 = ty.c()
-	call.args.a3 = glBoolean(normalized)
-	call.args.a4 = C.uintptr_t(stride)
-	call.args.a5 = C.uintptr_t(offset)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnVertexAttribPointer,
+			a0: dst.c(),
+			a1: C.uintptr_t(size),
+			a2: ty.c(),
+			a3: glBoolean(normalized),
+			a4: C.uintptr_t(stride),
+			a5: C.uintptr_t(offset),
+		},
+	})
 }
 
 func Viewport(x, y, width, height int) {
@@ -2619,11 +2834,13 @@ func Viewport(x, y, width, height int) {
 		errstr := errDrain()
 		log.Printf("gl.Viewport(%v, %v, %v, %v) %v", x, y, width, height, errstr)
 	}()
-	var call call
-	call.args.fn = C.glfnViewport
-	call.args.a0 = C.uintptr_t(x)
-	call.args.a1 = C.uintptr_t(y)
-	call.args.a2 = C.uintptr_t(width)
-	call.args.a3 = C.uintptr_t(height)
-	work <- call
+	enqueue(call{
+		args: C.struct_fnargs{
+			fn: C.glfnViewport,
+			a0: C.uintptr_t(x),
+			a1: C.uintptr_t(y),
+			a2: C.uintptr_t(width),
+			a3: C.uintptr_t(height),
+		},
+	})
 }

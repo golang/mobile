@@ -20,7 +20,7 @@
 //		quantize time.Now() to a clock.Time
 //		process UI events
 //		modify the scene's nodes and animations (Arranger values)
-//		e.Render(scene, t)
+//		e.Render(scene, t, c)
 //	}
 package sprite // import "golang.org/x/mobile/exp/sprite"
 
@@ -28,6 +28,7 @@ import (
 	"image"
 	"image/draw"
 
+	"golang.org/x/mobile/event"
 	"golang.org/x/mobile/exp/sprite/clock"
 	"golang.org/x/mobile/f32"
 )
@@ -57,7 +58,9 @@ type Engine interface {
 	SetSubTex(n *Node, x SubTex)
 	SetTransform(n *Node, m f32.Affine) // sets transform relative to parent.
 
-	Render(scene *Node, t clock.Time)
+	// Render renders the scene arranged at the given time, for the given
+	// window configuration (dimensions and resolution).
+	Render(scene *Node, t clock.Time, c event.Config)
 }
 
 // A Node is a renderable element and forms a tree of Nodes.

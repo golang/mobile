@@ -4,6 +4,11 @@
 
 package app
 
+/*
+To view the log output run:
+adb logcat GoLog:I *:S
+*/
+
 // Android redirects stdout and stderr to /dev/null.
 // As these are common debugging utilities in Go,
 // we redirect them to logcat.

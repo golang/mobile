@@ -11,9 +11,6 @@ void processFn(struct fnargs* args) {
 	case glfnUNDEFINED:
 		abort(); // bad glfn
 		break;
-	case glfnStop:
-		abort(); // should never make it into C
-		break;
 	case glfnActiveTexture:
 		glActiveTexture((GLenum)args->a0);
 		break;

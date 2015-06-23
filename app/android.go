@@ -63,12 +63,10 @@ import (
 	"io"
 	"log"
 	"os"
-	"runtime"
 	"time"
 	"unsafe"
 
 	"golang.org/x/mobile/app/internal/callfn"
-	"golang.org/x/mobile/geom"
 )
 
 //export callMain
@@ -93,7 +91,6 @@ func callMain(mainPC uintptr) {
 	time.Local = time.FixedZone(tz, tzOffset)
 
 	go callfn.CallFn(mainPC)
-	<-mainCalled
 	log.Print("app.Run called")
 }
 
@@ -126,7 +123,7 @@ func onCreate(activity *C.ANativeActivity) {
 		dpi = int(density) // This is a guess.
 	}
 
-	geom.PixelsPerPt = float32(dpi) / 72
+	pixelsPerPt = float32(dpi) / 72
 }
 
 //export onStart
@@ -201,12 +198,23 @@ func onConfigurationChanged(activity *C.ANativeActivity) {
 func onLowMemory(activity *C.ANativeActivity) {
 }
 
-func (Config) JavaVM() unsafe.Pointer {
-	return unsafe.Pointer(C.current_vm)
+// Context holds global OS-specific context.
+//
+// Its extra methods are deliberately difficult to access because they must be
+// used with care. Their use implies the use of cgo, which probably requires
+// you understand the initialization process in the app package. Also care must
+// be taken to write both Android, iOS, and desktop-testing versions to
+// maintain portability.
+type Context struct{}
+
+// AndroidContext returns a jobject for the app android.context.Context.
+func (Context) AndroidContext() unsafe.Pointer {
+	return unsafe.Pointer(C.current_ctx)
 }
 
-func (Config) AndroidContext() unsafe.Pointer {
-	return unsafe.Pointer(C.current_ctx)
+// JavaVM returns a JNI *JavaVM.
+func (Context) JavaVM() unsafe.Pointer {
+	return unsafe.Pointer(C.current_vm)
 }
 
 var (
@@ -266,26 +274,41 @@ func (a *asset) Close() error {
 	return nil
 }
 
+// TODO(crawshaw): fix up this comment??
 // notifyInitDone informs Java that the program is initialized.
 // A NativeActivity will not create a window until this is called.
-func run(callbacks []Callbacks) {
-	// We want to keep the event loop on a consistent OS thread.
-	runtime.LockOSThread()
-
+func main(f func(App) error) error {
 	ctag := C.CString("Go")
 	cstr := C.CString("app.Run")
 	C.__android_log_write(C.ANDROID_LOG_INFO, ctag, cstr)
 	C.free(unsafe.Pointer(ctag))
 	C.free(unsafe.Pointer(cstr))
 
-	close(mainCalled)
+	donec := make(chan error, 1)
+	go func() {
+		donec <- f(app{})
+	}()
+
 	if C.current_native_activity == nil {
-		stateStart(callbacks)
-		// TODO: stateStop under some conditions.
+		// TODO: Even though c-shared mode doesn't require main to be called
+		// now, gobind relies on the main being called. In main, app.Run is
+		// called and the start callback initializes Java-Go communication.
+		//
+		// The problem is if the main exits (because app.Run returns), go
+		// runtime exits and kills the app.
+		//
+		// Many things have changed in cgo recently. If we can manage to split
+		// gobind app, native Go app initialization logic, we may able to
+		// consider gobind app not to use main of the go package.
+		//
+		// TODO: do we need to do what used to be stateStart or stateStop?
 		select {}
 	} else {
 		for w := range windowCreated {
-			windowDraw(callbacks, w, queue)
+			if done, err := windowDraw(w, queue, donec); done {
+				return err
+			}
 		}
 	}
+	panic("unreachable")
 }
