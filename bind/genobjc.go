@@ -254,7 +254,7 @@ func (s *funcSummary) asMethod(g *objcGen) string {
 		if len(params) > 0 || i > 0 {
 			key = p.name
 		}
-		params = append(params, fmt.Sprintf("%s:(%s)%s", key, g.objcType(p.typ), p.name))
+		params = append(params, fmt.Sprintf("%s:(%s)%s", key, g.objcType(p.typ)+"*", p.name))
 	}
 	return fmt.Sprintf("(%s)%s%s", s.ret, s.name, strings.Join(params, " "))
 }

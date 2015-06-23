@@ -19,6 +19,7 @@
 - (void)setX:(double)v;
 - (double)Y;
 - (void)setY:(double)v;
+- (BOOL)Identity:(GoStructs_S**)ret0_ error:(NSError**)error;
 - (double)Sum;
 @end
 
