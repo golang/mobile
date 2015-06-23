@@ -29,7 +29,6 @@ void process(int count) {
 }
 */
 import "C"
-import "runtime"
 
 // work is a queue of calls to execute.
 var work = make(chan call, 10)
@@ -37,46 +36,47 @@ var work = make(chan call, 10)
 // retvalue is sent a return value when blocking calls complete.
 // It is safe to use a global unbuffered channel here as calls
 // cannot currently be made concurrently.
+//
+// TODO: the comment above about concurrent calls isn't actually true: package
+// app calls package gl, but it has to do so in a separate goroutine, which
+// means that its gl calls (which may be blocking) can race with other gl calls
+// in the main program. We should make it safe to issue blocking gl calls
+// concurrently, or get the gl calls out of package app, or both.
 var retvalue = make(chan C.uintptr_t)
 
 type call struct {
-	blocking bool
-	fn       func()
 	args     C.struct_fnargs
+	blocking bool
 }
 
-// Do calls fn on the OS thread with the GL context.
-func Do(fn func()) {
-	work <- call{
-		fn:       fn,
-		blocking: true,
+func enqueue(c call) C.uintptr_t {
+	work <- c
+
+	select {
+	case workAvailable <- struct{}{}:
+	default:
 	}
-	<-retvalue
+
+	if c.blocking {
+		return <-retvalue
+	}
+	return 0
 }
 
-// Stop stops the current GL processing.
-func Stop() {
-	var call call
-	call.blocking = true
-	call.args.fn = C.glfnStop
-	work <- call
-	<-retvalue
-}
+var (
+	workAvailable = make(chan struct{}, 1)
+	// WorkAvailable communicates when DoWork should be called.
+	//
+	// This is an internal implementation detail and should only be used by the
+	// golang.org/x/mobile/app package.
+	WorkAvailable <-chan struct{} = workAvailable
+)
 
-// Start executes GL functions on a fixed OS thread, starting with initCtx.
-// It blocks until Stop is called. Typical use:
+// DoWork performs any pending OpenGL calls.
 //
-//	go gl.Start(func() {
-//		// establish a GL context, using for example, EGL.
-//	})
-//
-//	// long running GL calls from any goroutine
-//
-//	gl.Stop()
-func Start(initCtx func()) {
-	runtime.LockOSThread()
-	initCtx()
-
+// This is an internal implementation detail and should only be used by the
+// golang.org/x/mobile/app package.
+func DoWork() {
 	queue := make([]call, 0, len(work))
 	for {
 		// Wait until at least one piece of work is ready.
@@ -84,6 +84,8 @@ func Start(initCtx func()) {
 		select {
 		case w := <-work:
 			queue = append(queue, w)
+		default:
+			return
 		}
 		blocking := queue[len(queue)-1].blocking
 	enqueue:
@@ -98,26 +100,15 @@ func Start(initCtx func()) {
 		}
 
 		// Process the queued GL functions.
-		fn := queue[len(queue)-1].fn
-		stop := queue[len(queue)-1].args.fn == C.glfnStop
-		if fn != nil || stop {
-			queue = queue[:len(queue)-1]
-		}
-		for i := range queue {
-			C.cargs[i] = queue[i].args
+		for i, q := range queue {
+			C.cargs[i] = q.args
 		}
 		C.process(C.int(len(queue)))
-		if fn != nil {
-			fn()
-		}
 
 		// Cleanup and signal.
 		queue = queue[:0]
 		if blocking {
 			retvalue <- C.ret
-		}
-		if stop {
-			return
 		}
 	}
 }

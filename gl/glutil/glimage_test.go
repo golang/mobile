@@ -15,13 +15,33 @@ import (
 	"image/png"
 	"io/ioutil"
 	"os"
+	"runtime"
 	"testing"
 
+	"golang.org/x/mobile/event"
 	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/gl"
 )
 
 func TestImage(t *testing.T) {
+	done := make(chan struct{})
+	defer close(done)
+	go func() {
+		runtime.LockOSThread()
+		ctx := createContext()
+		for {
+			select {
+			case <-gl.WorkAvailable:
+				gl.DoWork()
+			case <-done:
+				ctx.destroy()
+				return
+			}
+		}
+	}()
+	start()
+	defer stop()
+
 	// GL testing strategy:
 	// 	1. Create an offscreen framebuffer object.
 	// 	2. Configure framebuffer to render to a GL texture.
@@ -39,26 +59,17 @@ func TestImage(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var ctxGL *contextGL
-	go gl.Start(func() {
-		ctxGL = createContext()
-	})
-	start()
-	defer func() {
-		stop()
-		gl.Stop()
-		ctxGL.destroy()
-	}()
-
 	const (
 		pixW = 100
 		pixH = 100
 		ptW  = geom.Pt(50)
 		ptH  = geom.Pt(50)
 	)
-	geom.PixelsPerPt = float32(pixW) / float32(ptW)
-	geom.Width = ptW
-	geom.Height = ptH
+	cfg := event.Config{
+		Width:       ptW,
+		Height:      ptH,
+		PixelsPerPt: float32(pixW) / float32(ptW),
+	}
 
 	fBuf := gl.CreateFramebuffer()
 	gl.BindFramebuffer(gl.FRAMEBUFFER, fBuf)
@@ -96,7 +107,7 @@ func TestImage(t *testing.T) {
 	ptTopRight := geom.Point{32, 0}
 	ptBottomLeft := geom.Point{12, 24 + 16}
 	ptBottomRight := geom.Point{12 + 32, 16}
-	m.Draw(ptTopLeft, ptTopRight, ptBottomLeft, b)
+	m.Draw(cfg, ptTopLeft, ptTopRight, ptBottomLeft, b)
 
 	// For unknown reasons, a windowless OpenGL context renders upside-
 	// down. That is, a quad covering the initial viewport spans:
@@ -118,8 +129,8 @@ func TestImage(t *testing.T) {
 	}
 
 	drawCross(got, 0, 0)
-	drawCross(got, int(ptTopLeft.X.Px()), int(ptTopLeft.Y.Px()))
-	drawCross(got, int(ptBottomRight.X.Px()), int(ptBottomRight.Y.Px()))
+	drawCross(got, int(ptTopLeft.X.Px(cfg.PixelsPerPt)), int(ptTopLeft.Y.Px(cfg.PixelsPerPt)))
+	drawCross(got, int(ptBottomRight.X.Px(cfg.PixelsPerPt)), int(ptBottomRight.Y.Px(cfg.PixelsPerPt)))
 	drawCross(got, pixW-1, pixH-1)
 
 	const wantPath = "../../testdata/testpattern-window.png"

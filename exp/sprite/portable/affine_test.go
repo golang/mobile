@@ -14,6 +14,7 @@ import (
 	"os"
 	"testing"
 
+	"golang.org/x/mobile/event"
 	"golang.org/x/mobile/f32"
 	"golang.org/x/mobile/geom"
 )
@@ -37,9 +38,11 @@ func TestAffine(t *testing.T) {
 		ptW  = geom.Pt(50)
 		ptH  = geom.Pt(50)
 	)
-	geom.PixelsPerPt = float32(pixW) / float32(ptW)
-	geom.Width = ptW
-	geom.Height = ptH
+	cfg := event.Config{
+		Width:       ptW,
+		Height:      ptH,
+		PixelsPerPt: float32(pixW) / float32(ptW),
+	}
 
 	got := image.NewRGBA(image.Rect(0, 0, pixW, pixH))
 	blue := image.NewUniform(color.RGBA{B: 0xff, A: 0xff})
@@ -51,7 +54,7 @@ func TestAffine(t *testing.T) {
 
 	var a f32.Affine
 	a.Identity()
-	a.Scale(&a, geom.PixelsPerPt, geom.PixelsPerPt)
+	a.Scale(&a, cfg.PixelsPerPt, cfg.PixelsPerPt)
 	a.Translate(&a, 0, 24)
 	a.Rotate(&a, float32(math.Asin(12./20)))
 	// See commentary in the render method defined in portable.go.
@@ -64,8 +67,8 @@ func TestAffine(t *testing.T) {
 	ptBottomRight := geom.Point{12 + 32, 16}
 
 	drawCross(got, 0, 0)
-	drawCross(got, int(ptTopLeft.X.Px()), int(ptTopLeft.Y.Px()))
-	drawCross(got, int(ptBottomRight.X.Px()), int(ptBottomRight.Y.Px()))
+	drawCross(got, int(ptTopLeft.X.Px(cfg.PixelsPerPt)), int(ptTopLeft.Y.Px(cfg.PixelsPerPt)))
+	drawCross(got, int(ptBottomRight.X.Px(cfg.PixelsPerPt)), int(ptBottomRight.Y.Px(cfg.PixelsPerPt)))
 	drawCross(got, pixW-1, pixH-1)
 
 	const wantPath = "../../../testdata/testpattern-window.png"

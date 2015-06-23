@@ -24,8 +24,6 @@ void swapBuffers(void);
 */
 import "C"
 import (
-	"runtime"
-	"sync"
 	"time"
 
 	"golang.org/x/mobile/event"
@@ -33,116 +31,79 @@ import (
 	"golang.org/x/mobile/gl"
 )
 
-type windowEventType byte
+func main(f func(App) error) error {
+	C.createWindow()
 
-const (
-	start windowEventType = iota
-	stop
-	resize
-)
+	// TODO: send lifecycle events when e.g. the X11 window is iconified or moved off-screen.
+	sendLifecycle(event.LifecycleStageFocused)
 
-type windowEvent struct {
-	eventType  windowEventType
-	arg1, arg2 int
-}
+	donec := make(chan error, 1)
+	go func() {
+		donec <- f(app{})
+	}()
 
-var windowEvents struct {
-	sync.Mutex
-	events  []windowEvent
-	touches []event.Touch
-}
+	// TODO: can we get the actual vsync signal?
+	ticker := time.NewTicker(time.Second / 60)
+	defer ticker.Stop()
+	tc := ticker.C
 
-func run(cbs []Callbacks) {
-	runtime.LockOSThread()
-	callbacks = cbs
-
-	go gl.Start(func() {
-		C.createWindow()
-		sendEvent(windowEvent{start, 0, 0})
-	})
-
-	for range time.Tick(time.Second / 60) {
-		windowEvents.Lock()
-		events := windowEvents.events
-		touches := windowEvents.touches
-		windowEvents.events = nil
-		windowEvents.touches = nil
-		windowEvents.Unlock()
-
-		for _, ev := range events {
-			switch ev.eventType {
-			case start:
-				close(mainCalled)
-				stateStart(callbacks)
-
-			case stop:
-				stateStop(callbacks)
-				return
-
-			case resize:
-				w := ev.arg1
-				h := ev.arg2
-
-				// TODO(nigeltao): don't assume 72 DPI. DisplayWidth / DisplayWidthMM
-				// is probably the best place to start looking.
-				if geom.PixelsPerPt == 0 {
-					geom.PixelsPerPt = 1
-				}
-				configAlt.Width = geom.Pt(w)
-				configAlt.Height = geom.Pt(h)
-				configSwap(callbacks)
-			}
-		}
-
-		if !running {
-			// Drop touch events before app started.
-			continue
-		}
-
-		for _, cb := range callbacks {
-			if cb.Touch != nil {
-				for _, e := range touches {
-					cb.Touch(e)
-				}
-			}
-		}
-
-		for _, cb := range callbacks {
-			if cb.Draw != nil {
-				cb.Draw()
-			}
-		}
-
-		gl.Do(func() {
+	for {
+		select {
+		case err := <-donec:
+			return err
+		case <-gl.WorkAvailable:
+			gl.DoWork()
+		case <-endDraw:
 			C.swapBuffers()
-			C.processEvents()
-		})
+			tc = ticker.C
+		case <-tc:
+			tc = nil
+			eventsIn <- event.Draw{}
+		}
+		C.processEvents()
 	}
-}
-
-func sendEvent(ev windowEvent) {
-	windowEvents.Lock()
-	windowEvents.events = append(windowEvents.events, ev)
-	windowEvents.Unlock()
 }
 
 //export onResize
 func onResize(w, h int) {
-	gl.Viewport(0, 0, w, h)
-	sendEvent(windowEvent{resize, w, h})
+	// TODO(nigeltao): don't assume 72 DPI. DisplayWidth and DisplayWidthMM
+	// is probably the best place to start looking.
+	pixelsPerPt = 1
+	eventsIn <- event.Config{
+		Width:       geom.Pt(w),
+		Height:      geom.Pt(h),
+		PixelsPerPt: pixelsPerPt,
+	}
+
+	// This gl.Viewport call has to be in a separate goroutine because any gl
+	// call can block until gl.DoWork is called, but this goroutine is the one
+	// responsible for calling gl.DoWork.
+	// TODO: does this (GL-using) code belong here in the x/mobile/app
+	// package?? See similar TODOs in the Android x/mobile/app implementation.
+	c := make(chan struct{})
+	go func() {
+		gl.Viewport(0, 0, w, h)
+		close(c)
+	}()
+	for {
+		select {
+		case <-gl.WorkAvailable:
+			gl.DoWork()
+		case <-c:
+			return
+		}
+	}
 }
 
 func sendTouch(ty event.TouchType, x, y float32) {
-	windowEvents.Lock()
-	windowEvents.touches = append(windowEvents.touches, event.Touch{
-		ID:   0,
+	eventsIn <- event.Touch{
+		ID:   0, // TODO: button??
 		Type: ty,
 		Loc: geom.Point{
-			X: geom.Pt(x / geom.PixelsPerPt),
-			Y: geom.Pt(y / geom.PixelsPerPt),
+			X: geom.Pt(x / pixelsPerPt),
+			Y: geom.Pt(y / pixelsPerPt),
 		},
-	})
-	windowEvents.Unlock()
+	}
 }
 
 //export onTouchStart
@@ -154,7 +115,14 @@ func onTouchMove(x, y float32) { sendTouch(event.TouchMove, x, y) }
 //export onTouchEnd
 func onTouchEnd(x, y float32) { sendTouch(event.TouchEnd, x, y) }
 
+var stopped bool
+
 //export onStop
 func onStop() {
-	sendEvent(windowEvent{stop, 0, 0})
+	if stopped {
+		return
+	}
+	stopped = true
+	sendLifecycle(event.LifecycleStageDead)
+	eventsIn <- stopPumping{}
 }

@@ -8,25 +8,188 @@ package app
 
 import (
 	"io"
+	"log"
+	"runtime"
 
 	"golang.org/x/mobile/event"
-	"golang.org/x/mobile/geom"
 )
 
-var callbacks []Callbacks
+// Main is called by the main.main function to run the mobile application.
+//
+// It calls f on the App, in a separate goroutine, as some OS-specific
+// libraries require being on 'the main thread'.
+func Main(f func(App) error) {
+	runtime.LockOSThread()
+	if err := main(f); err != nil {
+		log.Fatal(err)
+	}
+}
 
-// Run starts the app.
+// App is how a GUI mobile application interacts with the OS.
+type App interface {
+	// Events returns the events channel. It carries events from the system to
+	// the app. The type of such events include:
+	//  - event.Config
+	//  - event.Draw
+	//  - event.Lifecycle
+	//  - event.Touch
+	// from the golang.org/x/mobile/events package. Other packages may define
+	// other event types that are carried on this channel.
+	Events() <-chan interface{}
+
+	// Send sends an event on the events channel. It does not block.
+	Send(event interface{})
+
+	// EndDraw flushes any pending OpenGL commands or buffers to the screen.
+	EndDraw()
+}
+
+var (
+	lifecycleStage = event.LifecycleStageDead
+	pixelsPerPt    = float32(1)
+
+	eventsOut = make(chan interface{})
+	eventsIn  = pump(eventsOut)
+	endDraw   = make(chan struct{}, 1)
+)
+
+func sendLifecycle(to event.LifecycleStage) {
+	if lifecycleStage == to {
+		return
+	}
+	eventsIn <- event.Lifecycle{
+		From: lifecycleStage,
+		To:   to,
+	}
+	lifecycleStage = to
+}
+
+type app struct{}
+
+func (app) Events() <-chan interface{} {
+	return eventsOut
+}
+
+func (app) Send(event interface{}) {
+	eventsIn <- event
+}
+
+func (app) EndDraw() {
+	select {
+	case endDraw <- struct{}{}:
+	default:
+	}
+}
+
+type stopPumping struct{}
+
+// pump returns a channel src such that sending on src will eventually send on
+// dst, in order, but that src will always be ready to send/receive soon, even
+// if dst currently isn't. It is effectively an infinitely buffered channel.
 //
-// It must be called directly from the main function and will
-// block until the app exits.
+// In particular, goroutine A sending on src will not deadlock even if goroutine
+// B that's responsible for receiving on dst is currently blocked trying to
+// send to A on a separate channel.
 //
-// TODO(crawshaw): Remove cb parameter.
+// Send a stopPumping on the src channel to close the dst channel after all queued
+// events are sent on dst. After that, other goroutines can still send to src,
+// so that such sends won't block forever, but such events will be ignored.
+func pump(dst chan interface{}) (src chan interface{}) {
+	src = make(chan interface{})
+	go func() {
+		// initialSize is the initial size of the circular buffer. It must be a
+		// power of 2.
+		const initialSize = 16
+		i, j, buf, mask := 0, 0, make([]interface{}, initialSize), initialSize-1
+
+		maybeSrc := src
+		for {
+			maybeDst := dst
+			if i == j {
+				maybeDst = nil
+			}
+			if maybeDst == nil && maybeSrc == nil {
+				break
+			}
+
+			select {
+			case maybeDst <- buf[i&mask]:
+				buf[i&mask] = nil
+				i++
+
+			case e := <-maybeSrc:
+				if _, ok := e.(stopPumping); ok {
+					maybeSrc = nil
+					continue
+				}
+
+				// Allocate a bigger buffer if necessary.
+				if i+len(buf) == j {
+					b := make([]interface{}, 2*len(buf))
+					n := copy(b, buf[j&mask:])
+					copy(b[n:], buf[:j&mask])
+					i, j = 0, len(buf)
+					buf, mask = b, len(b)-1
+				}
+
+				buf[j&mask] = e
+				j++
+			}
+		}
+
+		close(dst)
+		// Block forever.
+		for range src {
+		}
+	}()
+	return src
+}
+
+// Run starts the mobile application.
+//
+// It must be called directly from the main function and will block until the
+// application exits.
+//
+// Deprecated: call Main directly instead.
 func Run(cb Callbacks) {
-	callbacks = append(callbacks, cb)
-	run(callbacks)
+	Main(func(a App) error {
+		var c event.Config
+		for e := range a.Events() {
+			switch e := event.Filter(e).(type) {
+			case event.Lifecycle:
+				switch e.Crosses(event.LifecycleStageVisible) {
+				case event.ChangeOn:
+					if cb.Start != nil {
+						cb.Start()
+					}
+				case event.ChangeOff:
+					if cb.Stop != nil {
+						cb.Stop()
+					}
+				}
+			case event.Config:
+				if cb.Config != nil {
+					cb.Config(e, c)
+				}
+				c = e
+			case event.Draw:
+				if cb.Draw != nil {
+					cb.Draw(c)
+				}
+				a.EndDraw()
+			case event.Touch:
+				if cb.Touch != nil {
+					cb.Touch(e, c)
+				}
+			}
+		}
+		return nil
+	})
 }
 
 // Callbacks is the set of functions called by the app.
+//
+// Deprecated: call Main directly instead.
 type Callbacks struct {
 	// Start is called when the app enters the foreground.
 	// The app will start receiving Draw and Touch calls.
@@ -65,19 +228,13 @@ type Callbacks struct {
 	//
 	// Drawing is done into a framebuffer, which is then swapped onto the
 	// screen when Draw returns. It is called 60 times a second.
-	Draw func()
+	Draw func(event.Config)
 
 	// Touch is called by the app when a touch event occurs.
-	Touch func(event.Touch)
+	Touch func(event.Touch, event.Config)
 
 	// Config is called by the app when configuration has changed.
-	Config func(new, old Config)
-}
-
-// Register registers a set of callbacks.
-// Must be called before Run.
-func Register(cb Callbacks) {
-	callbacks = append(callbacks, cb)
+	Config func(new, old event.Config)
 }
 
 // Open opens a named asset.
@@ -100,43 +257,4 @@ func Open(name string) (ReadSeekCloser, error) {
 type ReadSeekCloser interface {
 	io.ReadSeeker
 	io.Closer
-}
-
-// GetConfig returns the current application state.
-// It will block until Run has been called.
-func GetConfig() Config {
-	select {
-	case <-mainCalled:
-	default:
-		panic("app.GetConfig is not available before app.Run is called")
-	}
-	configCurMu.Lock()
-	defer configCurMu.Unlock()
-	return configCur
-}
-
-// Config is global application-specific configuration.
-//
-// The Config variable also holds operating system specific state.
-// Android apps have the extra methods:
-//
-//	// JavaVM returns a JNI *JavaVM.
-//	JavaVM() unsafe.Pointer
-//
-//	// AndroidContext returns a jobject for the app android.context.Context.
-//	AndroidContext() unsafe.Pointer
-//
-// These extra methods are deliberately difficult to access because they
-// must be used with care. Their use implies the use of cgo, which probably
-// requires you understand the initialization process in the app package.
-// Also care must be taken to write both Android, iOS, and desktop-testing
-// versions to maintain portability.
-type Config struct {
-	// Width is the width of the device screen.
-	Width geom.Pt
-
-	// Height is the height of the device screen.
-	Height geom.Pt
-
-	// TODO: Orientation
 }

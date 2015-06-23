@@ -52,10 +52,11 @@ var (
 
 func main() {
 	app.Run(app.Callbacks{
-		Start: start,
-		Stop:  stop,
-		Draw:  draw,
-		Touch: touch,
+		Start:  start,
+		Stop:   stop,
+		Draw:   draw,
+		Touch:  touch,
+		Config: config,
 	})
 }
 
@@ -74,9 +75,9 @@ func start() {
 	position = gl.GetAttribLocation(program, "position")
 	color = gl.GetUniformLocation(program, "color")
 	offset = gl.GetUniformLocation(program, "offset")
-	touchLoc = geom.Point{geom.Width / 2, geom.Height / 2}
 
 	// TODO(crawshaw): the debug package needs to put GL state init here
+	// Can this be an event.Register call now??
 }
 
 func stop() {
@@ -84,11 +85,15 @@ func stop() {
 	gl.DeleteBuffer(buf)
 }
 
-func touch(t event.Touch) {
+func config(new, old event.Config) {
+	touchLoc = geom.Point{new.Width / 2, new.Height / 2}
+}
+
+func touch(t event.Touch, c event.Config) {
 	touchLoc = t.Loc
 }
 
-func draw() {
+func draw(c event.Config) {
 	gl.ClearColor(1, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 
@@ -100,7 +105,7 @@ func draw() {
 	}
 	gl.Uniform4f(color, 0, green, 0, 1)
 
-	gl.Uniform2f(offset, float32(touchLoc.X/geom.Width), float32(touchLoc.Y/geom.Height))
+	gl.Uniform2f(offset, float32(touchLoc.X/c.Width), float32(touchLoc.Y/c.Height))
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, buf)
 	gl.EnableVertexAttribArray(position)
@@ -108,7 +113,7 @@ func draw() {
 	gl.DrawArrays(gl.TRIANGLES, 0, vertexCount)
 	gl.DisableVertexAttribArray(position)
 
-	debug.DrawFPS()
+	debug.DrawFPS(c)
 }
 
 var triangleData = f32.Bytes(binary.LittleEndian,

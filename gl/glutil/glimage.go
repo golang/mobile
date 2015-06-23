@@ -13,7 +13,7 @@ import (
 	"runtime"
 	"sync"
 
-	"golang.org/x/mobile/app"
+	"golang.org/x/mobile/event"
 	"golang.org/x/mobile/f32"
 	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/gl"
@@ -31,9 +31,16 @@ var glimage struct {
 }
 
 func init() {
-	app.Register(app.Callbacks{
-		Start: start,
-		Stop:  stop,
+	event.RegisterFilter(func(e interface{}) interface{} {
+		if e, ok := e.(event.Lifecycle); ok {
+			switch e.Crosses(event.LifecycleStageVisible) {
+			case event.ChangeOn:
+				start()
+			case event.ChangeOff:
+				stop()
+			}
+		}
+		return e
 	})
 }
 
@@ -216,7 +223,7 @@ func (img *Image) Delete() {
 
 // Draw draws the srcBounds part of the image onto a parallelogram, defined by
 // three of its corners, in the current GL framebuffer.
-func (img *Image) Draw(topLeft, topRight, bottomLeft geom.Point, srcBounds image.Rectangle) {
+func (img *Image) Draw(c event.Config, topLeft, topRight, bottomLeft geom.Point, srcBounds image.Rectangle) {
 	// TODO(crawshaw): Adjust viewport for the top bar on android?
 	gl.UseProgram(glimage.program)
 	tex := texmap.get(*img.key)
@@ -256,12 +263,12 @@ func (img *Image) Draw(topLeft, topRight, bottomLeft geom.Point, srcBounds image
 		// First of all, convert from geom space to framebuffer space. For
 		// later convenience, we divide everything by 2 here: px2 is half of
 		// the P.X co-ordinate (in framebuffer space).
-		px2 := -0.5 + float32(topLeft.X/geom.Width)
-		py2 := +0.5 - float32(topLeft.Y/geom.Height)
-		qx2 := -0.5 + float32(topRight.X/geom.Width)
-		qy2 := +0.5 - float32(topRight.Y/geom.Height)
-		sx2 := -0.5 + float32(bottomLeft.X/geom.Width)
-		sy2 := +0.5 - float32(bottomLeft.Y/geom.Height)
+		px2 := -0.5 + float32(topLeft.X/c.Width)
+		py2 := +0.5 - float32(topLeft.Y/c.Height)
+		qx2 := -0.5 + float32(topRight.X/c.Width)
+		qy2 := +0.5 - float32(topRight.Y/c.Height)
+		sx2 := -0.5 + float32(bottomLeft.X/c.Width)
+		sy2 := +0.5 - float32(bottomLeft.Y/c.Height)
 		// Next, solve for the affine transformation matrix
 		//	    [ a00 a01 a02 ]
 		//	a = [ a10 a11 a12 ]

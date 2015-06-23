@@ -166,7 +166,7 @@ processEvents(void) {
 
 void
 swapBuffers(void) {
-	if(eglSwapBuffers(e_dpy, e_surf) == EGL_FALSE) {
+	if (eglSwapBuffers(e_dpy, e_surf) == EGL_FALSE) {
 		fprintf(stderr, "eglSwapBuffer failed\n");
 		exit(1);
 	}

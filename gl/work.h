@@ -17,7 +17,6 @@
 
 typedef enum {
 	glfnUNDEFINED,
-	glfnStop,
 
 	glfnActiveTexture,
 	glfnAttachShader,

@@ -39,12 +39,12 @@ import (
 
 	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/app/debug"
+	"golang.org/x/mobile/event"
 	"golang.org/x/mobile/exp/audio"
 	"golang.org/x/mobile/exp/sprite"
 	"golang.org/x/mobile/exp/sprite/clock"
 	"golang.org/x/mobile/exp/sprite/glsprite"
 	"golang.org/x/mobile/f32"
-	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/gl"
 )
 
@@ -54,8 +54,7 @@ const (
 )
 
 var (
-	startClock = time.Now()
-	lastClock  = clock.Time(-1)
+	startTime = time.Now()
 
 	eng   = glsprite.Engine()
 	scene *sprite.Node
@@ -86,24 +85,15 @@ func stop() {
 	player.Close()
 }
 
-func draw() {
+func draw(c event.Config) {
 	if scene == nil {
-		loadScene()
+		loadScene(c)
 	}
-
-	now := clock.Time(time.Since(startClock) * 60 / time.Second)
-	if now == lastClock {
-		// TODO: figure out how to limit draw callbacks to 60Hz instead of
-		// burning the CPU as fast as possible.
-		// TODO: (relatedly??) sync to vblank?
-		return
-	}
-	lastClock = now
-
 	gl.ClearColor(1, 1, 1, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
-	eng.Render(scene, now)
-	debug.DrawFPS()
+	now := clock.Time(time.Since(startTime) * 60 / time.Second)
+	eng.Render(scene, now, c)
+	debug.DrawFPS(c)
 }
 
 func newNode() *sprite.Node {
@@ -113,7 +103,7 @@ func newNode() *sprite.Node {
 	return n
 }
 
-func loadScene() {
+func loadScene(c event.Config) {
 	gopher := loadGopher()
 	scene = &sprite.Node{}
 	eng.Register(scene)
@@ -137,11 +127,11 @@ func loadScene() {
 			dy = 1
 			boing()
 		}
-		if x+width > float32(geom.Width) {
+		if x+width > float32(c.Width) {
 			dx = -1
 			boing()
 		}
-		if y+height > float32(geom.Height) {
+		if y+height > float32(c.Height) {
 			dy = -1
 			boing()
 		}

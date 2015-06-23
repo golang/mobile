@@ -79,7 +79,7 @@ import "fmt"
 type Pt float32
 
 // Px converts the length to current device pixels.
-func (p Pt) Px() float32 { return float32(p) * PixelsPerPt }
+func (p Pt) Px(pixelsPerPt float32) float32 { return float32(p) * pixelsPerPt }
 
 // String returns a string representation of p like "3.2pt".
 func (p Pt) String() string { return fmt.Sprintf("%.2fpt", p) }
@@ -100,18 +100,3 @@ type Rectangle struct {
 
 // String returns a string representation of r like "(3,4)-(6,5)".
 func (r Rectangle) String() string { return r.Min.String() + "-" + r.Max.String() }
-
-// PixelsPerPt is the number of pixels in a single Pt on the current device.
-//
-// There are a wide variety of pixel densities in existing phones and
-// tablets, so apps should be written to expect various non-integer
-// PixelsPerPt values. In general, work in Pt.
-//
-// Not valid until app initialization has completed.
-var PixelsPerPt float32
-
-// Width is deprecated. Use app.GetConfig().Width.
-var Width Pt
-
-// Height is deprecated. Use app.GetConfig().Height.
-var Height Pt
