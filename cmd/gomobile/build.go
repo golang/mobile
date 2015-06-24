@@ -80,13 +80,13 @@ func runBuild(cmd *command) (err error) {
 		return err
 	}
 
-	switch *buildTarget {
+	switch buildTarget {
 	case "android":
 		// implementation is below
 	case "ios":
 		return fmt.Errorf(`-target=ios not yet supported`)
 	default:
-		return fmt.Errorf(`unknown -target, %q.`, *buildTarget)
+		return fmt.Errorf(`unknown -target, %q.`, buildTarget)
 	}
 
 	if pkg.Name != "main" {
@@ -160,15 +160,15 @@ func runBuild(cmd *command) (err error) {
 		return err
 	}
 
-	if *buildO == "" {
-		*buildO = filepath.Base(pkg.Dir) + ".apk"
+	if buildO == "" {
+		buildO = filepath.Base(pkg.Dir) + ".apk"
 	}
-	if !strings.HasSuffix(*buildO, ".apk") {
-		return fmt.Errorf("output file name %q does not end in '.apk'", *buildO)
+	if !strings.HasSuffix(buildO, ".apk") {
+		return fmt.Errorf("output file name %q does not end in '.apk'", buildO)
 	}
 	var out io.Writer
 	if !buildN {
-		f, err := os.Create(*buildO)
+		f, err := os.Create(buildO)
 		if err != nil {
 			return err
 		}
@@ -317,18 +317,18 @@ func printcmd(format string, args ...interface{}) {
 
 // "Build flags", used by multiple commands.
 var (
-	buildA      bool    // -a
-	buildI      bool    // -i
-	buildN      bool    // -n
-	buildV      bool    // -v
-	buildX      bool    // -x
-	buildO      *string // -o
-	buildTarget *string // -target
+	buildA      bool   // -a
+	buildI      bool   // -i
+	buildN      bool   // -n
+	buildV      bool   // -v
+	buildX      bool   // -x
+	buildO      string // -o
+	buildTarget string // -target
 )
 
 func addBuildFlags(cmd *command) {
-	buildO = cmd.flag.String("o", "", "")
-	buildTarget = cmd.flag.String("target", "android", "")
+	cmd.flag.StringVar(&buildO, "o", "", "")
+	cmd.flag.StringVar(&buildTarget, "target", "android", "")
 
 	cmd.flag.BoolVar(&buildA, "a", false, "")
 	cmd.flag.BoolVar(&buildI, "i", false, "")
@@ -389,8 +389,8 @@ func goAndroidBuild(src, libPath string) error {
 		gocmd.Args = append(gocmd.Args, "-x")
 	}
 	if libPath == "" {
-		if *buildO != "" {
-			gocmd.Args = append(gocmd.Args, `-o`, *buildO)
+		if buildO != "" {
+			gocmd.Args = append(gocmd.Args, `-o`, buildO)
 		}
 	} else {
 		gocmd.Args = append(gocmd.Args, "-buildmode=c-shared", "-o", libPath)
