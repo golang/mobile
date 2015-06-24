@@ -89,13 +89,13 @@ func runBind(cmd *command) error {
 		return err
 	}
 
-	switch *buildTarget {
+	switch buildTarget {
 	case "android":
 		// implementation is below
 	case "ios":
 		return fmt.Errorf(`-target=ios not yet supported`)
 	default:
-		return fmt.Errorf(`unknown -target, %q.`, *buildTarget)
+		return fmt.Errorf(`unknown -target, %q.`, buildTarget)
 	}
 
 	if sdkDir := os.Getenv("ANDROID_HOME"); sdkDir == "" {
@@ -323,14 +323,14 @@ func main() {
 // javac and jar commands are needed to build classes.jar.
 func buildAAR(androidDir string, pkg *build.Package) (err error) {
 	var out io.Writer = ioutil.Discard
-	if *buildO == "" {
-		*buildO = pkg.Name + ".aar"
+	if buildO == "" {
+		buildO = pkg.Name + ".aar"
 	}
-	if !strings.HasSuffix(*buildO, ".aar") {
-		return fmt.Errorf("output file name %q does not end in '.aar'", *buildO)
+	if !strings.HasSuffix(buildO, ".aar") {
+		return fmt.Errorf("output file name %q does not end in '.aar'", buildO)
 	}
 	if !buildN {
-		f, err := os.Create(*buildO)
+		f, err := os.Create(buildO)
 		if err != nil {
 			return err
 		}

@@ -111,8 +111,8 @@ func goIOSBuild(src string) error {
 
 	// TODO(jbd): Fallback to copying if renaming fails.
 	out := path.Base(pkg.ImportPath) + ".app"
-	if *buildO != "" {
-		out = filepath.Join(*buildO, out)
+	if buildO != "" {
+		out = filepath.Join(buildO, out)
 	}
 	if buildX {
 		printcmd("mv %s %s", dir+"/build/Release-iphoneos/main.app", out)
