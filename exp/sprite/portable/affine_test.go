@@ -19,7 +19,7 @@ import (
 )
 
 func TestAffine(t *testing.T) {
-	f, err := os.Open("../../testdata/testpattern.png")
+	f, err := os.Open("../../../testdata/testpattern.png")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +68,7 @@ func TestAffine(t *testing.T) {
 	drawCross(got, int(ptBottomRight.X.Px()), int(ptBottomRight.Y.Px()))
 	drawCross(got, pixW-1, pixH-1)
 
-	const wantPath = "../../testdata/testpattern-window.png"
+	const wantPath = "../../../testdata/testpattern-window.png"
 	f, err = os.Open(wantPath)
 	if err != nil {
 		t.Fatal(err)
@@ -95,7 +95,7 @@ func TestAffine(t *testing.T) {
 }
 
 func TestAffineMask(t *testing.T) {
-	f, err := os.Open("../../testdata/testpattern.png")
+	f, err := os.Open("../../../testdata/testpattern.png")
 	if err != nil {
 		t.Fatal(err)
 	}
