@@ -971,8 +971,6 @@ func GetShaderInfoLog(s Shader) string {
 	return C.GoString((*C.char)(buf))
 }
 
-///////////////
-
 // GetShaderPrecisionFormat returns range and precision limits for
 // shader types.
 //
@@ -1356,8 +1354,6 @@ func Scissor(x, y, width, height int32) {
 	call.args.a3 = C.uintptr_t(height)
 	work <- call
 }
-
-var escape unsafe.Pointer
 
 // TODO(crawshaw): ShaderBinary
 
@@ -1783,7 +1779,7 @@ func UniformMatrix2fv(dst Uniform, src []float32) {
 	var call call
 	call.args.fn = C.glfnUniformMatrix2fv
 	call.blocking = true
-	/// OpenGL ES 2 does not support transpose.
+	// OpenGL ES 2 does not support transpose.
 	call.args.a0 = dst.c()
 	call.args.a1 = C.uintptr_t(len(src) / 4)
 	call.args.a2 = C.uintptr_t(uintptr(unsafe.Pointer(&src[0])))
