@@ -205,12 +205,6 @@ func (Config) JavaVM() unsafe.Pointer {
 	return unsafe.Pointer(C.current_vm)
 }
 
-// ClassFinder returns a C function pointer for finding a given class using
-// the app class loader. (jclass) (*fn)(JNIEnv*, const char*).
-func (Config) ClassFinder() unsafe.Pointer {
-	return unsafe.Pointer(C.app_find_class)
-}
-
 func (Config) AndroidContext() unsafe.Pointer {
 	return unsafe.Pointer(C.current_ctx)
 }
