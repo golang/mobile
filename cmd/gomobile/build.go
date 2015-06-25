@@ -442,7 +442,7 @@ func pkgImportsAudio(pkg *build.Package) bool {
 			continue
 		}
 		importsAudioPkgs[path] = struct{}{}
-		if strings.HasPrefix(path, "golang.org/x/mobile/audio") {
+		if strings.HasPrefix(path, "golang.org/x/mobile/exp/audio") {
 			return true
 		}
 		dPkg, err := ctx.Import(path, "", build.ImportComment)
