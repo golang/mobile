@@ -157,7 +157,6 @@ func loadScene() {
 }
 
 func boing() {
-	// TODO(jbd): the sound explodes at seek, volume down and seek?
 	player.Seek(0)
 	player.Play()
 }
