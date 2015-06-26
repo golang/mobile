@@ -59,7 +59,7 @@ func CreateContext() (*Context, error) {
 	if ctx == nil {
 		return nil, errors.New("al: cannot create a new context")
 	}
-	return Context{ptr: ctx}, nil
+	return &Context{ptr: ctx}, nil
 }
 
 // Destroy destroys the context and frees the underlying resources.
