@@ -54,27 +54,25 @@ func OpenDevice() error {
 }
 
 // CreateContext creates a new context.
-func CreateContext() (*Context, error) {
+func CreateContext() (Context, error) {
 	ctx := alcCreateContext(device, nil)
 	if ctx == nil {
-		return nil, errors.New("al: cannot create a new context")
+		return Context{}, errors.New("al: cannot create a new context")
 	}
-	return &Context{ptr: ctx}, nil
+	return Context{ptr: ctx}, nil
 }
 
 // Destroy destroys the context and frees the underlying resources.
 // The current context cannot be destroyed. Use MakeContextCurrent
 // to make a new context current or use nil.
-func (c *Context) Destroy() {
+func (c Context) Destroy() {
 	alcDestroyContext(c.ptr)
 }
 
-// MakeContextCurrent makes the given context current. The current
-// context can be nil.
-func MakeContextCurrent(c *Context) bool {
-	if c == nil {
-		return alcMakeContextCurrent(nil)
-	}
+// MakeContextCurrent makes the given context current. Calls to
+// MakeContextCurrent can accept a zero value Context to allow
+// a program not to have an active current context.
+func MakeContextCurrent(c Context) bool {
 	return alcMakeContextCurrent(c.ptr)
 }
 

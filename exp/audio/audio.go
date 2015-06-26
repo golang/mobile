@@ -104,7 +104,7 @@ var (
 	mu sync.Mutex // guards ctx
 
 	// ctx is the shared al.Context used by multiple Player instances.
-	ctx *al.Context
+	ctx al.Context
 )
 
 type track struct {
@@ -170,9 +170,10 @@ func createContext() error {
 	mu.Lock()
 	defer mu.Unlock()
 
-	if ctx != nil {
+	if ctx != (al.Context{}) {
 		return nil
 	}
+
 	var err error
 	ctx, err = al.CreateContext()
 	if err != nil {
