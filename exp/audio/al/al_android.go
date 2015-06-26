@@ -30,11 +30,13 @@ void* al_init(void* vm, void* context) {
   case JNI_EDETACHED:
     if ((*current_vm)->AttachCurrentThread(current_vm, &env, 0) != 0) {
       LOG_FATAL("cannot attach JVM");
+      return 0;
     }
     attached = 1;
     break;
   case JNI_EVERSION:
     LOG_FATAL("bad JNI version");
+    return 0;
   }
 
   jclass android_content_Context = (*env)->FindClass(env, "android/content/Context");
@@ -47,11 +49,12 @@ void* al_init(void* vm, void* context) {
   strlcat(lib_path, "/lib/libopenal.so", sizeof(lib_path));
   void* handle = dlopen(lib_path, RTLD_LAZY);
   (*env)->ReleaseStringUTFChars(env, package_name, cpackage_name);
-  if (!handle) {
-    LOG_FATAL("cannot load libopenal.so");
-  }
   if (attached) {
     (*current_vm)->DetachCurrentThread(current_vm);
+  }
+  if (!handle) {
+    LOG_FATAL("cannot load libopenal.so");
+    return 0;
   }
   return handle;
 }
@@ -297,8 +300,11 @@ func fn(fname string) unsafe.Pointer {
 	name := C.CString(fname)
 	defer C.free(unsafe.Pointer(name))
 
-	// TODO(jbd): Handle dlsym error and panic.
-	return C.dlsym(alHandle, name)
+	p := C.dlsym(alHandle, name)
+	if uintptr(p) == 0 {
+		log.Fatalf("al: couldn't dlsym %q (alHandle=%p)", fname, alHandle)
+	}
+	return p
 }
 
 func alEnable(capability int32) {
