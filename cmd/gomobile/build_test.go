@@ -27,8 +27,8 @@ func TestBuild(t *testing.T) {
 		os.Setenv("HOMEDRIVE", "C:")
 	}
 	cmdBuild.flag.Parse([]string{"golang.org/x/mobile/example/basic"})
-	if *buildTarget != "android" {
-		t.Fatalf("-target=%q, want android", *buildTarget)
+	if buildTarget != "android" {
+		t.Fatalf("-target=%q, want android", buildTarget)
 	}
 	err := runBuild(cmdBuild)
 	if err != nil {
