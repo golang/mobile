@@ -14,6 +14,13 @@ import java.util.concurrent.Executors;
 // Seq is a sequence of machine-dependent encoded values.
 // Used by automatically generated language bindings to talk to Go.
 public class Seq {
+	static {
+		initSeq();
+		new Thread("GoSeq") {
+			public void run() { Seq.receive(); }
+		}.start();
+	}
+
 	@SuppressWarnings("UnusedDeclaration")
 	private long memptr; // holds C-allocated pointer
 
@@ -65,10 +72,6 @@ public class Seq {
 	public Ref readRef() {
 		int refnum = readInt32();
 		return tracker.get(refnum);
-	}
-
-	static {
-		initSeq();
 	}
 
 	static native void initSeq();

@@ -15,7 +15,7 @@ import go.testpkg.Testpkg;
 
 public class SeqTest extends AndroidTestCase {
   public SeqTest() {
-    Go.init(this.getContext());
+    System.loadLibrary("gojni");
   }
 
   public void testAdd() {

@@ -150,15 +150,8 @@ func runBind(cmd *command) error {
 		return err
 	}
 
-	src := filepath.Join(repo, "app/Go.java")
-	dst := filepath.Join(androidDir, "src/main/java/go/Go.java")
-	rm(dst)
-	if err := symlink(src, dst); err != nil {
-		return err
-	}
-
-	src = filepath.Join(repo, "bind/java/Seq.java")
-	dst = filepath.Join(androidDir, "src/main/java/go/Seq.java")
+	src := filepath.Join(repo, "bind/java/Seq.java")
+	dst := filepath.Join(androidDir, "src/main/java/go/Seq.java")
 	rm(dst)
 	if err := symlink(src, dst); err != nil {
 		return err
@@ -292,15 +285,11 @@ var androidMainTmpl = template.Must(template.New("android.go").Parse(`
 package main
 
 import (
-	"golang.org/x/mobile/app"
-	"golang.org/x/mobile/bind/java"
-
+	_ "golang.org/x/mobile/bind/java"
 	_ "{{.}}"
 )
 
-func main() {
-	app.Run(app.Callbacks{Start: java.Init})
-}
+func main() {}
 `))
 
 // AAR is the format for the binary distribution of an Android Library Project

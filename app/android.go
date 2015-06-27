@@ -14,11 +14,9 @@ until this is complete. Next JNI_OnLoad is called. When that is
 complete, one of two entry points is called.
 
 All-Go apps built using NativeActivity enter at ANativeActivity_onCreate.
-Go libraries, such as those built with gomobild bind, enter from Java at
-Java_go_Go_run.
 
-Both entry points make a cgo call that calls the Go main and blocks
-until app.Run is called.
+Go libraries (for example, those built with gomobile bind) do not use
+the app package initialization.
 */
 
 package app
@@ -48,9 +46,6 @@ JavaVM* current_vm;
 jobject current_ctx;
 
 jclass app_find_class(JNIEnv* env, const char* name);
-
-// current_native_activity is the Android ANativeActivity. May be NULL.
-ANativeActivity* current_native_activity;
 
 // asset_manager is the asset manager of the app.
 // For all-Go app, this is initialized in onCreate.
@@ -291,10 +286,6 @@ func main(f func(App)) {
 		close(donec)
 	}()
 
-	if C.current_native_activity == nil {
-		<-donec
-		return
-	}
 	for w := range windowCreated {
 		if windowDraw(w, queue, donec) {
 			return
