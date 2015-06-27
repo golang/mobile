@@ -63,6 +63,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"runtime"
 	"time"
 	"unsafe"
 
@@ -274,40 +275,29 @@ func (a *asset) Close() error {
 	return nil
 }
 
-// TODO(crawshaw): fix up this comment??
-// notifyInitDone informs Java that the program is initialized.
-// A NativeActivity will not create a window until this is called.
-func main(f func(App) error) error {
+func main(f func(App)) {
+	// Preserve this OS thread for the GL context created in windowDraw.
+	runtime.LockOSThread()
+
 	ctag := C.CString("Go")
 	cstr := C.CString("app.Run")
 	C.__android_log_write(C.ANDROID_LOG_INFO, ctag, cstr)
 	C.free(unsafe.Pointer(ctag))
 	C.free(unsafe.Pointer(cstr))
 
-	donec := make(chan error, 1)
+	donec := make(chan struct{})
 	go func() {
-		donec <- f(app{})
+		f(app{})
+		close(donec)
 	}()
 
 	if C.current_native_activity == nil {
-		// TODO: Even though c-shared mode doesn't require main to be called
-		// now, gobind relies on the main being called. In main, app.Run is
-		// called and the start callback initializes Java-Go communication.
-		//
-		// The problem is if the main exits (because app.Run returns), go
-		// runtime exits and kills the app.
-		//
-		// Many things have changed in cgo recently. If we can manage to split
-		// gobind app, native Go app initialization logic, we may able to
-		// consider gobind app not to use main of the go package.
-		//
-		// TODO: do we need to do what used to be stateStart or stateStop?
-		select {}
-	} else {
-		for w := range windowCreated {
-			if done, err := windowDraw(w, queue, donec); done {
-				return err
-			}
+		<-donec
+		return
+	}
+	for w := range windowCreated {
+		if windowDraw(w, queue, donec) {
+			return
 		}
 	}
 	panic("unreachable")

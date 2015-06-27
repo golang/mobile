@@ -8,8 +8,6 @@ package app
 
 import (
 	"io"
-	"log"
-	"runtime"
 
 	"golang.org/x/mobile/event"
 )
@@ -18,11 +16,8 @@ import (
 //
 // It calls f on the App, in a separate goroutine, as some OS-specific
 // libraries require being on 'the main thread'.
-func Main(f func(App) error) {
-	runtime.LockOSThread()
-	if err := main(f); err != nil {
-		log.Fatal(err)
-	}
+func Main(f func(App)) {
+	main(f)
 }
 
 // App is how a GUI mobile application interacts with the OS.
@@ -152,7 +147,7 @@ func pump(dst chan interface{}) (src chan interface{}) {
 //
 // Deprecated: call Main directly instead.
 func Run(cb Callbacks) {
-	Main(func(a App) error {
+	Main(func(a App) {
 		var c event.Config
 		for e := range a.Events() {
 			switch e := event.Filter(e).(type) {
@@ -183,7 +178,6 @@ func Run(cb Callbacks) {
 				}
 			}
 		}
-		return nil
 	})
 }
 

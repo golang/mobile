@@ -24,6 +24,7 @@ void swapBuffers(void);
 */
 import "C"
 import (
+	"runtime"
 	"time"
 
 	"golang.org/x/mobile/event"
@@ -31,15 +32,17 @@ import (
 	"golang.org/x/mobile/gl"
 )
 
-func main(f func(App) error) error {
+func main(f func(App)) {
+	runtime.LockOSThread()
 	C.createWindow()
 
 	// TODO: send lifecycle events when e.g. the X11 window is iconified or moved off-screen.
 	sendLifecycle(event.LifecycleStageFocused)
 
-	donec := make(chan error, 1)
+	donec := make(chan struct{})
 	go func() {
-		donec <- f(app{})
+		f(app{})
+		close(donec)
 	}()
 
 	// TODO: can we get the actual vsync signal?
@@ -49,8 +52,8 @@ func main(f func(App) error) error {
 
 	for {
 		select {
-		case err := <-donec:
-			return err
+		case <-donec:
+			return
 		case <-gl.WorkAvailable:
 			gl.DoWork()
 		case <-endDraw:
