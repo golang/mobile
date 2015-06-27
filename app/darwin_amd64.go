@@ -51,23 +51,32 @@ func init() {
 	initThreadID = uint64(C.threadID())
 }
 
-func run(callbacks []Callbacks) {
+func main(f func(App) error) error {
 	if tid := uint64(C.threadID()); tid != initThreadID {
-		log.Fatalf("app.Run called on thread %d, but app.init ran on %d", tid, initThreadID)
+		log.Fatalf("app.Main called on thread %d, but app.init ran on %d", tid, initThreadID)
 	}
-	close(mainCalled)
+
+	var err error
+	go func() {
+		err = f(app{})
+		// TODO(crawshaw): trigger runApp to return
+	}()
+
 	C.runApp()
+	return err
 }
 
+var windowHeight geom.Pt
+
 //export setGeom
-func setGeom(pixelsPerPt float32, width, height int) {
-	if geom.PixelsPerPt == 0 {
-		// Macs default to 72 DPI, so scales are equivalent.
-		geom.PixelsPerPt = pixelsPerPt
+func setGeom(ppp float32, width, height int) {
+	pixelsPerPt = ppp
+	windowHeight = geom.Pt(float32(height) / pixelsPerPt)
+	eventsIn <- event.Config{
+		Width:       geom.Pt(float32(width) / pixelsPerPt),
+		Height:      windowHeight,
+		PixelsPerPt: pixelsPerPt,
 	}
-	configAlt.Width = geom.Pt(float32(width) / geom.PixelsPerPt)
-	configAlt.Height = geom.Pt(float32(height) / geom.PixelsPerPt)
-	configSwap(callbacks)
 }
 
 var touchEvents struct {
@@ -76,16 +85,14 @@ var touchEvents struct {
 }
 
 func sendTouch(ty event.TouchType, x, y float32) {
-	touchEvents.Lock()
-	touchEvents.pending = append(touchEvents.pending, event.Touch{
+	eventsIn <- event.Touch{
 		ID:   0,
 		Type: ty,
 		Loc: geom.Point{
-			X: geom.Pt(x / geom.PixelsPerPt),
-			Y: GetConfig().Height - geom.Pt(y/geom.PixelsPerPt),
+			X: geom.Pt(x / pixelsPerPt),
+			Y: windowHeight - geom.Pt(y/pixelsPerPt),
 		},
-	})
-	touchEvents.Unlock()
+	}
 }
 
 //export eventMouseDown
@@ -103,41 +110,30 @@ var startedgl = false
 func drawgl(ctx C.GLintptr) {
 	if !startedgl {
 		startedgl = true
-		go gl.Start(func() {
-			C.makeCurrentContext(ctx)
+		C.makeCurrentContext(ctx)
 
-			// Using attribute arrays in OpenGL 3.3 requires the use of a VBA.
-			// But VBAs don't exist in ES 2. So we bind a default one.
-			var id C.GLuint
-			C.glGenVertexArrays(1, &id)
-			C.glBindVertexArray(id)
+		// Using attribute arrays in OpenGL 3.3 requires the use of a VBA.
+		// But VBAs don't exist in ES 2. So we bind a default one.
+		var id C.GLuint
+		C.glGenVertexArrays(1, &id)
+		C.glBindVertexArray(id)
 
-		})
-
-		stateStart(callbacks)
-	}
-
-	touchEvents.Lock()
-	pending := touchEvents.pending
-	touchEvents.pending = nil
-	touchEvents.Unlock()
-	for _, cb := range callbacks {
-		if cb.Touch != nil {
-			for _, e := range pending {
-				cb.Touch(e)
-			}
-		}
+		sendLifecycle(event.LifecycleStageFocused)
 	}
 
 	// TODO: is the library or the app responsible for clearing the buffers?
 	gl.ClearColor(0, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	for _, cb := range callbacks {
-		if cb.Draw != nil {
-			cb.Draw()
+
+	eventsIn <- event.Draw{}
+
+	for {
+		select {
+		case <-gl.WorkAvailable:
+			gl.DoWork()
+		case <-endDraw:
+			C.CGLFlushDrawable(C.CGLGetCurrentContext())
+			return
 		}
 	}
-	gl.Do(func() {
-		C.CGLFlushDrawable(C.CGLGetCurrentContext())
-	})
 }
