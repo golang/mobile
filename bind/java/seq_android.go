@@ -25,7 +25,6 @@ const debug = false
 // Send is called by Java to send a request to run a Go function.
 //export Send
 func Send(descriptor string, code int, req *C.uint8_t, reqlen C.size_t, res **C.uint8_t, reslen *C.size_t) {
-	<-running
 	fn := seq.Registry[descriptor][code]
 	if fn == nil {
 		panic(fmt.Sprintf("invalid descriptor(%s) and code(0x%x)", descriptor, code))

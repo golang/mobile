@@ -8,11 +8,3 @@
 //
 // Currently, this works only for android.
 package java
-
-// Init initializes communication with Java.
-// Typically called from the Start callback in app.Run.
-func Init() {
-	close(running)
-}
-
-var running = make(chan struct{})

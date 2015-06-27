@@ -45,7 +45,6 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 
 	current_vm = vm;
 	current_ctx = NULL;
-	current_native_activity = NULL;
 
 	return JNI_VERSION_1_6;
 }
@@ -121,15 +120,15 @@ static void* call_main_and_wait() {
 	callMain(mainPC);
 }
 
-// Runtime entry point when using NativeActivity.
+// Entry point from NativeActivity.
+//
+// By here, the Go runtime has been initialized (as we are running in
+// -buildmode=c-shared) but main.main hasn't been called yet.
 void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_t savedStateSize) {
-	current_native_activity = activity;
-	if (current_ctx == NULL) {
-		// Note that activity->clazz is mis-named.
-		current_vm = activity->vm;
-		current_ctx = (*activity->env)->NewGlobalRef(activity->env, activity->clazz);
-		call_main_and_wait();
-	}
+	// Note that activity->clazz is mis-named.
+	current_vm = activity->vm;
+	current_ctx = (*activity->env)->NewGlobalRef(activity->env, activity->clazz);
+	call_main_and_wait();
 
 	// These functions match the methods on Activity, described at
 	// http://developer.android.com/reference/android/app/Activity.html
@@ -152,24 +151,4 @@ void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_
 	activity->callbacks->onLowMemory = onLowMemory;
 
 	onCreate(activity);
-}
-
-// Runtime entry point when embedding Go in a Java App.
-JNIEXPORT void JNICALL
-Java_go_Go_run(JNIEnv* env, jclass clazz, jobject ctx) {
-	current_ctx = (*env)->NewGlobalRef(env, ctx);
-
-	if (current_ctx != NULL) {
-		// Init asset_manager.
-		jclass context_clazz = find_class(env, "android/content/Context");
-		jmethodID getassets = find_method(
-			env, context_clazz, "getAssets", "()Landroid/content/res/AssetManager;");
-
-		// Prevent the java AssetManager from being GC'd
-		jobject asset_manager_ref = (*env)->NewGlobalRef(
-			env, (*env)->CallObjectMethod(env, current_ctx, getassets));
-		asset_manager = AAssetManager_fromJava(env, asset_manager_ref);
-	}
-
-	call_main_and_wait();
 }
