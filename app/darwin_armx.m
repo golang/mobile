@@ -15,7 +15,7 @@
 
 struct utsname sysInfo;
 
-@interface GoAppAppController : GLKViewController
+@interface GoAppAppController : GLKViewController<UIContentContainer>
 @end
 
 @interface GoAppAppDelegate : UIResponder<UIApplicationDelegate>
@@ -40,19 +40,28 @@ struct utsname sysInfo;
 @implementation GoAppAppController
 - (void)viewDidLoad {
 	[super viewDidLoad];
+	self.preferredFramesPerSecond = 60;
 	self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
 	GLKView *view = (GLKView *)self.view;
 	view.context = self.context;
 	view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
 	view.multipleTouchEnabled = true; // TODO expose setting to user.
+
+	int scale = 1;
+	if ([[UIScreen mainScreen] respondsToSelector:@selector(displayLinkWithTarget:selector:)]) {
+		scale = (int)[UIScreen mainScreen].scale; // either 1.0, 2.0, or 3.0.
+	}
+	setScreen(scale);
+
+	CGSize size = [UIScreen mainScreen].bounds.size;
+	updateConfig((int)size.width, (int)size.height);
+}
+
+- (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
+	updateConfig((int)size.width, (int)size.height);
 }
 
 - (void)update {
-	GLKView *view = (GLKView *)self.view;
-	int w = [view drawableWidth];
-	int h = [view drawableHeight];
-	setGeom(w, h);
-
 	drawgl((GoUintptr)self.context);
 }
 

@@ -24,6 +24,7 @@ import "C"
 import (
 	"log"
 	"runtime"
+	"strings"
 	"sync"
 	"unsafe"
 
@@ -46,79 +47,59 @@ func init() {
 	initThreadID = uint64(C.threadID())
 }
 
-func run(cbs []Callbacks) {
+func main(f func(App)) {
 	if tid := uint64(C.threadID()); tid != initThreadID {
 		log.Fatalf("app.Run called on thread %d, but app.init ran on %d", tid, initThreadID)
 	}
-	close(mainCalled)
-	callbacks = cbs
+
+	go func() {
+		f(app{})
+		// TODO(crawshaw): trigger runApp to return
+	}()
 	C.runApp()
+	panic("unexpected return from app.runApp")
 }
 
-// TODO(crawshaw): determine minimum iOS version and remove irrelevant devices.
-var machinePPI = map[string]int{
-	"i386":      163, // simulator
-	"x86_64":    163, // simulator
-	"iPod1,1":   163, // iPod Touch gen1
-	"iPod2,1":   163, // iPod Touch gen2
-	"iPod3,1":   163, // iPod Touch gen3
-	"iPod4,1":   326, // iPod Touch gen4
-	"iPod5,1":   326, // iPod Touch gen5
-	"iPhone1,1": 163, // iPhone
-	"iPhone1,2": 163, // iPhone 3G
-	"iPhone2,1": 163, // iPhone 3GS
-	"iPad1,1":   132, // iPad gen1
-	"iPad2,1":   132, // iPad gen2
-	"iPad2,2":   132, // iPad gen2 GSM
-	"iPad2,3":   132, // iPad gen2 CDMA
-	"iPad2,4":   132, // iPad gen2
-	"iPad2,5":   163, // iPad Mini gen1
-	"iPad2,6":   163, // iPad Mini gen1 AT&T
-	"iPad2,7":   163, // iPad Mini gen1 VZ
-	"iPad3,1":   264, // iPad gen3
-	"iPad3,2":   264, // iPad gen3 VZ
-	"iPad3,3":   264, // iPad gen3 AT&T
-	"iPad3,4":   264, // iPad gen4
-	"iPad3,5":   264, // iPad gen4 AT&T
-	"iPad3,6":   264, // iPad gen4 VZ
-	"iPad4,1":   264, // iPad Air wifi
-	"iPad4,2":   264, // iPad Air LTE
-	"iPad4,3":   264, // iPad Air LTE China
-	"iPad4,4":   326, // iPad Mini gen2 wifi
-	"iPad4,5":   326, // iPad Mini gen2 LTE
-	"iPad4,6":   326, // iPad Mini 3
-	"iPad4,7":   326, // iPad Mini 3
-	"iPhone3,1": 326, // iPhone 4
-	"iPhone4,1": 326, // iPhone 4S
-	"iPhone5,1": 326, // iPhone 5
-	"iPhone5,2": 326, // iPhone 5
-	"iPhone5,3": 326, // iPhone 5c
-	"iPhone5,4": 326, // iPhone 5c
-	"iPhone6,1": 326, // iPhone 5s
-	"iPhone6,2": 326, // iPhone 5s
-	"iPhone7,1": 401, // iPhone 6 Plus
-	"iPhone7,2": 326, // iPhone 6
-}
+var screenScale int // [UIScreen mainScreen].scale, either 1, 2, or 3.
 
-func ppi() int {
+//export setScreen
+func setScreen(scale int) {
 	C.uname(&C.sysInfo)
 	name := C.GoString(&C.sysInfo.machine[0])
-	v, ok := machinePPI[name]
-	if !ok {
+
+	var v float32
+
+	switch {
+	case strings.HasPrefix(name, "iPhone"):
+		v = 163
+	case strings.HasPrefix(name, "iPad"):
+		// TODO: is there a better way to distinguish the iPad Mini?
+		switch name {
+		case "iPad2,5", "iPad2,6", "iPad2,7", "iPad4,4", "iPad4,5", "iPad4,6", "iPad4,7":
+			v = 163 // iPad Mini
+		default:
+			v = 132
+		}
+	default:
+		v = 163 // names like i386 and x86_64 are the simulator
+	}
+
+	if v == 0 {
 		log.Printf("unknown machine: %s", name)
 		v = 163 // emergency fallback
 	}
-	return v
+
+	pixelsPerPt = v * float32(scale) / 72
+	screenScale = scale
 }
 
-//export setGeom
-func setGeom(width, height int) {
-	if geom.PixelsPerPt == 0 {
-		geom.PixelsPerPt = float32(ppi()) / 72
+//export updateConfig
+func updateConfig(width, height int) {
+	eventsIn <- event.Config{
+		Width:       geom.Pt(float32(screenScale*width) / pixelsPerPt),
+		Height:      geom.Pt(float32(screenScale*height) / pixelsPerPt),
+		PixelsPerPt: pixelsPerPt,
 	}
-	configAlt.Width = geom.Pt(float32(width) / geom.PixelsPerPt)
-	configAlt.Height = geom.Pt(float32(height) / geom.PixelsPerPt)
-	configSwap(callbacks)
 }
 
 var startedgl = false
@@ -162,43 +143,33 @@ func sendTouch(touch uintptr, touchType int, x, y float32) {
 		touchIDs[id] = 0
 	}
 
-	touchEvents.Lock()
-	touchEvents.pending = append(touchEvents.pending, event.Touch{
+	eventsIn <- event.Touch{
 		ID:   event.TouchSequenceID(id),
 		Type: ty,
 		Loc: geom.Point{
-			X: geom.Pt(x / geom.PixelsPerPt),
-			Y: geom.Pt(y / geom.PixelsPerPt),
+			X: geom.Pt(x / pixelsPerPt),
+			Y: geom.Pt(y / pixelsPerPt),
 		},
-	})
-	touchEvents.Unlock()
+	}
 }
 
 //export drawgl
 func drawgl(ctx uintptr) {
 	if !startedgl {
 		startedgl = true
-		go gl.Start(func() {
-			C.setContext(unsafe.Pointer(ctx))
-		})
-		stateStart(callbacks)
+		C.setContext(unsafe.Pointer(ctx))
+		// TODO(crawshaw): not just on process start.
+		sendLifecycle(event.LifecycleStageFocused)
 	}
 
-	touchEvents.Lock()
-	pending := touchEvents.pending
-	touchEvents.pending = nil
-	touchEvents.Unlock()
-	for _, cb := range callbacks {
-		if cb.Touch != nil {
-			for _, e := range pending {
-				cb.Touch(e)
-			}
-		}
-	}
+	eventsIn <- event.Draw{}
 
-	for _, cb := range callbacks {
-		if cb.Draw != nil {
-			cb.Draw()
+	for {
+		select {
+		case <-gl.WorkAvailable:
+			gl.DoWork()
+		case <-endDraw:
+			return
 		}
 	}
 }
