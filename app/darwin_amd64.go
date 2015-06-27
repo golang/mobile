@@ -51,19 +51,17 @@ func init() {
 	initThreadID = uint64(C.threadID())
 }
 
-func main(f func(App) error) error {
+func main(f func(App)) {
 	if tid := uint64(C.threadID()); tid != initThreadID {
 		log.Fatalf("app.Main called on thread %d, but app.init ran on %d", tid, initThreadID)
 	}
 
-	var err error
 	go func() {
-		err = f(app{})
+		f(app{})
 		// TODO(crawshaw): trigger runApp to return
 	}()
 
 	C.runApp()
-	return err
 }
 
 var windowHeight geom.Pt

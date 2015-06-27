@@ -92,7 +92,7 @@ import (
 
 var firstWindowDraw = true
 
-func windowDraw(w *C.ANativeWindow, queue *C.AInputQueue, donec chan error) (done bool, err error) {
+func windowDraw(w *C.ANativeWindow, queue *C.AInputQueue, donec chan struct{}) (done bool) {
 	C.createEGLWindow(w)
 
 	// TODO: is the library or the app responsible for clearing the buffers?
@@ -136,8 +136,8 @@ func windowDraw(w *C.ANativeWindow, queue *C.AInputQueue, donec chan error) (don
 	for {
 		processEvents(queue)
 		select {
-		case err := <-donec:
-			return true, err
+		case <-donec:
+			return true
 		case <-windowRedrawNeeded:
 			// Re-query the width and height.
 			C.querySurfaceWidthAndHeight()
@@ -170,7 +170,7 @@ func windowDraw(w *C.ANativeWindow, queue *C.AInputQueue, donec chan error) (don
 			}
 		case <-windowDestroyed:
 			sendLifecycle(event.LifecycleStageAlive)
-			return false, nil
+			return false
 		case <-gl.WorkAvailable:
 			gl.DoWork()
 		case <-endDraw:
