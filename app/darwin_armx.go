@@ -196,9 +196,6 @@ func drawgl(ctx uintptr) {
 		}
 	}
 
-	// TODO not here?
-	gl.ClearColor(0, 0, 0, 1)
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	for _, cb := range callbacks {
 		if cb.Draw != nil {
 			cb.Draw()
