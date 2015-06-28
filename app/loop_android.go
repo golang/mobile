@@ -95,31 +95,6 @@ var firstWindowDraw = true
 func windowDraw(w *C.ANativeWindow, queue *C.AInputQueue, donec chan struct{}) (done bool) {
 	C.createEGLWindow(w)
 
-	// TODO: is the library or the app responsible for clearing the buffers?
-	// The first thing that the example apps' draw functions do is their own
-	// gl.ClearColor + gl.Clear calls, so this one here seems redundant.
-	{
-		c := make(chan struct{})
-		go func() {
-			gl.ClearColor(0, 0, 0, 1)
-			gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-			if errv := gl.GetError(); errv != gl.NO_ERROR {
-				log.Printf("GL initialization error: %s", errv)
-			}
-			close(c)
-		}()
-	loop0:
-		for {
-			select {
-			case <-gl.WorkAvailable:
-				gl.DoWork()
-			case <-c:
-				break loop0
-			}
-		}
-		C.eglSwapBuffers(C.display, C.surface)
-	}
-
 	// TODO: is this needed if we also have the "case <-windowRedrawNeeded:" below??
 	sendLifecycle(event.LifecycleStageFocused)
 	eventsIn <- event.Config{
