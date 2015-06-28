@@ -194,10 +194,14 @@ func goBuild(src, o string, env []string) error {
 	}
 	cmd.Args = append(cmd.Args, "-o="+o)
 	cmd.Args = append(cmd.Args, src)
+	// TODO(jbd): Remove clangwrap.sh dependency by implementing clangwrap.sh
+	// in Go in this package.
 	cmd.Env = append(env, []string{
 		`CGO_ENABLED=1`,
 		`GOROOT=` + goroot,
 		`GOPATH=` + gopath,
+		`CC=` + filepath.Join(goroot, "misc/ios/clangwrap.sh"),
+		`CCX=` + filepath.Join(goroot, "misc/ios/clangwrap.sh"),
 	}...)
 	cmd.Stderr = os.Stderr
 	if buildX {
