@@ -118,6 +118,10 @@ func goIOSBuild(src string) error {
 		printcmd("mv %s %s", dir+"/build/Release-iphoneos/main.app", out)
 	}
 	if !buildN {
+		// if output already exists, remove.
+		if err := os.RemoveAll(out); err != nil {
+			return err
+		}
 		if err := os.Rename(dir+"/build/Release-iphoneos/main.app", out); err != nil {
 			return err
 		}
