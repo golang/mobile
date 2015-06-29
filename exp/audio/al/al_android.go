@@ -5,9 +5,6 @@
 package al
 
 /*
-#cgo LDFLAGS: -llog
-
-#include <android/log.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dlfcn.h>
@@ -16,10 +13,14 @@ package al
 #include <AL/al.h>
 #include <AL/alc.h>
 
-#define LOG_INFO(...) __android_log_print(ANDROID_LOG_INFO, "Go/OpenAL", __VA_ARGS__)
-#define LOG_FATAL(...) __android_log_print(ANDROID_LOG_FATAL, "Go/OpenAL", __VA_ARGS__)
+typedef enum {
+  AL_INIT_RESULT_OK,
+  AL_INIT_RESULT_CANNOT_ATTACH_JVM,
+  AL_INIT_RESULT_BAD_JNI_VERSION,
+  AL_INIT_RESULT_CANNOT_LOAD_SO
+} ALInitResult;
 
-void* al_init(void* vm, void* context) {
+ALInitResult al_init(void* vm, void* context, void** handle) {
   JavaVM* current_vm = (JavaVM*)(vm);
   JNIEnv* env;
 
@@ -29,14 +30,12 @@ void* al_init(void* vm, void* context) {
     break;
   case JNI_EDETACHED:
     if ((*current_vm)->AttachCurrentThread(current_vm, &env, 0) != 0) {
-      LOG_FATAL("cannot attach JVM");
-      return 0;
+      return AL_INIT_RESULT_CANNOT_ATTACH_JVM;
     }
     attached = 1;
     break;
   case JNI_EVERSION:
-    LOG_FATAL("bad JNI version");
-    return 0;
+    return AL_INIT_RESULT_BAD_JNI_VERSION;
   }
 
   jclass android_content_Context = (*env)->FindClass(env, "android/content/Context");
@@ -47,16 +46,15 @@ void* al_init(void* vm, void* context) {
   char lib_path[PATH_MAX] = "/data/data/";
   strlcat(lib_path, cpackage_name, sizeof(lib_path));
   strlcat(lib_path, "/lib/libopenal.so", sizeof(lib_path));
-  void* handle = dlopen(lib_path, RTLD_LAZY);
+  *handle = dlopen(lib_path, RTLD_LAZY);
   (*env)->ReleaseStringUTFChars(env, package_name, cpackage_name);
   if (attached) {
     (*current_vm)->DetachCurrentThread(current_vm);
   }
-  if (!handle) {
-    LOG_FATAL("cannot load libopenal.so");
-    return 0;
+  if (!*handle) {
+    return AL_INIT_RESULT_CANNOT_LOAD_SO;
   }
-  return handle;
+  return AL_INIT_RESULT_OK;
 }
 
 void call_alEnable(LPALENABLE fn, ALenum capability) {
@@ -250,7 +248,19 @@ var (
 
 func initAL() {
 	ctx := app.Context{}
-	alHandle = C.al_init(ctx.JavaVM(), ctx.AndroidContext())
+	switch C.al_init(ctx.JavaVM(), ctx.AndroidContext(), &alHandle) {
+	case C.AL_INIT_RESULT_OK:
+		// No-op.
+	case C.AL_INIT_RESULT_CANNOT_ATTACH_JVM:
+		log.Fatal("al: cannot attach JVM")
+	case C.AL_INIT_RESULT_BAD_JNI_VERSION:
+		log.Fatal("al: bad JNI version")
+	case C.AL_INIT_RESULT_CANNOT_LOAD_SO:
+		log.Fatal("al: cannot load libopenal.so")
+	default:
+		log.Fatal("al: cannot initialize OpenAL library")
+	}
+
 	alEnableFunc = C.LPALENABLE(fn("alEnable"))
 	alDisableFunc = C.LPALDISABLE(fn("alDisable"))
 	alIsEnabledFunc = C.LPALISENABLED(fn("alIsEnabled"))
@@ -300,7 +310,7 @@ func fn(fname string) unsafe.Pointer {
 
 	p := C.dlsym(alHandle, name)
 	if uintptr(p) == 0 {
-		log.Fatalf("al: couldn't dlsym %q (alHandle=%p)", fname, alHandle)
+		log.Fatalf("al: couldn't dlsym %q", fname)
 	}
 	return p
 }
