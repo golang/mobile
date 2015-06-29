@@ -22,9 +22,8 @@ the app package initialization.
 package app
 
 /*
-#cgo LDFLAGS: -llog -landroid
+#cgo LDFLAGS: -landroid
 
-#include <android/log.h>
 #include <android/configuration.h>
 #include <android/native_activity.h>
 #include <time.h>
@@ -79,7 +78,6 @@ func callMain(mainPC uintptr) {
 	time.Local = time.FixedZone(tz, tzOffset)
 
 	go callfn.CallFn(mainPC)
-	log.Print("app.Run called")
 }
 
 //export onCreate
@@ -212,12 +210,6 @@ var (
 func main(f func(App)) {
 	// Preserve this OS thread for the GL context created in windowDraw.
 	runtime.LockOSThread()
-
-	ctag := C.CString("Go")
-	cstr := C.CString("app.Run")
-	C.__android_log_write(C.ANDROID_LOG_INFO, ctag, cstr)
-	C.free(unsafe.Pointer(ctag))
-	C.free(unsafe.Pointer(cstr))
 
 	donec := make(chan struct{})
 	go func() {
