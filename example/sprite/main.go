@@ -36,6 +36,7 @@ import (
 
 	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/app/debug"
+	"golang.org/x/mobile/asset"
 	"golang.org/x/mobile/event"
 	"golang.org/x/mobile/exp/sprite"
 	"golang.org/x/mobile/exp/sprite/clock"
@@ -131,7 +132,7 @@ const (
 )
 
 func loadTextures() []sprite.SubTex {
-	a, err := app.Open("waza-gophers.jpeg")
+	a, err := asset.Open("waza-gophers.jpeg")
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -25,7 +25,6 @@ package app
 #cgo LDFLAGS: -llog -landroid
 
 #include <android/log.h>
-#include <android/asset_manager.h>
 #include <android/configuration.h>
 #include <android/native_activity.h>
 #include <time.h>
@@ -46,16 +45,9 @@ JavaVM* current_vm;
 jobject current_ctx;
 
 jclass app_find_class(JNIEnv* env, const char* name);
-
-// asset_manager is the asset manager of the app.
-// For all-Go app, this is initialized in onCreate.
-// For go library app, this is set from the context passed to Go.run.
-AAssetManager* asset_manager;
 */
 import "C"
 import (
-	"fmt"
-	"io"
 	"log"
 	"os"
 	"runtime"
@@ -92,8 +84,6 @@ func callMain(mainPC uintptr) {
 
 //export onCreate
 func onCreate(activity *C.ANativeActivity) {
-	C.asset_manager = activity.assetManager
-
 	config := C.AConfiguration_new()
 	C.AConfiguration_fromAssetManager(config, activity.assetManager)
 	density := C.AConfiguration_getDensity(config)
@@ -218,57 +208,6 @@ var (
 	windowCreated      = make(chan *C.ANativeWindow)
 	windowRedrawNeeded = make(chan *C.ANativeWindow)
 )
-
-func openAsset(name string) (ReadSeekCloser, error) {
-	cname := C.CString(name)
-	defer C.free(unsafe.Pointer(cname))
-	a := &asset{
-		ptr:  C.AAssetManager_open(C.asset_manager, cname, C.AASSET_MODE_UNKNOWN),
-		name: name,
-	}
-	if a.ptr == nil {
-		return nil, a.errorf("open", "bad asset")
-	}
-	return a, nil
-}
-
-type asset struct {
-	ptr  *C.AAsset
-	name string
-}
-
-func (a *asset) errorf(op string, format string, v ...interface{}) error {
-	return &os.PathError{
-		Op:   op,
-		Path: a.name,
-		Err:  fmt.Errorf(format, v...),
-	}
-}
-
-func (a *asset) Read(p []byte) (n int, err error) {
-	n = int(C.AAsset_read(a.ptr, unsafe.Pointer(&p[0]), C.size_t(len(p))))
-	if n == 0 && len(p) > 0 {
-		return 0, io.EOF
-	}
-	if n < 0 {
-		return 0, a.errorf("read", "negative bytes: %d", n)
-	}
-	return n, nil
-}
-
-func (a *asset) Seek(offset int64, whence int) (int64, error) {
-	// TODO(crawshaw): use AAsset_seek64 if it is available.
-	off := C.AAsset_seek(a.ptr, C.off_t(offset), C.int(whence))
-	if off == -1 {
-		return 0, a.errorf("seek", "bad result for offset=%d, whence=%d", offset, whence)
-	}
-	return int64(off), nil
-}
-
-func (a *asset) Close() error {
-	C.AAsset_close(a.ptr)
-	return nil
-}
 
 func main(f func(App)) {
 	// Preserve this OS thread for the GL context created in windowDraw.

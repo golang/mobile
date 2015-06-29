@@ -39,6 +39,7 @@ import (
 
 	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/app/debug"
+	"golang.org/x/mobile/asset"
 	"golang.org/x/mobile/event"
 	"golang.org/x/mobile/exp/audio"
 	"golang.org/x/mobile/exp/sprite"
@@ -71,7 +72,7 @@ func main() {
 }
 
 func start() {
-	rc, err := app.Open("boing.wav")
+	rc, err := asset.Open("boing.wav")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -152,7 +153,7 @@ func boing() {
 }
 
 func loadGopher() sprite.SubTex {
-	a, err := app.Open("gopher.jpeg")
+	a, err := asset.Open("gopher.jpeg")
 	if err != nil {
 		log.Fatal(err)
 	}
