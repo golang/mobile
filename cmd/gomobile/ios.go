@@ -130,37 +130,45 @@ func goIOSBuild(src string) error {
 }
 
 func iosCopyAssets(xcodeProjDir string) error {
-	assetsDir := filepath.Join(pkg.Dir, "assets")
-	assetsDirExists := true
-	fi, err := os.Stat(assetsDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			assetsDirExists = false
-		} else {
+	dstAssets := xcodeProjDir + "/main/assets"
+	if buildX {
+		printcmd("mkdir -p %s", dstAssets)
+	}
+	if !buildN {
+		if err := os.MkdirAll(dstAssets, 0755); err != nil {
 			return err
 		}
-	} else {
-		assetsDirExists = fi.IsDir()
 	}
-	if !assetsDirExists {
+
+	srcAssets := filepath.Join(pkg.Dir, "assets")
+	fi, err := os.Stat(srcAssets)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// skip walking through the directory to deep copy.
+			return nil
+		}
+		return err
+	}
+	if !fi.IsDir() {
+		// skip walking through to deep copy.
 		return nil
 	}
 
 	if buildX {
-		printcmd("cp -R %s %s", filepath.Join(pkg.Dir, "assets"), xcodeProjDir+"/main/assets")
+		printcmd("cp -R %s %s", filepath.Join(pkg.Dir, "assets"), dstAssets)
 	}
 	if buildN {
 		return nil
 	}
 
-	return filepath.Walk(assetsDir, func(path string, info os.FileInfo, err error) error {
+	return filepath.Walk(srcAssets, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 		if info.IsDir() {
 			return nil
 		}
-		dst := xcodeProjDir + "/main/assets/" + path[len(assetsDir)+1:]
+		dst := dstAssets + "/" + path[len(srcAssets)+1:]
 		if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
 			return err
 		}
@@ -176,7 +184,6 @@ func iosCopyAssets(xcodeProjDir string) error {
 		_, err = io.Copy(w, f)
 		return err
 	})
-	return nil
 }
 
 func goBuild(src, o string, env []string) error {
