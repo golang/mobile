@@ -48,6 +48,6 @@ func TestBuild(t *testing.T) {
 
 var buildTmpl = template.Must(template.New("output").Parse(`WORK=$WORK
 GOMOBILE={{.GOPATH}}/pkg/gomobile
-GOOS=android GOARCH=arm GOARM=7 CGO_ENABLED=1 CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-gcc{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-g++{{.EXE}} GOGCCFLAGS="-fPIC -marm -pthread -fmessage-length=0" GOROOT=$GOROOT GOPATH=$GOPATH GOMOBILEPATH=$GOMOBILE/android-{{.NDK}}/arm/bin go build -tags="" -toolexec=$GOMOBILE/android-{{.NDK}}/arm/bin/toolexec -x -buildmode=c-shared -o $WORK/libbasic.so golang.org/x/mobile/example/basic
+GOOS=android GOARCH=arm GOARM=7 CGO_ENABLED=1 CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-gcc{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-g++{{.EXE}} GOGCCFLAGS="-fPIC -marm -pthread -fmessage-length=0" GOROOT=$GOROOT GOPATH=$GOPATH go build -tags="" -x -buildmode=c-shared -o $WORK/libbasic.so golang.org/x/mobile/example/basic
 rm -r -f "$WORK"
 `))
