@@ -216,8 +216,8 @@ func runBuild(cmd *command) (err error) {
 		}
 	}
 
-	importsAudio := pkgImportsAudio(pkg)
-	if importsAudio {
+	importsAL := pkgImportsAL(pkg)
+	if importsAL {
 		alDir := filepath.Join(ndkccpath, "openal/lib")
 		filepath.Walk(alDir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -424,28 +424,28 @@ func goAndroidBuild(src, libPath string) error {
 	return nil
 }
 
-var importsAudioPkgs = make(map[string]struct{})
+var importsALPkg = make(map[string]struct{})
 
-// pkgImportsAudio returns true if the given package or one of its
-// dependencies imports the mobile/audio package.
-func pkgImportsAudio(pkg *build.Package) bool {
+// pkgImportsAL returns true if the given package or one of its
+// dependencies imports the x/mobile/exp/audio/al package.
+func pkgImportsAL(pkg *build.Package) bool {
 	for _, path := range pkg.Imports {
 		if path == "C" {
 			continue
 		}
-		if _, ok := importsAudioPkgs[path]; ok {
+		if _, ok := importsALPkg[path]; ok {
 			continue
 		}
-		importsAudioPkgs[path] = struct{}{}
+		importsALPkg[path] = struct{}{}
 		if strings.HasPrefix(path, "golang.org/x/mobile/exp/audio/al") {
 			return true
 		}
 		dPkg, err := ctx.Import(path, "", build.ImportComment)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "error while looking up for the audio package: %v", err)
+			fmt.Fprintf(os.Stderr, "error reading OpenAL library: %v", err)
 			os.Exit(2)
 		}
-		if pkgImportsAudio(dPkg) {
+		if pkgImportsAL(dPkg) {
 			return true
 		}
 	}
