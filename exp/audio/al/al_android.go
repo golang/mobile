@@ -292,8 +292,6 @@ func initAL() {
 	alcCreateContextFunc = C.LPALCCREATECONTEXT(fn("alcCreateContext"))
 	alcMakeContextCurrentFunc = C.LPALCMAKECONTEXTCURRENT(fn("alcMakeContextCurrent"))
 	alcDestroyContextFunc = C.LPALCDESTROYCONTEXT(fn("alcDestroyContext"))
-
-	log.Printf("alcOpenDeviceFunc=%v", alcOpenDeviceFunc)
 }
 
 func fn(fname string) unsafe.Pointer {
