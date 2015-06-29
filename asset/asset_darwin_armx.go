@@ -1,8 +1,9 @@
-// Copyright 2014 The Go Authors. All rights reserved.
+// Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build linux,!android darwin
+// +build darwin
+// +build arm arm64
 
 package app
 
@@ -11,9 +12,7 @@ import (
 	"path/filepath"
 )
 
-// Logic shared by desktop debugging implementations.
-
-func openAsset(name string) (ReadSeekCloser, error) {
+func openAsset(name string) (File, error) {
 	if !filepath.IsAbs(name) {
 		name = filepath.Join("assets", name)
 	}
@@ -22,4 +21,5 @@ func openAsset(name string) (ReadSeekCloser, error) {
 		return nil, err
 	}
 	return f, nil
+
 }

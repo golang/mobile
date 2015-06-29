@@ -6,11 +6,7 @@
 
 package app
 
-import (
-	"io"
-
-	"golang.org/x/mobile/event"
-)
+import "golang.org/x/mobile/event"
 
 // Main is called by the main.main function to run the mobile application.
 //
@@ -229,26 +225,4 @@ type Callbacks struct {
 
 	// Config is called by the app when configuration has changed.
 	Config func(new, old event.Config)
-}
-
-// Open opens a named asset.
-//
-// On Android, assets are accessed via android.content.res.AssetManager.
-// These files are stored in the assets/ directory of the app. Any raw asset
-// can be accessed by its direct relative name. For example assets/img.png
-// can be opened with Open("img.png").
-//
-// On iOS an asset is a resource stored in the application bundle.
-// Resources can be loaded using the same relative paths.
-//
-// For consistency when debugging on a desktop, assets are read from a
-// directoy named assets under the current working directory.
-func Open(name string) (ReadSeekCloser, error) {
-	return openAsset(name)
-}
-
-// ReadSeekCloser is an io.ReadSeeker and io.Closer.
-type ReadSeekCloser interface {
-	io.ReadSeeker
-	io.Closer
 }
