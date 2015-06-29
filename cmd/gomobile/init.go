@@ -109,12 +109,6 @@ func runInit(cmd *command) error {
 	}
 	defer removeAll(tmpdir)
 
-	goroot := goEnv("GOROOT")
-	tmpGoroot := filepath.Join(tmpdir, "go")
-	if err := copyGoroot(tmpGoroot, goroot); err != nil {
-		return err
-	}
-
 	if err := fetchNDK(); err != nil {
 		return err
 	}
@@ -122,98 +116,15 @@ func runInit(cmd *command) error {
 		return err
 	}
 
-	dst := filepath.Join(ndkccpath, "arm")
-
-	ndkccbin := filepath.Join(dst, "bin")
-	envpath := os.Getenv("PATH")
-	if buildN {
-		envpath = "$PATH"
-	}
-	makeScript := filepath.Join(tmpGoroot, "src/make")
-	if goos == "windows" {
-		makeScript += ".bat"
-	} else {
-		makeScript += ".bash"
-	}
-
-	bin := func(name string) string {
-		if goos == "windows" {
-			return name + ".exe"
-		}
-		return name
-	}
-
-	make := exec.Command(makeScript, "--no-clean")
-	make.Dir = filepath.Join(tmpGoroot, "src")
-	make.Env = []string{
-		`PATH=` + envpath,
-		`GOOS=android`,
-		`GOROOT=` + tmpGoroot, // set to override any bad os.Environ
-		`GOARCH=arm`,
-		`GOARM=7`,
-		`CGO_ENABLED=1`,
-		`CC_FOR_TARGET=` + filepath.Join(ndkccbin, bin("arm-linux-androideabi-gcc")),
-		`CXX_FOR_TARGET=` + filepath.Join(ndkccbin, bin("arm-linux-androideabi-g++")),
-	}
-	make.Env = appendCommonEnv(make.Env)
-	if v := goEnv("GOROOT_BOOTSTRAP"); v != "" {
-		make.Env = append(make.Env, `GOROOT_BOOTSTRAP=`+v)
-	}
-	if buildV {
-		fmt.Fprintf(os.Stderr, "building android/arm cross compiler\n")
-		make.Stdout = os.Stdout
-		make.Stderr = os.Stderr
-	}
-	if buildX {
-		printcmd("%s", strings.Join(make.Env, " ")+" "+strings.Join(make.Args, " "))
-	}
-	if !buildN {
-		if err := make.Run(); err != nil {
-			return err
-		}
-	}
-	if err := checkVersionMatch(tmpGoroot, version); err != nil {
+	// Install standard libraries for cross compilers.
+	if err := installAndroidArm(); err != nil {
 		return err
 	}
-
-	// Move the Go cross compiler toolchain into GOPATH.
-	gotoolsrc := filepath.Join(tmpGoroot, "pkg/tool", goos+"_"+goarch)
-	tools := []string{"compile", "asm", "cgo", "nm", "old5a", "pack", "link"}
-	for i, name := range tools {
-		tools[i] = bin(name)
-	}
-	if err := move(ndkccbin, gotoolsrc, tools...); err != nil {
-		return err
-	}
-
-	// Build toolexec command.
-	toolexecSrc := filepath.Join(tmpdir, "toolexec.go")
-	if !buildN {
-		if err := ioutil.WriteFile(toolexecSrc, []byte(toolexec), 0644); err != nil {
+	if goos == "darwin" {
+		if err := installDarwin("arm"); err != nil {
 			return err
 		}
-	}
-	make = exec.Command("go", "build", "-o", filepath.Join(ndkccbin, bin("toolexec")), toolexecSrc)
-	if buildV {
-		fmt.Fprintf(os.Stderr, "building gomobile toolexec\n")
-		make.Stdout = os.Stdout
-		make.Stderr = os.Stderr
-	}
-	if buildX {
-		printcmd("%s", strings.Join(make.Args, " "))
-	}
-	if !buildN {
-		if err := make.Run(); err != nil {
-			return err
-		}
-	}
-
-	if err := installCC("android", "arm"); err != nil {
-		return err
-	}
-
-	if runtime.GOOS == "darwin" {
-		if err := buildDarwinARMCC(); err != nil {
+		if err := installDarwin("arm64"); err != nil {
 			return err
 		}
 	}
@@ -229,70 +140,81 @@ func runInit(cmd *command) error {
 	return nil
 }
 
-func buildDarwinARMCC() error {
+func installAndroidArm() error {
+	removeAll(filepath.Join(goEnv("GOROOT"), "pkg", "android_arm"))
+	ndkccbin := filepath.Join(ndkccpath, "arm", "bin")
 	envpath := os.Getenv("PATH")
 	if buildN {
 		envpath = "$PATH"
 	}
-	tmpGoroot := filepath.Join(tmpdir, "go")
 
-	makeCC := func(arch string) error {
-		m := exec.Command(filepath.Join(tmpGoroot, "src/make.bash"), "--no-clean")
-		m.Dir = filepath.Join(tmpGoroot, "src")
-		m.Env = []string{
-			`PATH=` + envpath,
-			`GOOS=darwin`,
-			`GOROOT=` + tmpGoroot, // set to override any bad os.Environ
-			`GOARCH=` + arch,
-			`CGO_ENABLED=1`,
-			`CC_FOR_TARGET=` + filepath.Join(tmpGoroot, "misc/ios/clangwrap.sh"),
-			`CXX_FOR_TARGET=` + filepath.Join(tmpGoroot, "misc/ios/clangwrap.sh"),
+	bin := func(name string) string {
+		if goos == "windows" {
+			return name + ".exe"
 		}
-		if arch == "arm" {
-			m.Env = append(m.Env, "GOARM=7")
-		}
-		m.Env = appendCommonEnv(m.Env)
-		if v := goEnv("GOROOT_BOOTSTRAP"); v != "" {
-			m.Env = append(m.Env, `GOROOT_BOOTSTRAP=`+v)
-		}
-		if buildV {
-			fmt.Fprintf(os.Stderr, "building darwin/arm cross compiler\n")
-			m.Stdout = os.Stdout
-			m.Stderr = os.Stderr
-		}
-		if buildX {
-			printcmd("%s", strings.Join(m.Env, " ")+" "+strings.Join(m.Args, " "))
-		}
-		if !buildN {
-			if err := m.Run(); err != nil {
-				return err
-			}
-		}
-		return nil
+		return name
 	}
-	if err := makeCC("arm"); err != nil {
-		return nil
+
+	cmd := exec.Command("go", "install", "std")
+	cmd.Env = []string{
+		`PATH=` + envpath,
+		`GOOS=android`,
+		`GOARCH=arm`,
+		`GOARM=7`,
+		`CGO_ENABLED=1`,
+		`CC=` + filepath.Join(ndkccbin, bin("arm-linux-androideabi-gcc")),
+		`CXX=` + filepath.Join(ndkccbin, bin("arm-linux-androideabi-g++")),
 	}
-	if err := makeCC("arm64"); err != nil {
-		return nil
+	cmd.Env = appendCommonEnv(cmd.Env)
+	if buildV {
+		fmt.Fprintf(os.Stderr, "Building android/arm standard library.\n")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
 	}
-	if err := installCC("darwin", "arm"); err != nil {
-		return err
+	if buildX {
+		printcmd("%s", strings.Join(cmd.Env, " ")+" "+strings.Join(cmd.Args, " "))
 	}
-	return installCC("darwin", "arm64")
+	if !buildN {
+		if err := cmd.Run(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-func installCC(goos, goarch string) error {
-	goroot := goEnv("GOROOT")
-	tmpGoroot := filepath.Join(tmpdir, "go")
-	// Move pre-compiled stdlib for GOROOT. This is
-	// the only time we modify the user's GOROOT.
-	name := goos + "_" + goarch
-	if err := removeAll(filepath.Join(goroot, "pkg", name)); err != nil {
-		return fmt.Errorf("GOROOT is not writable: %v", err)
+func installDarwin(arch string) error {
+	removeAll(filepath.Join(goEnv("GOROOT"), "pkg", "darwin_"+arch))
+	envpath := os.Getenv("PATH")
+	if buildN {
+		envpath = "$PATH"
 	}
-	if err := move(filepath.Join(goroot, "pkg"), filepath.Join(tmpGoroot, "pkg"), name); err != nil {
-		return fmt.Errorf("GOROOT is not writable: %v", err)
+
+	goroot := goEnv("GOROOT")
+	cmd := exec.Command("go", "install", "std")
+	cmd.Env = []string{
+		`PATH=` + envpath,
+		`GOOS=darwin`,
+		`GOARCH=` + arch,
+		`CGO_ENABLED=1`,
+		`CC=` + filepath.Join(goroot, "misc/ios/clangwrap.sh"),
+		`CXX=` + filepath.Join(goroot, "misc/ios/clangwrap.sh"),
+	}
+	if arch == "arm" {
+		cmd.Env = append(cmd.Env, "GOARM=7")
+	}
+	cmd.Env = appendCommonEnv(cmd.Env)
+	if buildV {
+		fmt.Fprintf(os.Stderr, "Building darwin/%s standard library.\n", arch)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+	}
+	if buildX {
+		printcmd("%s", strings.Join(cmd.Env, " ")+" "+strings.Join(cmd.Args, " "))
+	}
+	if !buildN {
+		if err := cmd.Run(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -310,30 +232,6 @@ func appendCommonEnv(env []string) []string {
 	}
 	return env
 }
-
-// toolexec is the source of a small program designed to be passed to
-// the -toolexec flag of go build.
-const toolexec = `package main
-
-import (
-	"fmt"
-	"os"
-	"os/exec"
-	"path/filepath"
-)
-
-func main() {
-	args := append([]string{}, os.Args[1:]...)
-	args[0] = filepath.Join(os.Getenv("GOMOBILEPATH"), filepath.Base(args[0]))
-	cmd := exec.Command(args[0], args[1:]...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "%v\n", err)
-		os.Exit(1)
-	}
-}
-`
 
 func removeGomobilepkg() {
 	dir, err := os.Open(gomobilepath)
@@ -415,6 +313,8 @@ func goVersion() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("bad Go tool: %v (%s)", err, buildHelp)
 	}
+	// TODO(crawshaw): this is a crude test for Go 1.5. After release,
+	// remove this and check it is not an old release version.
 	if !bytes.Contains(buildHelp, []byte("-toolexec")) {
 		return nil, fmt.Errorf("installed Go tool does not support -toolexec")
 	}
@@ -641,7 +541,7 @@ func fetch(url string) (dst string, err error) {
 		return "", err
 	}
 	if buildV {
-		fmt.Fprintf(os.Stderr, "fetching %s\n", url)
+		fmt.Fprintf(os.Stderr, "Downloading %s.\n", url)
 	}
 	name := path.Base(url)
 	dst = filepath.Join(gomobilepath, "dl", name)

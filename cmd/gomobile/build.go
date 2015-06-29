@@ -383,7 +383,7 @@ func goAndroidBuild(src, libPath string) error {
 		`go`,
 		`build`,
 		`-tags=`+strconv.Quote(strings.Join(ctx.BuildTags, ",")),
-		`-toolexec=`+filepath.Join(ndkccbin, "toolexec"))
+	)
 	if buildV {
 		gocmd.Args = append(gocmd.Args, "-v")
 	}
@@ -415,7 +415,6 @@ func goAndroidBuild(src, libPath string) error {
 		`GOGCCFLAGS="-fPIC -marm -pthread -fmessage-length=0"`,
 		`GOROOT=` + goEnv("GOROOT"),
 		`GOPATH=` + gopath,
-		`GOMOBILEPATH=` + ndkccbin, // for toolexec
 	}
 	if buildX {
 		printcmd("%s", strings.Join(gocmd.Env, " ")+" "+strings.Join(gocmd.Args, " "))
