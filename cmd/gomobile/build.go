@@ -17,6 +17,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -84,7 +85,11 @@ func runBuild(cmd *command) (err error) {
 	case "android":
 		// implementation is below
 	case "ios":
-		return fmt.Errorf(`-target=ios not yet supported`)
+		if runtime.GOOS == "darwin" {
+			// TODO(jbd): Handle non-main packages.
+			return goIOSBuild(pkg.ImportPath)
+		}
+		return fmt.Errorf("-target=ios requires darwin host")
 	default:
 		return fmt.Errorf(`unknown -target, %q.`, buildTarget)
 	}
