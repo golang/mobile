@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // Package debug provides GL-based debugging tools for apps.
-package debug // import "golang.org/x/mobile/app/debug"
+package debug // import "golang.org/x/mobile/exp/app/debug"
 
 import (
 	"image"
