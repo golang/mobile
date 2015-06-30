@@ -14,17 +14,12 @@ package app
 #cgo CFLAGS: -x objective-c
 #cgo LDFLAGS: -framework Cocoa -framework OpenGL -framework QuartzCore
 #import <Cocoa/Cocoa.h>
-#import <OpenGL/gl.h>
 #include <pthread.h>
 
-void glGenVertexArrays(GLsizei n, GLuint* array);
-void glBindVertexArray(GLuint array);
-
 void runApp(void);
+void stopApp(void);
 void makeCurrentContext(GLintptr);
-double backingScaleFactor();
 uint64 threadID();
-
 */
 import "C"
 import (
@@ -41,8 +36,8 @@ var initThreadID uint64
 
 func init() {
 	// Lock the goroutine responsible for initialization to an OS thread.
-	// This means the goroutine running main (and calling the run function
-	// below) is locked to the OS thread that started the program. This is
+	// This means the goroutine running main (and calling runApp below)
+	// is locked to the OS thread that started the program. This is
 	// necessary for the correct delivery of Cocoa events to the process.
 	//
 	// A discussion on this topic:
@@ -58,10 +53,57 @@ func main(f func(App)) {
 
 	go func() {
 		f(app{})
+		C.stopApp()
 		// TODO(crawshaw): trigger runApp to return
 	}()
 
 	C.runApp()
+}
+
+// loop is the primary drawing loop.
+//
+// After Cocoa has captured the initial OS thread for processing Cocoa
+// events in runApp, it starts loop on another goroutine. It is locked
+// to an OS thread for its OpenGL context.
+//
+// Two Cocoa threads deliver draw signals to loop. The primary source of
+// draw events is the CVDisplayLink timer, which is tied to the display
+// vsync. Secondary draw events come from [NSView drawRect:] when the
+// window is resized.
+func loop(ctx C.GLintptr) {
+	runtime.LockOSThread()
+	C.makeCurrentContext(ctx)
+
+	for range draw {
+		eventsIn <- event.Draw{}
+	loop1:
+		for {
+			select {
+			case <-gl.WorkAvailable:
+				gl.DoWork()
+			case <-endDraw:
+				C.CGLFlushDrawable(C.CGLGetCurrentContext())
+				break loop1
+			}
+		}
+		drawDone <- struct{}{}
+	}
+}
+
+var (
+	draw     = make(chan struct{})
+	drawDone = make(chan struct{})
+)
+
+//export drawgl
+func drawgl() {
+	draw <- struct{}{}
+	<-drawDone
+}
+
+//export startloop
+func startloop(ctx C.GLintptr) {
+	go loop(ctx)
 }
 
 var windowHeight geom.Pt
@@ -102,32 +144,14 @@ func eventMouseDragged(x, y float32) { sendTouch(event.ChangeNone, x, y) }
 //export eventMouseEnd
 func eventMouseEnd(x, y float32) { sendTouch(event.ChangeOff, x, y) }
 
-var startedgl = false
+//export lifecycleDead
+func lifecycleDead() { sendLifecycle(event.LifecycleStageDead) }
 
-//export drawgl
-func drawgl(ctx C.GLintptr) {
-	if !startedgl {
-		startedgl = true
-		C.makeCurrentContext(ctx)
+//export lifecycleAlive
+func lifecycleAlive() { sendLifecycle(event.LifecycleStageAlive) }
 
-		// Using attribute arrays in OpenGL 3.3 requires the use of a VBA.
-		// But VBAs don't exist in ES 2. So we bind a default one.
-		var id C.GLuint
-		C.glGenVertexArrays(1, &id)
-		C.glBindVertexArray(id)
+//export lifecycleVisible
+func lifecycleVisible() { sendLifecycle(event.LifecycleStageVisible) }
 
-		sendLifecycle(event.LifecycleStageFocused)
-	}
-
-	eventsIn <- event.Draw{}
-
-	for {
-		select {
-		case <-gl.WorkAvailable:
-			gl.DoWork()
-		case <-endDraw:
-			C.CGLFlushDrawable(C.CGLGetCurrentContext())
-			return
-		}
-	}
-}
+//export lifecycleFocused
+func lifecycleFocused() { sendLifecycle(event.LifecycleStageFocused) }

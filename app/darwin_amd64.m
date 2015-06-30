@@ -10,15 +10,13 @@
 
 #import <Cocoa/Cocoa.h>
 #import <Foundation/Foundation.h>
-#import <OpenGL/gl.h>
+#import <OpenGL/gl3.h>
 #import <QuartzCore/CVReturn.h>
 #import <QuartzCore/CVBase.h>
 
 static CVReturn displayLinkDraw(CVDisplayLinkRef displayLink, const CVTimeStamp* now, const CVTimeStamp* outputTime, CVOptionFlags flagsIn, CVOptionFlags* flagsOut, void* displayLinkContext)
 {
-	NSOpenGLView* view = displayLinkContext;
-	NSOpenGLContext *currentContext = [view openGLContext];
-	drawgl((GLintptr)currentContext);
+	drawgl();
 	return kCVReturnSuccess;
 }
 
@@ -36,7 +34,7 @@ uint64 threadID() {
 }
 
 
-@interface MobileGLView : NSOpenGLView
+@interface MobileGLView : NSOpenGLView<NSApplicationDelegate, NSWindowDelegate>
 {
 	CVDisplayLinkRef displayLink;
 }
@@ -54,10 +52,19 @@ uint64 threadID() {
 	CGLContextObj cglContext = [[self openGLContext] CGLContextObj];
 	CGLPixelFormatObj cglPixelFormat = [[self pixelFormat] CGLPixelFormatObj];
 	CVDisplayLinkSetCurrentCGDisplayFromOpenGLContext(displayLink, cglContext, cglPixelFormat);
-	CVDisplayLinkStart(displayLink);
+
+	// Using attribute arrays in OpenGL 3.3 requires the use of a VBA.
+	// But VBAs don't exist in ES 2. So we bind a default one.
+	GLuint vba;
+	glGenVertexArrays(1, &vba);
+	glBindVertexArray(vba);
+
+	startloop((GLintptr)[self openGLContext]);
 }
 
 - (void)reshape {
+	[super reshape];
+
 	// Calculate screen PPI.
 	//
 	// Note that the backingScaleFactor converts from logical
@@ -88,6 +95,14 @@ uint64 threadID() {
 	setGeom(pixelsPerPt, w, h);
 }
 
+- (void)drawRect:(NSRect)theRect {
+	// Called during resize. Do an extra draw if we are visible.
+	// This gets rid of flicker when resizing.
+	if (CVDisplayLinkIsRunning(displayLink)) {
+		drawgl();
+	}
+}
+
 - (void)mouseDown:(NSEvent *)theEvent {
 	double scale = [[NSScreen mainScreen] backingScaleFactor];
 	NSPoint p = [theEvent locationInWindow];
@@ -105,10 +120,46 @@ uint64 threadID() {
 	NSPoint p = [theEvent locationInWindow];
 	eventMouseDragged(p.x * scale, p.y * scale);
 }
+
+- (void)windowDidBecomeKey:(NSNotification *)notification {
+	lifecycleFocused();
+}
+
+- (void)windowDidResignKey:(NSNotification *)notification {
+	if (![NSApp isHidden]) {
+		lifecycleVisible();
+	}
+}
+
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
+	lifecycleAlive();
+	[[NSRunningApplication currentApplication] activateWithOptions:(NSApplicationActivateAllWindows | NSApplicationActivateIgnoringOtherApps)];
+	[self.window makeKeyAndOrderFront:self];
+	lifecycleVisible();
+	CVDisplayLinkStart(displayLink);
+}
+
+- (void)applicationWillTerminate:(NSNotification *)aNotification {
+	lifecycleDead();
+}
+
+- (void)applicationDidHide:(NSNotification *)aNotification {
+	CVDisplayLinkStop(displayLink);
+	lifecycleAlive();
+}
+
+- (void)applicationWillUnhide:(NSNotification *)notification {
+	lifecycleVisible();
+	CVDisplayLinkStart(displayLink);
+}
+
+- (void)windowWillClose:(NSNotification *)notification {
+	CVDisplayLinkStop(displayLink);
+	lifecycleAlive();
+}
 @end
 
-void
-runApp(void) {
+void runApp(void) {
 	[NSAutoreleasePool new];
 	[NSApplication sharedApplication];
 	[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
@@ -120,6 +171,12 @@ runApp(void) {
 
 	id menu = [[NSMenu new] autorelease];
 	id name = [[NSProcessInfo processInfo] processName];
+
+	id hideMenuItem = [[[NSMenuItem alloc] initWithTitle:@"Hide"
+		action:@selector(hide:) keyEquivalent:@"h"]
+		autorelease];
+	[menu addItem:hideMenuItem];
+
 	id quitMenuItem = [[[NSMenuItem alloc] initWithTitle:@"Quit"
 		action:@selector(terminate:) keyEquivalent:@"q"]
 		autorelease];
@@ -128,15 +185,16 @@ runApp(void) {
 
 	NSRect rect = NSMakeRect(0, 0, 400, 400);
 
-	id window = [[[NSWindow alloc] initWithContentRect:rect
+	NSWindow* window = [[[NSWindow alloc] initWithContentRect:rect
 			styleMask:NSTitledWindowMask
 			backing:NSBackingStoreBuffered
 			defer:NO]
 		autorelease];
-	[window setStyleMask:[window styleMask] | NSResizableWindowMask];
+	window.styleMask |= NSResizableWindowMask;
+	window.styleMask |= NSMiniaturizableWindowMask ;
+	window.styleMask |= NSClosableWindowMask;
+	window.title = name;
 	[window cascadeTopLeftFromPoint:NSMakePoint(20,20)];
-	[window makeKeyAndOrderFront:nil];
-	[window setTitle:name];
 
 	NSOpenGLPixelFormatAttribute attr[] = {
 		NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core,
@@ -145,12 +203,17 @@ runApp(void) {
 		NSOpenGLPFADepthSize,     16,
 		NSOpenGLPFAAccelerated,
 		NSOpenGLPFADoubleBuffer,
+		NSOpenGLPFAAllowOfflineRenderers,
 		0
 	};
 	id pixFormat = [[NSOpenGLPixelFormat alloc] initWithAttributes:attr];
-	id view = [[MobileGLView alloc] initWithFrame:rect pixelFormat:pixFormat];
+	MobileGLView* view = [[MobileGLView alloc] initWithFrame:rect pixelFormat:pixFormat];
 	[window setContentView:view];
-
-	[NSApp activateIgnoringOtherApps:YES];
+	[window setDelegate:view];
+	[NSApp setDelegate:view];
 	[NSApp run];
+}
+
+void stopApp(void) {
+	[NSApp terminate:nil];
 }
