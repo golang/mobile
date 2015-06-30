@@ -5,7 +5,7 @@
 // +build darwin
 // +build arm arm64
 
-package app
+package asset
 
 import (
 	"os"
