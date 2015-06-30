@@ -117,7 +117,7 @@ mv $WORK/openal/include/AL $GOMOBILE/android-{{.NDK}}/arm/sysroot/usr/include/AL
 mkdir -p $GOMOBILE/android-{{.NDK}}/openal
 mv $WORK/openal/lib $GOMOBILE/android-{{.NDK}}/openal/lib
 rm -r -f "$GOROOT/pkg/android_arm"
-PATH=$PATH GOOS=android GOARCH=arm GOARM=7 CGO_ENABLED=1 CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-gcc{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-g++{{.EXE}} {{.BuildScript}}
+PATH=$PATH GOOS=android GOARCH=arm CGO_ENABLED=1 CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-gcc{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-g++{{.EXE}} GOARM=7 {{.BuildScript}}
 {{if eq .GOOS "darwin"}}rm -r -f "$GOROOT/pkg/darwin_arm"
 PATH=$PATH GOOS=darwin GOARCH=arm CGO_ENABLED=1 CC=$GOROOT/misc/ios/clangwrap.sh CXX=$GOROOT/misc/ios/clangwrap.sh GOARM=7 {{.BuildScript}}
 rm -r -f "$GOROOT/pkg/darwin_arm64"

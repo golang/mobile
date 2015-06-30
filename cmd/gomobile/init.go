@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 )
 
 // useStrippedNDK determines whether the init subcommand fetches the GCC
@@ -117,16 +118,12 @@ func runInit(cmd *command) error {
 	}
 
 	// Install standard libraries for cross compilers.
-	if err := installAndroidArm(); err != nil {
+	start := time.Now()
+	if err := installAndroid(); err != nil {
 		return err
 	}
-	if goos == "darwin" {
-		if err := installDarwin("arm"); err != nil {
-			return err
-		}
-		if err := installDarwin("arm64"); err != nil {
-			return err
-		}
+	if err := installDarwin(); err != nil {
+		return err
 	}
 
 	if buildX {
@@ -137,83 +134,81 @@ func runInit(cmd *command) error {
 			return err
 		}
 	}
-	return nil
-}
-
-func installAndroidArm() error {
-	removeAll(filepath.Join(goEnv("GOROOT"), "pkg", "android_arm"))
-	ndkccbin := filepath.Join(ndkccpath, "arm", "bin")
-	envpath := os.Getenv("PATH")
-	if buildN {
-		envpath = "$PATH"
-	}
-
-	bin := func(name string) string {
-		if goos == "windows" {
-			return name + ".exe"
-		}
-		return name
-	}
-
-	cmd := exec.Command("go", "install", "std")
-	cmd.Env = []string{
-		`PATH=` + envpath,
-		`GOOS=android`,
-		`GOARCH=arm`,
-		`GOARM=7`,
-		`CGO_ENABLED=1`,
-		`CC=` + filepath.Join(ndkccbin, bin("arm-linux-androideabi-gcc")),
-		`CXX=` + filepath.Join(ndkccbin, bin("arm-linux-androideabi-g++")),
-	}
-	cmd.Env = appendCommonEnv(cmd.Env)
 	if buildV {
-		fmt.Fprintf(os.Stderr, "Building android/arm standard library.\n")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-	}
-	if buildX {
-		printcmd("%s", strings.Join(cmd.Env, " ")+" "+strings.Join(cmd.Args, " "))
-	}
-	if !buildN {
-		if err := cmd.Run(); err != nil {
-			return err
-		}
+		took := time.Since(start) / time.Second * time.Second
+		fmt.Fprintf(os.Stderr, "\nDone, build took %s.\n", took)
 	}
 	return nil
 }
 
-func installDarwin(arch string) error {
-	removeAll(filepath.Join(goEnv("GOROOT"), "pkg", "darwin_"+arch))
+func installAndroid() error {
+	exe := ""
+	if goos == "windows" {
+		exe = ".exe"
+	}
+	ndkccbin := filepath.Join(ndkccpath, "arm", "bin")
+	androidEnv := []string{
+		`CC=` + filepath.Join(ndkccbin, "arm-linux-androideabi-gcc"+exe),
+		`CXX=` + filepath.Join(ndkccbin, "arm-linux-androideabi-g++"+exe),
+	}
+	return installStd("android", "arm", androidEnv)
+}
+
+func installDarwin() error {
+	if goos != "darwin" {
+		return nil // Only build iOS compilers on OS X.
+	}
+	cc := filepath.Join(goEnv("GOROOT"), "misc/ios/clangwrap.sh")
+	darwinEnv := []string{`CC=` + cc, `CXX=` + cc}
+	if err := installStd("darwin", "arm", darwinEnv); err != nil {
+		return err
+	}
+	return installStd("darwin", "arm64", darwinEnv)
+}
+
+func installStd(tOS, tArch string, env []string) error {
+	if buildV {
+		fmt.Fprintf(os.Stderr, "\n# Building standard library for %s/%s.\n", tOS, tArch)
+	}
+	removeAll(filepath.Join(goEnv("GOROOT"), "pkg", tOS+"_"+tArch))
 	envpath := os.Getenv("PATH")
 	if buildN {
 		envpath = "$PATH"
 	}
 
-	goroot := goEnv("GOROOT")
-	cmd := exec.Command("go", "install", "std")
+	cmd := exec.Command("go", "install")
+	if buildV {
+		cmd.Args = append(cmd.Args, "-v")
+	}
+	cmd.Args = append(cmd.Args, "std")
 	cmd.Env = []string{
 		`PATH=` + envpath,
-		`GOOS=darwin`,
-		`GOARCH=` + arch,
+		`GOOS=` + tOS,
+		`GOARCH=` + tArch,
 		`CGO_ENABLED=1`,
-		`CC=` + filepath.Join(goroot, "misc/ios/clangwrap.sh"),
-		`CXX=` + filepath.Join(goroot, "misc/ios/clangwrap.sh"),
 	}
-	if arch == "arm" {
+	cmd.Env = append(cmd.Env, env...)
+	if tArch == "arm" {
 		cmd.Env = append(cmd.Env, "GOARM=7")
 	}
 	cmd.Env = appendCommonEnv(cmd.Env)
-	if buildV {
-		fmt.Fprintf(os.Stderr, "Building darwin/%s standard library.\n", arch)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-	}
 	if buildX {
 		printcmd("%s", strings.Join(cmd.Env, " ")+" "+strings.Join(cmd.Args, " "))
 	}
+
+	buf := new(bytes.Buffer)
+	buf.WriteByte('\n')
+	if buildV {
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+	} else {
+		cmd.Stdout = buf
+		cmd.Stderr = buf
+	}
+
 	if !buildN {
 		if err := cmd.Run(); err != nil {
-			return err
+			return fmt.Errorf("go install std for %s/%s failed: %v%s", tOS, tArch, err, buf)
 		}
 	}
 	return nil
@@ -540,9 +535,6 @@ func fetch(url string) (dst string, err error) {
 	if err := mkdir(filepath.Join(gomobilepath, "dl")); err != nil {
 		return "", err
 	}
-	if buildV {
-		fmt.Fprintf(os.Stderr, "Downloading %s.\n", url)
-	}
 	name := path.Base(url)
 	dst = filepath.Join(gomobilepath, "dl", name)
 	if buildX {
@@ -553,6 +545,9 @@ func fetch(url string) (dst string, err error) {
 	}
 	if _, err = os.Stat(dst); err == nil {
 		return dst, nil
+	}
+	if buildV {
+		fmt.Fprintf(os.Stderr, "Downloading %s.\n", url)
 	}
 
 	f, err := ioutil.TempFile(tmpdir, "partial-"+name)
