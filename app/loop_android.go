@@ -171,24 +171,24 @@ func processEvent(e *C.AInputEvent) {
 	case C.AINPUT_EVENT_TYPE_KEY:
 		log.Printf("TODO input event: key")
 	case C.AINPUT_EVENT_TYPE_MOTION:
-		// At most one of the events in this batch is an up or down event; get its index and type.
+		// At most one of the events in this batch is an up or down event; get its index and change.
 		upDownIndex := C.size_t(C.AMotionEvent_getAction(e)&C.AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> C.AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT
-		upDownTyp := event.TouchMove
+		upDownChange := event.ChangeNone
 		switch C.AMotionEvent_getAction(e) & C.AMOTION_EVENT_ACTION_MASK {
 		case C.AMOTION_EVENT_ACTION_DOWN, C.AMOTION_EVENT_ACTION_POINTER_DOWN:
-			upDownTyp = event.TouchStart
+			upDownChange = event.ChangeOn
 		case C.AMOTION_EVENT_ACTION_UP, C.AMOTION_EVENT_ACTION_POINTER_UP:
-			upDownTyp = event.TouchEnd
+			upDownChange = event.ChangeOff
 		}
 
 		for i, n := C.size_t(0), C.AMotionEvent_getPointerCount(e); i < n; i++ {
-			typ := event.TouchMove
+			change := event.ChangeNone
 			if i == upDownIndex {
-				typ = upDownTyp
+				change = upDownChange
 			}
 			eventsIn <- event.Touch{
-				ID:   event.TouchSequenceID(C.AMotionEvent_getPointerId(e, i)),
-				Type: typ,
+				ID:     event.TouchSequenceID(C.AMotionEvent_getPointerId(e, i)),
+				Change: change,
 				Loc: geom.Point{
 					X: geom.Pt(float32(C.AMotionEvent_getX(e, i)) / pixelsPerPt),
 					Y: geom.Pt(float32(C.AMotionEvent_getY(e, i)) / pixelsPerPt),

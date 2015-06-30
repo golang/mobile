@@ -36,8 +36,6 @@ package event // import "golang.org/x/mobile/event"
 // TODO: keyboard events.
 
 import (
-	"fmt"
-
 	"golang.org/x/mobile/geom"
 )
 
@@ -181,60 +179,27 @@ func (l LifecycleStage) String() string {
 	}
 }
 
+// On Android, Touch is an AInputEvent with AINPUT_EVENT_TYPE_MOTION:
+//	- ChangeOn   is an AMOTION_EVENT_ACTION_DOWN.
+//	- ChangeNone is an AMOTION_EVENT_ACTION_MOVE.
+//	- ChangeOff  is an AMOTION_EVENT_ACTION_UP.
+//
+// On iOS, Touch is the UIEvent delivered to a UIView:
+//	- ChangeOn   is a call to touchesBegan.
+//	- ChangeNone is a call to touchesMoved.
+//	- ChangeOff  is a call to touchesEnded.
+
 // Touch is a user touch event.
 //
 // The same ID is shared by all events in a sequence. A sequence starts with a
-// single TouchStart, is followed by zero or more TouchMoves, and ends with a
-// single TouchEnd. An ID distinguishes concurrent sequences but is
-// subsequently reused.
-//
-// On Android, Touch is an AInputEvent with AINPUT_EVENT_TYPE_MOTION.
-// On iOS, Touch is the UIEvent delivered to a UIView.
+// single ChangeOn (a touch start), is followed by zero or more ChangeNones
+// (touch moves), and ends with a single ChangeOff (a touch end). An ID
+// distinguishes concurrent sequences but is subsequently reused.
 type Touch struct {
-	ID   TouchSequenceID
-	Type TouchType
-	Loc  geom.Point
-}
-
-func (t Touch) String() string {
-	var ty string
-	switch t.Type {
-	case TouchStart:
-		ty = "start"
-	case TouchMove:
-		ty = "move "
-	case TouchEnd:
-		ty = "end  "
-	}
-	return fmt.Sprintf("Touch{ %s, %s }", ty, t.Loc)
+	ID     TouchSequenceID
+	Change Change
+	Loc    geom.Point
 }
 
 // TouchSequenceID identifies a sequence of Touch events.
 type TouchSequenceID int64
-
-// TODO: change TouchType to Change.
-
-// TouchType describes the type of a touch event.
-type TouchType byte
-
-const (
-	// TouchStart is a user first touching the device.
-	//
-	// On Android, this is a AMOTION_EVENT_ACTION_DOWN.
-	// On iOS, this is a call to touchesBegan.
-	TouchStart TouchType = iota
-
-	// TouchMove is a user dragging across the device.
-	//
-	// A TouchMove is delivered between a TouchStart and TouchEnd.
-	//
-	// On Android, this is a AMOTION_EVENT_ACTION_MOVE.
-	// On iOS, this is a call to touchesMoved.
-	TouchMove
-
-	// TouchEnd is a user no longer touching the device.
-	//
-	// On Android, this is a AMOTION_EVENT_ACTION_UP.
-	// On iOS, this is a call to touchesEnded.
-	TouchEnd
-)
