@@ -159,7 +159,54 @@ uint64 threadID() {
 }
 @end
 
-void runApp(void) {
+@interface MobileResponder : NSResponder
+{
+}
+@end
+
+@implementation MobileResponder
+- (void)keyDown:(NSEvent *)theEvent {
+	[self key:theEvent];
+}
+- (void)keyUp:(NSEvent *)theEvent {
+	[self key:theEvent];
+}
+- (void)key:(NSEvent *)theEvent {
+	NSRange range = [theEvent.characters rangeOfComposedCharacterSequenceAtIndex:0];
+
+	uint8_t buf[4] = {0, 0, 0, 0};
+	if (![theEvent.characters getBytes:buf
+			maxLength:4
+			usedLength:nil
+			encoding:NSUTF32LittleEndianStringEncoding
+			options:NSStringEncodingConversionAllowLossy
+			range:range
+			remainingRange:nil]) {
+		NSLog(@"failed to read key event %@", theEvent);
+		return;
+	}
+
+	uint32_t rune = (uint32_t)buf[0]<<0 | (uint32_t)buf[1]<<8 | (uint32_t)buf[2]<<16 | (uint32_t)buf[3]<<24;
+
+	uint8_t direction;
+	if (theEvent.ARepeat) {
+		direction = 0;
+	} else if (theEvent.type == NSKeyDown) {
+		direction = 1;
+	} else {
+		direction = 2;
+	}
+	eventKey((int32_t)rune, direction, theEvent.keyCode, theEvent.modifierFlags);
+}
+
+- (void)flagsChanged:(NSEvent *)theEvent {
+	eventFlags(theEvent.modifierFlags);
+}
+@end
+
+
+void
+runApp(void) {
 	[NSAutoreleasePool new];
 	[NSApplication sharedApplication];
 	[NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
@@ -211,6 +258,9 @@ void runApp(void) {
 	[window setContentView:view];
 	[window setDelegate:view];
 	[NSApp setDelegate:view];
+
+	window.nextResponder = [[[MobileResponder alloc] init] autorelease];
+
 	[NSApp run];
 }
 
