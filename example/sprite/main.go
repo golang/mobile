@@ -35,9 +35,9 @@ import (
 	_ "image/jpeg"
 
 	"golang.org/x/mobile/app"
-	"golang.org/x/mobile/app/debug"
 	"golang.org/x/mobile/asset"
 	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/exp/app/debug"
 	"golang.org/x/mobile/exp/sprite"
 	"golang.org/x/mobile/exp/sprite/clock"
 	"golang.org/x/mobile/exp/sprite/glsprite"
