@@ -117,7 +117,7 @@ var touchEvents struct {
 }
 
 //export sendTouch
-func sendTouch(touch uintptr, touchType int, x, y float32) {
+func sendTouch(touch, change uintptr, x, y float32) {
 	id := -1
 	for i, val := range touchIDs {
 		if val == touch {
@@ -138,14 +138,14 @@ func sendTouch(touch uintptr, touchType int, x, y float32) {
 		}
 	}
 
-	ty := event.TouchType(touchType)
-	if ty == event.TouchEnd {
+	c := event.Change(change)
+	if c == event.ChangeOff {
 		touchIDs[id] = 0
 	}
 
 	eventsIn <- event.Touch{
-		ID:   event.TouchSequenceID(id),
-		Type: ty,
+		ID:     event.TouchSequenceID(id),
+		Change: c,
 		Loc: geom.Point{
 			X: geom.Pt(x / pixelsPerPt),
 			Y: geom.Pt(y / pixelsPerPt),

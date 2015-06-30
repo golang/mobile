@@ -98,10 +98,10 @@ func onResize(w, h int) {
 	}
 }
 
-func sendTouch(ty event.TouchType, x, y float32) {
+func sendTouch(c event.Change, x, y float32) {
 	eventsIn <- event.Touch{
-		ID:   0, // TODO: button??
-		Type: ty,
+		ID:     0, // TODO: button??
+		Change: c,
 		Loc: geom.Point{
 			X: geom.Pt(x / pixelsPerPt),
 			Y: geom.Pt(y / pixelsPerPt),
@@ -110,13 +110,13 @@ func sendTouch(ty event.TouchType, x, y float32) {
 }
 
 //export onTouchStart
-func onTouchStart(x, y float32) { sendTouch(event.TouchStart, x, y) }
+func onTouchStart(x, y float32) { sendTouch(event.ChangeOn, x, y) }
 
 //export onTouchMove
-func onTouchMove(x, y float32) { sendTouch(event.TouchMove, x, y) }
+func onTouchMove(x, y float32) { sendTouch(event.ChangeNone, x, y) }
 
 //export onTouchEnd
-func onTouchEnd(x, y float32) { sendTouch(event.TouchEnd, x, y) }
+func onTouchEnd(x, y float32) { sendTouch(event.ChangeOff, x, y) }
 
 var stopped bool
 

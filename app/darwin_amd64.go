@@ -82,10 +82,10 @@ var touchEvents struct {
 	pending []event.Touch
 }
 
-func sendTouch(ty event.TouchType, x, y float32) {
+func sendTouch(c event.Change, x, y float32) {
 	eventsIn <- event.Touch{
-		ID:   0,
-		Type: ty,
+		ID:     0,
+		Change: c,
 		Loc: geom.Point{
 			X: geom.Pt(x / pixelsPerPt),
 			Y: windowHeight - geom.Pt(y/pixelsPerPt),
@@ -94,13 +94,13 @@ func sendTouch(ty event.TouchType, x, y float32) {
 }
 
 //export eventMouseDown
-func eventMouseDown(x, y float32) { sendTouch(event.TouchStart, x, y) }
+func eventMouseDown(x, y float32) { sendTouch(event.ChangeOn, x, y) }
 
 //export eventMouseDragged
-func eventMouseDragged(x, y float32) { sendTouch(event.TouchMove, x, y) }
+func eventMouseDragged(x, y float32) { sendTouch(event.ChangeNone, x, y) }
 
 //export eventMouseEnd
-func eventMouseEnd(x, y float32) { sendTouch(event.TouchEnd, x, y) }
+func eventMouseEnd(x, y float32) { sendTouch(event.ChangeOff, x, y) }
 
 var startedgl = false
 
