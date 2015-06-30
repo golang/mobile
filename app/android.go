@@ -22,7 +22,9 @@ the app package initialization.
 package app
 
 /*
-#cgo LDFLAGS: -landroid
+// The C libraries listed here but not explicitly used in this file are used by
+// other *_android.go files. There should be only one #cgo declaration.
+#cgo LDFLAGS: -landroid -llog -lEGL -lGLESv2
 
 #include <android/configuration.h>
 #include <android/native_activity.h>

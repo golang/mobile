@@ -5,7 +5,6 @@
 package app
 
 /*
-#cgo android LDFLAGS: -llog -landroid -lEGL -lGLESv2
 #include <android/log.h>
 #include <android/native_activity.h>
 #include <android/input.h>

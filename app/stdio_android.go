@@ -16,7 +16,6 @@ adb logcat GoLog:I *:S
 // Unfortunately, logcat is line oriented, so we must buffer.
 
 /*
-#cgo LDFLAGS: -llog
 #include <android/log.h>
 #include <string.h>
 */
