@@ -166,6 +166,21 @@ const (
 	LifecycleStageFocused
 )
 
+func (l LifecycleStage) String() string {
+	switch l {
+	case LifecycleStageDead:
+		return "LifecycleStageDead"
+	case LifecycleStageAlive:
+		return "LifecycleStageAlive"
+	case LifecycleStageVisible:
+		return "LifecycleStageVisible"
+	case LifecycleStageFocused:
+		return "LifecycleStageFocused"
+	default:
+		return fmt.Sprintf("LifecycleStageInvalid:%d", l)
+	}
+}
+
 // Touch is a user touch event.
 //
 // The same ID is shared by all events in a sequence. A sequence starts with a
