@@ -15,9 +15,6 @@ import (
 	"strings"
 )
 
-// TODO(jbd): iOS builds are achievable only if the host machine is darwin.
-// TODO(jbd): Build darwin/arm cross compiler during gomobile init.
-
 func goIOSBuild(src string) error {
 	dir := "$XCODEPROJ"
 	if !buildN {
