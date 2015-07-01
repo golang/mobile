@@ -21,5 +21,4 @@ func openAsset(name string) (File, error) {
 		return nil, err
 	}
 	return f, nil
-
 }
