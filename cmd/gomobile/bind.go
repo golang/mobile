@@ -150,8 +150,13 @@ func runBind(cmd *command) error {
 		return err
 	}
 
+	dst := filepath.Join(androidDir, "src/main/java/go/LoadJNI.java")
+	if err := ioutil.WriteFile(dst, []byte(loadSrc), 0664); err != nil {
+		return err
+	}
+
 	src := filepath.Join(repo, "bind/java/Seq.java")
-	dst := filepath.Join(androidDir, "src/main/java/go/Seq.java")
+	dst = filepath.Join(androidDir, "src/main/java/go/Seq.java")
 	rm(dst)
 	if err := symlink(src, dst); err != nil {
 		return err
@@ -159,6 +164,15 @@ func runBind(cmd *command) error {
 
 	return buildAAR(androidDir, bindPkg)
 }
+
+var loadSrc = `package go;
+
+public class LoadJNI {
+	static {
+		System.loadLibrary("gojni");
+	}
+}
+`
 
 type binder struct {
 	files []*ast.File
