@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/exp/gl/glutil"
 	"golang.org/x/mobile/geom"
-	"golang.org/x/mobile/gl/glutil"
 )
 
 var lastDraw = time.Now()

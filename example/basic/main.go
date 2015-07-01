@@ -33,10 +33,10 @@ import (
 	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/event"
 	"golang.org/x/mobile/exp/app/debug"
+	"golang.org/x/mobile/exp/gl/glutil"
 	"golang.org/x/mobile/f32"
 	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/gl"
-	"golang.org/x/mobile/gl/glutil"
 )
 
 var (
