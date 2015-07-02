@@ -49,7 +49,7 @@ func TestImage(t *testing.T) {
 	//	4. Copy GL texture back into system memory.
 	//	5. Compare to a pre-computed image.
 
-	f, err := os.Open("../../testdata/testpattern.png")
+	f, err := os.Open("../../../testdata/testpattern.png")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -133,7 +133,7 @@ func TestImage(t *testing.T) {
 	drawCross(got, int(ptBottomRight.X.Px(cfg.PixelsPerPt)), int(ptBottomRight.Y.Px(cfg.PixelsPerPt)))
 	drawCross(got, pixW-1, pixH-1)
 
-	const wantPath = "../../testdata/testpattern-window.png"
+	const wantPath = "../../../testdata/testpattern-window.png"
 	f, err = os.Open(wantPath)
 	if err != nil {
 		t.Fatal(err)
