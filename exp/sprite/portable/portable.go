@@ -14,9 +14,9 @@ import (
 	"image/draw"
 
 	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/exp/f32"
 	"golang.org/x/mobile/exp/sprite"
 	"golang.org/x/mobile/exp/sprite/clock"
-	"golang.org/x/mobile/f32"
 )
 
 // Engine builds a sprite Engine that renders onto dst.
