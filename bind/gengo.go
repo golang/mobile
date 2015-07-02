@@ -373,7 +373,7 @@ func (g *goGen) typeString(typ types.Type) string {
 	case *types.Named:
 		obj := t.Obj()
 		if obj.Pkg() == nil { // e.g. error type is *types.Named.
-			return types.TypeString(pkg, typ)
+			return types.TypeString(typ, types.RelativeTo(pkg))
 		}
 		if obj.Pkg() != g.pkg {
 			g.errorf("type %s not defined in package %s", t, g.pkg)
@@ -381,7 +381,7 @@ func (g *goGen) typeString(typ types.Type) string {
 
 		switch t.Underlying().(type) {
 		case *types.Interface, *types.Struct:
-			return fmt.Sprintf("%s.%s", pkg.Name(), types.TypeString(pkg, typ))
+			return fmt.Sprintf("%s.%s", pkg.Name(), types.TypeString(typ, types.RelativeTo(pkg)))
 		default:
 			g.errorf("unsupported named type %s / %T", t, t)
 		}
@@ -393,7 +393,7 @@ func (g *goGen) typeString(typ types.Type) string {
 			g.errorf("not yet supported, pointer type %s / %T", t, t)
 		}
 	default:
-		return types.TypeString(pkg, typ)
+		return types.TypeString(typ, types.RelativeTo(pkg))
 	}
 	return ""
 }
