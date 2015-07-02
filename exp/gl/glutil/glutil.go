@@ -8,7 +8,7 @@ package glutil // import "golang.org/x/mobile/exp/gl/glutil"
 import (
 	"fmt"
 
-	"golang.org/x/mobile/f32"
+	"golang.org/x/mobile/exp/f32"
 	"golang.org/x/mobile/gl"
 )
 

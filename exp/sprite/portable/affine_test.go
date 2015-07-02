@@ -15,7 +15,7 @@ import (
 	"testing"
 
 	"golang.org/x/mobile/event"
-	"golang.org/x/mobile/f32"
+	"golang.org/x/mobile/exp/f32"
 	"golang.org/x/mobile/geom"
 )
 
