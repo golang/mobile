@@ -27,10 +27,12 @@ var fps struct {
 
 // DrawFPS draws the per second framerate in the bottom-left of the screen.
 func DrawFPS(c event.Config) {
+	const imgW, imgH = 7*(fontWidth+1) + 1, fontHeight + 2
+
 	fps.mu.Lock()
 	if fps.c != c || fps.m == nil {
 		fps.c = c
-		fps.m = glutil.NewImage(7*(fontWidth+1)+1, fontHeight+2)
+		fps.m = glutil.NewImage(imgW, imgH)
 	}
 	fps.mu.Unlock()
 
@@ -66,8 +68,8 @@ func DrawFPS(c event.Config) {
 	fps.m.Upload()
 	fps.m.Draw(
 		c,
-		geom.Point{0, c.Height - 12},
-		geom.Point{50, c.Height - 12},
+		geom.Point{0, c.Height - imgH},
+		geom.Point{imgW, c.Height - imgH},
 		geom.Point{0, c.Height},
 		fps.m.Bounds(),
 	)
