@@ -36,6 +36,8 @@ package event // import "golang.org/x/mobile/event"
 // TODO: keyboard events.
 
 import (
+	"fmt"
+
 	"golang.org/x/mobile/geom"
 )
 
