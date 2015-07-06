@@ -17,7 +17,7 @@ static NSString *errDomain = @"go.basictypes";
 #define _CALL_ErrorPair_ 4
 #define _CALL_Ints_ 5
 
-BOOL GoBasictypes_Bool(BOOL p0) {
+BOOL GoBasictypesBool(BOOL p0) {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_writeBool(&in_, p0);
@@ -28,7 +28,7 @@ BOOL GoBasictypes_Bool(BOOL p0) {
 	return ret0_;
 }
 
-NSData* GoBasictypes_ByteArrays(NSData* x) {
+NSData* GoBasictypesByteArrays(NSData* x) {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_writeByteArray(&in_, x);
@@ -39,7 +39,7 @@ NSData* GoBasictypes_ByteArrays(NSData* x) {
 	return ret0_;
 }
 
-BOOL GoBasictypes_Error(NSError** error) {
+BOOL GoBasictypesError(NSError** error) {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send(_DESCRIPTOR_, _CALL_Error_, &in_, &out_);
@@ -54,13 +54,13 @@ BOOL GoBasictypes_Error(NSError** error) {
 	return ([_error length] == 0);
 }
 
-BOOL GoBasictypes_ErrorPair(int* ret0_, NSError** error) {
+BOOL GoBasictypesErrorPair(int* ret0_, NSError** error) {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send(_DESCRIPTOR_, _CALL_ErrorPair_, &in_, &out_);
-	int _ret0_ = go_seq_readInt(&out_);
+	int ret0__val = go_seq_readInt(&out_);
 	if (ret0_ != NULL) {
-		*ret0_ = _ret0_;
+		*ret0_ = ret0__val;
 	}
 	NSString* _error = go_seq_readUTF8(&out_);
 	if ([_error length] != 0 && error != nil) {
@@ -73,7 +73,7 @@ BOOL GoBasictypes_ErrorPair(int* ret0_, NSError** error) {
 	return ([_error length] == 0);
 }
 
-void GoBasictypes_Ints(int8_t x, int16_t y, int32_t z, int64_t t, int u) {
+void GoBasictypesInts(int8_t x, int16_t y, int32_t z, int64_t t, int u) {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_writeInt8(&in_, x);

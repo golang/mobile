@@ -8,12 +8,12 @@
 
 #include "seq.h"
 
-@class GoIssue10788_TestInterface;
+@class GoIssue10788TestInterface;
 
-@class GoIssue10788_TestStruct;
+@class GoIssue10788TestStruct;
 
 
-@interface GoIssue10788_TestStruct : NSObject {
+@interface GoIssue10788TestStruct : NSObject {
 }
 @property(strong, readonly) GoSeqRef *ref;
 

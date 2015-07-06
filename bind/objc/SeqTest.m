@@ -16,56 +16,56 @@
 static int err = 0;
 
 void testHello(NSString *input) {
-  NSString *got = GoTestpkg_Hello(input);
+  NSString *got = GoTestpkgHello(input);
   NSString *want = [NSString stringWithFormat:@"Hello, %@!", input];
   if (!got) {
-    ERROR(@"GoTestpkg_Hello(%@)= NULL, want %@", input, want);
+    ERROR(@"GoTestpkgHello(%@)= NULL, want %@", input, want);
     return;
   }
   if (![got isEqualToString:want]) {
-    ERROR(@"want %@\nGoTestpkg_Hello(%@)= %@", want, input, got);
+    ERROR(@"want %@\nGoTestpkgHello(%@)= %@", want, input, got);
   }
 }
 
 void testBytesAppend(NSString *a, NSString *b) {
   NSData *data_a = [a dataUsingEncoding:NSUTF8StringEncoding];
   NSData *data_b = [b dataUsingEncoding:NSUTF8StringEncoding];
-  NSData *gotData = GoTestpkg_BytesAppend(data_a, data_b);
+  NSData *gotData = GoTestpkgBytesAppend(data_a, data_b);
   NSString *got =
       [[NSString alloc] initWithData:gotData encoding:NSUTF8StringEncoding];
   NSString *want = [a stringByAppendingString:b];
   if (![got isEqualToString:want]) {
-    ERROR(@"want %@\nGoTestpkg_BytesAppend(%@, %@) = %@", want, a, b, got);
+    ERROR(@"want %@\nGoTestpkgBytesAppend(%@, %@) = %@", want, a, b, got);
   }
 }
 
 void testReturnsError() {
   NSString *value;
   NSError *error;
-  GoTestpkg_ReturnsError(TRUE, &value, &error);
+  GoTestpkgReturnsError(TRUE, &value, &error);
   NSString *got = [error.userInfo valueForKey:NSLocalizedDescriptionKey];
   NSString *want = @"Error";
   if (![got isEqualToString:want]) {
-    ERROR(@"want %@\nGoTestpkg_ReturnsError(TRUE) = (%@, %@)", want, value, got);
+    ERROR(@"want %@\nGoTestpkgReturnsError(TRUE) = (%@, %@)", want, value, got);
   }
 }
 
 void testStruct() {
-  GoTestpkg_S *s = GoTestpkg_NewS(10.0, 100.0);
+  GoTestpkgS *s = GoTestpkgNewS(10.0, 100.0);
   if (!s) {
-    ERROR(@"GoTestpkg_NewS returned NULL");
+    ERROR(@"GoTestpkgNewS returned NULL");
   }
 
   double x = [s X];
   double y = [s Y];
   double sum = [s Sum];
   if (x != 10.0 || y != 100.0 || sum != 110.0) {
-    ERROR(@"GoTestpkg_S(10.0, 100.0).X=%f Y=%f SUM=%f; want 10, 100, 110", x, y, sum);
+    ERROR(@"GoTestpkgS(10.0, 100.0).X=%f Y=%f SUM=%f; want 10, 100, 110", x, y, sum);
   }
 
-  double sum2 = GoTestpkg_CallSSum(s);
+  double sum2 = GoTestpkgCallSSum(s);
   if (sum != sum2) {
-    ERROR(@"GoTestpkg_CallSSum(s)=%f; want %f as returned by s.Sum", sum2, sum);
+    ERROR(@"GoTestpkgCallSSum(s)=%f; want %f as returned by s.Sum", sum2, sum);
   }
 
   [s setX:7];
@@ -74,7 +74,7 @@ void testStruct() {
   y = [s Y];
   sum = [s Sum];
   if (x != 7 || y != 70 || sum != 77) {
-    ERROR(@"GoTestpkg_S(7, 70).X=%f Y=%f SUM=%f; want 7, 70, 77", x, y, sum);
+    ERROR(@"GoTestpkgS(7, 70).X=%f Y=%f SUM=%f; want 7, 70, 77", x, y, sum);
   }
 }
 
@@ -84,13 +84,13 @@ void testStruct() {
 // and test through xcodebuild.
 int main(void) {
   @autoreleasepool {
-    GoTestpkg_Hi();
+    GoTestpkgHi();
 
-    GoTestpkg_Int(42);
+    GoTestpkgInt(42);
 
-    int64_t sum = GoTestpkg_Sum(31, 21);
+    int64_t sum = GoTestpkgSum(31, 21);
     if (sum != 52) {
-      ERROR(@"GoTestpkg_Sum(31, 21) = %lld, want 52\n", sum);
+      ERROR(@"GoTestpkgSum(31, 21) = %lld, want 52\n", sum);
     }
 
     testHello(@"세계"); // korean, utf-8, world.
@@ -103,7 +103,7 @@ int main(void) {
     testBytesAppend(@"Foo", @"Bar");
 
     testStruct();
-    int numS = GoTestpkg_CollectS(1, 10); // within 10 seconds, collect the S used in testStruct.
+    int numS = GoTestpkgCollectS(1, 10); // within 10 seconds, collect the S used in testStruct.
     if (numS != 1) {
       ERROR(@"%d S objects were collected; S used in testStruct is supposed to be collected.", numS);
     }
