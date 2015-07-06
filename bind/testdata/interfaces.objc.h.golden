@@ -8,14 +8,14 @@
 
 #include "seq.h"
 
-@class GoInterfaces_I;
+@class GoInterfacesI;
 
-@class GoInterfaces_WithParam;
+@class GoInterfacesWithParam;
 
 
 
-FOUNDATION_EXPORT int32_t GoInterfaces_Add3(GoInterfaces_I* r);
+FOUNDATION_EXPORT int32_t GoInterfacesAdd3(GoInterfacesI* r);
 
-FOUNDATION_EXPORT GoInterfaces_I* GoInterfaces_Seven();
+FOUNDATION_EXPORT GoInterfacesI* GoInterfacesSeven();
 
 #endif

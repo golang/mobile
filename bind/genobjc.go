@@ -76,7 +76,7 @@ func (g *objcGen) genH() error {
 		named := obj.Type().(*types.Named)
 		switch named.Underlying().(type) {
 		case *types.Struct, *types.Interface:
-			g.Printf("@class %s_%s;\n", g.namePrefix, obj.Name())
+			g.Printf("@class %s%s;\n", g.namePrefix, obj.Name())
 		}
 		g.Printf("\n")
 	}
@@ -233,7 +233,7 @@ func (s *funcSummary) asFunc(g *objcGen) string {
 			params = append(params, g.objcType(p.typ)+"* "+p.name)
 		}
 	}
-	return fmt.Sprintf("%s %s_%s(%s)", s.ret, g.namePrefix, s.name, strings.Join(params, ", "))
+	return fmt.Sprintf("%s %s%s(%s)", s.ret, g.namePrefix, s.name, strings.Join(params, ", "))
 }
 
 func (s *funcSummary) asMethod(g *objcGen) string {
@@ -330,10 +330,10 @@ func (g *objcGen) genFunc(pkgDesc, callDesc string, s *funcSummary, isMethod boo
 				g.Outdent()
 				g.Printf("}\n")
 			} else if seqTyp := g.seqType(p.typ); seqTyp != "Ref" {
-				g.Printf("%s _%s = go_seq_read%s(&out_);\n", g.objcType(p.typ), p.name, g.seqType(p.typ))
+				g.Printf("%s %s_val = go_seq_read%s(&out_);\n", g.objcType(p.typ), p.name, g.seqType(p.typ))
 				g.Printf("if (%s != NULL) {\n", p.name)
 				g.Indent()
-				g.Printf("*%s = _%s;\n", p.name, p.name)
+				g.Printf("*%s = %s_val;\n", p.name, p.name)
 				g.Outdent()
 				g.Printf("}\n")
 			} else {
@@ -373,7 +373,7 @@ func (g *objcGen) genInterfaceM(obj *types.TypeName, t *types.Interface) {
 }
 
 func (g *objcGen) genStructH(obj *types.TypeName, t *types.Struct) {
-	g.Printf("@interface %s_%s : NSObject {\n", g.namePrefix, obj.Name())
+	g.Printf("@interface %s%s : NSObject {\n", g.namePrefix, obj.Name())
 	g.Printf("}\n")
 	g.Printf("@property(strong, readonly) GoSeqRef *ref;\n")
 	g.Printf("\n")
@@ -410,7 +410,7 @@ func (g *objcGen) genStructM(obj *types.TypeName, t *types.Struct) {
 	}
 
 	g.Printf("\n")
-	g.Printf("@implementation %s_%s {\n", g.namePrefix, obj.Name())
+	g.Printf("@implementation %s%s {\n", g.namePrefix, obj.Name())
 	g.Printf("}\n\n")
 	g.Printf("- (id)initWithRef:(GoSeqRef*)ref {\n")
 	g.Indent()
@@ -527,9 +527,9 @@ func (g *objcGen) objcType(typ types.Type) string {
 		}
 		switch typ.Underlying().(type) {
 		case *types.Interface:
-			return g.namePrefix + "_" + n.Name() + "*"
+			return g.namePrefix + n.Name() + "*"
 		case *types.Struct:
-			return g.namePrefix + "_" + n.Name()
+			return g.namePrefix + n.Name()
 		}
 		g.errorf("unsupported, named type %s", typ)
 		return "TODO"

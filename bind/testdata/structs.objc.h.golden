@@ -8,9 +8,9 @@
 
 #include "seq.h"
 
-@class GoStructs_S;
+@class GoStructsS;
 
-@interface GoStructs_S : NSObject {
+@interface GoStructsS : NSObject {
 }
 @property(strong, readonly) GoSeqRef *ref;
 
@@ -19,12 +19,12 @@
 - (void)setX:(double)v;
 - (double)Y;
 - (void)setY:(double)v;
-- (BOOL)Identity:(GoStructs_S**)ret0_ error:(NSError**)error;
+- (BOOL)Identity:(GoStructsS**)ret0_ error:(NSError**)error;
 - (double)Sum;
 @end
 
-FOUNDATION_EXPORT GoStructs_S* GoStructs_Identity(GoStructs_S* s);
+FOUNDATION_EXPORT GoStructsS* GoStructsIdentity(GoStructsS* s);
 
-FOUNDATION_EXPORT BOOL GoStructs_IdentityWithError(GoStructs_S* s, GoStructs_S** ret0_, NSError** error);
+FOUNDATION_EXPORT BOOL GoStructsIdentityWithError(GoStructsS* s, GoStructsS** ret0_, NSError** error);
 
 #endif

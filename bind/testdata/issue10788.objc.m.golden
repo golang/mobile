@@ -17,7 +17,7 @@ static NSString *errDomain = @"go.issue10788";
 #define _GO_issue10788_TestStruct_FIELD_Value_GET_ (0x00f)
 #define _GO_issue10788_TestStruct_FIELD_Value_SET_ (0x01f)
 
-@implementation GoIssue10788_TestStruct {
+@implementation GoIssue10788TestStruct {
 }
 
 - (id)initWithRef:(GoSeqRef*)ref {

@@ -22,7 +22,7 @@ static NSString *errDomain = @"go.structs";
 #define _GO_structs_S_Identity_ (0x00c)
 #define _GO_structs_S_Sum_ (0x10c)
 
-@implementation GoStructs_S {
+@implementation GoStructsS {
 }
 
 - (id)initWithRef:(GoSeqRef*)ref {
@@ -73,7 +73,7 @@ static NSString *errDomain = @"go.structs";
 	go_seq_free(&out_);
 }
 
-- (BOOL)Identity:(GoStructs_S**)ret0_ error:(NSError**)error {
+- (BOOL)Identity:(GoStructsS**)ret0_ error:(NSError**)error {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_writeRef(&in_, self.ref);
@@ -82,7 +82,7 @@ static NSString *errDomain = @"go.structs";
 	if (ret0_ != NULL) {
 		*ret0_ = ret0__ref.obj;
 		if (*ret0_ == NULL) {
-			*ret0_ = [[GoStructs_S alloc] initWithRef:ret0__ref];
+			*ret0_ = [[GoStructsS alloc] initWithRef:ret0__ref];
 		}
 	}
 	NSString* _error = go_seq_readUTF8(&out_);
@@ -109,22 +109,22 @@ static NSString *errDomain = @"go.structs";
 
 @end
 
-GoStructs_S* GoStructs_Identity(GoStructs_S* s) {
+GoStructsS* GoStructsIdentity(GoStructsS* s) {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_writeRef(&in_, s.ref);
 	go_seq_send(_DESCRIPTOR_, _CALL_Identity_, &in_, &out_);
 	GoSeqRef* ret0__ref = go_seq_readRef(&out_);
-	GoStructs_S* ret0_ = ret0__ref.obj;
+	GoStructsS* ret0_ = ret0__ref.obj;
 	if (ret0_ == NULL) {
-		ret0_ = [[GoStructs_S alloc] initWithRef:ret0__ref];
+		ret0_ = [[GoStructsS alloc] initWithRef:ret0__ref];
 	}
 	go_seq_free(&in_);
 	go_seq_free(&out_);
 	return ret0_;
 }
 
-BOOL GoStructs_IdentityWithError(GoStructs_S* s, GoStructs_S** ret0_, NSError** error) {
+BOOL GoStructsIdentityWithError(GoStructsS* s, GoStructsS** ret0_, NSError** error) {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_writeRef(&in_, s.ref);
@@ -133,7 +133,7 @@ BOOL GoStructs_IdentityWithError(GoStructs_S* s, GoStructs_S** ret0_, NSError** 
 	if (ret0_ != NULL) {
 		*ret0_ = ret0__ref.obj;
 		if (*ret0_ == NULL) {
-			*ret0_ = [[GoStructs_S alloc] initWithRef:ret0__ref];
+			*ret0_ = [[GoStructsS alloc] initWithRef:ret0__ref];
 		}
 	}
 	NSString* _error = go_seq_readUTF8(&out_);
