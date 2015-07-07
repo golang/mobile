@@ -100,13 +100,6 @@ var codeToState = map[int32]State{
 	al.Stopped: Stopped,
 }
 
-var (
-	mu sync.Mutex // guards ctx
-
-	// ctx is the shared al.Context used by multiple Player instances.
-	ctx al.Context
-)
-
 type track struct {
 	format           Format
 	samplesPerSecond int64
@@ -140,9 +133,6 @@ func NewPlayer(src ReadSeekCloser, format Format, samplesPerSecond int64) (*Play
 	if err := al.OpenDevice(); err != nil {
 		return nil, err
 	}
-	if err := createContext(); err != nil {
-		return nil, err
-	}
 	s := al.GenSources(1)
 	if code := al.Error(); code != 0 {
 		return nil, fmt.Errorf("audio: cannot generate an audio source [err=%x]", code)
@@ -161,28 +151,6 @@ func NewPlayer(src ReadSeekCloser, format Format, samplesPerSecond int64) (*Play
 		return nil, errors.New("audio: cannot determine the sample rate")
 	}
 	return p, nil
-}
-
-// TODO(jbd): Reuse the current context if there is one.
-// See https://github.com/golang/go/issues/11385.
-
-func createContext() error {
-	mu.Lock()
-	defer mu.Unlock()
-
-	if ctx != (al.Context{}) {
-		return nil
-	}
-
-	var err error
-	ctx, err = al.CreateContext()
-	if err != nil {
-		return errors.New("audio: cannot create a context")
-	}
-	if !al.MakeContextCurrent(ctx) {
-		return errors.New("audio: cannot set the current context")
-	}
-	return nil
 }
 
 // headerSize is the size of WAV headers.
