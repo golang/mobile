@@ -13,22 +13,14 @@ import (
 )
 
 var (
-	mu sync.Mutex // mu protects device.
-
-	// device is the currently open audio device or nil.
-	device unsafe.Pointer
+	mu      sync.Mutex
+	device  unsafe.Pointer
+	context unsafe.Pointer
 )
 
 // DeviceError returns the last known error from the current device.
 func DeviceError() int32 {
 	return alcGetError(device)
-}
-
-// Context represents an OpenAL context. The listener always
-// operates on the current context. In order to make a context
-// current, use MakeContextCurrent.
-type Context struct {
-	ptr unsafe.Pointer
 }
 
 // TODO(jbd): Investigate the cases where multiple audio output
@@ -45,35 +37,22 @@ func OpenDevice() error {
 		return nil
 	}
 
-	ptr := alcOpenDevice("")
-	if ptr == nil {
+	dev := alcOpenDevice("")
+	if dev == nil {
 		return errors.New("al: cannot open the default audio device")
 	}
-	device = ptr
-	return nil
-}
-
-// CreateContext creates a new context.
-func CreateContext() (Context, error) {
-	ctx := alcCreateContext(device, nil)
+	ctx := alcCreateContext(dev, nil)
 	if ctx == nil {
-		return Context{}, errors.New("al: cannot create a new context")
+		alcCloseDevice(dev)
+		return errors.New("al: cannot create a new context")
 	}
-	return Context{ptr: ctx}, nil
-}
-
-// Destroy destroys the context and frees the underlying resources.
-// The current context cannot be destroyed. Use MakeContextCurrent
-// to make a new context current or use nil.
-func (c Context) Destroy() {
-	alcDestroyContext(c.ptr)
-}
-
-// MakeContextCurrent makes the given context current. Calls to
-// MakeContextCurrent can accept a zero value Context to allow
-// a program not to have an active current context.
-func MakeContextCurrent(c Context) bool {
-	return alcMakeContextCurrent(c.ptr)
+	if !alcMakeContextCurrent(ctx) {
+		alcCloseDevice(dev)
+		return errors.New("al: cannot make context current")
+	}
+	device = dev
+	context = ctx
+	return nil
 }
 
 // CloseDevice closes the device and frees related resources.
@@ -82,8 +61,14 @@ func CloseDevice() {
 	mu.Lock()
 	defer mu.Unlock()
 
-	if device != nil {
-		alcCloseDevice(device)
-		device = nil
+	if device == nil {
+		return
 	}
+
+	alcCloseDevice(device)
+	if context != nil {
+		alcDestroyContext(context)
+	}
+	device = nil
+	context = nil
 }
