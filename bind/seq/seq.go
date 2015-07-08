@@ -16,7 +16,11 @@ package seq // import "golang.org/x/mobile/bind/seq"
 //	bindings which requires deconstructing seq into something
 //	gnarly. So don't get too attached to the design.
 
-import "fmt"
+import (
+	"fmt"
+
+	_ "golang.org/x/mobile/internal/mobileinit"
+)
 
 // Transact calls a method on a foreign object instance.
 // It blocks until the call is complete.

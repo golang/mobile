@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package app
+package mobileinit
 
 /*
 To view the log output run:
@@ -16,6 +16,8 @@ adb logcat GoLog:I *:S
 // Unfortunately, logcat is line oriented, so we must buffer.
 
 /*
+#cgo LDFLAGS: -landroid -llog
+
 #include <android/log.h>
 #include <string.h>
 */
@@ -37,7 +39,7 @@ type infoWriter struct{}
 
 func (infoWriter) Write(p []byte) (n int, err error) {
 	cstr := C.CString(string(p))
-	C.__android_log_write(C.ANDROID_LOG_INFO, ctagLog, cstr)
+	C.__android_log_write(C.ANDROID_LOG_INFO, ctag, cstr)
 	C.free(unsafe.Pointer(cstr))
 	return len(p), nil
 }
