@@ -89,6 +89,9 @@ func runBuild(cmd *command) (err error) {
 			if pkg.Name != "main" {
 				return fmt.Errorf("cannot build non-main packages")
 			}
+			if err := importsApp(pkg); err != nil {
+				return err
+			}
 			return goIOSBuild(pkg.ImportPath)
 		}
 		return fmt.Errorf("-target=ios requires darwin host")
@@ -101,16 +104,8 @@ func runBuild(cmd *command) (err error) {
 		return goAndroidBuild(pkg.ImportPath, "")
 	}
 
-	// Building a program, make sure it is appropriate for mobile.
-	importsApp := false
-	for _, path := range pkg.Imports {
-		if path == "golang.org/x/mobile/app" {
-			importsApp = true
-			break
-		}
-	}
-	if !importsApp {
-		return fmt.Errorf(`%s does not import "golang.org/x/mobile/app"`, pkg.ImportPath)
+	if err := importsApp(pkg); err != nil {
+		return err
 	}
 
 	if buildN {
@@ -295,6 +290,16 @@ func runBuild(cmd *command) (err error) {
 	}
 
 	return nil
+}
+
+func importsApp(pkg *build.Package) error {
+	// Building a program, make sure it is appropriate for mobile.
+	for _, path := range pkg.Imports {
+		if path == "golang.org/x/mobile/app" {
+			return nil
+		}
+	}
+	return fmt.Errorf(`%s does not import "golang.org/x/mobile/app"`, pkg.ImportPath)
 }
 
 var xout io.Writer = os.Stderr
