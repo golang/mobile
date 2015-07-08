@@ -86,7 +86,9 @@ func runBuild(cmd *command) (err error) {
 		// implementation is below
 	case "ios":
 		if runtime.GOOS == "darwin" {
-			// TODO(jbd): Handle non-main packages.
+			if pkg.Name != "main" {
+				return fmt.Errorf("cannot build non-main packages")
+			}
 			return goIOSBuild(pkg.ImportPath)
 		}
 		return fmt.Errorf("-target=ios requires darwin host")
