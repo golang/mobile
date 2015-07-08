@@ -149,8 +149,20 @@ func (w *Writer) Close() error {
 		return fmt.Errorf("apk: %v", err)
 	}
 
+	hasDex := false
+	for _, entry := range w.manifest {
+		if entry.name == "classes.dex" {
+			hasDex = true
+			break
+		}
+	}
+
 	manifest := new(bytes.Buffer)
-	fmt.Fprint(manifest, manifestHeader)
+	if hasDex {
+		fmt.Fprint(manifest, manifestDexHeader)
+	} else {
+		fmt.Fprint(manifest, manifestHeader)
+	}
 	certBody := new(bytes.Buffer)
 
 	for _, entry := range w.manifest {
@@ -202,6 +214,12 @@ func (w *Writer) Close() error {
 }
 
 const manifestHeader = `Manifest-Version: 1.0
+Created-By: 1.0 (Go)
+
+`
+
+const manifestDexHeader = `Manifest-Version: 1.0
+Dex-Location: classes.dex
 Created-By: 1.0 (Go)
 
 `

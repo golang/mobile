@@ -45,6 +45,8 @@ JavaVM* current_vm;
 // current_ctx is Android's android.context.Context. May be NULL.
 jobject current_ctx;
 
+jclass current_ctx_clazz;
+
 jclass app_find_class(JNIEnv* env, const char* name);
 */
 import "C"
