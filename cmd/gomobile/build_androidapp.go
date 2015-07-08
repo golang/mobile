@@ -7,12 +7,14 @@ package main
 import (
 	"bytes"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
 	"errors"
 	"fmt"
 	"go/build"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -106,6 +108,18 @@ func goAndroidBuild(pkg *build.Package) error {
 		return err
 	}
 	if _, err := w.Write(manifestData); err != nil {
+		return err
+	}
+
+	w, err = apkwcreate("classes.dex")
+	if err != nil {
+		return err
+	}
+	dexData, err := base64.StdEncoding.DecodeString(dexStr)
+	if err != nil {
+		log.Fatal("internal error bad dexStr: %v", err)
+	}
+	if _, err := w.Write(dexData); err != nil {
 		return err
 	}
 
