@@ -6,7 +6,10 @@
 
 package app
 
-import "golang.org/x/mobile/event"
+import (
+	"golang.org/x/mobile/event"
+	_ "golang.org/x/mobile/internal/mobileinit"
+)
 
 // Main is called by the main.main function to run the mobile application.
 //
