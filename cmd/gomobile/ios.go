@@ -5,6 +5,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -16,6 +17,10 @@ import (
 )
 
 func goIOSBuild(src string) error {
+	if buildO != "" && !strings.HasSuffix(buildO, ".app") {
+		return fmt.Errorf("-o must have an .app for target=ios")
+	}
+
 	dir := "$XCODEPROJ"
 	if !buildN {
 		tmp, err := ioutil.TempDir("", "xcodeproject")
@@ -107,19 +112,18 @@ func goIOSBuild(src string) error {
 	}
 
 	// TODO(jbd): Fallback to copying if renaming fails.
-	out := path.Base(pkg.ImportPath) + ".app"
-	if buildO != "" {
-		out = filepath.Join(buildO, out)
+	if buildO == "" {
+		buildO = path.Base(pkg.ImportPath) + ".app"
 	}
 	if buildX {
-		printcmd("mv %s %s", dir+"/build/Release-iphoneos/main.app", out)
+		printcmd("mv %s %s", dir+"/build/Release-iphoneos/main.app", buildO)
 	}
 	if !buildN {
 		// if output already exists, remove.
-		if err := os.RemoveAll(out); err != nil {
+		if err := os.RemoveAll(buildO); err != nil {
 			return err
 		}
-		if err := os.Rename(dir+"/build/Release-iphoneos/main.app", out); err != nil {
+		if err := os.Rename(dir+"/build/Release-iphoneos/main.app", buildO); err != nil {
 			return err
 		}
 	}
