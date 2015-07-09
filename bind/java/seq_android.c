@@ -202,8 +202,6 @@ Java_go_Seq_initSeq(JNIEnv *env, jclass clazz) {
 
 	jclass bclazz = find_class(env, "[B");
 	jbytearray_clazz = (*env)->NewGlobalRef(env, bclazz);
-
-	LOG_INFO("loaded go/Seq");
 }
 
 JNIEXPORT void JNICALL
