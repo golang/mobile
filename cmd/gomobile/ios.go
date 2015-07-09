@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -96,18 +97,29 @@ func goIOSBuild(src string) error {
 	}
 
 	// Build and move the release build to the output directory.
+	cmd := exec.Command(
+		"xcrun", "xcodebuild",
+		"-configuration", "Release",
+		"-project", dir+"/main.xcodeproj",
+	)
+
 	if buildX {
-		printcmd("xcrun xcodebuild -configuration Release -project %s", dir+"/main.xcodeproj")
+		printcmd("%s", strings.Join(cmd.Args, " "))
 	}
-	if !buildN {
-		cmd := exec.Command(
-			"xcrun", "xcodebuild",
-			"-configuration", "Release",
-			"-project", dir+"/main.xcodeproj",
-		)
+
+	buf := new(bytes.Buffer)
+	buf.WriteByte('\n')
+	if buildV {
+		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
+	} else {
+		cmd.Stdout = buf
+		cmd.Stderr = buf
+	}
+
+	if !buildN {
 		if err := cmd.Run(); err != nil {
-			return err
+			return fmt.Errorf("xcodebuild failed: %v%s", err, buf)
 		}
 	}
 
