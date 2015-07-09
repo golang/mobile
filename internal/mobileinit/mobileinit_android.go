@@ -31,8 +31,7 @@ import (
 )
 
 var (
-	ctag    = C.CString("GoStdio")
-	ctagLog = C.CString("GoLog")
+	ctag = C.CString("GoLog")
 )
 
 type infoWriter struct{}
