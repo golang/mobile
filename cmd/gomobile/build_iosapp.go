@@ -7,38 +7,26 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"go/build"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
-	"strconv"
 	"strings"
 )
 
-func goIOSBuild(src string) error {
+func goIOSBuild(pkg *build.Package) error {
+	src := pkg.ImportPath
 	if buildO != "" && !strings.HasSuffix(buildO, ".app") {
 		return fmt.Errorf("-o must have an .app for target=ios")
 	}
 
-	dir := "$XCODEPROJ"
-	if !buildN {
-		tmp, err := ioutil.TempDir("", "xcodeproject")
-		if err != nil {
-			return err
-		}
-		dir = tmp
-		defer os.RemoveAll(dir)
-	}
-	if buildX {
-		printcmd("mkdir %s", dir)
-	}
-
 	layout := map[string][]byte{
-		dir + "/main.xcodeproj/project.pbxproj":                        []byte(projPbxproj),
-		dir + "/main/Info.plist":                                       []byte(infoPlist),
-		dir + "/main/Images.xcassets/AppIcon.appiconset/Contents.json": []byte(contentsJSON),
+		tmpdir + "/main.xcodeproj/project.pbxproj":                        []byte(projPbxproj),
+		tmpdir + "/main/Info.plist":                                       []byte(infoPlist),
+		tmpdir + "/main/Images.xcassets/AppIcon.appiconset/Contents.json": []byte(contentsJSON),
 	}
 
 	for dst, v := range layout {
@@ -55,20 +43,13 @@ func goIOSBuild(src string) error {
 		}
 	}
 
-	armPath := filepath.Join(dir, "arm")
-	if err := goBuild(src, armPath, []string{
-		`GOOS=darwin`,
-		`GOARCH=arm`,
-		`GOARM=7`,
-	}); err != nil {
+	armPath := filepath.Join(tmpdir, "arm")
+	if err := goBuild(src, darwinArmEnv, "-o="+armPath); err != nil {
 		return err
 	}
 
-	arm64Path := filepath.Join(dir, "arm64")
-	if err := goBuild(src, arm64Path, []string{
-		`GOOS=darwin`,
-		`GOARCH=arm64`,
-	}); err != nil {
+	arm64Path := filepath.Join(tmpdir, "arm64")
+	if err := goBuild(src, darwinArm64Env, "-o="+arm64Path); err != nil {
 		return err
 	}
 
@@ -77,13 +58,13 @@ func goIOSBuild(src string) error {
 	// TODO(jbd): Investigate the new announcements about iO9's fat binary
 	// size limitations are breaking this feature.
 	if buildX {
-		printcmd("xcrun lipo -create %s %s -o %s", armPath, arm64Path, filepath.Join(dir, "main/main"))
+		printcmd("xcrun lipo -create %s %s -o %s", armPath, arm64Path, filepath.Join(tmpdir, "main/main"))
 	}
 	if !buildN {
 		cmd := exec.Command(
 			"xcrun", "lipo",
 			"-create", armPath, arm64Path,
-			"-o", filepath.Join(dir, "main/main"),
+			"-o", filepath.Join(tmpdir, "main/main"),
 		)
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
@@ -92,7 +73,7 @@ func goIOSBuild(src string) error {
 	}
 
 	// TODO(jbd): Set the launcher icon.
-	if err := iosCopyAssets(dir); err != nil {
+	if err := iosCopyAssets(pkg, tmpdir); err != nil {
 		return err
 	}
 
@@ -100,7 +81,7 @@ func goIOSBuild(src string) error {
 	cmd := exec.Command(
 		"xcrun", "xcodebuild",
 		"-configuration", "Release",
-		"-project", dir+"/main.xcodeproj",
+		"-project", tmpdir+"/main.xcodeproj",
 	)
 
 	if buildX {
@@ -128,21 +109,21 @@ func goIOSBuild(src string) error {
 		buildO = path.Base(pkg.ImportPath) + ".app"
 	}
 	if buildX {
-		printcmd("mv %s %s", dir+"/build/Release-iphoneos/main.app", buildO)
+		printcmd("mv %s %s", tmpdir+"/build/Release-iphoneos/main.app", buildO)
 	}
 	if !buildN {
 		// if output already exists, remove.
 		if err := os.RemoveAll(buildO); err != nil {
 			return err
 		}
-		if err := os.Rename(dir+"/build/Release-iphoneos/main.app", buildO); err != nil {
+		if err := os.Rename(tmpdir+"/build/Release-iphoneos/main.app", buildO); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func iosCopyAssets(xcodeProjDir string) error {
+func iosCopyAssets(pkg *build.Package, xcodeProjDir string) error {
 	dstAssets := xcodeProjDir + "/main/assets"
 	if buildX {
 		printcmd("mkdir -p %s", dstAssets)
@@ -197,45 +178,6 @@ func iosCopyAssets(xcodeProjDir string) error {
 		_, err = io.Copy(w, f)
 		return err
 	})
-}
-
-func goBuild(src, o string, env []string) error {
-	goroot := goEnv("GOROOT")
-	gopath := goEnv("GOPATH")
-	cmd := exec.Command(
-		`go`,
-		`build`,
-		`-tags=`+strconv.Quote(strings.Join(ctx.BuildTags, ",")),
-	)
-	if buildV {
-		cmd.Args = append(cmd.Args, "-v")
-	}
-	if buildI {
-		cmd.Args = append(cmd.Args, "-i")
-	}
-	if buildX {
-		cmd.Args = append(cmd.Args, "-x")
-	}
-	cmd.Args = append(cmd.Args, "-o="+o)
-	cmd.Args = append(cmd.Args, src)
-	// TODO(jbd): Remove clangwrap.sh dependency by implementing clangwrap.sh
-	// in Go in this package.
-	cmd.Env = append(env, []string{
-		`CGO_ENABLED=1`,
-		`GOROOT=` + goroot,
-		`GOPATH=` + gopath,
-		`CC=` + filepath.Join(goroot, "misc/ios/clangwrap.sh"),
-		`CCX=` + filepath.Join(goroot, "misc/ios/clangwrap.sh"),
-	}...)
-	cmd.Stderr = os.Stderr
-	if buildX {
-		printcmd("%s", strings.Join(cmd.Env, " ")+" "+strings.Join(cmd.Args, " "))
-	}
-	if !buildN {
-		cmd.Env = environ(cmd.Env)
-		return cmd.Run()
-	}
-	return nil
 }
 
 const infoPlist = `<?xml version="1.0" encoding="UTF-8"?>
