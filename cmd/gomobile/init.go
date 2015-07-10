@@ -4,7 +4,6 @@
 
 package main
 
-// TODO(crawshaw): build darwin/arm cross compiler on darwin/{386,amd64}
 // TODO(crawshaw): android/{386,arm64}
 
 import (

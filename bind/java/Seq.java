@@ -21,6 +21,7 @@ public class Seq {
 			Class.forName("go.LoadJNI");
 		} catch (ClassNotFoundException e) {
 			// Ignore, assume the user will load JNI for it.
+			Log.w("GoSeq", "LoadJNI class not found");
 		}
 
 		initSeq();
@@ -239,7 +240,7 @@ public class Seq {
 			if (refnum <= 0) {
 				// We don't keep track of the Go object.
 				// This must not happen.
-				Log.wtf("Seq", "dec request for Go object "+ refnum);
+				Log.wtf("GoSeq", "dec request for Go object "+ refnum);
 				return;
 			}
 			// Java objects are removed on request of Go.
