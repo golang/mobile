@@ -30,7 +30,7 @@ import (
 // There is a significant size different (400MB compared to 30MB).
 var useStrippedNDK = true
 
-const ndkVersion = "ndk-r10d"
+const ndkVersion = "ndk-r10e"
 const openALVersion = "openal-soft-1.16.0.1"
 
 var (
@@ -445,12 +445,12 @@ func fetchNDK() error {
 		return err
 	}
 
-	srcSysroot := filepath.Join(tmpdir, "android-ndk-r10d/platforms/android-15/arch-arm/usr")
+	srcSysroot := filepath.Join(tmpdir, "android-"+ndkVersion+"/platforms/android-15/arch-arm/usr")
 	if err := move(dstSysroot, srcSysroot, "include", "lib"); err != nil {
 		return err
 	}
 
-	ndkpath := filepath.Join(tmpdir, "android-ndk-r10d/toolchains/arm-linux-androideabi-4.8/prebuilt")
+	ndkpath := filepath.Join(tmpdir, "android-"+ndkVersion+"/toolchains/arm-linux-androideabi-4.8/prebuilt")
 	if goos == "windows" && ndkarch == "x86" {
 		ndkpath = filepath.Join(ndkpath, "windows")
 	} else {
@@ -476,7 +476,7 @@ func fetchNDK() error {
 }
 
 func fetchStrippedNDK() error {
-	url := "https://dl.google.com/go/mobile/gomobile-ndk-r10d-" + goos + "-" + ndkarch + ".tar.gz"
+	url := "https://dl.google.com/go/mobile/gomobile-" + ndkVersion + "-" + goos + "-" + ndkarch + ".tar.gz"
 	archive, err := fetch(url)
 	if err != nil {
 		return err
