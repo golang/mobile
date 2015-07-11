@@ -27,7 +27,7 @@ Commands:
 	bind        build a shared library for android APK and iOS app
 	build       compile android APK and iOS app
 	init        install android compiler toolchain
-	install     compile android APK and iOS app and install on device
+	install     compile android APK and install on device
 
 Use 'gomobile help [command]' for more information about that command.
 
@@ -117,7 +117,7 @@ The -u option forces download and installation of the new toolchain
 even when the toolchain exists.
 
 
-Compile android APK and iOS app and install on device
+Compile android APK and install on device
 
 Usage:
 

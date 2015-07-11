@@ -5,16 +5,18 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 var cmdInstall = &command{
 	run:   runInstall,
 	Name:  "install",
 	Usage: "[-target android] [build flags] [package]",
-	Short: "compile android APK and iOS app and install on device",
+	Short: "compile android APK and install on device",
 	Long: `
 Install compiles and installs the app named by the import path on the
 attached mobile device.
@@ -27,6 +29,9 @@ For documentation, see 'go help build'.
 }
 
 func runInstall(cmd *command) error {
+	if buildTarget != "android" {
+		return fmt.Errorf("install is not supported for -target=%s", buildTarget)
+	}
 	if err := runBuild(cmd); err != nil {
 		return err
 	}
@@ -36,6 +41,9 @@ func runInstall(cmd *command) error {
 		`-r`,
 		filepath.Base(pkg.Dir)+`.apk`,
 	)
+	if buildX {
+		printcmd("%s", strings.Join(install.Args, " "))
+	}
 	if buildV {
 		install.Stdout = os.Stdout
 		install.Stderr = os.Stderr
