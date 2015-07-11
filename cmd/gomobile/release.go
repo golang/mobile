@@ -26,7 +26,7 @@ import (
 	"runtime"
 )
 
-const ndkVersion = "ndk-r10d"
+const ndkVersion = "ndk-r10e"
 
 type version struct {
 	os   string
@@ -34,7 +34,6 @@ type version struct {
 }
 
 var hosts = []version{
-	{"darwin", "x86"},
 	{"darwin", "x86_64"},
 	{"linux", "x86"},
 	{"linux", "x86_64"},
@@ -181,8 +180,8 @@ func mkpkg(host version) (err error) {
 		return err
 	}
 
-	// The NDK is unpacked into tmpdir/linux-x86_64-src/android-ndk-r10d.
-	// Move the files we want into tmpdir/linux-x86_64-dst/android-ndk-r10d.
+	// The NDK is unpacked into tmpdir/linux-x86_64-src/android-{{ndkVersion}}.
+	// Move the files we want into tmpdir/linux-x86_64-dst/android-{{ndkVersion}}.
 	// We preserve the same file layout to make the full NDK interchangable
 	// with the cut down file.
 	usr := "android-" + ndkVersion + "/platforms/android-15/arch-arm/usr"
@@ -207,7 +206,7 @@ func mkpkg(host version) (err error) {
 	}
 
 	// Build the tarball.
-	f, err := os.Create("gomobile-ndk-r10d-" + host.os + "-" + host.arch + ".tar.gz")
+	f, err := os.Create("gomobile-" + ndkVersion + "-" + host.os + "-" + host.arch + ".tar.gz")
 	if err != nil {
 		return err
 	}
