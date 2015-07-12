@@ -37,7 +37,7 @@ type ReadSeekCloser interface {
 	io.Closer
 }
 
-// Format represents an PCM data format.
+// Format represents a PCM data format.
 type Format int
 
 const (
