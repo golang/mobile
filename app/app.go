@@ -8,6 +8,7 @@ package app
 
 import (
 	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/gl"
 	_ "golang.org/x/mobile/internal/mobileinit"
 )
 
@@ -69,6 +70,15 @@ func (app) Send(event interface{}) {
 }
 
 func (app) EndDraw() {
+	// gl.Flush is a lightweight (on modern GL drivers) blocking call
+	// that ensures all GL functions pending in the gl package have
+	// been passed onto the GL driver before the app package attempts
+	// to swap the screen buffer.
+	//
+	// This enforces that the final receive (for this draw cycle) on
+	// gl.WorkAvailable happens before the send on endDraw.
+	gl.Flush()
+
 	select {
 	case endDraw <- struct{}{}:
 	default:
