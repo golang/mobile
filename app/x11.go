@@ -32,6 +32,10 @@ import (
 	"golang.org/x/mobile/gl"
 )
 
+func init() {
+	registerGLViewportFilter()
+}
+
 func main(f func(App)) {
 	runtime.LockOSThread()
 	C.createWindow()
@@ -76,25 +80,6 @@ func onResize(w, h int) {
 		Width:       geom.Pt(w),
 		Height:      geom.Pt(h),
 		PixelsPerPt: pixelsPerPt,
-	}
-
-	// This gl.Viewport call has to be in a separate goroutine because any gl
-	// call can block until gl.DoWork is called, but this goroutine is the one
-	// responsible for calling gl.DoWork.
-	// TODO: does this (GL-using) code belong here in the x/mobile/app
-	// package?? See similar TODOs in the Android x/mobile/app implementation.
-	c := make(chan struct{})
-	go func() {
-		gl.Viewport(0, 0, w, h)
-		close(c)
-	}()
-	for {
-		select {
-		case <-gl.WorkAvailable:
-			gl.DoWork()
-		case <-c:
-			return
-		}
 	}
 }
 
