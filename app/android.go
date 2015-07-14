@@ -211,6 +211,10 @@ var (
 	windowRedrawNeeded = make(chan *C.ANativeWindow)
 )
 
+func init() {
+	registerGLViewportFilter()
+}
+
 func main(f func(App)) {
 	// Preserve this OS thread for the GL context created in windowDraw.
 	runtime.LockOSThread()

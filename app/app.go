@@ -239,3 +239,19 @@ type Callbacks struct {
 	// Config is called by the app when configuration has changed.
 	Config func(new, old event.Config)
 }
+
+// TODO: do this for all build targets, not just linux (x11 and Android)? If
+// so, should package gl instead of this package call event.RegisterFilter??
+//
+// TODO: does Android need this?? It seems to work without it (Nexus 7,
+// KitKat). If only x11 needs this, should we move this to x11.go??
+func registerGLViewportFilter() {
+	event.RegisterFilter(func(e interface{}) interface{} {
+		if e, ok := e.(event.Config); ok {
+			w := int(e.PixelsPerPt * float32(e.Width))
+			h := int(e.PixelsPerPt * float32(e.Height))
+			gl.Viewport(0, 0, w, h)
+		}
+		return e
+	})
+}

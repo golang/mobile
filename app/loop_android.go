@@ -121,27 +121,6 @@ func windowDraw(w *C.ANativeWindow, queue *C.AInputQueue, donec chan struct{}) (
 				Height:      geom.Pt(float32(C.windowHeight) / pixelsPerPt),
 				PixelsPerPt: pixelsPerPt,
 			}
-			// This gl.Viewport call has to be in a separate goroutine because any gl
-			// call can block until gl.DoWork is called, but this goroutine is the one
-			// responsible for calling gl.DoWork.
-			// TODO: again, should x/mobile/app be responsible for calling GL code, or
-			// should package gl instead call event.RegisterFilter?
-			{
-				c := make(chan struct{})
-				go func() {
-					gl.Viewport(0, 0, int(C.windowWidth), int(C.windowHeight))
-					close(c)
-				}()
-			loop1:
-				for {
-					select {
-					case <-gl.WorkAvailable:
-						gl.DoWork()
-					case <-c:
-						break loop1
-					}
-				}
-			}
 		case <-windowDestroyed:
 			sendLifecycle(event.LifecycleStageAlive)
 			return false
