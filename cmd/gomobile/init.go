@@ -190,7 +190,6 @@ func installStd(tOS, tArch string, env []string) error {
 	if tArch == "arm" {
 		cmd.Env = append(cmd.Env, "GOARM=7")
 	}
-	cmd.Env = appendCommonEnv(cmd.Env)
 	if buildX {
 		printcmd("%s", strings.Join(cmd.Env, " ")+" "+strings.Join(cmd.Args, " "))
 	}
@@ -206,25 +205,12 @@ func installStd(tOS, tArch string, env []string) error {
 	}
 
 	if !buildN {
+		cmd.Env = environ(cmd.Env)
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("go install std for %s/%s failed: %v%s", tOS, tArch, err, buf)
 		}
 	}
 	return nil
-}
-
-func appendCommonEnv(env []string) []string {
-	if goos == "windows" {
-		env = append(env, `TEMP=`+tmpdir)
-		env = append(env, `TMP=`+tmpdir)
-		env = append(env, `HOMEDRIVE=`+os.Getenv("HOMEDRIVE"))
-		env = append(env, `HOMEPATH=`+os.Getenv("HOMEPATH"))
-	} else {
-		env = append(env, `TMPDIR=`+tmpdir)
-		// for default the go1.4 bootstrap
-		env = append(env, `HOME=`+os.Getenv("HOME"))
-	}
-	return env
 }
 
 func removeGomobilepkg() {
@@ -313,45 +299,6 @@ func goVersion() ([]byte, error) {
 		return nil, fmt.Errorf("installed Go tool does not support -toolexec")
 	}
 	return exec.Command(gobin, "version").CombinedOutput()
-}
-
-// checkVersionMatch makes sure that the go command in the path matches
-// the GOROOT that will be used for building the cross compiler.
-//
-// This is typically not a problem when using the a release version, but
-// it is easy for development environments to drift, causing unexpected
-// errors.
-//
-// checkVersionMatch is run after the tmpGoroot is built, so the dist
-// command is available to call.
-func checkVersionMatch(tmpGoroot string, version []byte) error {
-	if buildN {
-		return nil
-	}
-	version = bytes.TrimPrefix(version, []byte("go version "))
-	version = bytes.Trim(version, "\n")
-
-	dist := filepath.Join(tmpGoroot, "pkg/tool/"+goEnv("GOOS")+"_"+goEnv("GOARCH")+"/dist")
-	if goos == "windows" {
-		dist += ".exe"
-	}
-	cmd := exec.Command(dist, "version")
-	cmd.Dir = tmpGoroot
-	cmd.Env = []string{
-		"GOROOT=" + tmpGoroot,
-		`PATH=` + os.Getenv("PATH"),
-	}
-	cmd.Env = appendCommonEnv(cmd.Env)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("cannot get cmd/dist version: %v (%s)", err, out)
-	}
-	out = bytes.Trim(out, "\n")
-
-	if !bytes.HasPrefix(version, out) {
-		return fmt.Errorf("Go command out of sync with GOROOT. The command `go version` reports:\n\t%s\nbut the GOROOT %q is version:\n\t%s\nRebuild Go.", version, goEnv("GOROOT"), out)
-	}
-	return nil
 }
 
 func fetchOpenAL() error {
@@ -582,32 +529,6 @@ func fetch(url string) (dst string, err error) {
 		return "", err
 	}
 	return dst, nil
-}
-
-// copyGoroot copies GOROOT from src to dst.
-//
-// It skips the pkg directory, which is not necessary for make.bash,
-// and symlinks .git to avoid a 70MB copy.
-func copyGoroot(dst, src string) error {
-	if err := mkdir(filepath.Join(dst, "pkg")); err != nil {
-		return err
-	}
-	for _, dir := range []string{"lib", "src", "misc"} {
-		if err := copyAll(filepath.Join(dst, dir), filepath.Join(src, dir)); err != nil {
-			return err
-		}
-	}
-	return symlink(filepath.Join(src, ".git"), filepath.Join(dst, ".git"))
-}
-
-func copyAll(dst, src string) error {
-	if buildX {
-		printcmd("cp -a %s %s", src, dst)
-	}
-	if buildN {
-		return nil
-	}
-	return doCopyAll(dst, src)
 }
 
 func doCopyAll(dst, src string) error {
