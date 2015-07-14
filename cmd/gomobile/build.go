@@ -196,41 +196,6 @@ func init() {
 	addBuildFlagsNVX(cmdBind)
 }
 
-// environ merges os.Environ and the given "key=value" pairs.
-func environ(kv []string) []string {
-	envs := map[string]string{}
-
-	cur := os.Environ()
-	new := make([]string, 0, len(cur)+len(kv))
-	for _, ev := range cur {
-		elem := strings.SplitN(ev, "=", 2)
-		if len(elem) != 2 || elem[0] == "" {
-			// pass the env var of unusual form untouched.
-			// e.g. Windows may have env var names starting with "=".
-			new = append(new, ev)
-			continue
-		}
-		if goos == "windows" {
-			elem[0] = strings.ToUpper(elem[0])
-		}
-		envs[elem[0]] = elem[1]
-	}
-	for _, ev := range kv {
-		elem := strings.SplitN(ev, "=", 2)
-		if len(elem) != 2 || elem[0] == "" {
-			panic(fmt.Sprintf("malformed env var %q from input", ev))
-		}
-		if goos == "windows" {
-			elem[0] = strings.ToUpper(elem[0])
-		}
-		envs[elem[0]] = elem[1]
-	}
-	for k, v := range envs {
-		new = append(new, k+"="+v)
-	}
-	return new
-}
-
 func goBuild(src string, env []string, args ...string) error {
 	cmd := exec.Command(
 		`go`,
@@ -248,12 +213,8 @@ func goBuild(src string, env []string, args ...string) error {
 	}
 	cmd.Args = append(cmd.Args, args...)
 	cmd.Args = append(cmd.Args, src)
+	cmd.Env = []string{"CGO_ENABLED=1"}
 	cmd.Env = append(cmd.Env, env...)
-	cmd.Env = append(cmd.Env,
-		`CGO_ENABLED=1`,
-		`GOROOT=`+goEnv("GOROOT"),
-		`GOPATH=`+goEnv("GOPATH"),
-	)
 	buf := new(bytes.Buffer)
 	buf.WriteByte('\n')
 	if buildV {

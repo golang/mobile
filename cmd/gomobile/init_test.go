@@ -57,16 +57,14 @@ func diffOutput(got string, wantTmpl *template.Template) (string, error) {
 
 	wantBuf := new(bytes.Buffer)
 	data := outputData{
-		NDK:         ndkVersion,
-		GOOS:        goos,
-		GOARCH:      goarch,
-		GOPATH:      gopath,
-		NDKARCH:     ndkarch,
-		BuildScript: unixBuildScript,
+		NDK:     ndkVersion,
+		GOOS:    goos,
+		GOARCH:  goarch,
+		GOPATH:  gopath,
+		NDKARCH: ndkarch,
 	}
 	if goos == "windows" {
 		data.EXE = ".exe"
-		data.BuildScript = windowsBuildScript
 	}
 	if err := wantTmpl.Execute(wantBuf, data); err != nil {
 		return "", err
@@ -79,19 +77,13 @@ func diffOutput(got string, wantTmpl *template.Template) (string, error) {
 }
 
 type outputData struct {
-	NDK         string
-	GOOS        string
-	GOARCH      string
-	GOPATH      string
-	NDKARCH     string
-	EXE         string // .extension for executables. (ex. ".exe" for windows)
-	BuildScript string
+	NDK     string
+	GOOS    string
+	GOARCH  string
+	GOPATH  string
+	NDKARCH string
+	EXE     string // .extension for executables. (ex. ".exe" for windows)
 }
-
-const (
-	unixBuildScript    = `TMPDIR=$WORK HOME=$HOME go install std`
-	windowsBuildScript = `TEMP=$WORK TMP=$WORK HOMEDRIVE=C: HOMEPATH=$HOMEPATH go install std`
-)
 
 var initTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
 mkdir -p $GOMOBILE/android-{{.NDK}}
@@ -117,11 +109,11 @@ mv $WORK/openal/include/AL $GOMOBILE/android-{{.NDK}}/arm/sysroot/usr/include/AL
 mkdir -p $GOMOBILE/android-{{.NDK}}/openal
 mv $WORK/openal/lib $GOMOBILE/android-{{.NDK}}/openal/lib
 rm -r -f "$GOROOT/pkg/android_arm"
-PATH=$PATH GOOS=android GOARCH=arm CGO_ENABLED=1 CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-gcc{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-g++{{.EXE}} GOARM=7 {{.BuildScript}}
+PATH=$PATH GOOS=android GOARCH=arm CGO_ENABLED=1 CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-gcc{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-g++{{.EXE}} GOARM=7 go install std
 {{if eq .GOOS "darwin"}}rm -r -f "$GOROOT/pkg/darwin_arm"
-PATH=$PATH GOOS=darwin GOARCH=arm CGO_ENABLED=1 CC=$GOROOT/misc/ios/clangwrap.sh CXX=$GOROOT/misc/ios/clangwrap.sh GOARM=7 {{.BuildScript}}
+PATH=$PATH GOOS=darwin GOARCH=arm CGO_ENABLED=1 CC=$GOROOT/misc/ios/clangwrap.sh CXX=$GOROOT/misc/ios/clangwrap.sh GOARM=7 go install std
 rm -r -f "$GOROOT/pkg/darwin_arm64"
-PATH=$PATH GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 CC=$GOROOT/misc/ios/clangwrap.sh CXX=$GOROOT/misc/ios/clangwrap.sh {{.BuildScript}}
+PATH=$PATH GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 CC=$GOROOT/misc/ios/clangwrap.sh CXX=$GOROOT/misc/ios/clangwrap.sh go install std
 {{end}}go version > $GOMOBILE/version
 rm -r -f "$WORK"
 `))
