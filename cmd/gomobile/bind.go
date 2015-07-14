@@ -16,8 +16,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"unicode"
-	"unicode/utf8"
+	"strings"
 
 	"golang.org/x/mobile/bind"
 	"golang.org/x/tools/go/loader"
@@ -89,7 +88,7 @@ func runBind(cmd *command) error {
 	case "android":
 		return goAndroidBind(pkg)
 	case "ios":
-		return fmt.Errorf(`-target=ios not yet supported`)
+		return goIOSBind(pkg)
 	default:
 		return fmt.Errorf(`unknown -target, %q.`, buildTarget)
 	}
@@ -101,9 +100,37 @@ type binder struct {
 	pkg   *types.Package
 }
 
+func (b *binder) GenObjc(outdir string) error {
+	name := strings.Title(b.pkg.Name())
+	mfile := filepath.Join(outdir, "Go"+name+".m")
+	hfile := filepath.Join(outdir, "Go"+name+".h")
+
+	if buildX {
+		printcmd("gobind -lang=objc %s > %s", b.pkg.Path(), mfile)
+	}
+
+	generate := func(w io.Writer) error {
+		return bind.GenObjc(w, b.fset, b.pkg, false)
+	}
+	if err := writeFile(mfile, generate); err != nil {
+		return err
+	}
+	generate = func(w io.Writer) error {
+		return bind.GenObjc(w, b.fset, b.pkg, true)
+	}
+	if err := writeFile(hfile, generate); err != nil {
+		return err
+	}
+
+	objcPkg, err := ctx.Import("golang.org/x/mobile/bind/objc", "", build.FindOnly)
+	if err != nil {
+		return err
+	}
+	return copyFile(filepath.Join(outdir, "seq.h"), filepath.Join(objcPkg.Dir, "seq.h"))
+}
+
 func (b *binder) GenJava(outdir string) error {
-	firstRune, size := utf8.DecodeRuneInString(b.pkg.Name())
-	className := string(unicode.ToUpper(firstRune)) + b.pkg.Name()[size:]
+	className := strings.Title(b.pkg.Name())
 	javaFile := filepath.Join(outdir, className+".java")
 
 	if buildX {
@@ -134,6 +161,21 @@ func (b *binder) GenGo(outdir string) error {
 		return err
 	}
 	return nil
+}
+
+func copyFile(dst, src string) error {
+	if buildX {
+		printcmd("cp %s %s", src, dst)
+	}
+	f, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return writeFile(dst, func(w io.Writer) error {
+		_, err := io.Copy(w, f)
+		return err
+	})
 }
 
 func writeFile(filename string, generate func(io.Writer) error) error {
