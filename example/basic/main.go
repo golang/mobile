@@ -31,7 +31,10 @@ import (
 	"log"
 
 	"golang.org/x/mobile/app"
+	"golang.org/x/mobile/event"
 	"golang.org/x/mobile/event/config"
+	"golang.org/x/mobile/event/lifecycle"
+	"golang.org/x/mobile/event/paint"
 	"golang.org/x/mobile/event/touch"
 	"golang.org/x/mobile/exp/app/debug"
 	"golang.org/x/mobile/exp/f32"
@@ -52,12 +55,27 @@ var (
 )
 
 func main() {
-	app.Run(app.Callbacks{
-		Start:  onStart,
-		Stop:   onStop,
-		Draw:   onDraw,
-		Touch:  onTouch,
-		Config: onConfig,
+	app.Main(func(a app.App) {
+		var c config.Event
+		for e := range a.Events() {
+			switch e := event.Filter(e).(type) {
+			case lifecycle.Event:
+				switch e.Crosses(lifecycle.StageVisible) {
+				case lifecycle.CrossOn:
+					onStart()
+				case lifecycle.CrossOff:
+					onStop()
+				}
+			case config.Event:
+				c = e
+				touchLoc = geom.Point{c.Width / 2, c.Height / 2}
+			case paint.Event:
+				onDraw(c)
+				a.EndDraw()
+			case touch.Event:
+				touchLoc = e.Loc
+			}
+		}
 	})
 }
 
@@ -84,14 +102,6 @@ func onStart() {
 func onStop() {
 	gl.DeleteProgram(program)
 	gl.DeleteBuffer(buf)
-}
-
-func onConfig(new, old config.Event) {
-	touchLoc = geom.Point{new.Width / 2, new.Height / 2}
-}
-
-func onTouch(t touch.Event, c config.Event) {
-	touchLoc = t.Loc
 }
 
 func onDraw(c config.Event) {
