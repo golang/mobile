@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/exp/gl/glutil"
 	"golang.org/x/mobile/geom"
 )
@@ -21,12 +21,12 @@ var lastDraw = time.Now()
 
 var fps struct {
 	mu sync.Mutex
-	c  event.Config
+	c  config.Event
 	m  *glutil.Image
 }
 
 // DrawFPS draws the per second framerate in the bottom-left of the screen.
-func DrawFPS(c event.Config) {
+func DrawFPS(c config.Event) {
 	const imgW, imgH = 7*(fontWidth+1) + 1, fontHeight + 2
 
 	fps.mu.Lock()

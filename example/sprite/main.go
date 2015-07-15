@@ -36,7 +36,7 @@ import (
 
 	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/asset"
-	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/exp/app/debug"
 	"golang.org/x/mobile/exp/f32"
 	"golang.org/x/mobile/exp/sprite"
@@ -53,11 +53,11 @@ var (
 
 func main() {
 	app.Run(app.Callbacks{
-		Draw: draw,
+		Draw: onDraw,
 	})
 }
 
-func draw(c event.Config) {
+func onDraw(c config.Event) {
 	if scene == nil {
 		loadScene()
 	}

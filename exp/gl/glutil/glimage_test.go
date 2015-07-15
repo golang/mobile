@@ -18,7 +18,7 @@ import (
 	"runtime"
 	"testing"
 
-	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/gl"
 )
@@ -65,7 +65,7 @@ func TestImage(t *testing.T) {
 		ptW  = geom.Pt(50)
 		ptH  = geom.Pt(50)
 	)
-	cfg := event.Config{
+	cfg := config.Event{
 		Width:       ptW,
 		Height:      ptH,
 		PixelsPerPt: float32(pixW) / float32(ptW),

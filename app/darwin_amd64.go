@@ -27,7 +27,10 @@ import (
 	"runtime"
 	"sync"
 
-	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/event/config"
+	"golang.org/x/mobile/event/lifecycle"
+	"golang.org/x/mobile/event/paint"
+	"golang.org/x/mobile/event/touch"
 	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/gl"
 )
@@ -75,7 +78,7 @@ func loop(ctx C.GLintptr) {
 	C.makeCurrentContext(ctx)
 
 	for range draw {
-		eventsIn <- event.Draw{}
+		eventsIn <- paint.Event{}
 	loop1:
 		for {
 			select {
@@ -112,7 +115,7 @@ var windowHeight geom.Pt
 func setGeom(ppp float32, width, height int) {
 	pixelsPerPt = ppp
 	windowHeight = geom.Pt(float32(height) / pixelsPerPt)
-	eventsIn <- event.Config{
+	eventsIn <- config.Event{
 		Width:       geom.Pt(float32(width) / pixelsPerPt),
 		Height:      windowHeight,
 		PixelsPerPt: pixelsPerPt,
@@ -121,13 +124,13 @@ func setGeom(ppp float32, width, height int) {
 
 var touchEvents struct {
 	sync.Mutex
-	pending []event.Touch
+	pending []touch.Event
 }
 
-func sendTouch(c event.Change, x, y float32) {
-	eventsIn <- event.Touch{
-		ID:     0,
-		Change: c,
+func sendTouch(t touch.Type, x, y float32) {
+	eventsIn <- touch.Event{
+		Sequence: 0,
+		Type:     t,
 		Loc: geom.Point{
 			X: geom.Pt(x / pixelsPerPt),
 			Y: windowHeight - geom.Pt(y/pixelsPerPt),
@@ -136,22 +139,22 @@ func sendTouch(c event.Change, x, y float32) {
 }
 
 //export eventMouseDown
-func eventMouseDown(x, y float32) { sendTouch(event.ChangeOn, x, y) }
+func eventMouseDown(x, y float32) { sendTouch(touch.TypeStart, x, y) }
 
 //export eventMouseDragged
-func eventMouseDragged(x, y float32) { sendTouch(event.ChangeNone, x, y) }
+func eventMouseDragged(x, y float32) { sendTouch(touch.TypeMove, x, y) }
 
 //export eventMouseEnd
-func eventMouseEnd(x, y float32) { sendTouch(event.ChangeOff, x, y) }
+func eventMouseEnd(x, y float32) { sendTouch(touch.TypeEnd, x, y) }
 
 //export lifecycleDead
-func lifecycleDead() { sendLifecycle(event.LifecycleStageDead) }
+func lifecycleDead() { sendLifecycle(lifecycle.StageDead) }
 
 //export lifecycleAlive
-func lifecycleAlive() { sendLifecycle(event.LifecycleStageAlive) }
+func lifecycleAlive() { sendLifecycle(lifecycle.StageAlive) }
 
 //export lifecycleVisible
-func lifecycleVisible() { sendLifecycle(event.LifecycleStageVisible) }
+func lifecycleVisible() { sendLifecycle(lifecycle.StageVisible) }
 
 //export lifecycleFocused
-func lifecycleFocused() { sendLifecycle(event.LifecycleStageFocused) }
+func lifecycleFocused() { sendLifecycle(lifecycle.StageFocused) }

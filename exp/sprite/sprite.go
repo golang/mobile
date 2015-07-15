@@ -28,7 +28,7 @@ import (
 	"image"
 	"image/draw"
 
-	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/exp/f32"
 	"golang.org/x/mobile/exp/sprite/clock"
 )
@@ -60,7 +60,7 @@ type Engine interface {
 
 	// Render renders the scene arranged at the given time, for the given
 	// window configuration (dimensions and resolution).
-	Render(scene *Node, t clock.Time, c event.Config)
+	Render(scene *Node, t clock.Time, c config.Event)
 }
 
 // A Node is a renderable element and forms a tree of Nodes.

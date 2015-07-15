@@ -27,7 +27,10 @@ import (
 	"runtime"
 	"time"
 
-	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/event/config"
+	"golang.org/x/mobile/event/lifecycle"
+	"golang.org/x/mobile/event/paint"
+	"golang.org/x/mobile/event/touch"
 	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/gl"
 )
@@ -41,7 +44,7 @@ func main(f func(App)) {
 	C.createWindow()
 
 	// TODO: send lifecycle events when e.g. the X11 window is iconified or moved off-screen.
-	sendLifecycle(event.LifecycleStageFocused)
+	sendLifecycle(lifecycle.StageFocused)
 
 	donec := make(chan struct{})
 	go func() {
@@ -65,7 +68,7 @@ func main(f func(App)) {
 			tc = ticker.C
 		case <-tc:
 			tc = nil
-			eventsIn <- event.Draw{}
+			eventsIn <- paint.Event{}
 		}
 		C.processEvents()
 	}
@@ -76,17 +79,17 @@ func onResize(w, h int) {
 	// TODO(nigeltao): don't assume 72 DPI. DisplayWidth and DisplayWidthMM
 	// is probably the best place to start looking.
 	pixelsPerPt = 1
-	eventsIn <- event.Config{
+	eventsIn <- config.Event{
 		Width:       geom.Pt(w),
 		Height:      geom.Pt(h),
 		PixelsPerPt: pixelsPerPt,
 	}
 }
 
-func sendTouch(c event.Change, x, y float32) {
-	eventsIn <- event.Touch{
-		ID:     0, // TODO: button??
-		Change: c,
+func sendTouch(t touch.Type, x, y float32) {
+	eventsIn <- touch.Event{
+		Sequence: 0, // TODO: button??
+		Type:     t,
 		Loc: geom.Point{
 			X: geom.Pt(x / pixelsPerPt),
 			Y: geom.Pt(y / pixelsPerPt),
@@ -95,13 +98,13 @@ func sendTouch(c event.Change, x, y float32) {
 }
 
 //export onTouchStart
-func onTouchStart(x, y float32) { sendTouch(event.ChangeOn, x, y) }
+func onTouchStart(x, y float32) { sendTouch(touch.TypeStart, x, y) }
 
 //export onTouchMove
-func onTouchMove(x, y float32) { sendTouch(event.ChangeNone, x, y) }
+func onTouchMove(x, y float32) { sendTouch(touch.TypeMove, x, y) }
 
 //export onTouchEnd
-func onTouchEnd(x, y float32) { sendTouch(event.ChangeOff, x, y) }
+func onTouchEnd(x, y float32) { sendTouch(touch.TypeEnd, x, y) }
 
 var stopped bool
 
@@ -111,6 +114,6 @@ func onStop() {
 		return
 	}
 	stopped = true
-	sendLifecycle(event.LifecycleStageDead)
+	sendLifecycle(lifecycle.StageDead)
 	eventsIn <- stopPumping{}
 }

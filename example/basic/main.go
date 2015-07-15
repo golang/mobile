@@ -31,7 +31,8 @@ import (
 	"log"
 
 	"golang.org/x/mobile/app"
-	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/event/config"
+	"golang.org/x/mobile/event/touch"
 	"golang.org/x/mobile/exp/app/debug"
 	"golang.org/x/mobile/exp/f32"
 	"golang.org/x/mobile/exp/gl/glutil"
@@ -52,15 +53,15 @@ var (
 
 func main() {
 	app.Run(app.Callbacks{
-		Start:  start,
-		Stop:   stop,
-		Draw:   draw,
-		Touch:  touch,
-		Config: config,
+		Start:  onStart,
+		Stop:   onStop,
+		Draw:   onDraw,
+		Touch:  onTouch,
+		Config: onConfig,
 	})
 }
 
-func start() {
+func onStart() {
 	var err error
 	program, err = glutil.CreateProgram(vertexShader, fragmentShader)
 	if err != nil {
@@ -80,20 +81,20 @@ func start() {
 	// Can this be an event.Register call now??
 }
 
-func stop() {
+func onStop() {
 	gl.DeleteProgram(program)
 	gl.DeleteBuffer(buf)
 }
 
-func config(new, old event.Config) {
+func onConfig(new, old config.Event) {
 	touchLoc = geom.Point{new.Width / 2, new.Height / 2}
 }
 
-func touch(t event.Touch, c event.Config) {
+func onTouch(t touch.Event, c config.Event) {
 	touchLoc = t.Loc
 }
 
-func draw(c event.Config) {
+func onDraw(c config.Event) {
 	gl.ClearColor(1, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 

@@ -8,6 +8,10 @@ package app
 
 import (
 	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/event/config"
+	"golang.org/x/mobile/event/lifecycle"
+	"golang.org/x/mobile/event/paint"
+	"golang.org/x/mobile/event/touch"
 	"golang.org/x/mobile/gl"
 	_ "golang.org/x/mobile/internal/mobileinit"
 )
@@ -24,12 +28,12 @@ func Main(f func(App)) {
 type App interface {
 	// Events returns the events channel. It carries events from the system to
 	// the app. The type of such events include:
-	//  - event.Config
-	//  - event.Draw
-	//  - event.Lifecycle
-	//  - event.Touch
-	// from the golang.org/x/mobile/events package. Other packages may define
-	// other event types that are carried on this channel.
+	//  - config.Event
+	//  - lifecycle.Event
+	//  - paint.Event
+	//  - touch.Event
+	// from the golang.org/x/mobile/event/etc packages. Other packages may
+	// define other event types that are carried on this channel.
 	Events() <-chan interface{}
 
 	// Send sends an event on the events channel. It does not block.
@@ -40,7 +44,7 @@ type App interface {
 }
 
 var (
-	lifecycleStage = event.LifecycleStageDead
+	lifecycleStage = lifecycle.StageDead
 	pixelsPerPt    = float32(1)
 
 	eventsOut = make(chan interface{})
@@ -48,11 +52,11 @@ var (
 	endDraw   = make(chan struct{}, 1)
 )
 
-func sendLifecycle(to event.LifecycleStage) {
+func sendLifecycle(to lifecycle.Stage) {
 	if lifecycleStage == to {
 		return
 	}
-	eventsIn <- event.Lifecycle{
+	eventsIn <- lifecycle.Event{
 		From: lifecycleStage,
 		To:   to,
 	}
@@ -157,31 +161,31 @@ func pump(dst chan interface{}) (src chan interface{}) {
 // Deprecated: call Main directly instead.
 func Run(cb Callbacks) {
 	Main(func(a App) {
-		var c event.Config
+		var c config.Event
 		for e := range a.Events() {
 			switch e := event.Filter(e).(type) {
-			case event.Lifecycle:
-				switch e.Crosses(event.LifecycleStageVisible) {
-				case event.ChangeOn:
+			case lifecycle.Event:
+				switch e.Crosses(lifecycle.StageVisible) {
+				case lifecycle.CrossOn:
 					if cb.Start != nil {
 						cb.Start()
 					}
-				case event.ChangeOff:
+				case lifecycle.CrossOff:
 					if cb.Stop != nil {
 						cb.Stop()
 					}
 				}
-			case event.Config:
+			case config.Event:
 				if cb.Config != nil {
 					cb.Config(e, c)
 				}
 				c = e
-			case event.Draw:
+			case paint.Event:
 				if cb.Draw != nil {
 					cb.Draw(c)
 				}
 				a.EndDraw()
-			case event.Touch:
+			case touch.Event:
 				if cb.Touch != nil {
 					cb.Touch(e, c)
 				}
@@ -231,13 +235,13 @@ type Callbacks struct {
 	//
 	// Drawing is done into a framebuffer, which is then swapped onto the
 	// screen when Draw returns. It is called 60 times a second.
-	Draw func(event.Config)
+	Draw func(config.Event)
 
 	// Touch is called by the app when a touch event occurs.
-	Touch func(event.Touch, event.Config)
+	Touch func(touch.Event, config.Event)
 
 	// Config is called by the app when configuration has changed.
-	Config func(new, old event.Config)
+	Config func(new, old config.Event)
 }
 
 // TODO: do this for all build targets, not just linux (x11 and Android)? If
@@ -247,7 +251,7 @@ type Callbacks struct {
 // KitKat). If only x11 needs this, should we move this to x11.go??
 func registerGLViewportFilter() {
 	event.RegisterFilter(func(e interface{}) interface{} {
-		if e, ok := e.(event.Config); ok {
+		if e, ok := e.(config.Event); ok {
 			w := int(e.PixelsPerPt * float32(e.Width))
 			h := int(e.PixelsPerPt * float32(e.Height))
 			gl.Viewport(0, 0, w, h)

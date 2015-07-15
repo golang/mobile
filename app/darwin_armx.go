@@ -28,7 +28,10 @@ import (
 	"sync"
 	"unsafe"
 
-	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/event/config"
+	"golang.org/x/mobile/event/lifecycle"
+	"golang.org/x/mobile/event/paint"
+	"golang.org/x/mobile/event/touch"
 	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/gl"
 )
@@ -95,7 +98,7 @@ func setScreen(scale int) {
 
 //export updateConfig
 func updateConfig(width, height int) {
-	eventsIn <- event.Config{
+	eventsIn <- config.Event{
 		Width:       geom.Pt(float32(screenScale*width) / pixelsPerPt),
 		Height:      geom.Pt(float32(screenScale*height) / pixelsPerPt),
 		PixelsPerPt: pixelsPerPt,
@@ -113,11 +116,11 @@ var touchIDs [11]uintptr
 
 var touchEvents struct {
 	sync.Mutex
-	pending []event.Touch
+	pending []touch.Event
 }
 
 //export sendTouch
-func sendTouch(touch, change uintptr, x, y float32) {
+func sendTouch(touch, touchType uintptr, x, y float32) {
 	id := -1
 	for i, val := range touchIDs {
 		if val == touch {
@@ -138,14 +141,14 @@ func sendTouch(touch, change uintptr, x, y float32) {
 		}
 	}
 
-	c := event.Change(change)
-	if c == event.ChangeOff {
+	t := touch.Type(touchType)
+	if t == touch.TypeEnd {
 		touchIDs[id] = 0
 	}
 
-	eventsIn <- event.Touch{
-		ID:     event.TouchSequenceID(id),
-		Change: c,
+	eventsIn <- touch.Event{
+		Sequence: touch.Sequence(id),
+		Type:     t,
 		Loc: geom.Point{
 			X: geom.Pt(x / pixelsPerPt),
 			Y: geom.Pt(y / pixelsPerPt),
@@ -159,10 +162,10 @@ func drawgl(ctx uintptr) {
 		startedgl = true
 		C.setContext(unsafe.Pointer(ctx))
 		// TODO(crawshaw): not just on process start.
-		sendLifecycle(event.LifecycleStageFocused)
+		sendLifecycle(lifecycle.StageFocused)
 	}
 
-	eventsIn <- event.Draw{}
+	eventsIn <- paint.Event{}
 
 	for {
 		select {

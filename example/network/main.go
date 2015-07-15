@@ -41,7 +41,7 @@ import (
 	"net/http"
 
 	"golang.org/x/mobile/app"
-	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/exp/app/debug"
 	"golang.org/x/mobile/gl"
 )
@@ -51,7 +51,7 @@ func main() {
 	go checkNetwork()
 
 	app.Run(app.Callbacks{
-		Draw: draw,
+		Draw: onDraw,
 	})
 }
 
@@ -70,7 +70,7 @@ func checkNetwork() {
 	ok = true
 }
 
-func draw(c event.Config) {
+func onDraw(c config.Event) {
 	select {
 	case <-determined:
 		if ok {
