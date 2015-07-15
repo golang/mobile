@@ -65,9 +65,9 @@ struct utsname sysInfo;
 	drawgl((GoUintptr)self.context);
 }
 
-#define CHANGE_NONE 0 // event.ChangeNone
-#define CHANGE_ON   1 // event.ChangeOn
-#define CHANGE_OFF  2 // event.ChangeOff
+#define TOUCH_TYPE_START 0 // touch.TypeStart
+#define TOUCH_TYPE_MOVE  1 // touch.TypeMove
+#define TOUCH_TYPE_END   2 // touch.TypeEnd
 
 static void sendTouches(int change, NSSet* touches) {
 	CGFloat scale = [UIScreen mainScreen].scale;
@@ -78,15 +78,15 @@ static void sendTouches(int change, NSSet* touches) {
 }
 
 - (void)touchesBegan:(NSSet*)touches withEvent:(UIEvent*)event {
-	sendTouches(CHANGE_ON, touches);
+	sendTouches(TOUCH_TYPE_START, touches);
 }
 
 - (void)touchesMoved:(NSSet*)touches withEvent:(UIEvent*)event {
-	sendTouches(CHANGE_NONE, touches);
+	sendTouches(TOUCH_TYPE_MOVE, touches);
 }
 
 - (void)touchesEnded:(NSSet*)touches withEvent:(UIEvent*)event {
-	sendTouches(CHANGE_OFF, touches);
+	sendTouches(TOUCH_TYPE_END, touches);
 }
 @end
 

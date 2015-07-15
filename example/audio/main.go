@@ -39,7 +39,7 @@ import (
 
 	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/asset"
-	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/exp/app/debug"
 	"golang.org/x/mobile/exp/audio"
 	"golang.org/x/mobile/exp/f32"
@@ -65,13 +65,13 @@ var (
 
 func main() {
 	app.Run(app.Callbacks{
-		Start: start,
-		Stop:  stop,
-		Draw:  draw,
+		Start: onStart,
+		Stop:  onStop,
+		Draw:  onDraw,
 	})
 }
 
-func start() {
+func onStart() {
 	rc, err := asset.Open("boing.wav")
 	if err != nil {
 		log.Fatal(err)
@@ -82,11 +82,11 @@ func start() {
 	}
 }
 
-func stop() {
+func onStop() {
 	player.Close()
 }
 
-func draw(c event.Config) {
+func onDraw(c config.Event) {
 	if scene == nil {
 		loadScene(c)
 	}
@@ -104,7 +104,7 @@ func newNode() *sprite.Node {
 	return n
 }
 
-func loadScene(c event.Config) {
+func loadScene(c config.Event) {
 	gopher := loadGopher()
 	scene = &sprite.Node{}
 	eng.Register(scene)

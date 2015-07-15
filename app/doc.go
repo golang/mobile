@@ -42,15 +42,18 @@ function exits, the app exits.
 		"log"
 
 		"golang.org/x/mobile/app"
+		"golang.org/x/mobile/event"
+		"golang.org/x/mobile/event/lifecycle"
+		"golang.org/x/mobile/event/paint"
 	)
 
 	func main() {
 		app.Main(func(a app.App) {
 			for e := range a.Events() {
 				switch e := event.Filter(e).(type) {
-				case event.Lifecycle:
+				case lifecycle.Event:
 					// ...
-				case event.Draw:
+				case paint.Event:
 					log.Print("Call OpenGL here.")
 					a.EndDraw()
 				}

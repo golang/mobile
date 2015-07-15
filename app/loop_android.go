@@ -84,7 +84,10 @@ import "C"
 import (
 	"log"
 
-	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/event/config"
+	"golang.org/x/mobile/event/lifecycle"
+	"golang.org/x/mobile/event/paint"
+	"golang.org/x/mobile/event/touch"
 	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/gl"
 )
@@ -95,16 +98,16 @@ func windowDraw(w *C.ANativeWindow, queue *C.AInputQueue, donec chan struct{}) (
 	C.createEGLWindow(w)
 
 	// TODO: is this needed if we also have the "case <-windowRedrawNeeded:" below??
-	sendLifecycle(event.LifecycleStageFocused)
-	eventsIn <- event.Config{
+	sendLifecycle(lifecycle.StageFocused)
+	eventsIn <- config.Event{
 		Width:       geom.Pt(float32(C.windowWidth) / pixelsPerPt),
 		Height:      geom.Pt(float32(C.windowHeight) / pixelsPerPt),
 		PixelsPerPt: pixelsPerPt,
 	}
 	if firstWindowDraw {
 		firstWindowDraw = false
-		// TODO: be more principled about when to send a draw event.
-		eventsIn <- event.Draw{}
+		// TODO: be more principled about when to send a paint event.
+		eventsIn <- paint.Event{}
 	}
 
 	for {
@@ -115,21 +118,21 @@ func windowDraw(w *C.ANativeWindow, queue *C.AInputQueue, donec chan struct{}) (
 		case <-windowRedrawNeeded:
 			// Re-query the width and height.
 			C.querySurfaceWidthAndHeight()
-			sendLifecycle(event.LifecycleStageFocused)
-			eventsIn <- event.Config{
+			sendLifecycle(lifecycle.StageFocused)
+			eventsIn <- config.Event{
 				Width:       geom.Pt(float32(C.windowWidth) / pixelsPerPt),
 				Height:      geom.Pt(float32(C.windowHeight) / pixelsPerPt),
 				PixelsPerPt: pixelsPerPt,
 			}
 		case <-windowDestroyed:
-			sendLifecycle(event.LifecycleStageAlive)
+			sendLifecycle(lifecycle.StageAlive)
 			return false
 		case <-gl.WorkAvailable:
 			gl.DoWork()
 		case <-endDraw:
 			// eglSwapBuffers blocks until vsync.
 			C.eglSwapBuffers(C.display, C.surface)
-			eventsIn <- event.Draw{}
+			eventsIn <- paint.Event{}
 		}
 	}
 }
@@ -152,22 +155,22 @@ func processEvent(e *C.AInputEvent) {
 	case C.AINPUT_EVENT_TYPE_MOTION:
 		// At most one of the events in this batch is an up or down event; get its index and change.
 		upDownIndex := C.size_t(C.AMotionEvent_getAction(e)&C.AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> C.AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT
-		upDownChange := event.ChangeNone
+		upDownType := touch.TypeMove
 		switch C.AMotionEvent_getAction(e) & C.AMOTION_EVENT_ACTION_MASK {
 		case C.AMOTION_EVENT_ACTION_DOWN, C.AMOTION_EVENT_ACTION_POINTER_DOWN:
-			upDownChange = event.ChangeOn
+			upDownType = touch.TypeStart
 		case C.AMOTION_EVENT_ACTION_UP, C.AMOTION_EVENT_ACTION_POINTER_UP:
-			upDownChange = event.ChangeOff
+			upDownType = touch.TypeEnd
 		}
 
 		for i, n := C.size_t(0), C.AMotionEvent_getPointerCount(e); i < n; i++ {
-			change := event.ChangeNone
+			t := touch.TypeMove
 			if i == upDownIndex {
-				change = upDownChange
+				t = upDownType
 			}
-			eventsIn <- event.Touch{
-				ID:     event.TouchSequenceID(C.AMotionEvent_getPointerId(e, i)),
-				Change: change,
+			eventsIn <- touch.Event{
+				Sequence: touch.Sequence(C.AMotionEvent_getPointerId(e, i)),
+				Type:     t,
 				Loc: geom.Point{
 					X: geom.Pt(float32(C.AMotionEvent_getX(e, i)) / pixelsPerPt),
 					Y: geom.Pt(float32(C.AMotionEvent_getY(e, i)) / pixelsPerPt),

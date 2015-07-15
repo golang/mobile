@@ -12,7 +12,7 @@ import (
 	"image"
 	"image/draw"
 
-	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/exp/f32"
 	"golang.org/x/mobile/exp/gl/glutil"
 	"golang.org/x/mobile/exp/sprite"
@@ -91,7 +91,7 @@ func (e *engine) SetTransform(n *sprite.Node, m f32.Affine) {
 	e.nodes[n.EngineFields.Index].relTransform = m
 }
 
-func (e *engine) Render(scene *sprite.Node, t clock.Time, cfg event.Config) {
+func (e *engine) Render(scene *sprite.Node, t clock.Time, cfg config.Event) {
 	e.absTransforms = append(e.absTransforms[:0], f32.Affine{
 		{1, 0, 0},
 		{0, 1, 0},
@@ -99,7 +99,7 @@ func (e *engine) Render(scene *sprite.Node, t clock.Time, cfg event.Config) {
 	e.render(scene, t, cfg)
 }
 
-func (e *engine) render(n *sprite.Node, t clock.Time, cfg event.Config) {
+func (e *engine) render(n *sprite.Node, t clock.Time, cfg config.Event) {
 	if n.EngineFields.Index == 0 {
 		panic("glsprite: sprite.Node not registered")
 	}

@@ -14,6 +14,8 @@ import (
 	"sync"
 
 	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/event/config"
+	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/exp/f32"
 	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/gl"
@@ -32,11 +34,11 @@ var glimage struct {
 
 func init() {
 	event.RegisterFilter(func(e interface{}) interface{} {
-		if e, ok := e.(event.Lifecycle); ok {
-			switch e.Crosses(event.LifecycleStageVisible) {
-			case event.ChangeOn:
+		if e, ok := e.(lifecycle.Event); ok {
+			switch e.Crosses(lifecycle.StageVisible) {
+			case lifecycle.CrossOn:
 				start()
-			case event.ChangeOff:
+			case lifecycle.CrossOff:
 				stop()
 			}
 		}
@@ -223,7 +225,7 @@ func (img *Image) Delete() {
 
 // Draw draws the srcBounds part of the image onto a parallelogram, defined by
 // three of its corners, in the current GL framebuffer.
-func (img *Image) Draw(c event.Config, topLeft, topRight, bottomLeft geom.Point, srcBounds image.Rectangle) {
+func (img *Image) Draw(c config.Event, topLeft, topRight, bottomLeft geom.Point, srcBounds image.Rectangle) {
 	// TODO(crawshaw): Adjust viewport for the top bar on android?
 	gl.UseProgram(glimage.program)
 	tex := texmap.get(*img.key)

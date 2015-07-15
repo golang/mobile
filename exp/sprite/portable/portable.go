@@ -13,7 +13,7 @@ import (
 	"image"
 	"image/draw"
 
-	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/exp/f32"
 	"golang.org/x/mobile/exp/sprite"
 	"golang.org/x/mobile/exp/sprite/clock"
@@ -92,7 +92,7 @@ func (e *engine) SetTransform(n *sprite.Node, m f32.Affine) {
 	e.nodes[n.EngineFields.Index].relTransform = m
 }
 
-func (e *engine) Render(scene *sprite.Node, t clock.Time, cfg event.Config) {
+func (e *engine) Render(scene *sprite.Node, t clock.Time, cfg config.Event) {
 	// Affine transforms are done in geom.Pt. When finally drawing
 	// the geom.Pt onto an image.Image we need to convert to system
 	// pixels. We scale by cfg.PixelsPerPt to do this.
