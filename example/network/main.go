@@ -41,7 +41,9 @@ import (
 	"net/http"
 
 	"golang.org/x/mobile/app"
+	"golang.org/x/mobile/event"
 	"golang.org/x/mobile/event/config"
+	"golang.org/x/mobile/event/paint"
 	"golang.org/x/mobile/exp/app/debug"
 	"golang.org/x/mobile/gl"
 )
@@ -50,8 +52,17 @@ func main() {
 	// checkNetwork runs only once when the app first loads.
 	go checkNetwork()
 
-	app.Run(app.Callbacks{
-		Draw: onDraw,
+	app.Main(func(a app.App) {
+		var c config.Event
+		for e := range a.Events() {
+			switch e := event.Filter(e).(type) {
+			case config.Event:
+				c = e
+			case paint.Event:
+				onDraw(c)
+				a.EndPaint()
+			}
+		}
 	})
 }
 
