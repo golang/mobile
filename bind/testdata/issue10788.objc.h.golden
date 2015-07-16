@@ -6,7 +6,7 @@
 #ifndef __GoIssue10788_H__
 #define __GoIssue10788_H__
 
-#include "seq.h"
+#include <Foundation/Foundation.h>
 
 @class GoIssue10788TestInterface;
 
@@ -15,9 +15,9 @@
 
 @interface GoIssue10788TestStruct : NSObject {
 }
-@property(strong, readonly) GoSeqRef *ref;
+@property(strong, readonly) id ref;
 
-- (id)initWithRef:(GoSeqRef*)ref;
+- (id)initWithRef:(id)ref;
 - (NSString*)Value;
 - (void)setValue:(NSString*)v;
 @end

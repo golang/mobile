@@ -6,15 +6,15 @@
 #ifndef __GoStructs_H__
 #define __GoStructs_H__
 
-#include "seq.h"
+#include <Foundation/Foundation.h>
 
 @class GoStructsS;
 
 @interface GoStructsS : NSObject {
 }
-@property(strong, readonly) GoSeqRef *ref;
+@property(strong, readonly) id ref;
 
-- (id)initWithRef:(GoSeqRef*)ref;
+- (id)initWithRef:(id)ref;
 - (double)X;
 - (void)setX:(double)v;
 - (double)Y;

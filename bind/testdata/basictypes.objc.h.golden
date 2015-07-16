@@ -6,7 +6,7 @@
 #ifndef __GoBasictypes_H__
 #define __GoBasictypes_H__
 
-#include "seq.h"
+#include <Foundation/Foundation.h>
 
 FOUNDATION_EXPORT BOOL GoBasictypesBool(BOOL p0);
 
