@@ -13,7 +13,7 @@ import (
 	"runtime"
 	"sync"
 
-	"golang.org/x/mobile/event"
+	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/exp/f32"
@@ -33,7 +33,7 @@ var glimage struct {
 }
 
 func init() {
-	event.RegisterFilter(func(e interface{}) interface{} {
+	app.RegisterFilter(func(e interface{}) interface{} {
 		if e, ok := e.(lifecycle.Event); ok {
 			switch e.Crosses(lifecycle.StageVisible) {
 			case lifecycle.CrossOn:

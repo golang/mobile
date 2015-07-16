@@ -16,7 +16,7 @@
 // StageFocused means that the app has gained the focus. A negative crossing
 // means it has lost the focus.
 //
-// See the golang.org/x/mobile/event package for details on the event model.
+// See the golang.org/x/mobile/app package for details on the event model.
 package lifecycle // import "golang.org/x/mobile/event/lifecycle"
 
 import (

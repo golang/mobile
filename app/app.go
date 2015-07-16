@@ -7,7 +7,6 @@
 package app
 
 import (
-	"golang.org/x/mobile/event"
 	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/paint"
@@ -89,6 +88,26 @@ func (app) EndPaint() {
 	}
 }
 
+var filters []func(interface{}) interface{}
+
+// Filter calls each registered event filter function in sequence.
+func Filter(event interface{}) interface{} {
+	for _, f := range filters {
+		event = f(event)
+	}
+	return event
+}
+
+// RegisterFilter registers a event filter function to be called by Filter. The
+// function can return a different event, or return nil to consume the event,
+// but the function can also return its argument unchanged, where its purpose
+// is to trigger a side effect rather than modify the event.
+//
+// RegisterFilter should only be called from init functions.
+func RegisterFilter(f func(interface{}) interface{}) {
+	filters = append(filters, f)
+}
+
 type stopPumping struct{}
 
 // pump returns a channel src such that sending on src will eventually send on
@@ -163,7 +182,7 @@ func Run(cb Callbacks) {
 	Main(func(a App) {
 		var c config.Event
 		for e := range a.Events() {
-			switch e := event.Filter(e).(type) {
+			switch e := Filter(e).(type) {
 			case lifecycle.Event:
 				switch e.Crosses(lifecycle.StageVisible) {
 				case lifecycle.CrossOn:
@@ -245,12 +264,12 @@ type Callbacks struct {
 }
 
 // TODO: do this for all build targets, not just linux (x11 and Android)? If
-// so, should package gl instead of this package call event.RegisterFilter??
+// so, should package gl instead of this package call RegisterFilter??
 //
 // TODO: does Android need this?? It seems to work without it (Nexus 7,
 // KitKat). If only x11 needs this, should we move this to x11.go??
 func registerGLViewportFilter() {
-	event.RegisterFilter(func(e interface{}) interface{} {
+	RegisterFilter(func(e interface{}) interface{} {
 		if e, ok := e.(config.Event); ok {
 			w := int(e.PixelsPerPt * float32(e.Width))
 			h := int(e.PixelsPerPt * float32(e.Height))
