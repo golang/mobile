@@ -61,13 +61,13 @@ import (
 	"sync"
 	"unsafe"
 
-	"golang.org/x/mobile/app"
+	"golang.org/x/mobile/internal/mobileinit"
 )
 
 var assetOnce sync.Once
 
 func assetInit() {
-	ctx := app.Context{}
+	ctx := mobileinit.Context{}
 	C.asset_manager_init(ctx.JavaVM(), ctx.AndroidContext())
 }
 

@@ -34,17 +34,6 @@ package app
 #include <pthread.h>
 #include <stdlib.h>
 
-// current_vm is stored to initialize other cgo packages.
-//
-// As all the Go packages in a program form a single shared library,
-// there can only be one JNI_OnLoad function for iniitialization. In
-// OpenJDK there is JNI_GetCreatedJavaVMs, but this is not available
-// on android.
-JavaVM* current_vm;
-
-// current_ctx is Android's android.context.Context. May be NULL.
-jobject current_ctx;
-
 jclass current_ctx_clazz;
 
 jclass app_find_class(JNIEnv* env, const char* name);
@@ -58,7 +47,13 @@ import (
 	"unsafe"
 
 	"golang.org/x/mobile/app/internal/callfn"
+	"golang.org/x/mobile/internal/mobileinit"
 )
+
+//export setCurrentContext
+func setCurrentContext(vm *C.JavaVM, ctx C.jobject) {
+	mobileinit.SetCurrentContext(unsafe.Pointer(vm), unsafe.Pointer(ctx))
+}
 
 //export callMain
 func callMain(mainPC uintptr) {
@@ -184,25 +179,6 @@ func onConfigurationChanged(activity *C.ANativeActivity) {
 
 //export onLowMemory
 func onLowMemory(activity *C.ANativeActivity) {
-}
-
-// Context holds global OS-specific context.
-//
-// Its extra methods are deliberately difficult to access because they must be
-// used with care. Their use implies the use of cgo, which probably requires
-// you understand the initialization process in the app package. Also care must
-// be taken to write both Android, iOS, and desktop-testing versions to
-// maintain portability.
-type Context struct{}
-
-// AndroidContext returns a jobject for the app android.context.Context.
-func (Context) AndroidContext() unsafe.Pointer {
-	return unsafe.Pointer(C.current_ctx)
-}
-
-// JavaVM returns a JNI *JavaVM.
-func (Context) JavaVM() unsafe.Pointer {
-	return unsafe.Pointer(C.current_vm)
 }
 
 var (

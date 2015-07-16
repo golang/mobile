@@ -17,6 +17,12 @@ public class SeqTest extends AndroidTestCase {
   public SeqTest() {
   }
 
+  public void testAssets() {
+    String want = "Hello, Assets.\n";
+    String got = Testpkg.ReadAsset();
+    assertEquals("Asset read", want, got);
+  }
+
   public void testAdd() {
     long res = Testpkg.Add(3, 4);
     assertEquals("Unexpected arithmetic failure", 7, res);

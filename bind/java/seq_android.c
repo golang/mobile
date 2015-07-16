@@ -435,3 +435,12 @@ Java_go_Seq_recvRes(JNIEnv *env, jclass clazz, jint handle, jobject out_obj) {
 	}
 	RecvRes((int32_t)handle, out->buf, out->len);
 }
+
+JNIEXPORT void JNICALL
+Java_go_Seq_setContext(JNIEnv* env, jclass clazz, jobject ctx) {
+	JavaVM* vm;
+        if ((*env)->GetJavaVM(env, &vm) != 0) {
+		LOG_FATAL("failed to get JavaVM");
+	}
+	setContext(vm, (*env)->NewGlobalRef(env, ctx));
+}

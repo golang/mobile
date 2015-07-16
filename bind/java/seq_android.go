@@ -6,6 +6,7 @@ package java // import "golang.org/x/mobile/bind/java"
 
 //#cgo LDFLAGS: -llog
 //#include <android/log.h>
+//#include <jni.h>
 //#include <stdint.h>
 //#include <string.h>
 //#include "seq_android.h"
@@ -16,6 +17,7 @@ import (
 	"unsafe"
 
 	"golang.org/x/mobile/bind/seq"
+	"golang.org/x/mobile/internal/mobileinit"
 )
 
 const maxSliceLen = 1<<31 - 1
@@ -177,4 +179,9 @@ func init() {
 	seq.Transact = transact
 	seq.EncString = encodeString
 	seq.DecString = decodeString
+}
+
+//export setContext
+func setContext(vm *C.JavaVM, ctx C.jobject) {
+	mobileinit.SetCurrentContext(unsafe.Pointer(vm), unsafe.Pointer(ctx))
 }

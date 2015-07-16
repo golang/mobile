@@ -45,8 +45,6 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	}
 
 	// Load classes here, which uses the correct ClassLoader.
-	current_vm = vm;
-	current_ctx = NULL;
 	current_ctx_clazz = find_class(env, "org/golang/app/GoNativeActivity");
 	current_ctx_clazz = (jclass)(*env)->NewGlobalRef(env, current_ctx_clazz);
 
@@ -61,8 +59,10 @@ void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_
 	JNIEnv* env = activity->env;
 
 	// Note that activity->clazz is mis-named.
-	current_vm = activity->vm;
-	current_ctx = (*env)->NewGlobalRef(env, activity->clazz);
+	JavaVM* current_vm = activity->vm;
+	jobject current_ctx = activity->clazz;
+
+	setCurrentContext(current_vm, (*env)->NewGlobalRef(env, current_ctx));
 
 	// Set TMPDIR.
 	jmethodID gettmpdir = find_method(env, current_ctx_clazz, "getTmpdir", "()Ljava/lang/String;");

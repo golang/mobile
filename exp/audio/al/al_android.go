@@ -198,7 +198,7 @@ import (
 	"log"
 	"unsafe"
 
-	"golang.org/x/mobile/app"
+	"golang.org/x/mobile/internal/mobileinit"
 )
 
 var (
@@ -247,7 +247,7 @@ var (
 )
 
 func initAL() {
-	ctx := app.Context{}
+	ctx := mobileinit.Context{}
 	switch C.al_init(ctx.JavaVM(), ctx.AndroidContext(), &alHandle) {
 	case C.AL_INIT_RESULT_OK:
 		// No-op.
