@@ -14,6 +14,42 @@ import (
 	"time"
 )
 
+type I interface {
+	Times(v int32) int64
+}
+
+type myI struct{}
+
+func (i *myI) Times(v int32) int64 {
+	return int64(v) * 10
+}
+
+func NewI() I {
+	return &myI{}
+}
+
+var pinnedI = make(map[int32]I)
+
+func RegisterI(idx int32, i I) {
+	pinnedI[idx] = i
+}
+
+func UnregisterI(idx int32) {
+	delete(pinnedI, idx)
+}
+
+func Multiply(idx int32, val int32) int64 {
+	i, ok := pinnedI[idx]
+	if !ok {
+		panic(fmt.Sprintf("unknown I with index %d", i))
+	}
+	return i.Times(val)
+}
+
+func GC() {
+	runtime.GC()
+}
+
 func Hi() {
 	fmt.Println("Hi")
 }

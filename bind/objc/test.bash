@@ -18,9 +18,9 @@ function cleanup() {
 }
 trap cleanup EXIT
 
-(cd testpkg; go generate)
+# TODO: reenable this when gobind can handle interfaces.
+#(cd testpkg; go generate)
 
-# TODO: package seq.h Testpkg.* and gooutput.a into a statically linked framework.
 go build -x -v -buildmode=c-archive -o=${WORK}/libgo.a test_main.go
 cp ./seq.h ${WORK}/
 cp testpkg/objc_testpkg/GoTestpkg.* ${WORK}/
