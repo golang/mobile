@@ -13,6 +13,8 @@ import (
 	"image"
 	"image/draw"
 
+	xdraw "golang.org/x/image/draw"
+	"golang.org/x/image/math/f64"
 	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/exp/f32"
 	"golang.org/x/mobile/exp/sprite"
@@ -132,6 +134,8 @@ func (e *engine) render(n *sprite.Node, t clock.Time) {
 		dx, dy := x.R.Dx(), x.R.Dy()
 		if dx > 0 && dy > 0 {
 			m.Scale(&m, 1/float32(dx), 1/float32(dy))
+			// TODO(nigeltao): delete the double-inverse: one here and one
+			// inside func affine.
 			m.Inverse(&m) // See the documentation on the affine function.
 			affine(e.dst, x.T.(*texture).m, x.R, nil, &m, draw.Over)
 		}
@@ -143,4 +147,45 @@ func (e *engine) render(n *sprite.Node, t clock.Time) {
 
 	// Pop absTransforms.
 	e.absTransforms = e.absTransforms[:len(e.absTransforms)-1]
+}
+
+// affine draws each pixel of dst using bilinear interpolation of the
+// affine-transformed position in src. This is equivalent to:
+//
+//      for each (x,y) in dst:
+//              dst(x,y) = bilinear interpolation of src(a*(x,y))
+//
+// While this is the simpler implementation, it can be counter-
+// intuitive as an affine transformation is usually described in terms
+// of the source, not the destination. For example, a scale transform
+//
+//      Affine{{2, 0, 0}, {0, 2, 0}}
+//
+// will produce a dst that is half the size of src. To perform a
+// traditional affine transform, use the inverse of the affine matrix.
+func affine(dst *image.RGBA, src image.Image, srcb image.Rectangle, mask image.Image, a *f32.Affine, op draw.Op) {
+	// For legacy compatibility reasons, the matrix a transforms from dst-space
+	// to src-space. The golang.org/x/image/draw package's matrices transform
+	// from src-space to dst-space, so we invert (and adjust for different
+	// origins).
+	i := *a
+	i[0][2] += float32(srcb.Min.X)
+	i[1][2] += float32(srcb.Min.Y)
+	i.Inverse(&i)
+	i[0][2] += float32(dst.Rect.Min.X)
+	i[1][2] += float32(dst.Rect.Min.Y)
+	m := f64.Aff3{
+		float64(i[0][0]),
+		float64(i[0][1]),
+		float64(i[0][2]),
+		float64(i[1][0]),
+		float64(i[1][1]),
+		float64(i[1][2]),
+	}
+	// TODO(nigeltao): is the caller or callee responsible for detecting
+	// transforms that are simple copies or scales, for which there are faster
+	// implementations in the xdraw package.
+	xdraw.ApproxBiLinear.Transform(dst, &m, src, srcb, xdraw.Op(op), &xdraw.Options{
+		SrcMask: mask,
+	})
 }
