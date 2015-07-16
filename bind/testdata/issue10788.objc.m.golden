@@ -20,7 +20,7 @@ static NSString *errDomain = @"go.issue10788";
 @implementation GoIssue10788TestStruct {
 }
 
-- (id)initWithRef:(GoSeqRef*)ref {
+- (id)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { _ref = ref; }
 	return self;

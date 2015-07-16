@@ -6,15 +6,15 @@
 #ifndef __GoTestpkg_H__
 #define __GoTestpkg_H__
 
-#include "seq.h"
+#include <Foundation/Foundation.h>
 
 @class GoTestpkgS;
 
 @interface GoTestpkgS : NSObject {
 }
-@property(strong, readonly) GoSeqRef *ref;
+@property(strong, readonly) id ref;
 
-- (id)initWithRef:(GoSeqRef*)ref;
+- (id)initWithRef:(id)ref;
 - (double)X;
 - (void)setX:(double)v;
 - (double)Y;

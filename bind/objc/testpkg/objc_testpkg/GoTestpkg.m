@@ -31,7 +31,7 @@ static NSString *errDomain = @"go.golang.org/x/mobile/bind/objc/testpkg";
 @implementation GoTestpkgS {
 }
 
-- (id)initWithRef:(GoSeqRef*)ref {
+- (id)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { _ref = ref; }
 	return self;

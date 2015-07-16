@@ -6,7 +6,7 @@
 #ifndef __GoInterfaces_H__
 #define __GoInterfaces_H__
 
-#include "seq.h"
+#include <Foundation/Foundation.h>
 
 @class GoInterfacesI;
 

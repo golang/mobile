@@ -227,8 +227,6 @@ void go_seq_send(char *descriptor, int code, GoSeq *req, GoSeq *res) {
 // init_seq is called when the Go side is initialized.
 void init_seq() {
   // TODO(hyangah): initialize a map of Objective-C objects passed to Go.
-
-  LOG_INFO(@"loaded go/Seq");
 }
 
 GoSeqRef *go_seq_readRef(GoSeq *seq) {

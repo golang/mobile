@@ -68,7 +68,7 @@ func (g *objcGen) genH() error {
 	g.Printf("#ifndef __Go%s_H__\n", capitalize(g.pkgName))
 	g.Printf("#define __Go%s_H__\n", capitalize(g.pkgName))
 	g.Printf("\n")
-	g.Printf(`#include "seq.h"`)
+	g.Printf(`#include <Foundation/Foundation.h>`)
 	g.Printf("\n\n")
 
 	// @class names
@@ -375,9 +375,9 @@ func (g *objcGen) genInterfaceM(obj *types.TypeName, t *types.Interface) {
 func (g *objcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 	g.Printf("@interface %s%s : NSObject {\n", g.namePrefix, obj.Name())
 	g.Printf("}\n")
-	g.Printf("@property(strong, readonly) GoSeqRef *ref;\n")
+	g.Printf("@property(strong, readonly) id ref;\n")
 	g.Printf("\n")
-	g.Printf("- (id)initWithRef:(GoSeqRef*)ref;\n")
+	g.Printf("- (id)initWithRef:(id)ref;\n")
 
 	// accessors to exported fields.
 	for _, f := range exportedFields(t) {
@@ -412,7 +412,7 @@ func (g *objcGen) genStructM(obj *types.TypeName, t *types.Struct) {
 	g.Printf("\n")
 	g.Printf("@implementation %s%s {\n", g.namePrefix, obj.Name())
 	g.Printf("}\n\n")
-	g.Printf("- (id)initWithRef:(GoSeqRef*)ref {\n")
+	g.Printf("- (id)initWithRef:(id)ref {\n")
 	g.Indent()
 	g.Printf("self = [super init];\n")
 	g.Printf("if (self) { _ref = ref; }\n")
