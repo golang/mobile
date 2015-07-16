@@ -7,11 +7,6 @@
 // See the golang.org/x/mobile/event package for details on the event model.
 package paint // import "golang.org/x/mobile/event/paint"
 
-// TODO: rename App.EndDraw to App.EndPaint.
-//
-// This is "package paint", not "package draw", to avoid conflicting with the
-// standard library's "image/draw" package.
-
 // Event indicates that the app is ready to paint the next frame of the GUI. A
-// frame is completed by calling the App's EndDraw method.
+// frame is completed by calling the App's EndPaint method.
 type Event struct{}

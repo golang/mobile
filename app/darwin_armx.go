@@ -171,7 +171,7 @@ func drawgl(ctx uintptr) {
 		select {
 		case <-gl.WorkAvailable:
 			gl.DoWork()
-		case <-endDraw:
+		case <-endPaint:
 			return
 		}
 	}

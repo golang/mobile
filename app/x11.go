@@ -63,7 +63,7 @@ func main(f func(App)) {
 			return
 		case <-gl.WorkAvailable:
 			gl.DoWork()
-		case <-endDraw:
+		case <-endPaint:
 			C.swapBuffers()
 			tc = ticker.C
 		case <-tc:

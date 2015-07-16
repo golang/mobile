@@ -129,7 +129,7 @@ func windowDraw(w *C.ANativeWindow, queue *C.AInputQueue, donec chan struct{}) (
 			return false
 		case <-gl.WorkAvailable:
 			gl.DoWork()
-		case <-endDraw:
+		case <-endPaint:
 			// eglSwapBuffers blocks until vsync.
 			C.eglSwapBuffers(C.display, C.surface)
 			eventsIn <- paint.Event{}

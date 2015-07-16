@@ -70,8 +70,8 @@ func main() {
 				c = e
 				touchLoc = geom.Point{c.Width / 2, c.Height / 2}
 			case paint.Event:
-				onDraw(c)
-				a.EndDraw()
+				onPaint(c)
+				a.EndPaint()
 			case touch.Event:
 				touchLoc = e.Loc
 			}
@@ -104,7 +104,7 @@ func onStop() {
 	gl.DeleteBuffer(buf)
 }
 
-func onDraw(c config.Event) {
+func onPaint(c config.Event) {
 	gl.ClearColor(1, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 
