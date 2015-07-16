@@ -86,6 +86,73 @@ void testStruct() {
     ERROR(@"GoTestpkgS_TryTwoStrings(%@, %@)= %@; want %@", first, second, got,
           want);
   }
+
+  GoTestpkgGC();
+}
+
+// Objective-C implementation of testpkg.I.
+@interface Number : NSObject <GoTestpkgI> {
+}
+@property int32_t value;
+
+- (int64_t)Times:(int32_t)v;
+@end
+
+// numI is incremented when the first numI objective-C implementation is
+// deallocated.
+static int numI = 0;
+
+@implementation Number {
+}
+@synthesize value;
+
+- (int64_t)Times:(int32_t)v {
+  return v * value;
+}
+- (void)dealloc {
+  if (self.value == 0) {
+    numI++;
+  }
+}
+@end
+
+void testInterface() {
+  // Test Go object implementing testpkg.I is handled correctly.
+  id<GoTestpkgI> goObj = GoTestpkgNewI();
+  int64_t got = [goObj Times:10];
+  if (got != 100) {
+    ERROR(@"GoTestpkgNewI().Times(10) = %lld; want %d", got, 100);
+  }
+  int32_t key = -1;
+  GoTestpkgRegisterI(key, goObj);
+  int64_t got2 = GoTestpkgMultiply(key, 10);
+  if (got != got2) {
+    ERROR(@"GoTestpkgMultiply(10 * 10) = %lld; want %lld", got2, got);
+  }
+  GoTestpkgUnregisterI(key);
+
+  // Test Objective-C objects implementing testpkg.I is handled correctly.
+  @autoreleasepool {
+    for (int32_t i = 0; i < 10; i++) {
+      Number *num = [[Number alloc] init];
+      num.value = i;
+      GoTestpkgRegisterI(i, num);
+    }
+    GoTestpkgGC();
+  }
+
+  // Registered Objective-C objects are pinned on Go side which must
+  // prevent deallocation from Objective-C.
+  for (int32_t i = 0; i < 10; i++) {
+    int64_t got = GoTestpkgMultiply(i, 2);
+    if (got != i * 2) {
+      ERROR(@"GoTestpkgMultiply(%d, 2) = %lld; want %d", i, got, i * 2);
+      return;
+    }
+    GoTestpkgUnregisterI(i);
+    GoTestpkgGC();
+  }
+  // Unregistered all Objective-C objects.
 }
 
 // Invokes functions and object methods defined in Testpkg.h.
@@ -119,6 +186,15 @@ int main(void) {
       ERROR(@"%d S objects were collected; S used in testStruct is supposed to "
             @"be collected.",
             numS);
+    }
+
+    @autoreleasepool {
+      testInterface();
+    }
+    if (numI != 1) {
+      ERROR(@"%d I objects were collected; I used in testInterface is supposed "
+            @"to be collected.",
+            numI);
     }
   }
 
