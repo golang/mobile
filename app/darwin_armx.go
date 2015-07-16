@@ -120,10 +120,10 @@ var touchEvents struct {
 }
 
 //export sendTouch
-func sendTouch(touch, touchType uintptr, x, y float32) {
+func sendTouch(cTouch, cTouchType uintptr, x, y float32) {
 	id := -1
 	for i, val := range touchIDs {
-		if val == touch {
+		if val == cTouch {
 			id = i
 			break
 		}
@@ -131,7 +131,7 @@ func sendTouch(touch, touchType uintptr, x, y float32) {
 	if id == -1 {
 		for i, val := range touchIDs {
 			if val == 0 {
-				touchIDs[i] = touch
+				touchIDs[i] = cTouch
 				id = i
 				break
 			}
@@ -141,7 +141,7 @@ func sendTouch(touch, touchType uintptr, x, y float32) {
 		}
 	}
 
-	t := touch.Type(touchType)
+	t := touch.Type(cTouchType)
 	if t == touch.TypeEnd {
 		touchIDs[id] = 0
 	}
