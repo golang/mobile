@@ -29,12 +29,15 @@ https://golang.org/x/mobile/cmd/gomobile.
 
 Event processing in Native Apps
 
-The Go runtime is initialized on Android when NativeActivity
-onCreate is called, and on iOS when the process starts. In both
-cases, Go init functions run before the app lifecycle has started.
+The Go runtime is initialized on Android when NativeActivity onCreate is
+called, and on iOS when the process starts. In both cases, Go init functions
+run before the app lifecycle has started.
 
-An app is expected to call the Main function in main.main. When the
-function exits, the app exits.
+An app is expected to call the Main function in main.main. When the function
+exits, the app exits. Inside the func passed to Main, call Filter on every
+event received, and then switch on its type. Registered filters run when the
+event is received, not when it is sent, so that filters run in the same
+goroutine as other code that calls OpenGL.
 
 	package main
 
@@ -42,7 +45,6 @@ function exits, the app exits.
 		"log"
 
 		"golang.org/x/mobile/app"
-		"golang.org/x/mobile/event"
 		"golang.org/x/mobile/event/lifecycle"
 		"golang.org/x/mobile/event/paint"
 	)
@@ -50,7 +52,7 @@ function exits, the app exits.
 	func main() {
 		app.Main(func(a app.App) {
 			for e := range a.Events() {
-				switch e := event.Filter(e).(type) {
+				switch e := app.Filter(e).(type) {
 				case lifecycle.Event:
 					// ...
 				case paint.Event:
@@ -61,6 +63,19 @@ function exits, the app exits.
 		})
 	}
 
-For details on the event model, see https://golang.org/x/mobile/event.
+An event is represented by the empty interface type interface{}. Any value can
+be an event. Commonly used types include Event types defined by the following
+packages:
+	- golang.org/x/mobile/event/config
+	- golang.org/x/mobile/event/lifecycle
+	- golang.org/x/mobile/event/paint
+	- golang.org/x/mobile/event/touch
+For example, touch.Event is the type that represents touch events. Other
+packages may define their own events, and send them on an app's event channel.
+
+Other packages can also register event filters, e.g. to manage resources in
+response to lifecycle events. Such packages should call:
+	app.RegisterFilter(etc)
+in an init function inside that package.
 */
 package app // import "golang.org/x/mobile/app"

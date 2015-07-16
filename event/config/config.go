@@ -5,7 +5,7 @@
 // Package config defines an event for the dimensions and physical resolution
 // of the app's window.
 //
-// See the golang.org/x/mobile/event package for details on the event model.
+// See the golang.org/x/mobile/app package for details on the event model.
 package config // import "golang.org/x/mobile/event/config"
 
 import (

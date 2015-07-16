@@ -31,7 +31,6 @@ import (
 	"log"
 
 	"golang.org/x/mobile/app"
-	"golang.org/x/mobile/event"
 	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/paint"
@@ -58,7 +57,7 @@ func main() {
 	app.Main(func(a app.App) {
 		var c config.Event
 		for e := range a.Events() {
-			switch e := event.Filter(e).(type) {
+			switch e := app.Filter(e).(type) {
 			case lifecycle.Event:
 				switch e.Crosses(lifecycle.StageVisible) {
 				case lifecycle.CrossOn:
@@ -96,7 +95,7 @@ func onStart() {
 	offset = gl.GetUniformLocation(program, "offset")
 
 	// TODO(crawshaw): the debug package needs to put GL state init here
-	// Can this be an event.Register call now??
+	// Can this be an app.RegisterFilter call now??
 }
 
 func onStop() {
