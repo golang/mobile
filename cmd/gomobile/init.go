@@ -116,9 +116,13 @@ func runInit(cmd *command) error {
 		return err
 	}
 
+	if err := envInit(); err != nil {
+		return err
+	}
+
 	// Install standard libraries for cross compilers.
 	start := time.Now()
-	if err := installAndroid(); err != nil {
+	if err := installStd(androidArmEnv); err != nil {
 		return err
 	}
 	if err := installDarwin(); err != nil {
@@ -140,56 +144,45 @@ func runInit(cmd *command) error {
 	return nil
 }
 
-func installAndroid() error {
-	exe := ""
-	if goos == "windows" {
-		exe = ".exe"
-	}
-	ndkccbin := filepath.Join(ndkccpath, "arm", "bin")
-	androidEnv := []string{
-		`CC=` + filepath.Join(ndkccbin, "arm-linux-androideabi-gcc"+exe),
-		`CXX=` + filepath.Join(ndkccbin, "arm-linux-androideabi-g++"+exe),
-	}
-	return installStd("android", "arm", androidEnv)
-}
-
 func installDarwin() error {
 	if goos != "darwin" {
 		return nil // Only build iOS compilers on OS X.
 	}
-	cc := filepath.Join(goEnv("GOROOT"), "misc/ios/clangwrap.sh")
-	darwinEnv := []string{`CC=` + cc, `CXX=` + cc}
-	if err := installStd("darwin", "arm", darwinEnv); err != nil {
+	if err := installStd(darwinArmEnv); err != nil {
 		return err
 	}
-	return installStd("darwin", "arm64", darwinEnv)
+	if err := installStd(darwinArm64Env); err != nil {
+		return err
+	}
+	// TODO(crawshaw): darwin/386 for the iOS simulator?
+	if err := installStd(darwinAmd64Env, "-tags=ios"); err != nil {
+		return err
+	}
+	return nil
 }
 
-func installStd(tOS, tArch string, env []string) error {
+func installStd(env []string, args ...string) error {
+	tOS := getenv(env, "GOOS")
+	tArch := getenv(env, "GOARCH")
 	if buildV {
 		fmt.Fprintf(os.Stderr, "\n# Building standard library for %s/%s.\n", tOS, tArch)
 	}
-	removeAll(filepath.Join(goEnv("GOROOT"), "pkg", tOS+"_"+tArch))
 	envpath := os.Getenv("PATH")
 	if buildN {
 		envpath = "$PATH"
 	}
 
-	cmd := exec.Command("go", "install")
+	cmd := exec.Command("go", "install", "-pkgdir="+pkgdir(env))
+	cmd.Args = append(cmd.Args, args...)
 	if buildV {
 		cmd.Args = append(cmd.Args, "-v")
 	}
+	if buildX {
+		cmd.Args = append(cmd.Args, "-x")
+	}
 	cmd.Args = append(cmd.Args, "std")
-	cmd.Env = []string{
-		`PATH=` + envpath,
-		`GOOS=` + tOS,
-		`GOARCH=` + tArch,
-		`CGO_ENABLED=1`,
-	}
+	cmd.Env = []string{"PATH=" + envpath}
 	cmd.Env = append(cmd.Env, env...)
-	if tArch == "arm" {
-		cmd.Env = append(cmd.Env, "GOARM=7")
-	}
 	if buildX {
 		printcmd("%s", strings.Join(cmd.Env, " ")+" "+strings.Join(cmd.Args, " "))
 	}
@@ -295,8 +288,8 @@ func goVersion() ([]byte, error) {
 	}
 	// TODO(crawshaw): this is a crude test for Go 1.5. After release,
 	// remove this and check it is not an old release version.
-	if !bytes.Contains(buildHelp, []byte("-toolexec")) {
-		return nil, fmt.Errorf("installed Go tool does not support -toolexec")
+	if !bytes.Contains(buildHelp, []byte("-pkgdir")) {
+		return nil, fmt.Errorf("installed Go tool does not support -pkgdir")
 	}
 	return exec.Command(gobin, "version").CombinedOutput()
 }
