@@ -39,8 +39,8 @@ type App interface {
 	// Send sends an event on the events channel. It does not block.
 	Send(event interface{})
 
-	// EndDraw flushes any pending OpenGL commands or buffers to the screen.
-	EndDraw()
+	// EndPaint flushes any pending OpenGL commands or buffers to the screen.
+	EndPaint()
 }
 
 var (
@@ -49,7 +49,7 @@ var (
 
 	eventsOut = make(chan interface{})
 	eventsIn  = pump(eventsOut)
-	endDraw   = make(chan struct{}, 1)
+	endPaint  = make(chan struct{}, 1)
 )
 
 func sendLifecycle(to lifecycle.Stage) {
@@ -73,18 +73,18 @@ func (app) Send(event interface{}) {
 	eventsIn <- event
 }
 
-func (app) EndDraw() {
+func (app) EndPaint() {
 	// gl.Flush is a lightweight (on modern GL drivers) blocking call
 	// that ensures all GL functions pending in the gl package have
 	// been passed onto the GL driver before the app package attempts
 	// to swap the screen buffer.
 	//
-	// This enforces that the final receive (for this draw cycle) on
-	// gl.WorkAvailable happens before the send on endDraw.
+	// This enforces that the final receive (for this paint cycle) on
+	// gl.WorkAvailable happens before the send on endPaint.
 	gl.Flush()
 
 	select {
-	case endDraw <- struct{}{}:
+	case endPaint <- struct{}{}:
 	default:
 	}
 }
@@ -184,7 +184,7 @@ func Run(cb Callbacks) {
 				if cb.Draw != nil {
 					cb.Draw(c)
 				}
-				a.EndDraw()
+				a.EndPaint()
 			case touch.Event:
 				if cb.Touch != nil {
 					cb.Touch(e, c)

@@ -84,7 +84,7 @@ func loop(ctx C.GLintptr) {
 			select {
 			case <-gl.WorkAvailable:
 				gl.DoWork()
-			case <-endDraw:
+			case <-endPaint:
 				C.CGLFlushDrawable(C.CGLGetCurrentContext())
 				break loop1
 			}

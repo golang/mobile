@@ -55,7 +55,7 @@ function exits, the app exits.
 					// ...
 				case paint.Event:
 					log.Print("Call OpenGL here.")
-					a.EndDraw()
+					a.EndPaint()
 				}
 			}
 		})
