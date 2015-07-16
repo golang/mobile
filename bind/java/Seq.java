@@ -4,6 +4,8 @@
 
 package go;
 
+import android.app.Application;
+import android.content.Context;
 import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseIntArray;
@@ -24,6 +26,16 @@ public class Seq {
 			Log.w("GoSeq", "LoadJNI class not found");
 		}
 
+		try {
+			// TODO(hyangah): check proguard rule.
+			Application appl = (Application)Class.forName("android.app.AppGlobals").getMethod("getInitialApplication").invoke(null, (Object[]) null);
+			Context ctx = appl.getApplicationContext();
+			setContext(ctx);
+
+		} catch (Exception e) {
+			Log.w("GoSeq", "Global context not found:" + e);
+		}
+
 		initSeq();
 		new Thread("GoSeq") {
 			public void run() { Seq.receive(); }
@@ -36,6 +48,8 @@ public class Seq {
 	public Seq() {
 		ensure(64);
 	}
+
+	static native void setContext(Context ctx);
 
 	// Ensure that at least size bytes can be written to the Seq.
 	// Any existing data in the buffer is preserved.

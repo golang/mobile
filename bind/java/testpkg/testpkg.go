@@ -11,8 +11,12 @@ package testpkg
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"runtime"
 	"time"
+
+	"golang.org/x/mobile/asset"
 )
 
 type I interface {
@@ -155,4 +159,18 @@ func Hello(r Receiver, name string) {
 
 func GarbageCollect() {
 	runtime.GC()
+}
+
+func ReadAsset() string {
+	rc, err := asset.Open("hello.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rc.Close()
+
+	b, err := ioutil.ReadAll(rc)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return string(b)
 }
