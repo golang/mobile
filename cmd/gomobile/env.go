@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -16,17 +18,14 @@ var (
 	gomobilepath string // $GOPATH/pkg/gomobile
 	ndkccpath    string // $GOPATH/pkg/gomobile/android-{{.NDK}}
 
+	androidArmEnv  []string
 	darwinArmEnv   []string
 	darwinArm64Env []string
-	androidArmEnv  []string
+	darwin386Env   []string
+	darwinAmd64Env []string
 )
 
-func envInit() (cleanup func(), err error) {
-	cwd, err = os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-
+func buildEnvInit() (cleanup func(), err error) {
 	// Find gomobilepath.
 	gopath := goEnv("GOPATH")
 	for _, p := range filepath.SplitList(gopath) {
@@ -56,38 +55,9 @@ func envInit() (cleanup func(), err error) {
 		return nil, errors.New("toolchain out of date, run `gomobile init`")
 	}
 
-	// Setup the cross-compiler environments.
-
-	// TODO(crawshaw): Remove ndkccpath global.
-	ndkccpath = filepath.Join(gomobilepath, "android-"+ndkVersion)
-	ndkccbin := filepath.Join(ndkccpath, "arm", "bin")
-
-	androidEnv := []string{
-		"CC=" + filepath.Join(ndkccbin, "arm-linux-androideabi-gcc"),
-		"CXX=" + filepath.Join(ndkccbin, "arm-linux-androideabi-g++"),
-		`GOGCCFLAGS="-fPIC -marm -pthread -fmessage-length=0"`,
+	if err := envInit(); err != nil {
+		return nil, err
 	}
-	androidArmEnv = append([]string{
-		"GOOS=android",
-		"GOARCH=arm",
-		"GOARM=7",
-	}, androidEnv...)
-
-	// TODO(jbd): Remove clangwrap.sh dependency by implementing clangwrap.sh
-	// in Go in this package.
-	goroot := goEnv("GOROOT")
-	iosEnv := []string{
-		"CC=" + filepath.Join(goroot, "misc/ios/clangwrap.sh"),
-		"CCX=" + filepath.Join(goroot, "misc/ios/clangwrap.sh"),
-	}
-	darwinArmEnv = append([]string{
-		"GOOS=darwin",
-		"GOARCH=arm",
-	}, iosEnv...)
-	darwinArm64Env = append([]string{
-		"GOOS=darwin",
-		"GOARCH=arm64",
-	}, iosEnv...)
 
 	// We need a temporary directory when assembling an apk/app.
 	if buildN {
@@ -103,6 +73,119 @@ func envInit() (cleanup func(), err error) {
 	}
 
 	return func() { removeAll(tmpdir) }, nil
+}
+
+func envInit() (err error) {
+	// TODO(crawshaw): cwd only used by ctx.Import, which can take "."
+	cwd, err = os.Getwd()
+	if err != nil {
+		return err
+	}
+
+	// Setup the cross-compiler environments.
+
+	// TODO(crawshaw): Remove ndkccpath global.
+	ndkccpath = filepath.Join(gomobilepath, "android-"+ndkVersion)
+	ndkccbin := filepath.Join(ndkccpath, "arm", "bin")
+
+	exe := ""
+	if goos == "windows" {
+		exe = ".exe"
+	}
+	androidArmEnv = []string{
+		"GOOS=android",
+		"GOARCH=arm",
+		"GOARM=7",
+		"CC=" + filepath.Join(ndkccbin, "arm-linux-androideabi-gcc"+exe),
+		"CXX=" + filepath.Join(ndkccbin, "arm-linux-androideabi-g++"+exe),
+		"CGO_ENABLED=1",
+	}
+
+	if runtime.GOOS != "darwin" {
+		return nil
+	}
+
+	clang, cflags, err := envClang("iphoneos")
+	if err != nil {
+		return err
+	}
+	darwinArmEnv = []string{
+		"GOOS=darwin",
+		"GOARCH=arm",
+		"GOARM=7",
+		"CC=" + clang,
+		"CXX=" + clang,
+		"CGO_CFLAGS=" + cflags + " -arch " + archClang("arm"),
+		"CGO_LDFLAGS=" + cflags + " -arch " + archClang("arm"),
+		"CGO_ENABLED=1",
+	}
+	darwinArm64Env = []string{
+		"GOOS=darwin",
+		"GOARCH=arm64",
+		"CC=" + clang,
+		"CXX=" + clang,
+		"CGO_CFLAGS=" + cflags + " -arch " + archClang("arm64"),
+		"CGO_LDFLAGS=" + cflags + " -arch " + archClang("arm64"),
+		"CGO_ENABLED=1",
+	}
+
+	clang, cflags, err = envClang("iphonesimulator")
+	if err != nil {
+		return err
+	}
+	darwin386Env = []string{
+		"GOOS=darwin",
+		"GOARCH=386",
+		"CC=" + clang,
+		"CXX=" + clang,
+		"CGO_CFLAGS=" + cflags + " -mios-simulator-version-min=6.1 -arch " + archClang("386"),
+		"CGO_LDFLAGS=" + cflags + " -mios-simulator-version-min=6.1 -arch " + archClang("386"),
+		"CGO_ENABLED=1",
+	}
+	darwinAmd64Env = []string{
+		"GOOS=darwin",
+		"GOARCH=amd64",
+		"CC=" + clang,
+		"CXX=" + clang,
+		"CGO_CFLAGS=" + cflags + " -mios-simulator-version-min=6.1 -arch x86_64",
+		"CGO_LDFLAGS=" + cflags + " -mios-simulator-version-min=6.1 -arch x86_64",
+		"CGO_ENABLED=1",
+	}
+
+	return nil
+}
+
+func envClang(sdkName string) (clang, cflags string, err error) {
+	cmd := exec.Command("xcrun", "--sdk", sdkName, "--find", "clang")
+	out, err := cmd.Output()
+	if err != nil {
+		return "", "", fmt.Errorf("xcrun --find: %v\n%s", err, out)
+	}
+	clang = strings.TrimSpace(string(out))
+
+	cmd = exec.Command("xcrun", "--sdk", sdkName, "--show-sdk-path")
+	out, err = cmd.Output()
+	if err != nil {
+		return "", "", fmt.Errorf("xcrun --show-sdk-path: %v\n%s", err, out)
+	}
+	sdk := strings.TrimSpace(string(out))
+
+	return clang, "-isysroot " + sdk, nil
+}
+
+func archClang(goarch string) string {
+	switch goarch {
+	case "arm":
+		return "armv7"
+	case "arm64":
+		return "arm64"
+	case "386":
+		return "i386"
+	case "amd64":
+		return "x86_64"
+	default:
+		panic(fmt.Sprintf("unknown GOARCH: %q", goarch))
+	}
 }
 
 // environ merges os.Environ and the given "key=value" pairs.
@@ -139,4 +222,18 @@ func environ(kv []string) []string {
 		new = append(new, k+"="+v)
 	}
 	return new
+}
+
+func getenv(env []string, key string) string {
+	prefix := key + "="
+	for _, kv := range env {
+		if strings.HasPrefix(kv, prefix) {
+			return kv[len(prefix):]
+		}
+	}
+	return ""
+}
+
+func pkgdir(env []string) string {
+	return gomobilepath + "/pkg_" + getenv(env, "GOOS") + "_" + getenv(env, "GOARCH")
 }

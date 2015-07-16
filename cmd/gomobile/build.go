@@ -56,7 +56,7 @@ For documentation, see 'go help build'.
 }
 
 func runBuild(cmd *command) (err error) {
-	cleanup, err := envInit()
+	cleanup, err := buildEnvInit()
 	if err != nil {
 		return err
 	}
@@ -198,9 +198,10 @@ func init() {
 
 func goBuild(src string, env []string, args ...string) error {
 	cmd := exec.Command(
-		`go`,
-		`build`,
-		`-tags=`+strconv.Quote(strings.Join(ctx.BuildTags, ",")),
+		"go",
+		"build",
+		"-pkgdir="+pkgdir(env),
+		"-tags="+strconv.Quote(strings.Join(ctx.BuildTags, ",")),
 	)
 	if buildV {
 		cmd.Args = append(cmd.Args, "-v")
@@ -213,8 +214,7 @@ func goBuild(src string, env []string, args ...string) error {
 	}
 	cmd.Args = append(cmd.Args, args...)
 	cmd.Args = append(cmd.Args, src)
-	cmd.Env = []string{"CGO_ENABLED=1"}
-	cmd.Env = append(cmd.Env, env...)
+	cmd.Env = append([]string{}, env...)
 	buf := new(bytes.Buffer)
 	buf.WriteByte('\n')
 	if buildV {

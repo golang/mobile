@@ -43,25 +43,19 @@ func goIOSBind(pkg *build.Package) error {
 		return err
 	}
 
-	armPath, err := goIOSBindArchive(name, mainFile, darwinArmEnv)
-	if err != nil {
-		return err
-	}
-	arm64Path, err := goIOSBindArchive(name, mainFile, darwinArm64Env)
-	if err != nil {
-		return err
+	cmd := exec.Command("xcrun", "lipo", "-create")
+
+	// TODO(crawshaw): Build in parallel.
+	for _, env := range [][]string{darwinArmEnv, darwinArm64Env, darwinAmd64Env} {
+		arch := archClang(getenv(env, "GOARCH"))
+		path, err := goIOSBindArchive(name, mainFile, env)
+		if err != nil {
+			return fmt.Errorf("darwin-%s: %v", arch, err)
+		}
+		cmd.Args = append(cmd.Args, "-arch", arch, path)
 	}
 
-	cmd := exec.Command(
-		"xcrun", "lipo",
-		"-create",
-		"-arch", "arm",
-		armPath,
-		"-arch", "arm64",
-		arm64Path,
-		"-o", buildO,
-	)
-	// TODO(crawshaw): arch i386/x86_64 for iOS simulator
+	cmd.Args = append(cmd.Args, "-o", buildO)
 	if buildX {
 		printcmd(strings.Join(cmd.Args, " "))
 	}
@@ -72,8 +66,6 @@ func goIOSBind(pkg *build.Package) error {
 			return err
 		}
 	}
-
-	// TODO(crawshaw): seq.h
 
 	// Copy header file next to output archive.
 	return copyFile(
@@ -90,23 +82,15 @@ func goIOSBindArchive(name, path string, env []string) (string, error) {
 		return "", err
 	}
 
-	// Build env suitable for invoking $CC.
-	cmd := exec.Command("go", "env", "GOGCCFLAGS")
-	cmd.Env = environ(env)
-	ccflags, err := cmd.Output()
-	if err != nil {
-		panic(err) // the Go tool must work by now
-	}
-	env = append([]string{fmt.Sprintf("CCFLAGS=%q", string(ccflags))}, env...)
-
 	obj := "gobind-" + name + "-" + arch + ".o"
-	cmd = exec.Command(
+	cmd := exec.Command(
 		getenv(env, "CC"),
 		"-I", ".",
 		"-g", "-O2",
 		"-o", obj,
 		"-c", "Go"+strings.Title(name)+".m",
 	)
+	cmd.Args = append(cmd.Args, strings.Split(getenv(env, "CGO_CFLAGS"), " ")...)
 	cmd.Dir = filepath.Join(tmpdir, "objc")
 	cmd.Env = env
 	if buildX {
@@ -136,16 +120,6 @@ func goIOSBindArchive(name, path string, env []string) (string, error) {
 	}
 
 	return archive, nil
-}
-
-func getenv(env []string, key string) string {
-	prefix := key + "="
-	for _, kv := range env {
-		if strings.HasPrefix(kv, prefix) {
-			return kv[len(prefix):]
-		}
-	}
-	return ""
 }
 
 var iosBindTmpl = template.Must(template.New("ios.go").Parse(`

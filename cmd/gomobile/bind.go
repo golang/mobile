@@ -62,7 +62,7 @@ For documentation, see 'go help build'.
 }
 
 func runBind(cmd *command) error {
-	cleanup, err := envInit()
+	cleanup, err := buildEnvInit()
 	if err != nil {
 		return err
 	}
