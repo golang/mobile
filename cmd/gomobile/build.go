@@ -50,8 +50,8 @@ output file name depends on the package built.
 
 The -v flag provides verbose output, including the list of packages built.
 
-The build flags -a, -i, -n, -x, and -tags are shared with the build command.
-For documentation, see 'go help build'.
+The build flags -a, -i, -n, -x, -gcflags, -ldflags, and -tags are shared
+with the build command. For documentation, see 'go help build'.
 `,
 }
 
@@ -154,17 +154,21 @@ func printcmd(format string, args ...interface{}) {
 
 // "Build flags", used by multiple commands.
 var (
-	buildA      bool   // -a
-	buildI      bool   // -i
-	buildN      bool   // -n
-	buildV      bool   // -v
-	buildX      bool   // -x
-	buildO      string // -o
-	buildTarget string // -target
+	buildA       bool   // -a
+	buildI       bool   // -i
+	buildN       bool   // -n
+	buildV       bool   // -v
+	buildX       bool   // -x
+	buildO       string // -o
+	buildGcflags string // -gcflags
+	buildLdflags string // -ldflags
+	buildTarget  string // -target
 )
 
 func addBuildFlags(cmd *command) {
 	cmd.flag.StringVar(&buildO, "o", "", "")
+	cmd.flag.StringVar(&buildGcflags, "gcflags", "", "")
+	cmd.flag.StringVar(&buildLdflags, "ldflags", "", "")
 	cmd.flag.StringVar(&buildTarget, "target", "android", "")
 
 	cmd.flag.BoolVar(&buildA, "a", false, "")
@@ -211,6 +215,12 @@ func goBuild(src string, env []string, args ...string) error {
 	}
 	if buildX {
 		cmd.Args = append(cmd.Args, "-x")
+	}
+	if buildGcflags != "" {
+		cmd.Args = append(cmd.Args, "-gcflags", buildGcflags)
+	}
+	if buildLdflags != "" {
+		cmd.Args = append(cmd.Args, "-ldflags", buildLdflags)
 	}
 	cmd.Args = append(cmd.Args, args...)
 	cmd.Args = append(cmd.Args, src)

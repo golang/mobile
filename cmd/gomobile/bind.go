@@ -56,8 +56,8 @@ installed. Support is not complete.
 
 The -v flag provides verbose output, including the list of packages built.
 
-The build flags -a, -i, -n, -x, and -tags are shared with the build command.
-For documentation, see 'go help build'.
+The build flags -a, -i, -n, -x, -gcflags, -ldflags, and -tags are shared
+with the build command. For documentation, see 'go help build'.
 `,
 }
 
