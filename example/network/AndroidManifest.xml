@@ -18,9 +18,9 @@ license that can be found in the LICENSE file.
 	     http://developer.android.com/guide/topics/manifest/manifest-intro.html#perms -->
 	<uses-permission android:name="android.permission.INTERNET" />
 
-	<application android:label="network" android:hasCode="false" android:debuggable="true">
+	<application android:label="network" android:debuggable="true">
 
-	<activity android:name="android.app.NativeActivity"
+	<activity android:name="org.golang.app.GoNativeActivity"
 		android:label="network"
 		android:configChanges="orientation|keyboardHidden">
 		<meta-data android:name="android.app.lib_name" android:value="network" />
