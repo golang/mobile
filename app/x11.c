@@ -143,7 +143,7 @@ processEvents(void) {
 		XNextEvent(x_dpy, &ev);
 		switch (ev.type) {
 		case ButtonPress:
-			onTouchStart((float)ev.xbutton.x, (float)ev.xbutton.y);
+			onTouchBegin((float)ev.xbutton.x, (float)ev.xbutton.y);
 			break;
 		case ButtonRelease:
 			onTouchEnd((float)ev.xbutton.x, (float)ev.xbutton.y);

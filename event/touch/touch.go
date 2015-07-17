@@ -20,8 +20,8 @@ import (
 
 // Event is a touch event.
 //
-// The same Sequence is shared by all events in a sequence. A sequence starts
-// with a single TypeStart, is followed by zero or more TypeMoves, and ends
+// The same Sequence is shared by all events in a sequence. A sequence begins
+// with a single TypeBegin, is followed by zero or more TypeMoves, and ends
 // with a single TypeEnd. A Sequence distinguishes concurrent sequences but its
 // value is subsequently reused.
 type Event struct {
@@ -37,15 +37,15 @@ type Sequence int64
 type Type byte
 
 const (
-	// TypeStart is a user first touching the device.
+	// TypeBegin is a user first touching the device.
 	//
 	// On Android, this is a AMOTION_EVENT_ACTION_DOWN.
 	// On iOS, this is a call to touchesBegan.
-	TypeStart Type = iota
+	TypeBegin Type = iota
 
 	// TypeMove is a user dragging across the device.
 	//
-	// A TypeMove is delivered between a TypeStart and TypeEnd.
+	// A TypeMove is delivered between a TypeBegin and TypeEnd.
 	//
 	// On Android, this is a AMOTION_EVENT_ACTION_MOVE.
 	// On iOS, this is a call to touchesMoved.
@@ -60,8 +60,8 @@ const (
 
 func (t Type) String() string {
 	switch t {
-	case TypeStart:
-		return "start"
+	case TypeBegin:
+		return "begin"
 	case TypeMove:
 		return "move"
 	case TypeEnd:
