@@ -63,11 +63,12 @@ var (
 	scene *sprite.Node
 
 	player *audio.Player
+
+	cfg config.Event
 )
 
 func main() {
 	app.Main(func(a app.App) {
-		var c config.Event
 		for e := range a.Events() {
 			switch e := app.Filter(e).(type) {
 			case lifecycle.Event:
@@ -78,9 +79,9 @@ func main() {
 					onStop()
 				}
 			case config.Event:
-				c = e
+				cfg = e
 			case paint.Event:
-				onPaint(c)
+				onPaint()
 				a.EndPaint()
 			}
 		}
@@ -102,15 +103,15 @@ func onStop() {
 	player.Close()
 }
 
-func onPaint(c config.Event) {
+func onPaint() {
 	if scene == nil {
-		loadScene(c)
+		loadScene()
 	}
 	gl.ClearColor(1, 1, 1, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 	now := clock.Time(time.Since(startTime) * 60 / time.Second)
-	eng.Render(scene, now, c)
-	debug.DrawFPS(c)
+	eng.Render(scene, now, cfg)
+	debug.DrawFPS(cfg)
 }
 
 func newNode() *sprite.Node {
@@ -120,7 +121,7 @@ func newNode() *sprite.Node {
 	return n
 }
 
-func loadScene(c config.Event) {
+func loadScene() {
 	gopher := loadGopher()
 	scene = &sprite.Node{}
 	eng.Register(scene)
@@ -133,6 +134,7 @@ func loadScene(c config.Event) {
 	dx, dy := float32(1), float32(1)
 
 	n := newNode()
+	// TODO: Shouldn't arranger pass the config.Event?
 	n.Arranger = arrangerFunc(func(eng sprite.Engine, n *sprite.Node, t clock.Time) {
 		eng.SetSubTex(n, gopher)
 
@@ -144,11 +146,11 @@ func loadScene(c config.Event) {
 			dy = 1
 			boing()
 		}
-		if x+width > float32(c.Width) {
+		if x+width > float32(cfg.Width) {
 			dx = -1
 			boing()
 		}
-		if y+height > float32(c.Height) {
+		if y+height > float32(cfg.Height) {
 			dy = -1
 			boing()
 		}
