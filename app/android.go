@@ -81,32 +81,8 @@ func callMain(mainPC uintptr) {
 
 //export onCreate
 func onCreate(activity *C.ANativeActivity) {
-	config := C.AConfiguration_new()
-	C.AConfiguration_fromAssetManager(config, activity.assetManager)
-	density := C.AConfiguration_getDensity(config)
-	C.AConfiguration_delete(config)
-
-	var dpi int
-	switch density {
-	case C.ACONFIGURATION_DENSITY_DEFAULT:
-		dpi = 160
-	case C.ACONFIGURATION_DENSITY_LOW,
-		C.ACONFIGURATION_DENSITY_MEDIUM,
-		213, // C.ACONFIGURATION_DENSITY_TV
-		C.ACONFIGURATION_DENSITY_HIGH,
-		320, // ACONFIGURATION_DENSITY_XHIGH
-		480, // ACONFIGURATION_DENSITY_XXHIGH
-		640: // ACONFIGURATION_DENSITY_XXXHIGH
-		dpi = int(density)
-	case C.ACONFIGURATION_DENSITY_NONE:
-		log.Print("android device reports no screen density")
-		dpi = 72
-	default:
-		log.Print("android device reports unknown density: %d", density)
-		dpi = int(density) // This is a guess.
-	}
-
-	pixelsPerPt = float32(dpi) / 72
+	config := windowConfigRead(activity)
+	pixelsPerPt = config.pixelsPerPt
 }
 
 //export onStart
@@ -143,13 +119,15 @@ func onNativeWindowCreated(activity *C.ANativeActivity, w *C.ANativeWindow) {
 	windowCreated <- w
 }
 
-//export onNativeWindowResized
-func onNativeWindowResized(activity *C.ANativeActivity, window *C.ANativeWindow) {
-}
-
 //export onNativeWindowRedrawNeeded
 func onNativeWindowRedrawNeeded(activity *C.ANativeActivity, window *C.ANativeWindow) {
+	// Called on orientation change and window resize.
+	// Send a request for redraw, and block this function
+	// until a complete draw and buffer swap is completed.
+	// This is required by the redraw documentation to
+	// avoid bad draws.
 	windowRedrawNeeded <- window
+	<-windowRedrawDone
 }
 
 //export onNativeWindowDestroyed
@@ -173,8 +151,61 @@ func onInputQueueDestroyed(activity *C.ANativeActivity, q *C.AInputQueue) {
 func onContentRectChanged(activity *C.ANativeActivity, rect *C.ARect) {
 }
 
+type windowConfig struct {
+	// TODO(crawshaw): report orientation
+	//	ACONFIGURATION_ORIENTATION_ANY
+	//	ACONFIGURATION_ORIENTATION_PORT
+	//	ACONFIGURATION_ORIENTATION_LAND
+	//	ACONFIGURATION_ORIENTATION_SQUARE
+	// Needs to be merged with iOS's notion of orientation first.
+	orientation int
+	pixelsPerPt float32
+}
+
+func windowConfigRead(activity *C.ANativeActivity) windowConfig {
+	aconfig := C.AConfiguration_new()
+	C.AConfiguration_fromAssetManager(aconfig, activity.assetManager)
+	orient := C.AConfiguration_getOrientation(aconfig)
+	density := C.AConfiguration_getDensity(aconfig)
+	C.AConfiguration_delete(aconfig)
+
+	var dpi int
+	switch density {
+	case C.ACONFIGURATION_DENSITY_DEFAULT:
+		dpi = 160
+	case C.ACONFIGURATION_DENSITY_LOW,
+		C.ACONFIGURATION_DENSITY_MEDIUM,
+		213, // C.ACONFIGURATION_DENSITY_TV
+		C.ACONFIGURATION_DENSITY_HIGH,
+		320, // ACONFIGURATION_DENSITY_XHIGH
+		480, // ACONFIGURATION_DENSITY_XXHIGH
+		640: // ACONFIGURATION_DENSITY_XXXHIGH
+		dpi = int(density)
+	case C.ACONFIGURATION_DENSITY_NONE:
+		log.Print("android device reports no screen density")
+		dpi = 72
+	default:
+		log.Printf("android device reports unknown density: %d", density)
+		// All we can do is guess.
+		if density > 0 {
+			dpi = int(density)
+		} else {
+			dpi = 72
+		}
+	}
+
+	return windowConfig{
+		orientation: int(orient),
+		pixelsPerPt: float32(dpi) / 72,
+	}
+}
+
 //export onConfigurationChanged
 func onConfigurationChanged(activity *C.ANativeActivity) {
+	// A rotation event first triggers onConfigurationChanged, then
+	// calls onNativeWindowRedrawNeeded. We extract the orientation
+	// here and save it for the redraw event.
+	windowConfigChange <- windowConfigRead(activity)
 }
 
 //export onLowMemory
@@ -185,6 +216,8 @@ var (
 	windowDestroyed    = make(chan bool)
 	windowCreated      = make(chan *C.ANativeWindow)
 	windowRedrawNeeded = make(chan *C.ANativeWindow)
+	windowRedrawDone   = make(chan struct{})
+	windowConfigChange = make(chan windowConfig)
 )
 
 func init() {

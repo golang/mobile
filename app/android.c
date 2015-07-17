@@ -90,15 +90,14 @@ void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_
 	activity->callbacks->onDestroy = onDestroy;
 	activity->callbacks->onWindowFocusChanged = onWindowFocusChanged;
 	activity->callbacks->onNativeWindowCreated = onNativeWindowCreated;
-	activity->callbacks->onNativeWindowResized = onNativeWindowResized;
 	activity->callbacks->onNativeWindowRedrawNeeded = onNativeWindowRedrawNeeded;
 	activity->callbacks->onNativeWindowDestroyed = onNativeWindowDestroyed;
 	activity->callbacks->onInputQueueCreated = onInputQueueCreated;
 	activity->callbacks->onInputQueueDestroyed = onInputQueueDestroyed;
-	// TODO(crawshaw): Type mismatch for onContentRectChanged.
-	//activity->callbacks->onContentRectChanged = onContentRectChanged;
 	activity->callbacks->onConfigurationChanged = onConfigurationChanged;
 	activity->callbacks->onLowMemory = onLowMemory;
 
+	// Note that onNativeWindowResized is not called on resize. Avoid it.
+	// https://code.google.com/p/android/issues/detail?id=180645
 	onCreate(activity);
 }
