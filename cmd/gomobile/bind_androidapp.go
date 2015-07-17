@@ -65,7 +65,11 @@ func goAndroidBind(pkg *build.Package) error {
 	}
 
 	dst := filepath.Join(androidDir, "src/main/java/go/LoadJNI.java")
-	if err := ioutil.WriteFile(dst, []byte(loadSrc), 0664); err != nil {
+	genLoadJNI := func(w io.Writer) error {
+		_, err := io.WriteString(w, loadSrc)
+		return err
+	}
+	if err := writeFile(dst, genLoadJNI); err != nil {
 		return err
 	}
 

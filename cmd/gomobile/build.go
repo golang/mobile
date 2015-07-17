@@ -134,6 +134,9 @@ func printcmd(format string, args ...interface{}) {
 	if tmpdir != "" {
 		cmd = strings.Replace(cmd, tmpdir, "$WORK", -1)
 	}
+	if androidHome := os.Getenv("ANDROID_HOME"); androidHome != "" {
+		cmd = strings.Replace(cmd, androidHome, "$ANDROID_HOME", -1)
+	}
 	if gomobilepath != "" {
 		cmd = strings.Replace(cmd, gomobilepath, "$GOMOBILE", -1)
 	}

@@ -30,15 +30,21 @@ func buildEnvInit() (cleanup func(), err error) {
 	gopath := goEnv("GOPATH")
 	for _, p := range filepath.SplitList(gopath) {
 		gomobilepath = filepath.Join(p, "pkg", "gomobile")
-		if _, err := os.Stat(gomobilepath); err == nil {
+		if _, err := os.Stat(gomobilepath); buildN || err == nil {
 			break
 		}
 	}
+
+	if err := envInit(); err != nil {
+		return nil, err
+	}
+
 	if buildX {
 		fmt.Fprintln(xout, "GOMOBILE="+gomobilepath)
 	}
 
 	// Check the toolchain is in a good state.
+	// Pick a temporary directory for assembling an apk/app.
 	version, err := goVersion()
 	if err != nil {
 		return nil, err
@@ -46,23 +52,21 @@ func buildEnvInit() (cleanup func(), err error) {
 	if gomobilepath == "" {
 		return nil, errors.New("toolchain not installed, run `gomobile init`")
 	}
-	verpath := filepath.Join(gomobilepath, "version")
-	installedVersion, err := ioutil.ReadFile(verpath)
-	if err != nil {
-		return nil, errors.New("toolchain partially installed, run `gomobile init`")
-	}
-	if !bytes.Equal(installedVersion, version) {
-		return nil, errors.New("toolchain out of date, run `gomobile init`")
-	}
 
-	if err := envInit(); err != nil {
-		return nil, err
-	}
-
-	// We need a temporary directory when assembling an apk/app.
+	cleanupFn := func() { removeAll(tmpdir) }
 	if buildN {
 		tmpdir = "$WORK"
+		cleanupFn = func() {}
 	} else {
+		verpath := filepath.Join(gomobilepath, "version")
+		installedVersion, err := ioutil.ReadFile(verpath)
+		if err != nil {
+			return nil, errors.New("toolchain partially installed, run `gomobile init`")
+		}
+		if !bytes.Equal(installedVersion, version) {
+			return nil, errors.New("toolchain out of date, run `gomobile init`")
+		}
+
 		tmpdir, err = ioutil.TempDir("", "gomobile-work-")
 		if err != nil {
 			return nil, err
@@ -72,7 +76,7 @@ func buildEnvInit() (cleanup func(), err error) {
 		fmt.Fprintln(xout, "WORK="+tmpdir)
 	}
 
-	return func() { removeAll(tmpdir) }, nil
+	return cleanupFn, nil
 }
 
 func envInit() (err error) {
@@ -156,6 +160,9 @@ func envInit() (err error) {
 }
 
 func envClang(sdkName string) (clang, cflags string, err error) {
+	if buildN {
+		return "clang-" + sdkName, "-isysroot=" + sdkName, nil
+	}
 	cmd := exec.Command("xcrun", "--sdk", sdkName, "--find", "clang")
 	out, err := cmd.Output()
 	if err != nil {

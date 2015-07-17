@@ -87,7 +87,7 @@ type outputData struct {
 
 var initTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
 mkdir -p $GOMOBILE/android-{{.NDK}}
-WORK=/GOPATH1/pkg/gomobile/work
+WORK={{.GOPATH}}/pkg/gomobile/work
 mkdir -p $GOMOBILE/dl
 curl -o$GOMOBILE/dl/gomobile-{{.NDK}}-{{.GOOS}}-{{.NDKARCH}}.tar.gz https://dl.google.com/go/mobile/gomobile-{{.NDK}}-{{.GOOS}}-{{.NDKARCH}}.tar.gz
 tar xfz $GOMOBILE/dl/gomobile-{{.NDK}}-{{.GOOS}}-{{.NDKARCH}}.tar.gz
@@ -108,12 +108,10 @@ tar xfz $GOMOBILE/dl/gomobile-openal-soft-1.16.0.1.tar.gz
 mv $WORK/openal/include/AL $GOMOBILE/android-{{.NDK}}/arm/sysroot/usr/include/AL
 mkdir -p $GOMOBILE/android-{{.NDK}}/openal
 mv $WORK/openal/lib $GOMOBILE/android-{{.NDK}}/openal/lib
-rm -r -f "$GOROOT/pkg/android_arm"
-PATH=$PATH GOOS=android GOARCH=arm CGO_ENABLED=1 CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-gcc{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-g++{{.EXE}} GOARM=7 go install std
-{{if eq .GOOS "darwin"}}rm -r -f "$GOROOT/pkg/darwin_arm"
-PATH=$PATH GOOS=darwin GOARCH=arm CGO_ENABLED=1 CC=$GOROOT/misc/ios/clangwrap.sh CXX=$GOROOT/misc/ios/clangwrap.sh GOARM=7 go install std
-rm -r -f "$GOROOT/pkg/darwin_arm64"
-PATH=$PATH GOOS=darwin GOARCH=arm64 CGO_ENABLED=1 CC=$GOROOT/misc/ios/clangwrap.sh CXX=$GOROOT/misc/ios/clangwrap.sh go install std
+{{if eq .GOOS "darwin"}}PATH=$PATH GOOS=android GOARCH=arm GOARM=7 CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-gcc{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-g++ CGO_ENABLED=1 go install -pkgdir=$GOMOBILE/pkg_android_arm -x std
+PATH=$PATH GOOS=darwin GOARCH=arm GOARM=7 CC=clang-iphoneos CXX=clang-iphoneos CGO_CFLAGS=-isysroot=iphoneos -arch armv7 CGO_LDFLAGS=-isysroot=iphoneos -arch armv7 CGO_ENABLED=1 go install -pkgdir=$GOMOBILE/pkg_darwin_arm -x std
+PATH=$PATH GOOS=darwin GOARCH=arm64 CC=clang-iphoneos CXX=clang-iphoneos CGO_CFLAGS=-isysroot=iphoneos -arch arm64 CGO_LDFLAGS=-isysroot=iphoneos -arch arm64 CGO_ENABLED=1 go install -pkgdir=$GOMOBILE/pkg_darwin_arm64 -x std
+PATH=$PATH GOOS=darwin GOARCH=amd64 CC=clang-iphonesimulator CXX=clang-iphonesimulator CGO_CFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=6.1 -arch x86_64 CGO_LDFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=6.1 -arch x86_64 CGO_ENABLED=1 go install -pkgdir=$GOMOBILE/pkg_darwin_amd64 -tags=ios -x std
 {{end}}go version > $GOMOBILE/version
 rm -r -f "$WORK"
 `))
