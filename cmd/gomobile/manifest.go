@@ -32,8 +32,8 @@ func manifestLibName(data []byte) (string, error) {
 	if err := xml.Unmarshal(data, manifest); err != nil {
 		return "", err
 	}
-	if manifest.Activity.Name != "android.app.NativeActivity" {
-		return "", fmt.Errorf("can only build an .apk for NativeActivity, not %q", manifest.Activity.Name)
+	if manifest.Activity.Name != "org.golang.app.GoNativeActivity" {
+		return "", fmt.Errorf("can only build an .apk for GoNativeActivity, not %q", manifest.Activity.Name)
 	}
 	libName := ""
 	for _, md := range manifest.Activity.MetaData {
