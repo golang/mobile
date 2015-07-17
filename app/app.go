@@ -9,8 +9,6 @@ package app
 import (
 	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/event/lifecycle"
-	"golang.org/x/mobile/event/paint"
-	"golang.org/x/mobile/event/touch"
 	"golang.org/x/mobile/gl"
 	_ "golang.org/x/mobile/internal/mobileinit"
 )
@@ -170,97 +168,6 @@ func pump(dst chan interface{}) (src chan interface{}) {
 		}
 	}()
 	return src
-}
-
-// Run starts the mobile application.
-//
-// It must be called directly from the main function and will block until the
-// application exits.
-//
-// Deprecated: call Main directly instead.
-func Run(cb Callbacks) {
-	Main(func(a App) {
-		var c config.Event
-		for e := range a.Events() {
-			switch e := Filter(e).(type) {
-			case lifecycle.Event:
-				switch e.Crosses(lifecycle.StageVisible) {
-				case lifecycle.CrossOn:
-					if cb.Start != nil {
-						cb.Start()
-					}
-				case lifecycle.CrossOff:
-					if cb.Stop != nil {
-						cb.Stop()
-					}
-				}
-			case config.Event:
-				if cb.Config != nil {
-					cb.Config(e, c)
-				}
-				c = e
-			case paint.Event:
-				if cb.Draw != nil {
-					cb.Draw(c)
-				}
-				a.EndPaint()
-			case touch.Event:
-				if cb.Touch != nil {
-					cb.Touch(e, c)
-				}
-			}
-		}
-	})
-}
-
-// Callbacks is the set of functions called by the app.
-//
-// Deprecated: call Main directly instead.
-type Callbacks struct {
-	// Start is called when the app enters the foreground.
-	// The app will start receiving Draw and Touch calls.
-	//
-	// If the app is responsible for the screen (that is, it is an
-	// all-Go app), then Window geometry will be configured and an
-	// OpenGL context will be available during Start.
-	//
-	// If this is a library, Start will be called before the
-	// app is told that Go has finished initialization.
-	//
-	// Start is an equivalent lifecycle state to onStart() on
-	// Android and applicationDidBecomeActive on iOS.
-	Start func()
-
-	// Stop is called shortly before a program is suspended.
-	//
-	// When Stop is received, the app is no longer visible and is not
-	// receiving events. It should:
-	//
-	//	- Save any state the user expects saved (for example text).
-	//	- Release all resources that are not needed.
-	//
-	// Execution time in the stop state is limited, and the limit is
-	// enforced by the operating system. Stop as quickly as you can.
-	//
-	// An app that is stopped may be started again. For example, the user
-	// opens Recent Apps and switches to your app. A stopped app may also
-	// be terminated by the operating system with no further warning.
-	//
-	// Stop is equivalent to onStop() on Android and
-	// applicationDidEnterBackground on iOS.
-	Stop func()
-
-	// Draw is called by the render loop to draw the screen.
-	//
-	// Drawing is done into a framebuffer, which is then swapped onto the
-	// screen when Draw returns. It is called 60 times a second.
-	Draw func(config.Event)
-
-	// Touch is called by the app when a touch event occurs.
-	Touch func(touch.Event, config.Event)
-
-	// Config is called by the app when configuration has changed.
-	Config func(new, old config.Event)
 }
 
 // TODO: do this for all build targets, not just linux (x11 and Android)? If
