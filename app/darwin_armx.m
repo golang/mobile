@@ -65,7 +65,7 @@ struct utsname sysInfo;
 	drawgl((GoUintptr)self.context);
 }
 
-#define TOUCH_TYPE_START 0 // touch.TypeStart
+#define TOUCH_TYPE_BEGIN 0 // touch.TypeBegin
 #define TOUCH_TYPE_MOVE  1 // touch.TypeMove
 #define TOUCH_TYPE_END   2 // touch.TypeEnd
 
@@ -78,7 +78,7 @@ static void sendTouches(int change, NSSet* touches) {
 }
 
 - (void)touchesBegan:(NSSet*)touches withEvent:(UIEvent*)event {
-	sendTouches(TOUCH_TYPE_START, touches);
+	sendTouches(TOUCH_TYPE_BEGIN, touches);
 }
 
 - (void)touchesMoved:(NSSet*)touches withEvent:(UIEvent*)event {

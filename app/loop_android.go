@@ -158,7 +158,7 @@ func processEvent(e *C.AInputEvent) {
 		upDownType := touch.TypeMove
 		switch C.AMotionEvent_getAction(e) & C.AMOTION_EVENT_ACTION_MASK {
 		case C.AMOTION_EVENT_ACTION_DOWN, C.AMOTION_EVENT_ACTION_POINTER_DOWN:
-			upDownType = touch.TypeStart
+			upDownType = touch.TypeBegin
 		case C.AMOTION_EVENT_ACTION_UP, C.AMOTION_EVENT_ACTION_POINTER_UP:
 			upDownType = touch.TypeEnd
 		}

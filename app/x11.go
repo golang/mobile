@@ -97,8 +97,8 @@ func sendTouch(t touch.Type, x, y float32) {
 	}
 }
 
-//export onTouchStart
-func onTouchStart(x, y float32) { sendTouch(touch.TypeStart, x, y) }
+//export onTouchBegin
+func onTouchBegin(x, y float32) { sendTouch(touch.TypeBegin, x, y) }
 
 //export onTouchMove
 func onTouchMove(x, y float32) { sendTouch(touch.TypeMove, x, y) }

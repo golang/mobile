@@ -139,7 +139,7 @@ func sendTouch(t touch.Type, x, y float32) {
 }
 
 //export eventMouseDown
-func eventMouseDown(x, y float32) { sendTouch(touch.TypeStart, x, y) }
+func eventMouseDown(x, y float32) { sendTouch(touch.TypeBegin, x, y) }
 
 //export eventMouseDragged
 func eventMouseDragged(x, y float32) { sendTouch(touch.TypeMove, x, y) }
