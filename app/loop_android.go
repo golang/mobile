@@ -7,6 +7,7 @@ package app
 /*
 #include <android/log.h>
 #include <android/native_activity.h>
+#include <android/native_window.h>
 #include <android/input.h>
 #include <EGL/egl.h>
 #include <GLES/gl.h>
@@ -23,17 +24,10 @@ const EGLint RGB_888[] = {
 	EGL_NONE
 };
 
-EGLint windowWidth;
-EGLint windowHeight;
 EGLDisplay display;
 EGLSurface surface;
 
 #define LOG_ERROR(...) __android_log_print(ANDROID_LOG_ERROR, "Go", __VA_ARGS__)
-
-void querySurfaceWidthAndHeight() {
-	eglQuerySurface(display, surface, EGL_WIDTH, &windowWidth);
-	eglQuerySurface(display, surface, EGL_HEIGHT, &windowHeight);
-}
 
 void createEGLWindow(ANativeWindow* window) {
 	EGLint numConfigs, format;
@@ -74,8 +68,6 @@ void createEGLWindow(ANativeWindow* window) {
 		LOG_ERROR("eglMakeCurrent failed");
 		return;
 	}
-
-	querySurfaceWidthAndHeight();
 }
 
 #undef LOG_ERROR
@@ -92,46 +84,55 @@ import (
 	"golang.org/x/mobile/gl"
 )
 
-var firstWindowDraw = true
-
 func windowDraw(w *C.ANativeWindow, queue *C.AInputQueue, donec chan struct{}) (done bool) {
-	C.createEGLWindow(w)
-
-	// TODO: is this needed if we also have the "case <-windowRedrawNeeded:" below??
-	sendLifecycle(lifecycle.StageFocused)
-	eventsIn <- config.Event{
-		Width:       geom.Pt(float32(C.windowWidth) / pixelsPerPt),
-		Height:      geom.Pt(float32(C.windowHeight) / pixelsPerPt),
-		PixelsPerPt: pixelsPerPt,
-	}
-	if firstWindowDraw {
-		firstWindowDraw = false
-		// TODO: be more principled about when to send a paint event.
-		eventsIn <- paint.Event{}
-	}
-
+	// Android can send a windowRedrawNeeded event any time, including
+	// in the middle of a paint cycle. The redraw event may have changed
+	// the size of the screen, so any partial painting is now invalidated.
+	// We must also not return to Android (via sending on windowRedrawDone)
+	// until a complete paint with the new configuration is complete.
+	//
+	// When a windowRedrawNeeded request comes in, we increment redrawGen
+	// (Gen is short for generation number), and do not make a paint cycle
+	// visible on <-endPaint unless paintGen agrees. If possible,
+	// windowRedrawDone is signalled, allowing onNativeWindowRedrawNeeded
+	// to return.
+	var redrawGen, paintGen uint32
 	for {
 		processEvents(queue)
 		select {
 		case <-donec:
 			return true
-		case <-windowRedrawNeeded:
-			// Re-query the width and height.
-			C.querySurfaceWidthAndHeight()
+		case cfg := <-windowConfigChange:
+			// TODO save orientation
+			pixelsPerPt = cfg.pixelsPerPt
+		case w := <-windowRedrawNeeded:
 			sendLifecycle(lifecycle.StageFocused)
 			eventsIn <- config.Event{
-				Width:       geom.Pt(float32(C.windowWidth) / pixelsPerPt),
-				Height:      geom.Pt(float32(C.windowHeight) / pixelsPerPt),
+				Width:       geom.Pt(float32(C.ANativeWindow_getWidth(w)) / pixelsPerPt),
+				Height:      geom.Pt(float32(C.ANativeWindow_getHeight(w)) / pixelsPerPt),
 				PixelsPerPt: pixelsPerPt,
 			}
+			if paintGen == 0 {
+				paintGen++
+				C.createEGLWindow(w)
+				eventsIn <- paint.Event{}
+			}
+			redrawGen++
 		case <-windowDestroyed:
 			sendLifecycle(lifecycle.StageAlive)
 			return false
 		case <-gl.WorkAvailable:
 			gl.DoWork()
 		case <-endPaint:
-			// eglSwapBuffers blocks until vsync.
-			C.eglSwapBuffers(C.display, C.surface)
+			if paintGen == redrawGen {
+				// eglSwapBuffers blocks until vsync.
+				C.eglSwapBuffers(C.display, C.surface)
+				select {
+				case windowRedrawDone <- struct{}{}:
+				default:
+				}
+			}
+			paintGen = redrawGen
 			eventsIn <- paint.Event{}
 		}
 	}
