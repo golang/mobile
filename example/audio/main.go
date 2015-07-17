@@ -40,6 +40,8 @@ import (
 	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/asset"
 	"golang.org/x/mobile/event/config"
+	"golang.org/x/mobile/event/lifecycle"
+	"golang.org/x/mobile/event/paint"
 	"golang.org/x/mobile/exp/app/debug"
 	"golang.org/x/mobile/exp/audio"
 	"golang.org/x/mobile/exp/f32"
@@ -64,10 +66,24 @@ var (
 )
 
 func main() {
-	app.Run(app.Callbacks{
-		Start: onStart,
-		Stop:  onStop,
-		Draw:  onDraw,
+	app.Main(func(a app.App) {
+		var c config.Event
+		for e := range a.Events() {
+			switch e := app.Filter(e).(type) {
+			case lifecycle.Event:
+				switch e.Crosses(lifecycle.StageVisible) {
+				case lifecycle.CrossOn:
+					onStart()
+				case lifecycle.CrossOff:
+					onStop()
+				}
+			case config.Event:
+				c = e
+			case paint.Event:
+				onPaint(c)
+				a.EndPaint()
+			}
+		}
 	})
 }
 
@@ -86,7 +102,7 @@ func onStop() {
 	player.Close()
 }
 
-func onDraw(c config.Event) {
+func onPaint(c config.Event) {
 	if scene == nil {
 		loadScene(c)
 	}
