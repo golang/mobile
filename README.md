@@ -1,28 +1,25 @@
 # Go support for Mobile devices
 
-The Go mobile repository holds packages and build tools for using Go on Android.
+The Go mobile repository holds packages and build tools for using Go on mobile platforms.
+
+Package documentation serves as a starting point:
+
+- [Building all-Go apps](https://golang.org/x/mobile/app)
+- [Building libraries for SDK apps](https://golang.org/x/mobile/cmd/gobind)
+
+![Caution image](doc/caution.png)
+
+The Go Mobile project is experimental. Use this at your own risk.
+While we are working hard to improve it, neither Google nor the Go
+team can provide end-user support.
 
 This is early work and installing the build system requires Go 1.5.
 Follow the build instructions on
-[godoc.org/golang.org/x/mobile/cmd/gomobile](http://godoc.org/golang.org/x/mobile/cmd/gomobile)
+[godoc.org/golang.org/x/mobile/cmd/gomobile](https://golang.org/x/mobile/cmd/gomobile)
 to install the gomobile command and
-[build the basic example](http://godoc.org/golang.org/x/mobile/example/basic).
+[build the basic example](https://golang.org/x/mobile/example/basic).
 
----
-
-APIs are currently very limited, but under active development. Package
-documentation serves as a starting point:
-
-- [mobile/app](http://godoc.org/golang.org/x/mobile/app)
-- [mobile/gl](http://godoc.org/golang.org/x/mobile/gl)
-- [mobile/cmd/gomobile](http://godoc.org/golang.org/x/mobile/cmd/gomobile)
-- [mobile/cmd/gobind](http://godoc.org/golang.org/x/mobile/cmd/gobind)
-
----
-
-- [mobile/exp/audio](http://godoc.org/golang.org/x/mobile/exp/audio)
-- [mobile/exp/sensor](http://godoc.org/golang.org/x/mobile/exp/sensor)
-- [mobile/exp/sprite](http://godoc.org/golang.org/x/mobile/exp/sprite)
+--
 
 Contributions to Go are appreciated. See https://golang.org/doc/contribute.html.
 
