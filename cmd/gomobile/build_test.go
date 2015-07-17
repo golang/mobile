@@ -22,14 +22,13 @@ func TestBuild(t *testing.T) {
 	xout = buf
 	buildN = true
 	buildX = true
+	buildO = "basic.apk"
+	buildTarget = "android"
 	gopath = filepath.SplitList(os.Getenv("GOPATH"))[0]
 	if goos == "windows" {
 		os.Setenv("HOMEDRIVE", "C:")
 	}
 	cmdBuild.flag.Parse([]string{"golang.org/x/mobile/example/basic"})
-	if buildTarget != "android" {
-		t.Fatalf("-target=%q, want android", buildTarget)
-	}
 	err := runBuild(cmdBuild)
 	if err != nil {
 		t.Log(buf.String())
@@ -43,11 +42,9 @@ func TestBuild(t *testing.T) {
 	if diff != "" {
 		t.Errorf("unexpected output:\n%s", diff)
 	}
-
 }
 
 var buildTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
 WORK=$WORK
-CGO_ENABLED=1 GOOS=android GOARCH=arm GOARM=7 CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-gcc{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-g++{{.EXE}} GOGCCFLAGS="-fPIC -marm -pthread -fmessage-length=0" go build -tags="" -x -buildmode=c-shared -o $WORK/libbasic.so golang.org/x/mobile/example/basic
-rm -r -f "$WORK"
+GOOS=android GOARCH=arm GOARM=7 CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-gcc{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-g++{{.EXE}} CGO_ENABLED=1 go build -pkgdir=$GOMOBILE/pkg_android_arm -tags="" -x -buildmode=c-shared -o $WORK/libbasic.so golang.org/x/mobile/example/basic
 `))
