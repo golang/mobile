@@ -21,11 +21,11 @@ func goIOSBind(pkg *build.Package) error {
 	}
 	name := binder.pkg.Name()
 
-	if buildO != "" && !strings.HasSuffix(buildO, ".a") {
-		return fmt.Errorf("archive name %q missing .a suffix", buildO)
+	if buildO != "" && !strings.HasSuffix(buildO, ".framework") {
+		return fmt.Errorf("static framework name %q missing .framework suffix", buildO)
 	}
 	if buildO == "" {
-		buildO = name + ".a"
+		buildO = name + ".framework"
 	}
 
 	if err := binder.GenGo(filepath.Join(tmpdir, "src")); err != nil {
@@ -54,15 +54,33 @@ func goIOSBind(pkg *build.Package) error {
 		cmd.Args = append(cmd.Args, "-arch", arch, path)
 	}
 
-	cmd.Args = append(cmd.Args, "-o", buildO)
+	// Build static framework output directory.
+	if err := removeAll(buildO); err != nil {
+		return err
+	}
+	headers := buildO + "/Versions/A/Headers"
+	if err := mkdir(headers); err != nil {
+		return err
+	}
+	if err := symlink("A", buildO+"/Versions/Current"); err != nil {
+		return err
+	}
+	if err := symlink("Versions/Current/Headers", buildO+"/Headers"); err != nil {
+		return err
+	}
+	if err := symlink("Versions/Current/"+strings.Title(name), buildO+"/"+strings.Title(name)); err != nil {
+		return err
+	}
+
+	cmd.Args = append(cmd.Args, "-o", buildO+"/Versions/A/"+strings.Title(name))
 	if err := runCmd(cmd); err != nil {
 		return err
 	}
 
 	// Copy header file next to output archive.
 	return copyFile(
-		filepath.Join(buildO[:len(buildO)-2]+".h"),
-		filepath.Join(tmpdir, "objc/Go"+strings.Title(name)+".h"),
+		headers+"/"+strings.Title(name)+".h",
+		tmpdir+"/objc/Go"+strings.Title(name)+".h",
 	)
 }
 
