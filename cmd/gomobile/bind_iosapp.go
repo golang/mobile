@@ -77,7 +77,7 @@ func goIOSBind(pkg *build.Package) error {
 func goIOSBindArchive(name, path string, env []string) (string, error) {
 	arch := getenv(env, "GOARCH")
 	archive := filepath.Join(tmpdir, name+"-"+arch+".a")
-	err := goBuild(path, env, "-buildmode=c-archive", "-o", archive)
+	err := goBuild(path, env, "-buildmode=c-archive", "-tags=ios", "-o", archive)
 	if err != nil {
 		return "", err
 	}
