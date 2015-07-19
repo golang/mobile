@@ -44,12 +44,12 @@ func goIOSBuild(pkg *build.Package) error {
 	}
 
 	armPath := filepath.Join(tmpdir, "arm")
-	if err := goBuild(src, darwinArmEnv, "-o="+armPath); err != nil {
+	if err := goBuild(src, darwinArmEnv, "-tags=ios", "-o="+armPath); err != nil {
 		return err
 	}
 
 	arm64Path := filepath.Join(tmpdir, "arm64")
-	if err := goBuild(src, darwinArm64Env, "-o="+arm64Path); err != nil {
+	if err := goBuild(src, darwinArm64Env, "-tags=ios", "-o="+arm64Path); err != nil {
 		return err
 	}
 
