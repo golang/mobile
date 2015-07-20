@@ -7,7 +7,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"go/build"
 	"io"
@@ -228,24 +227,5 @@ func goBuild(src string, env []string, args ...string) error {
 	cmd.Args = append(cmd.Args, args...)
 	cmd.Args = append(cmd.Args, src)
 	cmd.Env = append([]string{}, env...)
-	buf := new(bytes.Buffer)
-	buf.WriteByte('\n')
-	if buildV {
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-	} else {
-		cmd.Stdout = buf
-		cmd.Stderr = buf
-	}
-
-	if buildX {
-		printcmd("%s", strings.Join(cmd.Env, " ")+" "+strings.Join(cmd.Args, " "))
-	}
-	if !buildN {
-		cmd.Env = environ(cmd.Env)
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("go build failed: %v%s", err, buf)
-		}
-	}
-	return nil
+	return runCmd(cmd)
 }

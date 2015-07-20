@@ -5,10 +5,8 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"go/build"
-	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -30,13 +28,13 @@ func goIOSBuild(pkg *build.Package) error {
 	}
 
 	for dst, v := range layout {
+		if err := mkdir(filepath.Dir(dst)); err != nil {
+			return err
+		}
 		if buildX {
 			printcmd("echo \"%s\" > %s", v, dst)
 		}
 		if !buildN {
-			if err := os.MkdirAll(filepath.Dir(dst), 0775|os.ModeDir); err != nil {
-				return err
-			}
 			if err := ioutil.WriteFile(dst, v, 0644); err != nil {
 				return err
 			}
@@ -57,19 +55,13 @@ func goIOSBuild(pkg *build.Package) error {
 	// We are using lipo tool to build multiarchitecture binaries.
 	// TODO(jbd): Investigate the new announcements about iO9's fat binary
 	// size limitations are breaking this feature.
-	if buildX {
-		printcmd("xcrun lipo -create %s %s -o %s", armPath, arm64Path, filepath.Join(tmpdir, "main/main"))
-	}
-	if !buildN {
-		cmd := exec.Command(
-			"xcrun", "lipo",
-			"-create", armPath, arm64Path,
-			"-o", filepath.Join(tmpdir, "main/main"),
-		)
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
-			return err
-		}
+	cmd := exec.Command(
+		"xcrun", "lipo",
+		"-create", armPath, arm64Path,
+		"-o", filepath.Join(tmpdir, "main/main"),
+	)
+	if err := runCmd(cmd); err != nil {
+		return err
 	}
 
 	// TODO(jbd): Set the launcher icon.
@@ -78,30 +70,13 @@ func goIOSBuild(pkg *build.Package) error {
 	}
 
 	// Build and move the release build to the output directory.
-	cmd := exec.Command(
+	cmd = exec.Command(
 		"xcrun", "xcodebuild",
 		"-configuration", "Release",
 		"-project", tmpdir+"/main.xcodeproj",
 	)
-
-	if buildX {
-		printcmd("%s", strings.Join(cmd.Args, " "))
-	}
-
-	buf := new(bytes.Buffer)
-	buf.WriteByte('\n')
-	if buildV {
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-	} else {
-		cmd.Stdout = buf
-		cmd.Stderr = buf
-	}
-
-	if !buildN {
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("xcodebuild failed: %v%s", err, buf)
-		}
+	if err := runCmd(cmd); err != nil {
+		return err
 	}
 
 	// TODO(jbd): Fallback to copying if renaming fails.
@@ -125,13 +100,8 @@ func goIOSBuild(pkg *build.Package) error {
 
 func iosCopyAssets(pkg *build.Package, xcodeProjDir string) error {
 	dstAssets := xcodeProjDir + "/main/assets"
-	if buildX {
-		printcmd("mkdir -p %s", dstAssets)
-	}
-	if !buildN {
-		if err := os.MkdirAll(dstAssets, 0755); err != nil {
-			return err
-		}
+	if err := mkdir(dstAssets); err != nil {
+		return err
 	}
 
 	srcAssets := filepath.Join(pkg.Dir, "assets")
@@ -148,13 +118,6 @@ func iosCopyAssets(pkg *build.Package, xcodeProjDir string) error {
 		return nil
 	}
 
-	if buildX {
-		printcmd("cp -R %s %s", filepath.Join(pkg.Dir, "assets"), dstAssets)
-	}
-	if buildN {
-		return nil
-	}
-
 	return filepath.Walk(srcAssets, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -163,20 +126,7 @@ func iosCopyAssets(pkg *build.Package, xcodeProjDir string) error {
 			return nil
 		}
 		dst := dstAssets + "/" + path[len(srcAssets)+1:]
-		if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
-			return err
-		}
-		f, err := os.Create(dst)
-		if err != nil {
-			return err
-		}
-		w, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		_, err = io.Copy(w, f)
-		return err
+		return copyFile(dst, path)
 	})
 }
 

@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"go/build"
 	"io"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -56,15 +55,8 @@ func goIOSBind(pkg *build.Package) error {
 	}
 
 	cmd.Args = append(cmd.Args, "-o", buildO)
-	if buildX {
-		printcmd(strings.Join(cmd.Args, " "))
-	}
-	if !buildN {
-		cmd.Stderr = os.Stderr
-		cmd.Stdout = os.Stdout
-		if err := cmd.Run(); err != nil {
-			return err
-		}
+	if err := runCmd(cmd); err != nil {
+		return err
 	}
 
 	// Copy header file next to output archive.
@@ -92,33 +84,16 @@ func goIOSBindArchive(name, path string, env []string) (string, error) {
 	)
 	cmd.Args = append(cmd.Args, strings.Split(getenv(env, "CGO_CFLAGS"), " ")...)
 	cmd.Dir = filepath.Join(tmpdir, "objc")
-	cmd.Env = env
-	if buildX {
-		printcmd("PWD=" + cmd.Dir + " " + strings.Join(cmd.Env, " ") + strings.Join(cmd.Args, " "))
-	}
-	if !buildN {
-		cmd.Stderr = os.Stderr // nominally silent
-		cmd.Stdout = os.Stdout
-		if err := cmd.Run(); err != nil {
-			return "", err
-		}
+	cmd.Env = append([]string{}, env...)
+	if err := runCmd(cmd); err != nil {
+		return "", err
 	}
 
 	cmd = exec.Command("ar", "-q", "-s", archive, obj)
 	cmd.Dir = filepath.Join(tmpdir, "objc")
-	if buildX {
-		printcmd("PWD=" + cmd.Dir + " " + strings.Join(cmd.Args, " "))
+	if err := runCmd(cmd); err != nil {
+		return "", err
 	}
-	if !buildN {
-		out, err := cmd.CombinedOutput()
-		if buildV {
-			os.Stderr.Write(out)
-		}
-		if err != nil {
-			return "", fmt.Errorf("ar: %v\n%s", err, out)
-		}
-	}
-
 	return archive, nil
 }
 
