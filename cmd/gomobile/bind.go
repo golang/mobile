@@ -167,14 +167,20 @@ func copyFile(dst, src string) error {
 	if buildX {
 		printcmd("cp %s %s", src, dst)
 	}
-	f, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
 	return writeFile(dst, func(w io.Writer) error {
-		_, err := io.Copy(w, f)
-		return err
+		if buildN {
+			return nil
+		}
+		f, err := os.Open(src)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		if _, err := io.Copy(w, f); err != nil {
+			return fmt.Errorf("cp %s %s failed: %v", src, dst, err)
+		}
+		return nil
 	})
 }
 

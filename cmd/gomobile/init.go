@@ -167,10 +167,6 @@ func installStd(env []string, args ...string) error {
 	if buildV {
 		fmt.Fprintf(os.Stderr, "\n# Building standard library for %s/%s.\n", tOS, tArch)
 	}
-	envpath := os.Getenv("PATH")
-	if buildN {
-		envpath = "$PATH"
-	}
 
 	cmd := exec.Command("go", "install", "-pkgdir="+pkgdir(env))
 	cmd.Args = append(cmd.Args, args...)
@@ -181,29 +177,8 @@ func installStd(env []string, args ...string) error {
 		cmd.Args = append(cmd.Args, "-x")
 	}
 	cmd.Args = append(cmd.Args, "std")
-	cmd.Env = []string{"PATH=" + envpath}
-	cmd.Env = append(cmd.Env, env...)
-	if buildX {
-		printcmd("%s", strings.Join(cmd.Env, " ")+" "+strings.Join(cmd.Args, " "))
-	}
-
-	buf := new(bytes.Buffer)
-	buf.WriteByte('\n')
-	if buildV {
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-	} else {
-		cmd.Stdout = buf
-		cmd.Stderr = buf
-	}
-
-	if !buildN {
-		cmd.Env = environ(cmd.Env)
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("go install std for %s/%s failed: %v%s", tOS, tArch, err, buf)
-		}
-	}
-	return nil
+	cmd.Env = append([]string{}, env...)
+	return runCmd(cmd)
 }
 
 func removeGomobilepkg() {
@@ -452,18 +427,7 @@ func fetchFullNDK() error {
 		inflate = exec.Command("7z.exe", "x", archive)
 	}
 	inflate.Dir = tmpdir
-	if buildX {
-		printcmd("%s", archive)
-	}
-	if !buildN {
-		out, err := inflate.CombinedOutput()
-		if err != nil {
-			if buildV {
-				os.Stderr.Write(out)
-			}
-			return err
-		}
-	}
+	return runCmd(inflate)
 	return nil
 }
 
@@ -602,4 +566,36 @@ func goEnv(name string) string {
 		panic(err) // the Go tool was tested to work earlier
 	}
 	return strings.TrimSpace(string(val))
+}
+
+func runCmd(cmd *exec.Cmd) error {
+	if buildX {
+		dir := ""
+		if cmd.Dir != "" {
+			dir = "PWD=" + cmd.Dir + " "
+		}
+		env := strings.Join(cmd.Env, " ")
+		if env != "" {
+			env += " "
+		}
+		printcmd("%s%s%s", dir, env, strings.Join(cmd.Args, " "))
+	}
+
+	buf := new(bytes.Buffer)
+	buf.WriteByte('\n')
+	if buildV {
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+	} else {
+		cmd.Stdout = buf
+		cmd.Stderr = buf
+	}
+
+	if !buildN {
+		cmd.Env = environ(cmd.Env)
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("%s failed: %v%s", strings.Join(cmd.Args, " "), err, buf)
+		}
+	}
+	return nil
 }
