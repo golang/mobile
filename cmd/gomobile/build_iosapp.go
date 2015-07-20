@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"go/build"
 	"io/ioutil"
@@ -13,6 +14,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"text/template"
 )
 
 func goIOSBuild(pkg *build.Package) error {
@@ -21,9 +23,15 @@ func goIOSBuild(pkg *build.Package) error {
 		return fmt.Errorf("-o must have an .app for target=ios")
 	}
 
+	infoplist := new(bytes.Buffer)
+	if err := infoplistTmpl.Execute(infoplist, manifestTmplData{
+		Name: strings.Title(path.Base(pkg.ImportPath)),
+	}); err != nil {
+		return err
+	}
 	layout := map[string][]byte{
 		tmpdir + "/main.xcodeproj/project.pbxproj":                        []byte(projPbxproj),
-		tmpdir + "/main/Info.plist":                                       []byte(infoPlist),
+		tmpdir + "/main/Info.plist":                                       infoplist.Bytes(),
 		tmpdir + "/main/Images.xcassets/AppIcon.appiconset/Contents.json": []byte(contentsJSON),
 	}
 
@@ -130,14 +138,18 @@ func iosCopyAssets(pkg *build.Package, xcodeProjDir string) error {
 	})
 }
 
-const infoPlist = `<?xml version="1.0" encoding="UTF-8"?>
+type infoplistTmplData struct {
+	Name string
+}
+
+var infoplistTmpl = template.Must(template.New("infoplist").Parse(`<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
   <key>CFBundleDevelopmentRegion</key>
   <string>en</string>
   <key>CFBundleExecutable</key>
-  <string>main</string>
+  <string>{{.Name}}</string>
   <key>CFBundleIdentifier</key>
   <string>org.golang.todo.$(PRODUCT_NAME:rfc1034identifier)</string>
   <key>CFBundleInfoDictionaryVersion</key>
@@ -175,7 +187,7 @@ const infoPlist = `<?xml version="1.0" encoding="UTF-8"?>
   </array>
 </dict>
 </plist>
-`
+`))
 
 const projPbxproj = `// !$*UTF8*$!
 {
