@@ -5,191 +5,46 @@
 package main
 
 import (
-	"bytes"
-	"fmt"
-	"go/build"
-	"io/ioutil"
-	"os"
-	"os/exec"
-	"path"
-	"path/filepath"
-	"strings"
-	"text/template"
+  "bytes"
+  "os"
+  "path/filepath"
+  "testing"
+  "text/template"
 )
 
-func goIOSBuild(pkg *build.Package) error {
-	src := pkg.ImportPath
-	if buildO != "" && !strings.HasSuffix(buildO, ".app") {
-		return fmt.Errorf("-o must have an .app for target=ios")
-	}
+func TestIOSBuild(t *testing.T) {
+  buf := new(bytes.Buffer)
+  defer func() {
+    xout = os.Stderr
+    buildN = false
+    buildX = false
+  }()
+  xout = buf
+  buildN = true
+  buildX = true
+  buildO = "basic.app"
+  buildTarget = "ios"
+  gopath = filepath.SplitList(os.Getenv("GOPATH"))[0]
+  cmdBuild.flag.Parse([]string{"golang.org/x/mobile/example/basic"})
+  err := runBuild(cmdBuild)
+  if err != nil {
+    t.Log(buf.String())
+    t.Fatal(err)
+  }
 
-	infoplist := new(bytes.Buffer)
-	if err := infoplistTmpl.Execute(infoplist, manifestTmplData{
-		Name: strings.Title(path.Base(pkg.ImportPath)),
-	}); err != nil {
-		return err
-	}
-	layout := map[string][]byte{
-		tmpdir + "/main.xcodeproj/project.pbxproj":                        []byte(projPbxproj),
-		tmpdir + "/main/Info.plist":                                       infoplist.Bytes(),
-		tmpdir + "/main/Images.xcassets/AppIcon.appiconset/Contents.json": []byte(contentsJSON),
-	}
-
-	for dst, v := range layout {
-		if err := mkdir(filepath.Dir(dst)); err != nil {
-			return err
-		}
-		if buildX {
-			printcmd("echo \"%s\" > %s", v, dst)
-		}
-		if !buildN {
-			if err := ioutil.WriteFile(dst, v, 0644); err != nil {
-				return err
-			}
-		}
-	}
-
-	armPath := filepath.Join(tmpdir, "arm")
-	if err := goBuild(src, darwinArmEnv, "-tags=ios", "-o="+armPath); err != nil {
-		return err
-	}
-
-	arm64Path := filepath.Join(tmpdir, "arm64")
-	if err := goBuild(src, darwinArm64Env, "-tags=ios", "-o="+arm64Path); err != nil {
-		return err
-	}
-
-	// Apple requires builds to target both darwin/arm and darwin/arm64.
-	// We are using lipo tool to build multiarchitecture binaries.
-	// TODO(jbd): Investigate the new announcements about iO9's fat binary
-	// size limitations are breaking this feature.
-	cmd := exec.Command(
-		"xcrun", "lipo",
-		"-create", armPath, arm64Path,
-		"-o", filepath.Join(tmpdir, "main/main"),
-	)
-	if err := runCmd(cmd); err != nil {
-		return err
-	}
-
-	// TODO(jbd): Set the launcher icon.
-	if err := iosCopyAssets(pkg, tmpdir); err != nil {
-		return err
-	}
-
-	// Build and move the release build to the output directory.
-	cmd = exec.Command(
-		"xcrun", "xcodebuild",
-		"-configuration", "Release",
-		"-project", tmpdir+"/main.xcodeproj",
-	)
-	if err := runCmd(cmd); err != nil {
-		return err
-	}
-
-	// TODO(jbd): Fallback to copying if renaming fails.
-	if buildO == "" {
-		buildO = path.Base(pkg.ImportPath) + ".app"
-	}
-	if buildX {
-		printcmd("mv %s %s", tmpdir+"/build/Release-iphoneos/main.app", buildO)
-	}
-	if !buildN {
-		// if output already exists, remove.
-		if err := os.RemoveAll(buildO); err != nil {
-			return err
-		}
-		if err := os.Rename(tmpdir+"/build/Release-iphoneos/main.app", buildO); err != nil {
-			return err
-		}
-	}
-	return nil
+  diff, err := diffOutput(buf.String(), iosBuildTmpl)
+  if err != nil {
+    t.Fatalf("computing diff failed: %v", err)
+  }
+  if diff != "" {
+    t.Errorf("unexpected output:\n%s", diff)
+  }
 }
 
-func iosCopyAssets(pkg *build.Package, xcodeProjDir string) error {
-	dstAssets := xcodeProjDir + "/main/assets"
-	if err := mkdir(dstAssets); err != nil {
-		return err
-	}
-
-	srcAssets := filepath.Join(pkg.Dir, "assets")
-	fi, err := os.Stat(srcAssets)
-	if err != nil {
-		if os.IsNotExist(err) {
-			// skip walking through the directory to deep copy.
-			return nil
-		}
-		return err
-	}
-	if !fi.IsDir() {
-		// skip walking through to deep copy.
-		return nil
-	}
-
-	return filepath.Walk(srcAssets, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-		dst := dstAssets + "/" + path[len(srcAssets)+1:]
-		return copyFile(dst, path)
-	})
-}
-
-type infoplistTmplData struct {
-	Name string
-}
-
-var infoplistTmpl = template.Must(template.New("infoplist").Parse(`<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-  <key>CFBundleDevelopmentRegion</key>
-  <string>en</string>
-  <key>CFBundleExecutable</key>
-  <string>main</string>
-  <key>CFBundleIdentifier</key>
-  <string>org.golang.todo.$(PRODUCT_NAME:rfc1034identifier)</string>
-  <key>CFBundleInfoDictionaryVersion</key>
-  <string>6.0</string>
-  <key>CFBundleName</key>
-  <string>{{.Name}}</string>
-  <key>CFBundlePackageType</key>
-  <string>APPL</string>
-  <key>CFBundleShortVersionString</key>
-  <string>1.0</string>
-  <key>CFBundleSignature</key>
-  <string>????</string>
-  <key>CFBundleVersion</key>
-  <string>1</string>
-  <key>LSRequiresIPhoneOS</key>
-  <true/>
-  <key>UILaunchStoryboardName</key>
-  <string>LaunchScreen</string>
-  <key>UIRequiredDeviceCapabilities</key>
-  <array>
-    <string>armv7</string>
-  </array>
-  <key>UISupportedInterfaceOrientations</key>
-  <array>
-    <string>UIInterfaceOrientationPortrait</string>
-    <string>UIInterfaceOrientationLandscapeLeft</string>
-    <string>UIInterfaceOrientationLandscapeRight</string>
-  </array>
-  <key>UISupportedInterfaceOrientations~ipad</key>
-  <array>
-    <string>UIInterfaceOrientationPortrait</string>
-    <string>UIInterfaceOrientationPortraitUpsideDown</string>
-    <string>UIInterfaceOrientationLandscapeLeft</string>
-    <string>UIInterfaceOrientationLandscapeRight</string>
-  </array>
-</dict>
-</plist>
-`))
-
-const projPbxproj = `// !$*UTF8*$!
+var iosBuildTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
+WORK=$WORK
+mkdir -p $WORK/main.xcodeproj
+echo "// !$*UTF8*$!
 {
   archiveVersion = 1;
   classes = {
@@ -439,9 +294,56 @@ const projPbxproj = `// !$*UTF8*$!
   };
   rootObject = 254BB8361B1FD08900C56DE9 /* Project object */;
 }
-`
-
-const contentsJSON = `{
+" > $WORK/main.xcodeproj/project.pbxproj
+mkdir -p $WORK/main
+echo "<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>en</string>
+  <key>CFBundleExecutable</key>
+  <string>main</string>
+  <key>CFBundleIdentifier</key>
+  <string>org.golang.todo.$(PRODUCT_NAME:rfc1034identifier)</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
+  <key>CFBundleName</key>
+  <string>Basic</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0</string>
+  <key>CFBundleSignature</key>
+  <string>????</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+  <key>LSRequiresIPhoneOS</key>
+  <true/>
+  <key>UILaunchStoryboardName</key>
+  <string>LaunchScreen</string>
+  <key>UIRequiredDeviceCapabilities</key>
+  <array>
+    <string>armv7</string>
+  </array>
+  <key>UISupportedInterfaceOrientations</key>
+  <array>
+    <string>UIInterfaceOrientationPortrait</string>
+    <string>UIInterfaceOrientationLandscapeLeft</string>
+    <string>UIInterfaceOrientationLandscapeRight</string>
+  </array>
+  <key>UISupportedInterfaceOrientations~ipad</key>
+  <array>
+    <string>UIInterfaceOrientationPortrait</string>
+    <string>UIInterfaceOrientationPortraitUpsideDown</string>
+    <string>UIInterfaceOrientationLandscapeLeft</string>
+    <string>UIInterfaceOrientationLandscapeRight</string>
+  </array>
+</dict>
+</plist>
+" > $WORK/main/Info.plist
+mkdir -p $WORK/main/Images.xcassets/AppIcon.appiconset
+echo "{
   "images" : [
     {
       "idiom" : "iphone",
@@ -509,4 +411,11 @@ const contentsJSON = `{
     "author" : "xcode"
   }
 }
-`
+" > $WORK/main/Images.xcassets/AppIcon.appiconset/Contents.json
+GOOS=darwin GOARCH=arm GOARM=7 CC=clang-iphoneos CXX=clang-iphoneos CGO_CFLAGS=-isysroot=iphoneos -arch armv7 CGO_LDFLAGS=-isysroot=iphoneos -arch armv7 CGO_ENABLED=1 go build -pkgdir=$GOMOBILE/pkg_darwin_arm -tags="" -x -tags=ios -o=$WORK/arm golang.org/x/mobile/example/basic
+GOOS=darwin GOARCH=arm64 CC=clang-iphoneos CXX=clang-iphoneos CGO_CFLAGS=-isysroot=iphoneos -arch arm64 CGO_LDFLAGS=-isysroot=iphoneos -arch arm64 CGO_ENABLED=1 go build -pkgdir=$GOMOBILE/pkg_darwin_arm64 -tags="" -x -tags=ios -o=$WORK/arm64 golang.org/x/mobile/example/basic
+xcrun lipo -create $WORK/arm $WORK/arm64 -o $WORK/main/main
+mkdir -p $WORK/main/assets
+xcrun xcodebuild -configuration Release -project $WORK/main.xcodeproj
+mv $WORK/build/Release-iphoneos/main.app basic.app
+`))

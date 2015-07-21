@@ -12,7 +12,7 @@ import (
 	"text/template"
 )
 
-func TestBuild(t *testing.T) {
+func TestAndroidBuild(t *testing.T) {
 	buf := new(bytes.Buffer)
 	defer func() {
 		xout = os.Stderr
@@ -35,7 +35,7 @@ func TestBuild(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	diff, err := diffOutput(buf.String(), buildTmpl)
+	diff, err := diffOutput(buf.String(), androidBuildTmpl)
 	if err != nil {
 		t.Fatalf("computing diff failed: %v", err)
 	}
@@ -44,7 +44,7 @@ func TestBuild(t *testing.T) {
 	}
 }
 
-var buildTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
+var androidBuildTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
 WORK=$WORK
 GOOS=android GOARCH=arm GOARM=7 CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-gcc{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-g++{{.EXE}} CGO_ENABLED=1 go build -pkgdir=$GOMOBILE/pkg_android_arm -tags="" -x -buildmode=c-shared -o $WORK/libbasic.so golang.org/x/mobile/example/basic
 `))
