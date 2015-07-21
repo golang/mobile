@@ -133,6 +133,7 @@ var commands = []*command{
 	cmdBuild,
 	cmdInit,
 	cmdInstall,
+	cmdVersion,
 }
 
 type command struct {
