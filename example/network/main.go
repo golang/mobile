@@ -41,7 +41,6 @@ import (
 	"net/http"
 
 	"golang.org/x/mobile/app"
-	"golang.org/x/mobile/event"
 	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/event/paint"
 	"golang.org/x/mobile/exp/app/debug"
@@ -55,7 +54,7 @@ func main() {
 	app.Main(func(a app.App) {
 		var c config.Event
 		for e := range a.Events() {
-			switch e := event.Filter(e).(type) {
+			switch e := app.Filter(e).(type) {
 			case config.Event:
 				c = e
 			case paint.Event:
