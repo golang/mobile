@@ -86,7 +86,7 @@ func runInit(cmd *command) error {
 	gomobilepath = filepath.Join(gopaths[0], "pkg/gomobile")
 	ndkccpath = filepath.Join(gopaths[0], "pkg/gomobile/android-"+ndkVersion)
 	verpath := filepath.Join(gopaths[0], "pkg/gomobile/version")
-	if buildX {
+	if buildX || buildN {
 		fmt.Fprintln(xout, "GOMOBILE="+gomobilepath)
 	}
 	removeGomobilepkg()
@@ -104,7 +104,7 @@ func runInit(cmd *command) error {
 			return err
 		}
 	}
-	if buildX {
+	if buildX || buildN {
 		fmt.Fprintln(xout, "WORK="+tmpdir)
 	}
 	defer removeAll(tmpdir)
@@ -129,7 +129,7 @@ func runInit(cmd *command) error {
 		return err
 	}
 
-	if buildX {
+	if buildX || buildN {
 		printcmd("go version > %s", verpath)
 	}
 	if !buildN {
@@ -204,7 +204,7 @@ func move(dst, src string, names ...string) error {
 	for _, name := range names {
 		srcf := filepath.Join(src, name)
 		dstf := filepath.Join(dst, name)
-		if buildX {
+		if buildX || buildN {
 			printcmd("mv %s %s", srcf, dstf)
 		}
 		if buildN {
@@ -222,7 +222,7 @@ func move(dst, src string, names ...string) error {
 }
 
 func mkdir(dir string) error {
-	if buildX {
+	if buildX || buildN {
 		printcmd("mkdir -p %s", dir)
 	}
 	if buildN {
@@ -232,7 +232,7 @@ func mkdir(dir string) error {
 }
 
 func symlink(src, dst string) error {
-	if buildX {
+	if buildX || buildN {
 		printcmd("ln -s %s %s", src, dst)
 	}
 	if buildN {
@@ -245,7 +245,7 @@ func symlink(src, dst string) error {
 }
 
 func rm(name string) error {
-	if buildX {
+	if buildX || buildN {
 		printcmd("rm %s", name)
 	}
 	if buildN {
@@ -297,7 +297,7 @@ func fetchOpenAL() error {
 }
 
 func extract(dst, src string) error {
-	if buildX {
+	if buildX || buildN {
 		printcmd("tar xfz %s", src)
 	}
 	if buildN {
@@ -442,7 +442,7 @@ func fetch(url string) (dst string, err error) {
 	}
 	name := path.Base(url)
 	dst = filepath.Join(gomobilepath, "dl", name)
-	if buildX {
+	if buildX || buildN {
 		printcmd("curl -o%s %s", dst, url)
 	}
 	if buildN {
@@ -523,7 +523,7 @@ func doCopyAll(dst, src string) error {
 }
 
 func removeAll(path string) error {
-	if buildX {
+	if buildX || buildN {
 		printcmd(`rm -r -f "%s"`, path)
 	}
 	if buildN {
@@ -571,7 +571,7 @@ func goEnv(name string) string {
 }
 
 func runCmd(cmd *exec.Cmd) error {
-	if buildX {
+	if buildX || buildN {
 		dir := ""
 		if cmd.Dir != "" {
 			dir = "PWD=" + cmd.Dir + " "
