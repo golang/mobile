@@ -51,37 +51,49 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	return JNI_VERSION_1_6;
 }
 
+int main_running = 0;
+
 // Entry point from our subclassed NativeActivity.
 //
 // By here, the Go runtime has been initialized (as we are running in
-// -buildmode=c-shared) but main.main hasn't been called yet.
+// -buildmode=c-shared) but the first time it is called, Go's main.main
+// hasn't been called yet.
+//
+// The Activity may be created and destroyed multiple times throughout
+// the life of a single process. Each time, onCreate is called.
 void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_t savedStateSize) {
-	JNIEnv* env = activity->env;
+	if (!main_running) {
+		JNIEnv* env = activity->env;
 
-	// Note that activity->clazz is mis-named.
-	JavaVM* current_vm = activity->vm;
-	jobject current_ctx = activity->clazz;
+		// Note that activity->clazz is mis-named.
+		JavaVM* current_vm = activity->vm;
+		jobject current_ctx = activity->clazz;
 
-	setCurrentContext(current_vm, (*env)->NewGlobalRef(env, current_ctx));
+		setCurrentContext(current_vm, (*env)->NewGlobalRef(env, current_ctx));
 
-	// Set TMPDIR.
-	jmethodID gettmpdir = find_method(env, current_ctx_clazz, "getTmpdir", "()Ljava/lang/String;");
-	jstring jpath = (jstring)(*env)->CallObjectMethod(env, current_ctx, gettmpdir, NULL);
-	const char* tmpdir = (*env)->GetStringUTFChars(env, jpath, NULL);
-	if (setenv("TMPDIR", tmpdir, 1) != 0) {
-		LOG_INFO("setenv(\"TMPDIR\", \"%s\", 1) failed: %d", tmpdir, errno);
+		// Set TMPDIR.
+		jmethodID gettmpdir = find_method(env, current_ctx_clazz, "getTmpdir", "()Ljava/lang/String;");
+		jstring jpath = (jstring)(*env)->CallObjectMethod(env, current_ctx, gettmpdir, NULL);
+		const char* tmpdir = (*env)->GetStringUTFChars(env, jpath, NULL);
+		if (setenv("TMPDIR", tmpdir, 1) != 0) {
+			LOG_INFO("setenv(\"TMPDIR\", \"%s\", 1) failed: %d", tmpdir, errno);
+		}
+		(*env)->ReleaseStringUTFChars(env, jpath, tmpdir);
+
+		// Call the Go main.main.
+		uintptr_t mainPC = (uintptr_t)dlsym(RTLD_DEFAULT, "main.main");
+		if (!mainPC) {
+			LOG_FATAL("missing main.main");
+		}
+		callMain(mainPC);
+		main_running = 1;
 	}
-	(*env)->ReleaseStringUTFChars(env, jpath, tmpdir);
-
-	// Call the Go main.main.
-	uintptr_t mainPC = (uintptr_t)dlsym(RTLD_DEFAULT, "main.main");
-	if (!mainPC) {
-		LOG_FATAL("missing main.main");
-	}
-	callMain(mainPC);
 
 	// These functions match the methods on Activity, described at
 	// http://developer.android.com/reference/android/app/Activity.html
+	//
+	// Note that onNativeWindowResized is not called on resize. Avoid it.
+	// https://code.google.com/p/android/issues/detail?id=180645
 	activity->callbacks->onStart = onStart;
 	activity->callbacks->onResume = onResume;
 	activity->callbacks->onSaveInstanceState = onSaveInstanceState;
@@ -97,7 +109,5 @@ void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_
 	activity->callbacks->onConfigurationChanged = onConfigurationChanged;
 	activity->callbacks->onLowMemory = onLowMemory;
 
-	// Note that onNativeWindowResized is not called on resize. Avoid it.
-	// https://code.google.com/p/android/issues/detail?id=180645
 	onCreate(activity);
 }
