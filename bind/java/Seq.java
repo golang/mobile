@@ -28,7 +28,7 @@ public class Seq {
 
 		try {
 			// TODO(hyangah): check proguard rule.
-			Application appl = (Application)Class.forName("android.app.AppGlobals").getMethod("getInitialApplication").invoke(null, (Object[]) null);
+			Application appl = (Application)Class.forName("android.app.AppGlobals").getMethod("getInitialApplication").invoke(null);
 			Context ctx = appl.getApplicationContext();
 			setContext(ctx);
 
