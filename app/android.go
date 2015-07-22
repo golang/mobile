@@ -42,7 +42,6 @@ import "C"
 import (
 	"log"
 	"os"
-	"runtime"
 	"time"
 	"unsafe"
 
@@ -79,12 +78,6 @@ func callMain(mainPC uintptr) {
 	go callfn.CallFn(mainPC)
 }
 
-//export onCreate
-func onCreate(activity *C.ANativeActivity) {
-	config := windowConfigRead(activity)
-	pixelsPerPt = config.pixelsPerPt
-}
-
 //export onStart
 func onStart(activity *C.ANativeActivity) {
 }
@@ -104,6 +97,16 @@ func onPause(activity *C.ANativeActivity) {
 
 //export onStop
 func onStop(activity *C.ANativeActivity) {
+}
+
+//export onCreate
+func onCreate(activity *C.ANativeActivity) {
+	// Set the initial configuration.
+	//
+	// Note we use unbuffered channels to talk to the activity loop, and
+	// NativeActivity calls these callbacks sequentially, so configuration
+	// will be set before <-windowRedrawNeeded is processed.
+	windowConfigChange <- windowConfigRead(activity)
 }
 
 //export onDestroy
@@ -132,19 +135,17 @@ func onNativeWindowRedrawNeeded(activity *C.ANativeActivity, window *C.ANativeWi
 
 //export onNativeWindowDestroyed
 func onNativeWindowDestroyed(activity *C.ANativeActivity, window *C.ANativeWindow) {
-	windowDestroyed <- true
+	windowDestroyed <- window
 }
-
-var queue *C.AInputQueue
 
 //export onInputQueueCreated
 func onInputQueueCreated(activity *C.ANativeActivity, q *C.AInputQueue) {
-	queue = q
+	inputQueue <- q
 }
 
 //export onInputQueueDestroyed
 func onInputQueueDestroyed(activity *C.ANativeActivity, q *C.AInputQueue) {
-	queue = nil
+	inputQueue <- nil
 }
 
 //export onContentRectChanged
@@ -213,7 +214,8 @@ func onLowMemory(activity *C.ANativeActivity) {
 }
 
 var (
-	windowDestroyed    = make(chan bool)
+	inputQueue         = make(chan *C.AInputQueue)
+	windowDestroyed    = make(chan *C.ANativeWindow)
 	windowCreated      = make(chan *C.ANativeWindow)
 	windowRedrawNeeded = make(chan *C.ANativeWindow)
 	windowRedrawDone   = make(chan struct{})
@@ -222,22 +224,4 @@ var (
 
 func init() {
 	registerGLViewportFilter()
-}
-
-func main(f func(App)) {
-	// Preserve this OS thread for the GL context created in windowDraw.
-	runtime.LockOSThread()
-
-	donec := make(chan struct{})
-	go func() {
-		f(app{})
-		close(donec)
-	}()
-
-	for w := range windowCreated {
-		if windowDraw(w, queue, donec) {
-			return
-		}
-	}
-	panic("unreachable")
 }

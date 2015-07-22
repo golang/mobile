@@ -5,7 +5,6 @@
 package app
 
 /*
-#include <android/log.h>
 #include <android/native_activity.h>
 #include <android/native_window.h>
 #include <android/input.h>
@@ -24,57 +23,67 @@ const EGLint RGB_888[] = {
 	EGL_NONE
 };
 
-EGLDisplay display;
-EGLSurface surface;
+EGLDisplay display = NULL;
+EGLSurface surface = NULL;
 
-#define LOG_ERROR(...) __android_log_print(ANDROID_LOG_ERROR, "Go", __VA_ARGS__)
+char* initEGLDisplay() {
+	display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+	if (!eglInitialize(display, 0, 0)) {
+		return "EGL initialize failed";
+	}
+	return NULL;
+}
 
-void createEGLWindow(ANativeWindow* window) {
+char* createEGLSurface(ANativeWindow* window) {
+	char* err;
 	EGLint numConfigs, format;
 	EGLConfig config;
 	EGLContext context;
 
-	display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-	if (!eglInitialize(display, 0, 0)) {
-		LOG_ERROR("EGL initialize failed");
-		return;
+	if (display == 0) {
+		if ((err = initEGLDisplay()) != NULL) {
+			return err;
+		}
 	}
 
 	if (!eglChooseConfig(display, RGB_888, &config, 1, &numConfigs)) {
-		LOG_ERROR("EGL choose RGB_888 config failed");
-		return;
+		return "EGL choose RGB_888 config failed";
 	}
 	if (numConfigs <= 0) {
-		LOG_ERROR("EGL no config found");
-		return;
+		return "EGL no config found";
 	}
 
 	eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
 	if (ANativeWindow_setBuffersGeometry(window, 0, 0, format) != 0) {
-		LOG_ERROR("EGL set buffers geometry failed");
-		return;
+		return "EGL set buffers geometry failed";
 	}
 
 	surface = eglCreateWindowSurface(display, config, window, NULL);
 	if (surface == EGL_NO_SURFACE) {
-		LOG_ERROR("EGL create surface failed");
-		return;
+		return "EGL create surface failed";
 	}
 
 	const EGLint contextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
 	context = eglCreateContext(display, config, EGL_NO_CONTEXT, contextAttribs);
 
 	if (eglMakeCurrent(display, surface, surface, context) == EGL_FALSE) {
-		LOG_ERROR("eglMakeCurrent failed");
-		return;
+		return "eglMakeCurrent failed";
 	}
+	return NULL;
 }
 
-#undef LOG_ERROR
+char* destroyEGLSurface() {
+	if (!eglDestroySurface(display, surface)) {
+		return "EGL destroy surface failed";
+	}
+	return NULL;
+}
 */
 import "C"
 import (
+	"fmt"
 	"log"
+	"runtime"
 
 	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/event/lifecycle"
@@ -84,7 +93,18 @@ import (
 	"golang.org/x/mobile/gl"
 )
 
-func windowDraw(w *C.ANativeWindow, queue *C.AInputQueue, donec chan struct{}) (done bool) {
+func main(f func(App)) {
+	// Preserve this OS thread for the GL context created below.
+	runtime.LockOSThread()
+
+	donec := make(chan struct{})
+	go func() {
+		f(app{})
+		close(donec)
+	}()
+
+	var q *C.AInputQueue
+
 	// Android can send a windowRedrawNeeded event any time, including
 	// in the middle of a paint cycle. The redraw event may have changed
 	// the size of the screen, so any partial painting is now invalidated.
@@ -97,15 +117,27 @@ func windowDraw(w *C.ANativeWindow, queue *C.AInputQueue, donec chan struct{}) (
 	// windowRedrawDone is signalled, allowing onNativeWindowRedrawNeeded
 	// to return.
 	var redrawGen, paintGen uint32
+
 	for {
-		processEvents(queue)
+		if q != nil {
+			processEvents(q)
+		}
 		select {
+		case <-windowCreated:
+		case q = <-inputQueue:
 		case <-donec:
-			return true
+			return
 		case cfg := <-windowConfigChange:
 			// TODO save orientation
 			pixelsPerPt = cfg.pixelsPerPt
 		case w := <-windowRedrawNeeded:
+			newWindow := C.surface == nil
+			if newWindow {
+				if errStr := C.createEGLSurface(w); errStr != nil {
+					log.Printf("app: %s (%s)", C.GoString(errStr), eglGetError())
+					return
+				}
+			}
 			sendLifecycle(lifecycle.StageFocused)
 			widthPx := int(C.ANativeWindow_getWidth(w))
 			heightPx := int(C.ANativeWindow_getHeight(w))
@@ -116,28 +148,43 @@ func windowDraw(w *C.ANativeWindow, queue *C.AInputQueue, donec chan struct{}) (
 				HeightPt:    geom.Pt(float32(heightPx) / pixelsPerPt),
 				PixelsPerPt: pixelsPerPt,
 			}
-			if paintGen == 0 {
-				paintGen++
-				C.createEGLWindow(w)
+			redrawGen++
+			if newWindow {
+				// New window, begin paint loop.
+				// TODO(crawshaw): If we get a <-windowCreated in between sending a
+				// paint.Event and receiving on endPaint, we can double-paint. (BUG)
+				paintGen = redrawGen
 				eventsIn <- paint.Event{}
 			}
-			redrawGen++
 		case <-windowDestroyed:
+			if C.surface != nil {
+				if errStr := C.destroyEGLSurface(); errStr != nil {
+					log.Printf("app: %s (%s)", C.GoString(errStr), eglGetError())
+					return
+				}
+			}
+			C.surface = nil
 			sendLifecycle(lifecycle.StageAlive)
-			return false
 		case <-gl.WorkAvailable:
 			gl.DoWork()
 		case <-endPaint:
 			if paintGen == redrawGen {
-				// eglSwapBuffers blocks until vsync.
-				C.eglSwapBuffers(C.display, C.surface)
+				if C.surface != nil {
+					// eglSwapBuffers blocks until vsync.
+					if C.eglSwapBuffers(C.display, C.surface) == C.EGL_FALSE {
+						log.Printf("app: failed to swap buffers (%s)", eglGetError())
+					}
+				}
 				select {
 				case windowRedrawDone <- struct{}{}:
 				default:
 				}
 			}
+			if C.surface != nil {
+				redrawGen++
+				eventsIn <- paint.Event{}
+			}
 			paintGen = redrawGen
-			eventsIn <- paint.Event{}
 		}
 	}
 }
@@ -184,5 +231,42 @@ func processEvent(e *C.AInputEvent) {
 		}
 	default:
 		log.Printf("unknown input event, type=%d", C.AInputEvent_getType(e))
+	}
+}
+
+func eglGetError() string {
+	switch errNum := C.eglGetError(); errNum {
+	case C.EGL_SUCCESS:
+		return "EGL_SUCCESS"
+	case C.EGL_NOT_INITIALIZED:
+		return "EGL_NOT_INITIALIZED"
+	case C.EGL_BAD_ACCESS:
+		return "EGL_BAD_ACCESS"
+	case C.EGL_BAD_ALLOC:
+		return "EGL_BAD_ALLOC"
+	case C.EGL_BAD_ATTRIBUTE:
+		return "EGL_BAD_ATTRIBUTE"
+	case C.EGL_BAD_CONTEXT:
+		return "EGL_BAD_CONTEXT"
+	case C.EGL_BAD_CONFIG:
+		return "EGL_BAD_CONFIG"
+	case C.EGL_BAD_CURRENT_SURFACE:
+		return "EGL_BAD_CURRENT_SURFACE"
+	case C.EGL_BAD_DISPLAY:
+		return "EGL_BAD_DISPLAY"
+	case C.EGL_BAD_SURFACE:
+		return "EGL_BAD_SURFACE"
+	case C.EGL_BAD_MATCH:
+		return "EGL_BAD_MATCH"
+	case C.EGL_BAD_PARAMETER:
+		return "EGL_BAD_PARAMETER"
+	case C.EGL_BAD_NATIVE_PIXMAP:
+		return "EGL_BAD_NATIVE_PIXMAP"
+	case C.EGL_BAD_NATIVE_WINDOW:
+		return "EGL_BAD_NATIVE_WINDOW"
+	case C.EGL_CONTEXT_LOST:
+		return "EGL_CONTEXT_LOST"
+	default:
+		return fmt.Sprintf("Unknown EGL err: %d", errNum)
 	}
 }

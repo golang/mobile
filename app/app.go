@@ -80,11 +80,7 @@ func (app) EndPaint() {
 	// This enforces that the final receive (for this paint cycle) on
 	// gl.WorkAvailable happens before the send on endPaint.
 	gl.Flush()
-
-	select {
-	case endPaint <- struct{}{}:
-	default:
-	}
+	endPaint <- struct{}{}
 }
 
 var filters []func(interface{}) interface{}
