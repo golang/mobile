@@ -60,7 +60,8 @@ void testStruct() {
   double y = [s Y];
   double sum = [s Sum];
   if (x != 10.0 || y != 100.0 || sum != 110.0) {
-    ERROR(@"GoTestpkgS(10.0, 100.0).X=%f Y=%f SUM=%f; want 10, 100, 110", x, y, sum);
+    ERROR(@"GoTestpkgS(10.0, 100.0).X=%f Y=%f SUM=%f; want 10, 100, 110", x, y,
+          sum);
   }
 
   double sum2 = GoTestpkgCallSSum(s);
@@ -75,6 +76,15 @@ void testStruct() {
   sum = [s Sum];
   if (x != 7 || y != 70 || sum != 77) {
     ERROR(@"GoTestpkgS(7, 70).X=%f Y=%f SUM=%f; want 7, 70, 77", x, y, sum);
+  }
+
+  NSString *first = @"trytwotested";
+  NSString *second = @"test";
+  NSString *got = [s TryTwoStrings:first second:second];
+  NSString *want = [first stringByAppendingString:second];
+  if (![got isEqualToString:want]) {
+    ERROR(@"GoTestpkgS_TryTwoStrings(%@, %@)= %@; want %@", first, second, got,
+          want);
   }
 }
 
@@ -103,9 +113,12 @@ int main(void) {
     testBytesAppend(@"Foo", @"Bar");
 
     testStruct();
-    int numS = GoTestpkgCollectS(1, 10); // within 10 seconds, collect the S used in testStruct.
+    int numS = GoTestpkgCollectS(
+        1, 10); // within 10 seconds, collect the S used in testStruct.
     if (numS != 1) {
-      ERROR(@"%d S objects were collected; S used in testStruct is supposed to be collected.", numS);
+      ERROR(@"%d S objects were collected; S used in testStruct is supposed to "
+            @"be collected.",
+            numS);
     }
   }
 

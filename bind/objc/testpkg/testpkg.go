@@ -75,6 +75,10 @@ func NewS(x, y float64) *S {
 	return s
 }
 
+func (s *S) TryTwoStrings(first, second string) string {
+	return first + second
+}
+
 func (s *S) Sum() float64 {
 	return s.X + s.Y
 }

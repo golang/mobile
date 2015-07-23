@@ -65,12 +65,13 @@ func proxy_ReturnsError(out, in *seq.Buffer) {
 }
 
 const (
-	proxyS_Descriptor = "go.testpkg.S"
-	proxyS_X_Get_Code = 0x00f
-	proxyS_X_Set_Code = 0x01f
-	proxyS_Y_Get_Code = 0x10f
-	proxyS_Y_Set_Code = 0x11f
-	proxyS_Sum_Code   = 0x00c
+	proxyS_Descriptor         = "go.testpkg.S"
+	proxyS_X_Get_Code         = 0x00f
+	proxyS_X_Set_Code         = 0x01f
+	proxyS_Y_Get_Code         = 0x10f
+	proxyS_Y_Set_Code         = 0x11f
+	proxyS_Sum_Code           = 0x00c
+	proxyS_TryTwoStrings_Code = 0x10c
 )
 
 type proxyS seq.Ref
@@ -106,12 +107,22 @@ func proxyS_Sum(out, in *seq.Buffer) {
 	out.WriteFloat64(res)
 }
 
+func proxyS_TryTwoStrings(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := ref.Get().(*testpkg.S)
+	param_first := in.ReadString()
+	param_second := in.ReadString()
+	res := v.TryTwoStrings(param_first, param_second)
+	out.WriteString(res)
+}
+
 func init() {
 	seq.Register(proxyS_Descriptor, proxyS_X_Set_Code, proxyS_X_Set)
 	seq.Register(proxyS_Descriptor, proxyS_X_Get_Code, proxyS_X_Get)
 	seq.Register(proxyS_Descriptor, proxyS_Y_Set_Code, proxyS_Y_Set)
 	seq.Register(proxyS_Descriptor, proxyS_Y_Get_Code, proxyS_Y_Get)
 	seq.Register(proxyS_Descriptor, proxyS_Sum_Code, proxyS_Sum)
+	seq.Register(proxyS_Descriptor, proxyS_TryTwoStrings_Code, proxyS_TryTwoStrings)
 }
 
 func proxy_Sum(out, in *seq.Buffer) {

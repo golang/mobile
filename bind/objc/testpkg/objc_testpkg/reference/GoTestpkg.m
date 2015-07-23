@@ -9,21 +9,18 @@
 
 static NSString *errDomain = @"go.golang.org/x/mobile/bind/objc/testpkg";
 
-@protocol goSeqRefInterface
--(GoSeqRef*) ref;
-@end
-
 #define _DESCRIPTOR_ "testpkg"
 
 #define _CALL_BytesAppend_ 1
-#define _CALL_CallSSum_ 2
-#define _CALL_CollectS_ 3
-#define _CALL_Hello_ 4
-#define _CALL_Hi_ 5
-#define _CALL_Int_ 6
-#define _CALL_NewS_ 7
-#define _CALL_ReturnsError_ 8
-#define _CALL_Sum_ 9
+#define _CALL_CallI_ 2
+#define _CALL_CallSSum_ 3
+#define _CALL_CollectS_ 4
+#define _CALL_Hello_ 5
+#define _CALL_Hi_ 6
+#define _CALL_Int_ 7
+#define _CALL_NewS_ 8
+#define _CALL_ReturnsError_ 9
+#define _CALL_Sum_ 10
 
 #define _GO_testpkg_S_DESCRIPTOR_ "go.testpkg.S"
 #define _GO_testpkg_S_FIELD_X_GET_ (0x00f)
@@ -31,7 +28,40 @@ static NSString *errDomain = @"go.golang.org/x/mobile/bind/objc/testpkg";
 #define _GO_testpkg_S_FIELD_Y_GET_ (0x10f)
 #define _GO_testpkg_S_FIELD_Y_SET_ (0x11f)
 #define _GO_testpkg_S_Sum_ (0x00c)
-#define _GO_testpkg_S_TryTwoStrings_ (0x10c)
+
+#define _GO_testpkg_I_DESCRIPTOR_ "go.testpkg.I"
+#define _GO_testpkg_I_Fn_ 0x10a
+
+@implementation GoTestpkgI {
+}
+@synthesize delegate = _delegate;
+@synthesize ref = _ref;
+
+- (id)init {
+	self = [super init];
+	if (self) {
+		_delegate = self;
+		_ref = [GoSeqRef newForObject:self];
+	}
+	return self;
+}
+
+- (void)call:(int)code in:(void *)in out:(void *)out {
+	GoSeq* inseq = (GoSeq*)in;
+	GoSeq* outseq = (GoSeq*)out;
+	switch (code) {
+	case _GO_testpkg_I_Fn_:
+		{
+			int32_t v = go_seq_readInt32(inseq);
+			[_delegate Fn:v];
+			return;
+		}
+	default:
+	        NSLog(@"unknown code %s:%d", _GO_testpkg_I_DESCRIPTOR_, code);
+	}
+}
+
+@end
 
 @implementation GoTestpkgS {
 }
@@ -95,19 +125,6 @@ static NSString *errDomain = @"go.golang.org/x/mobile/bind/objc/testpkg";
 	return ret0_;
 }
 
-- (NSString*)TryTwoStrings:(NSString*)first second:(NSString*)second {
-	GoSeq in_ = {};
-	GoSeq out_ = {};
-	go_seq_writeRef(&in_, self.ref);
-	go_seq_writeUTF8(&in_, first);
-	go_seq_writeUTF8(&in_, second);
-	go_seq_send(_GO_testpkg_S_DESCRIPTOR_, _GO_testpkg_S_TryTwoStrings_, &in_, &out_);
-	NSString* ret0_ = go_seq_readUTF8(&out_);
-	go_seq_free(&in_);
-	go_seq_free(&out_);
-	return ret0_;
-}
-
 @end
 
 NSData* GoTestpkgBytesAppend(NSData* a, NSData* b) {
@@ -122,15 +139,19 @@ NSData* GoTestpkgBytesAppend(NSData* a, NSData* b) {
 	return ret0_;
 }
 
+void GoTestpkgCallI(GoTestpkgI* i, int32_t v) {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	go_seq_writeRef(&in_, i.ref);
+	go_seq_writeInt32(&in_, v);
+	go_seq_send(_DESCRIPTOR_, _CALL_CallI_, &in_, &out_);
+	return;
+}
+
 double GoTestpkgCallSSum(GoTestpkgS* s) {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
-	if (![s respondsToSelector:@selector(ref)]) {
-		@throw [NSException exceptionWithName:@"InvalidGoSeqRef"
-		                               reason:@"not a subclass of GoTestpkgSStub"
-		                             userInfo:nil];
-	}
-	go_seq_writeRef(&in_, [(id<goSeqRefInterface>)s ref]);
+	go_seq_writeRef(&in_, s.ref);
 	go_seq_send(_DESCRIPTOR_, _CALL_CallSSum_, &in_, &out_);
 	double ret0_ = go_seq_readFloat64(&out_);
 	go_seq_free(&in_);
