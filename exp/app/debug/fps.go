@@ -71,7 +71,7 @@ func DrawFPS(c config.Event) {
 		geom.Point{0, c.Height - imgH},
 		geom.Point{imgW, c.Height - imgH},
 		geom.Point{0, c.Height},
-		fps.m.Bounds(),
+		fps.m.RGBA.Bounds(),
 	)
 
 	lastDraw = now

@@ -170,14 +170,14 @@ func (tm *texmapCache) get(key texmapKey) *texture {
 
 // Image bridges between an *image.RGBA and an OpenGL texture.
 //
-// The contents of the embedded *image.RGBA can be uploaded as a
-// texture and drawn as a 2D quad.
+// The contents of the *image.RGBA can be uploaded as a texture and drawn as a
+// 2D quad.
 //
-// The number of active Images must fit in the system's OpenGL texture
-// limit. The typical use of an Image is as a texture atlas.
+// The number of active Images must fit in the system's OpenGL texture limit.
+// The typical use of an Image is as a texture atlas.
 type Image struct {
-	*image.RGBA
-	key *texmapKey
+	RGBA *image.RGBA
+	key  *texmapKey
 }
 
 // NewImage creates an Image of the given size.
@@ -214,7 +214,7 @@ func roundToPower2(x int) int {
 func (img *Image) Upload() {
 	tex := texmap.get(*img.key)
 	gl.BindTexture(gl.TEXTURE_2D, tex.gltex)
-	gl.TexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, tex.width, tex.height, gl.RGBA, gl.UNSIGNED_BYTE, img.Pix)
+	gl.TexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, tex.width, tex.height, gl.RGBA, gl.UNSIGNED_BYTE, img.RGBA.Pix)
 }
 
 // Delete invalidates the Image and removes any underlying data structures.
@@ -311,10 +311,10 @@ func (img *Image) Draw(c config.Event, topLeft, topRight, bottomLeft geom.Point,
 		// from pixel space to texture space.
 		w := float32(tex.width)
 		h := float32(tex.height)
-		px := float32(srcBounds.Min.X-img.Rect.Min.X) / w
-		py := float32(srcBounds.Min.Y-img.Rect.Min.Y) / h
-		qx := float32(srcBounds.Max.X-img.Rect.Min.X) / w
-		sy := float32(srcBounds.Max.Y-img.Rect.Min.Y) / h
+		px := float32(srcBounds.Min.X-img.RGBA.Rect.Min.X) / w
+		py := float32(srcBounds.Min.Y-img.RGBA.Rect.Min.Y) / h
+		qx := float32(srcBounds.Max.X-img.RGBA.Rect.Min.X) / w
+		sy := float32(srcBounds.Max.Y-img.RGBA.Rect.Min.Y) / h
 		// Due to axis alignment, qy = py and sx = px.
 		//
 		// The simultaneous equations are:
