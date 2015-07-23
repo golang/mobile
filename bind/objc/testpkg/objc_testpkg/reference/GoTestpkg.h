@@ -8,6 +8,18 @@
 
 #include <Foundation/Foundation.h>
 
+@protocol GoTestpkgI
+- (void)Fn:(int32_t)v;
+@end
+
+@interface GoTestpkgI : NSObject {
+}
+@property (strong, readonly) id ref;
+@property (weak, readonly, nonatomic) id delegate;
+
+- (void)call:(int)code in:(void *)in out:(void *)out;
+@end
+
 @class GoTestpkgS;
 
 @interface GoTestpkgS : NSObject {
@@ -20,10 +32,11 @@
 - (double)Y;
 - (void)setY:(double)v;
 - (double)Sum;
-- (NSString*)TryTwoStrings:(NSString*)first second:(NSString*)second;
 @end
 
 FOUNDATION_EXPORT NSData* GoTestpkgBytesAppend(NSData* a, NSData* b);
+
+FOUNDATION_EXPORT void GoTestpkgCallI(GoTestpkgI* i, int32_t v);
 
 FOUNDATION_EXPORT double GoTestpkgCallSSum(GoTestpkgS* s);
 

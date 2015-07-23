@@ -25,14 +25,24 @@
 // mem_ensure ensures that m has at least size bytes free.
 // If m is NULL, it is created.
 static void mem_ensure(GoSeq *m, uint32_t size) {
-  if (m->cap > m->off + size) {
+  size_t cap = m->cap;
+
+  if (cap > m->off + size) {
     return;
   }
-  m->buf = (uint8_t *)realloc((void *)m->buf, m->off + size);
+
+  if (cap == 0) {
+	  cap = 64;
+  }
+  while (cap < m->off + size) {
+	  cap *= 2;
+  }
+
+  m->buf = (uint8_t *)realloc((void *)m->buf, cap);
   if (m->buf == NULL) {
     LOG_FATAL(@"mem_ensure realloc failed, off=%zu, size=%u", m->off, size);
   }
-  m->cap = m->off + size;
+  m->cap = cap;
 }
 
 static uint32_t align(uint32_t offset, uint32_t alignment) {
@@ -66,14 +76,7 @@ static uint8_t *mem_write(GoSeq *m, uint32_t size, uint32_t alignment) {
               m->off, m->len, size);
   }
   uint32_t offset = align(m->off, alignment);
-  uint32_t cap = m->cap;
-  if (cap == 0) {
-    cap = 64;
-  }
-  while (offset + size > cap) {
-    cap *= 2;
-  }
-  mem_ensure(m, cap);
+  mem_ensure(m, offset - m->off + size);
   uint8_t *res = m->buf + offset;
   m->off = offset + size;
   m->len = offset + size;
@@ -160,7 +163,7 @@ void go_seq_writeUTF8(GoSeq *seq, NSString *s) {
     return;
   }
 
-  char *buf = (char *)mem_write(seq, len + 1, 1);
+  char *buf = (char *)mem_write(seq, len, 1);
   NSUInteger used;
   [s getBytes:buf
            maxLength:len
