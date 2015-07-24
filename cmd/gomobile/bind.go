@@ -99,6 +99,8 @@ func runBind(cmd *command) error {
 		return goAndroidBind(pkg)
 	case "ios":
 		return goIOSBind(pkg)
+	default:
+		return fmt.Errorf(`unknown -target, %q.`, buildTarget)
 	}
 }
 
