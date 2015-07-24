@@ -63,6 +63,16 @@ func runBuild(cmd *command) (err error) {
 
 	args := cmd.flag.Args()
 
+	ctx.GOARCH = "arm"
+	switch buildTarget {
+	case "android":
+		ctx.GOOS = "android"
+	case "ios":
+		ctx.GOOS = "darwin"
+	default:
+		return fmt.Errorf(`unknown -target, %q.`, buildTarget)
+	}
+
 	switch len(args) {
 	case 0:
 		pkg, err = ctx.ImportDir(cwd, build.ImportComment)
@@ -101,8 +111,6 @@ func runBuild(cmd *command) (err error) {
 		if err := goIOSBuild(pkg); err != nil {
 			return err
 		}
-	default:
-		return fmt.Errorf(`unknown -target, %q.`, buildTarget)
 	}
 
 	// TODO(crawshaw): This is an incomplete package scan.
