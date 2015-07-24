@@ -23,6 +23,9 @@ var (
 	darwinArm64Env []string
 	darwin386Env   []string
 	darwinAmd64Env []string
+
+	androidArmNM string
+	darwinArmNM  string
 )
 
 func buildEnvInit() (cleanup func(), err error) {
@@ -104,6 +107,7 @@ func envInit() (err error) {
 		"CXX=" + filepath.Join(ndkccbin, "arm-linux-androideabi-g++"+exe),
 		"CGO_ENABLED=1",
 	}
+	androidArmNM = filepath.Join(ndkccbin, "arm-linux-androideabi-nm"+exe)
 
 	if runtime.GOOS != "darwin" {
 		return nil
@@ -123,6 +127,7 @@ func envInit() (err error) {
 		"CGO_LDFLAGS=" + cflags + " -arch " + archClang("arm"),
 		"CGO_ENABLED=1",
 	}
+	darwinArmNM = "nm"
 	darwinArm64Env = []string{
 		"GOOS=darwin",
 		"GOARCH=arm64",

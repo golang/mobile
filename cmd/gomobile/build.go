@@ -7,11 +7,13 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"go/build"
 	"io"
 	"os"
 	"os/exec"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -90,12 +92,14 @@ func runBuild(cmd *command) (err error) {
 		return fmt.Errorf("cannot set -o when building non-main package")
 	}
 
+	var nmpkgs map[string]bool
 	switch buildTarget {
 	case "android":
 		if pkg.Name != "main" {
 			return goBuild(pkg.ImportPath, androidArmEnv)
 		}
-		if err := goAndroidBuild(pkg); err != nil {
+		nmpkgs, err = goAndroidBuild(pkg)
+		if err != nil {
 			return err
 		}
 	case "ios":
@@ -108,20 +112,51 @@ func runBuild(cmd *command) (err error) {
 			}
 			return goBuild(pkg.ImportPath, darwinArm64Env)
 		}
-		if err := goIOSBuild(pkg); err != nil {
+		nmpkgs, err = goIOSBuild(pkg)
+		if err != nil {
 			return err
 		}
 	}
 
-	// TODO(crawshaw): This is an incomplete package scan.
-	// A complete package scan would be too expensive. Instead,
-	// fake it. After the binary is built, scan its symbols
-	// with nm and look for the app and al packages.
-	if err := importsApp(pkg); err != nil {
-		return err
+	if !nmpkgs["golang.org/x/mobile/app"] {
+		return fmt.Errorf(`%s does not import "golang.org/x/mobile/app"`, pkg.ImportPath)
 	}
 
 	return nil
+}
+
+var nmRE = regexp.MustCompile(`[0-9a-f]{8} t (golang.org/x.*/[^.]*)`)
+
+func extractPkgs(nm string, path string) (map[string]bool, error) {
+	if buildN {
+		return map[string]bool{"golang.org/x/mobile/app": true}, nil
+	}
+	r, w := io.Pipe()
+	cmd := exec.Command(nm, path)
+	cmd.Stdout = w
+	cmd.Stderr = os.Stderr
+
+	nmpkgs := make(map[string]bool)
+	errc := make(chan error, 1)
+	go func() {
+		s := bufio.NewScanner(r)
+		for s.Scan() {
+			if res := nmRE.FindStringSubmatch(s.Text()); res != nil {
+				nmpkgs[res[1]] = true
+			}
+		}
+		errc <- s.Err()
+	}()
+
+	err := cmd.Run()
+	w.Close()
+	if err != nil {
+		return nil, fmt.Errorf("%s %s: %v", nm, path, err)
+	}
+	if err := <-errc; err != nil {
+		return nil, fmt.Errorf("%s %s: %v", nm, path, err)
+	}
+	return nmpkgs, nil
 }
 
 func importsApp(pkg *build.Package) error {
