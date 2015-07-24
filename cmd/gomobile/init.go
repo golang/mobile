@@ -430,7 +430,6 @@ func fetchFullNDK() error {
 	}
 	inflate.Dir = tmpdir
 	return runCmd(inflate)
-	return nil
 }
 
 // fetch reads a URL into $GOPATH/pkg/gomobile/dl and returns the path
