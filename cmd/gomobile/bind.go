@@ -70,6 +70,16 @@ func runBind(cmd *command) error {
 
 	args := cmd.flag.Args()
 
+	ctx.GOARCH = "arm"
+	switch buildTarget {
+	case "android":
+		ctx.GOOS = "android"
+	case "ios":
+		ctx.GOOS = "darwin"
+	default:
+		return fmt.Errorf(`unknown -target, %q.`, buildTarget)
+	}
+
 	var pkg *build.Package
 	switch len(args) {
 	case 0:
@@ -89,8 +99,6 @@ func runBind(cmd *command) error {
 		return goAndroidBind(pkg)
 	case "ios":
 		return goIOSBind(pkg)
-	default:
-		return fmt.Errorf(`unknown -target, %q.`, buildTarget)
 	}
 }
 
