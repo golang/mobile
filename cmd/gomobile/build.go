@@ -203,9 +203,12 @@ func init() {
 }
 
 func goBuild(src string, env []string, args ...string) error {
+	// The -p flag is to speed up darwin/arm builds.
+	// Remove when golang.org/issue/10477 is resolved.
 	cmd := exec.Command(
 		"go",
 		"build",
+		fmt.Sprintf("-p=%d", runtime.NumCPU()),
 		"-pkgdir="+pkgdir(env),
 		"-tags="+strconv.Quote(strings.Join(ctx.BuildTags, ",")),
 	)
