@@ -168,7 +168,9 @@ func installStd(env []string, args ...string) error {
 		fmt.Fprintf(os.Stderr, "\n# Building standard library for %s/%s.\n", tOS, tArch)
 	}
 
-	cmd := exec.Command("go", "install", "-pkgdir="+pkgdir(env))
+	// The -p flag is to speed up darwin/arm builds.
+	// Remove when golang.org/issue/10477 is resolved.
+	cmd := exec.Command("go", "install", fmt.Sprintf("-p=%d", runtime.NumCPU()), "-pkgdir="+pkgdir(env))
 	cmd.Args = append(cmd.Args, args...)
 	if buildV {
 		cmd.Args = append(cmd.Args, "-v")
