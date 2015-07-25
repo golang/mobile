@@ -5,40 +5,40 @@
 package main
 
 import (
-  "bytes"
-  "os"
-  "path/filepath"
-  "testing"
-  "text/template"
+	"bytes"
+	"os"
+	"path/filepath"
+	"testing"
+	"text/template"
 )
 
 func TestIOSBuild(t *testing.T) {
-  buf := new(bytes.Buffer)
-  defer func() {
-    xout = os.Stderr
-    buildN = false
-    buildX = false
-  }()
-  xout = buf
-  buildN = true
-  buildX = true
-  buildO = "basic.app"
-  buildTarget = "ios"
-  gopath = filepath.SplitList(os.Getenv("GOPATH"))[0]
-  cmdBuild.flag.Parse([]string{"golang.org/x/mobile/example/basic"})
-  err := runBuild(cmdBuild)
-  if err != nil {
-    t.Log(buf.String())
-    t.Fatal(err)
-  }
+	buf := new(bytes.Buffer)
+	defer func() {
+		xout = os.Stderr
+		buildN = false
+		buildX = false
+	}()
+	xout = buf
+	buildN = true
+	buildX = true
+	buildO = "basic.app"
+	buildTarget = "ios"
+	gopath = filepath.SplitList(os.Getenv("GOPATH"))[0]
+	cmdBuild.flag.Parse([]string{"golang.org/x/mobile/example/basic"})
+	err := runBuild(cmdBuild)
+	if err != nil {
+		t.Log(buf.String())
+		t.Fatal(err)
+	}
 
-  diff, err := diffOutput(buf.String(), iosBuildTmpl)
-  if err != nil {
-    t.Fatalf("computing diff failed: %v", err)
-  }
-  if diff != "" {
-    t.Errorf("unexpected output:\n%s", diff)
-  }
+	diff, err := diffOutput(buf.String(), iosBuildTmpl)
+	if err != nil {
+		t.Fatalf("computing diff failed: %v", err)
+	}
+	if diff != "" {
+		t.Errorf("unexpected output:\n%s", diff)
+	}
 }
 
 var iosBuildTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
@@ -412,8 +412,8 @@ echo "{
   }
 }
 " > $WORK/main/Images.xcassets/AppIcon.appiconset/Contents.json
-GOOS=darwin GOARCH=arm GOARM=7 CC=clang-iphoneos CXX=clang-iphoneos CGO_CFLAGS=-isysroot=iphoneos -arch armv7 CGO_LDFLAGS=-isysroot=iphoneos -arch armv7 CGO_ENABLED=1 go build -pkgdir=$GOMOBILE/pkg_darwin_arm -tags="" -x -tags=ios -o=$WORK/arm golang.org/x/mobile/example/basic
-GOOS=darwin GOARCH=arm64 CC=clang-iphoneos CXX=clang-iphoneos CGO_CFLAGS=-isysroot=iphoneos -arch arm64 CGO_LDFLAGS=-isysroot=iphoneos -arch arm64 CGO_ENABLED=1 go build -pkgdir=$GOMOBILE/pkg_darwin_arm64 -tags="" -x -tags=ios -o=$WORK/arm64 golang.org/x/mobile/example/basic
+GOOS=darwin GOARCH=arm GOARM=7 CC=clang-iphoneos CXX=clang-iphoneos CGO_CFLAGS=-isysroot=iphoneos -arch armv7 CGO_LDFLAGS=-isysroot=iphoneos -arch armv7 CGO_ENABLED=1 go build -p=8 -pkgdir=$GOMOBILE/pkg_darwin_arm -tags="" -x -tags=ios -o=$WORK/arm golang.org/x/mobile/example/basic
+GOOS=darwin GOARCH=arm64 CC=clang-iphoneos CXX=clang-iphoneos CGO_CFLAGS=-isysroot=iphoneos -arch arm64 CGO_LDFLAGS=-isysroot=iphoneos -arch arm64 CGO_ENABLED=1 go build -p=8 -pkgdir=$GOMOBILE/pkg_darwin_arm64 -tags="" -x -tags=ios -o=$WORK/arm64 golang.org/x/mobile/example/basic
 xcrun lipo -create $WORK/arm $WORK/arm64 -o $WORK/main/main
 mkdir -p $WORK/main/assets
 xcrun xcodebuild -configuration Release -project $WORK/main.xcodeproj
