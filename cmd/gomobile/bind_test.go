@@ -63,5 +63,4 @@ rm $WORK/android/src/main/java/go/Seq.java
 ln -s $GOPATH/src/golang.org/x/mobile/bind/java/Seq.java $WORK/android/src/main/java/go/Seq.java
 PWD=$WORK/android/src/main/java javac -d $WORK/javac-output -source 1.7 -target 1.7 -bootclasspath $ANDROID_HOME/platforms/android-22/android.jar *.java
 jar c -C $WORK/javac-output .
-rm -r -f "$WORK/javac-output"
 `))

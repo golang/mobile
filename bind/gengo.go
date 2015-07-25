@@ -7,10 +7,9 @@ package bind
 import (
 	"fmt"
 	"go/token"
+	"go/types"
 	"log"
 	"strings"
-
-	"golang.org/x/tools/go/types"
 )
 
 type goGen struct {

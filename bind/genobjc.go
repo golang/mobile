@@ -7,7 +7,7 @@ package bind
 import (
 	"fmt"
 	"go/token"
-	"golang.org/x/tools/go/types"
+	"go/types"
 	"log"
 	"strings"
 	"unicode"
