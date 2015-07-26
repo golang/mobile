@@ -59,11 +59,14 @@ func diffOutput(got string, wantTmpl *template.Template) (string, error) {
 
 	wantBuf := new(bytes.Buffer)
 	data := outputData{
-		NDK:     ndkVersion,
-		GOOS:    goos,
-		GOARCH:  goarch,
-		GOPATH:  gopath,
-		NDKARCH: ndkarch,
+		NDK:       ndkVersion,
+		GOOS:      goos,
+		GOARCH:    goarch,
+		GOPATH:    gopath,
+		NDKARCH:   ndkarch,
+		Xproj:     projPbxproj,
+		Xcontents: contentsJSON,
+		Xinfo:     infoplistTmplData{Name: "Basic"},
 	}
 	if goos == "windows" {
 		data.EXE = ".exe"
@@ -79,12 +82,15 @@ func diffOutput(got string, wantTmpl *template.Template) (string, error) {
 }
 
 type outputData struct {
-	NDK     string
-	GOOS    string
-	GOARCH  string
-	GOPATH  string
-	NDKARCH string
-	EXE     string // .extension for executables. (ex. ".exe" for windows)
+	NDK       string
+	GOOS      string
+	GOARCH    string
+	GOPATH    string
+	NDKARCH   string
+	EXE       string // .extension for executables. (ex. ".exe" for windows)
+	Xproj     string
+	Xcontents string
+	Xinfo     infoplistTmplData
 }
 
 var initTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile

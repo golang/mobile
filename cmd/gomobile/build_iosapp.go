@@ -29,21 +29,25 @@ func goIOSBuild(pkg *build.Package) error {
 	}); err != nil {
 		return err
 	}
-	layout := map[string][]byte{
-		tmpdir + "/main.xcodeproj/project.pbxproj":                        []byte(projPbxproj),
-		tmpdir + "/main/Info.plist":                                       infoplist.Bytes(),
-		tmpdir + "/main/Images.xcassets/AppIcon.appiconset/Contents.json": []byte(contentsJSON),
+
+	files := []struct {
+		name     string
+		contents []byte
+	}{
+		{tmpdir + "/main.xcodeproj/project.pbxproj", []byte(projPbxproj)},
+		{tmpdir + "/main/Info.plist", infoplist.Bytes()},
+		{tmpdir + "/main/Images.xcassets/AppIcon.appiconset/Contents.json", []byte(contentsJSON)},
 	}
 
-	for dst, v := range layout {
-		if err := mkdir(filepath.Dir(dst)); err != nil {
+	for _, file := range files {
+		if err := mkdir(filepath.Dir(file.name)); err != nil {
 			return err
 		}
 		if buildX {
-			printcmd("echo \"%s\" > %s", v, dst)
+			printcmd("echo \"%s\" > %s", file.contents, file.name)
 		}
 		if !buildN {
-			if err := ioutil.WriteFile(dst, v, 0644); err != nil {
+			if err := ioutil.WriteFile(file.name, file.contents, 0644); err != nil {
 				return err
 			}
 		}
