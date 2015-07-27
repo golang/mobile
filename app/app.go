@@ -27,6 +27,7 @@ type App interface {
 	// the app. The type of such events include:
 	//  - config.Event
 	//  - lifecycle.Event
+	//  - mouse.Event
 	//  - paint.Event
 	//  - touch.Event
 	// from the golang.org/x/mobile/event/etc packages. Other packages may
