@@ -51,8 +51,8 @@ output file name depends on the package built.
 
 The -v flag provides verbose output, including the list of packages built.
 
-The build flags -a, -i, -n, -x, -gcflags, -ldflags, and -tags are shared
-with the build command. For documentation, see 'go help build'.
+The build flags -a, -i, -n, -x, -gcflags, -ldflags, -tags, and -work are
+shared with the build command. For documentation, see 'go help build'.
 `,
 }
 
@@ -208,6 +208,7 @@ var (
 	buildGcflags string // -gcflags
 	buildLdflags string // -ldflags
 	buildTarget  string // -target
+	buildWork    bool   // -work
 )
 
 func addBuildFlags(cmd *command) {
@@ -221,10 +222,11 @@ func addBuildFlags(cmd *command) {
 	cmd.flag.Var((*stringsFlag)(&ctx.BuildTags), "tags", "")
 }
 
-func addBuildFlagsNVX(cmd *command) {
+func addBuildFlagsNVXWork(cmd *command) {
 	cmd.flag.BoolVar(&buildN, "n", false, "")
 	cmd.flag.BoolVar(&buildV, "v", false, "")
 	cmd.flag.BoolVar(&buildX, "x", false, "")
+	cmd.flag.BoolVar(&buildWork, "work", false, "")
 }
 
 type binInfo struct {
@@ -234,15 +236,15 @@ type binInfo struct {
 
 func init() {
 	addBuildFlags(cmdBuild)
-	addBuildFlagsNVX(cmdBuild)
+	addBuildFlagsNVXWork(cmdBuild)
 
 	addBuildFlags(cmdInstall)
-	addBuildFlagsNVX(cmdInstall)
+	addBuildFlagsNVXWork(cmdInstall)
 
-	addBuildFlagsNVX(cmdInit)
+	addBuildFlagsNVXWork(cmdInit)
 
 	addBuildFlags(cmdBind)
-	addBuildFlagsNVX(cmdBind)
+	addBuildFlagsNVXWork(cmdBind)
 }
 
 func goBuild(src string, env []string, args ...string) error {
@@ -269,6 +271,9 @@ func goBuild(src string, env []string, args ...string) error {
 	}
 	if buildLdflags != "" {
 		cmd.Args = append(cmd.Args, "-ldflags", buildLdflags)
+	}
+	if buildWork {
+		cmd.Args = append(cmd.Args, "-work")
 	}
 	cmd.Args = append(cmd.Args, args...)
 	cmd.Args = append(cmd.Args, src)
