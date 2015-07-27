@@ -265,12 +265,12 @@ func (img *Image) Draw(c config.Event, topLeft, topRight, bottomLeft geom.Point,
 		// First of all, convert from geom space to framebuffer space. For
 		// later convenience, we divide everything by 2 here: px2 is half of
 		// the P.X co-ordinate (in framebuffer space).
-		px2 := -0.5 + float32(topLeft.X/c.Width)
-		py2 := +0.5 - float32(topLeft.Y/c.Height)
-		qx2 := -0.5 + float32(topRight.X/c.Width)
-		qy2 := +0.5 - float32(topRight.Y/c.Height)
-		sx2 := -0.5 + float32(bottomLeft.X/c.Width)
-		sy2 := +0.5 - float32(bottomLeft.Y/c.Height)
+		px2 := -0.5 + float32(topLeft.X/c.WidthPt)
+		py2 := +0.5 - float32(topLeft.Y/c.HeightPt)
+		qx2 := -0.5 + float32(topRight.X/c.WidthPt)
+		qy2 := +0.5 - float32(topRight.Y/c.HeightPt)
+		sx2 := -0.5 + float32(bottomLeft.X/c.WidthPt)
+		sy2 := +0.5 - float32(bottomLeft.Y/c.HeightPt)
 		// Next, solve for the affine transformation matrix
 		//	    [ a00 a01 a02 ]
 		//	a = [ a10 a11 a12 ]

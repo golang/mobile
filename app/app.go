@@ -179,9 +179,7 @@ func pump(dst chan interface{}) (src chan interface{}) {
 func registerGLViewportFilter() {
 	RegisterFilter(func(e interface{}) interface{} {
 		if e, ok := e.(config.Event); ok {
-			w := int(e.PixelsPerPt * float32(e.Width))
-			h := int(e.PixelsPerPt * float32(e.Height))
-			gl.Viewport(0, 0, w, h)
+			gl.Viewport(0, 0, e.WidthPx, e.HeightPx)
 		}
 		return e
 	})
