@@ -146,11 +146,11 @@ func loadScene() {
 			dy = 1
 			boing()
 		}
-		if x+width > float32(cfg.Width) {
+		if x+width > float32(cfg.WidthPt) {
 			dx = -1
 			boing()
 		}
-		if y+height > float32(cfg.Height) {
+		if y+height > float32(cfg.HeightPt) {
 			dy = -1
 			boing()
 		}

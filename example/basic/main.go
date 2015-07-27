@@ -67,7 +67,7 @@ func main() {
 				}
 			case config.Event:
 				c = e
-				touchLoc = geom.Point{c.Width / 2, c.Height / 2}
+				touchLoc = geom.Point{c.WidthPt / 2, c.HeightPt / 2}
 			case paint.Event:
 				onPaint(c)
 				a.EndPaint()
@@ -115,7 +115,7 @@ func onPaint(c config.Event) {
 	}
 	gl.Uniform4f(color, 0, green, 0, 1)
 
-	gl.Uniform2f(offset, float32(touchLoc.X/c.Width), float32(touchLoc.Y/c.Height))
+	gl.Uniform2f(offset, float32(touchLoc.X/c.WidthPt), float32(touchLoc.Y/c.HeightPt))
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, buf)
 	gl.EnableVertexAttribArray(position)

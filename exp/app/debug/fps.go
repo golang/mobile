@@ -68,9 +68,9 @@ func DrawFPS(c config.Event) {
 	fps.m.Upload()
 	fps.m.Draw(
 		c,
-		geom.Point{0, c.Height - imgH},
-		geom.Point{imgW, c.Height - imgH},
-		geom.Point{0, c.Height},
+		geom.Point{0, c.HeightPt - imgH},
+		geom.Point{imgW, c.HeightPt - imgH},
+		geom.Point{0, c.HeightPt},
 		fps.m.RGBA.Bounds(),
 	)
 

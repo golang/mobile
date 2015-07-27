@@ -14,8 +14,12 @@ import (
 
 // Event holds the dimensions and physical resolution of the app's window.
 type Event struct {
-	// Width and Height are the window's dimensions.
-	Width, Height geom.Pt
+	// WidthPx and HeightPx are the window's dimensions in pixels.
+	WidthPx, HeightPx int
+
+	// WidthPt and HeightPt are the window's dimensions in points (1/72 of an
+	// inch).
+	WidthPt, HeightPt geom.Pt
 
 	// PixelsPerPt is the window's physical resolution. It is the number of
 	// pixels in a single geom.Pt, from the golang.org/x/mobile/geom package.

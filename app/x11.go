@@ -80,8 +80,10 @@ func onResize(w, h int) {
 	// is probably the best place to start looking.
 	pixelsPerPt = 1
 	eventsIn <- config.Event{
-		Width:       geom.Pt(w),
-		Height:      geom.Pt(h),
+		WidthPx:     w,
+		HeightPx:    h,
+		WidthPt:     geom.Pt(w),
+		HeightPt:    geom.Pt(h),
 		PixelsPerPt: pixelsPerPt,
 	}
 }

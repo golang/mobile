@@ -98,9 +98,13 @@ func setScreen(scale int) {
 
 //export updateConfig
 func updateConfig(width, height int) {
+	widthPx := screenScale * width
+	heightPx := screenScale * height
 	eventsIn <- config.Event{
-		Width:       geom.Pt(float32(screenScale*width) / pixelsPerPt),
-		Height:      geom.Pt(float32(screenScale*height) / pixelsPerPt),
+		WidthPx:     widthPx,
+		HeightPx:    heightPx,
+		WidthPt:     geom.Pt(float32(widthPx) / pixelsPerPt),
+		HeightPt:    geom.Pt(float32(heightPx) / pixelsPerPt),
 		PixelsPerPt: pixelsPerPt,
 	}
 }

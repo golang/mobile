@@ -107,9 +107,13 @@ func windowDraw(w *C.ANativeWindow, queue *C.AInputQueue, donec chan struct{}) (
 			pixelsPerPt = cfg.pixelsPerPt
 		case w := <-windowRedrawNeeded:
 			sendLifecycle(lifecycle.StageFocused)
+			widthPx := int(C.ANativeWindow_getWidth(w))
+			heightPx := int(C.ANativeWindow_getHeight(w))
 			eventsIn <- config.Event{
-				Width:       geom.Pt(float32(C.ANativeWindow_getWidth(w)) / pixelsPerPt),
-				Height:      geom.Pt(float32(C.ANativeWindow_getHeight(w)) / pixelsPerPt),
+				WidthPx:     widthPx,
+				HeightPx:    heightPx,
+				WidthPt:     geom.Pt(float32(widthPx) / pixelsPerPt),
+				HeightPt:    geom.Pt(float32(heightPx) / pixelsPerPt),
 				PixelsPerPt: pixelsPerPt,
 			}
 			if paintGen == 0 {
