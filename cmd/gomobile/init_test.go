@@ -22,11 +22,14 @@ func TestInit(t *testing.T) {
 		xout = os.Stderr
 		buildN = false
 		buildX = false
+		initU = false
 		os.Setenv("GOPATH", gopathorig)
 	}()
 	xout = buf
 	buildN = true
 	buildX = true
+	initU = true
+
 	// Test that first GOPATH element is chosen correctly.
 	gopath = "/GOPATH1"
 	paths := []string{"/GOPATH1", "/path2", "/path3"}
@@ -35,15 +38,14 @@ func TestInit(t *testing.T) {
 	if goos == "windows" {
 		os.Setenv("HOMEDRIVE", "C:")
 	}
+
 	err := runInit(cmdInit)
 	if err != nil {
 		t.Log(buf.String())
 		t.Fatal(err)
 	}
 
-	tmpl := initTmpl
-
-	diff, err := diffOutput(buf.String(), tmpl)
+	diff, err := diffOutput(buf.String(), initTmpl)
 	if err != nil {
 		t.Fatalf("computing diff failed: %v", err)
 	}

@@ -442,15 +442,23 @@ func fetch(url string) (dst string, err error) {
 	}
 	name := path.Base(url)
 	dst = filepath.Join(gomobilepath, "dl", name)
-	if buildX || buildN {
+
+	// Use what's in the cache if force update is not required.
+	if !initU {
+		if buildX {
+			printcmd("stat %s", dst)
+		}
+		if _, err = os.Stat(dst); err == nil {
+			return dst, nil
+		}
+	}
+	if buildX {
 		printcmd("curl -o%s %s", dst, url)
 	}
 	if buildN {
 		return dst, nil
 	}
-	if _, err = os.Stat(dst); err == nil {
-		return dst, nil
-	}
+
 	if buildV {
 		fmt.Fprintf(os.Stderr, "Downloading %s.\n", url)
 	}
