@@ -56,7 +56,13 @@ func buildEnvInit() (cleanup func(), err error) {
 		return nil, errors.New("toolchain not installed, run `gomobile init`")
 	}
 
-	cleanupFn := func() { removeAll(tmpdir) }
+	cleanupFn := func() {
+		if buildWork {
+			fmt.Printf("WORK=%s\n", tmpdir)
+			return
+		}
+		removeAll(tmpdir)
+	}
 	if buildN {
 		tmpdir = "$WORK"
 		cleanupFn = func() {}

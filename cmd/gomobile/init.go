@@ -107,7 +107,13 @@ func runInit(cmd *command) error {
 	if buildX || buildN {
 		fmt.Fprintln(xout, "WORK="+tmpdir)
 	}
-	defer removeAll(tmpdir)
+	defer func() {
+		if buildWork {
+			fmt.Printf("WORK=%s\n", tmpdir)
+			return
+		}
+		removeAll(tmpdir)
+	}()
 
 	if err := fetchNDK(); err != nil {
 		return err
@@ -177,6 +183,9 @@ func installStd(env []string, args ...string) error {
 	}
 	if buildX {
 		cmd.Args = append(cmd.Args, "-x")
+	}
+	if buildWork {
+		cmd.Args = append(cmd.Args, "-work")
 	}
 	cmd.Args = append(cmd.Args, "std")
 	cmd.Env = append([]string{}, env...)
@@ -536,6 +545,7 @@ func removeAll(path string) error {
 	if buildN {
 		return nil
 	}
+
 	// os.RemoveAll behaves differently in windows.
 	// http://golang.org/issues/9606
 	if goos == "windows" {
@@ -598,6 +608,15 @@ func runCmd(cmd *exec.Cmd) error {
 	} else {
 		cmd.Stdout = buf
 		cmd.Stderr = buf
+	}
+
+	if buildWork {
+		if goos == "windows" {
+			cmd.Env = append(cmd.Env, `TEMP=`+tmpdir)
+			cmd.Env = append(cmd.Env, `TMP=`+tmpdir)
+		} else {
+			cmd.Env = append(cmd.Env, `TMPDIR=`+tmpdir)
+		}
 	}
 
 	if !buildN {
