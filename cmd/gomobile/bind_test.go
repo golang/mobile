@@ -55,7 +55,7 @@ WORK=$WORK
 gobind -lang=go golang.org/x/mobile/asset > $WORK/go_asset/go_assetmain.go
 mkdir -p $WORK/go_asset
 mkdir -p $WORK/androidlib
-GOOS=android GOARCH=arm GOARM=7 CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-gcc{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-g++{{.EXE}} CGO_ENABLED=1 go build -p=8 -pkgdir=$GOMOBILE/pkg_android_arm -tags="" -x -buildmode=c-shared -o=$WORK/android/src/main/jniLibs/armeabi-v7a/libgojni.so $WORK/androidlib/main.go
+GOOS=android GOARCH=arm GOARM=7 CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-gcc{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-g++{{.EXE}} CGO_ENABLED=1 go build -p={{.NumCPU}} -pkgdir=$GOMOBILE/pkg_android_arm -tags="" -x -buildmode=c-shared -o=$WORK/android/src/main/jniLibs/armeabi-v7a/libgojni.so $WORK/androidlib/main.go
 gobind -lang=java golang.org/x/mobile/asset > $WORK/android/src/main/java/go/asset/Asset.java
 mkdir -p $WORK/android/src/main/java/go/asset
 mkdir -p $WORK/android/src/main/java/go
