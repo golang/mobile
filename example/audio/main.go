@@ -84,7 +84,7 @@ func main() {
 				cfg = e
 			case paint.Event:
 				onPaint()
-				a.EndPaint()
+				a.EndPaint(e)
 			}
 		}
 	})

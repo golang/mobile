@@ -9,6 +9,7 @@ package app
 import (
 	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/event/lifecycle"
+	"golang.org/x/mobile/event/paint"
 	"golang.org/x/mobile/gl"
 	_ "golang.org/x/mobile/internal/mobileinit"
 )
@@ -38,7 +39,8 @@ type App interface {
 	Send(event interface{})
 
 	// EndPaint flushes any pending OpenGL commands or buffers to the screen.
-	EndPaint()
+	// If EndPaint is called with an old generation number, it is ignored.
+	EndPaint(paint.Event)
 }
 
 var (
@@ -47,7 +49,7 @@ var (
 
 	eventsOut = make(chan interface{})
 	eventsIn  = pump(eventsOut)
-	endPaint  = make(chan struct{}, 1)
+	endPaint  = make(chan paint.Event, 1)
 )
 
 func sendLifecycle(to lifecycle.Stage) {
@@ -71,7 +73,7 @@ func (app) Send(event interface{}) {
 	eventsIn <- event
 }
 
-func (app) EndPaint() {
+func (app) EndPaint(e paint.Event) {
 	// gl.Flush is a lightweight (on modern GL drivers) blocking call
 	// that ensures all GL functions pending in the gl package have
 	// been passed onto the GL driver before the app package attempts
@@ -80,7 +82,7 @@ func (app) EndPaint() {
 	// This enforces that the final receive (for this paint cycle) on
 	// gl.WorkAvailable happens before the send on endPaint.
 	gl.Flush()
-	endPaint <- struct{}{}
+	endPaint <- e
 }
 
 var filters []func(interface{}) interface{}

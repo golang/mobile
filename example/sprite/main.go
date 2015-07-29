@@ -63,7 +63,7 @@ func main() {
 				c = e
 			case paint.Event:
 				onPaint(c)
-				a.EndPaint()
+				a.EndPaint(e)
 			}
 		}
 	})
