@@ -72,7 +72,7 @@ func main() {
 				touchLoc = geom.Point{c.WidthPt / 2, c.HeightPt / 2}
 			case paint.Event:
 				onPaint(c)
-				a.EndPaint()
+				a.EndPaint(e)
 			case touch.Event:
 				touchLoc = e.Loc
 			}

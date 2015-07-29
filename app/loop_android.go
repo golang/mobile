@@ -113,10 +113,10 @@ func main(f func(App)) {
 	//
 	// When a windowRedrawNeeded request comes in, we increment redrawGen
 	// (Gen is short for generation number), and do not make a paint cycle
-	// visible on <-endPaint unless paintGen agrees. If possible,
+	// visible on <-endPaint unless Generation agrees. If possible,
 	// windowRedrawDone is signalled, allowing onNativeWindowRedrawNeeded
 	// to return.
-	var redrawGen, paintGen uint32
+	var redrawGen uint32
 
 	for {
 		if q != nil {
@@ -151,10 +151,7 @@ func main(f func(App)) {
 			redrawGen++
 			if newWindow {
 				// New window, begin paint loop.
-				// TODO(crawshaw): If we get a <-windowCreated in between sending a
-				// paint.Event and receiving on endPaint, we can double-paint. (BUG)
-				paintGen = redrawGen
-				eventsIn <- paint.Event{}
+				eventsIn <- paint.Event{redrawGen}
 			}
 		case <-windowDestroyed:
 			if C.surface != nil {
@@ -167,24 +164,24 @@ func main(f func(App)) {
 			sendLifecycle(lifecycle.StageAlive)
 		case <-gl.WorkAvailable:
 			gl.DoWork()
-		case <-endPaint:
-			if paintGen == redrawGen {
-				if C.surface != nil {
-					// eglSwapBuffers blocks until vsync.
-					if C.eglSwapBuffers(C.display, C.surface) == C.EGL_FALSE {
-						log.Printf("app: failed to swap buffers (%s)", eglGetError())
-					}
+		case p := <-endPaint:
+			if p.Generation != redrawGen {
+				continue
+			}
+			if C.surface != nil {
+				// eglSwapBuffers blocks until vsync.
+				if C.eglSwapBuffers(C.display, C.surface) == C.EGL_FALSE {
+					log.Printf("app: failed to swap buffers (%s)", eglGetError())
 				}
-				select {
-				case windowRedrawDone <- struct{}{}:
-				default:
-				}
+			}
+			select {
+			case windowRedrawDone <- struct{}{}:
+			default:
 			}
 			if C.surface != nil {
 				redrawGen++
-				eventsIn <- paint.Event{}
+				eventsIn <- paint.Event{redrawGen}
 			}
-			paintGen = redrawGen
 		}
 	}
 }
