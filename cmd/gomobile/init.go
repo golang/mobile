@@ -223,7 +223,7 @@ func move(dst, src string, names ...string) error {
 		}
 		if goos == "windows" {
 			// os.Rename fails if dstf already exists.
-			os.Remove(dstf)
+			removeAll(dstf)
 		}
 		if err := os.Rename(srcf, dstf); err != nil {
 			return err
@@ -290,6 +290,9 @@ func fetchOpenAL() error {
 	}
 	if err := extract("openal", archive); err != nil {
 		return err
+	}
+	if goos == "windows" {
+		resetReadOnlyFlagAll(filepath.Join(tmpdir, "openal"))
 	}
 	dst := filepath.Join(ndkccpath, "arm", "sysroot", "usr", "include")
 	src := filepath.Join(tmpdir, "openal", "include")
@@ -365,6 +368,9 @@ func fetchNDK() error {
 		if err := fetchFullNDK(); err != nil {
 			return err
 		}
+	}
+	if goos == "windows" {
+		resetReadOnlyFlagAll(filepath.Join(tmpdir, "android-"+ndkVersion))
 	}
 
 	dst := filepath.Join(ndkccpath, "arm")
