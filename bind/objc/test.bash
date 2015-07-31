@@ -18,8 +18,7 @@ function cleanup() {
 }
 trap cleanup EXIT
 
-# TODO: reenable this when gobind can handle interfaces.
-#(cd testpkg; go generate)
+(cd testpkg; go generate)
 
 go build -x -v -buildmode=c-archive -o=${WORK}/libgo.a test_main.go
 cp ./seq.h ${WORK}/
