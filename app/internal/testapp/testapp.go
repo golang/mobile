@@ -59,7 +59,7 @@ func main() {
 					comm.Send("paint")
 					sendPainting = false
 				}
-				a.EndPaint()
+				a.EndPaint(e)
 			case touch.Event:
 				comm.Send("touch", e.Type, e.Loc.X.Px(c.PixelsPerPt), e.Loc.Y.Px(c.PixelsPerPt))
 			}

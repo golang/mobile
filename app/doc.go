@@ -57,7 +57,7 @@ goroutine as other code that calls OpenGL.
 					// ...
 				case paint.Event:
 					log.Print("Call OpenGL here.")
-					a.EndPaint()
+					a.EndPaint(e)
 				}
 			}
 		})
