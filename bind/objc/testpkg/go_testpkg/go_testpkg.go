@@ -67,7 +67,7 @@ type proxyI seq.Ref
 func (p *proxyI) Times(v int32) int64 {
 	in := new(seq.Buffer)
 	in.WriteInt32(v)
-	out := seq.Transact((*seq.Ref)(p), proxyI_Descriptor, proxyI_Times_Code, in)
+	out := seq.Transact((*seq.Ref)(p), "go.testpkg.I", proxyI_Times_Code, in)
 	res_0 := out.ReadInt64()
 	return res_0
 }
