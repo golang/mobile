@@ -218,12 +218,10 @@ func processEvent(e *C.AInputEvent) {
 				t = upDownType
 			}
 			eventsIn <- touch.Event{
+				X:        float32(C.AMotionEvent_getX(e, i)),
+				Y:        float32(C.AMotionEvent_getY(e, i)),
 				Sequence: touch.Sequence(C.AMotionEvent_getPointerId(e, i)),
 				Type:     t,
-				Loc: geom.Point{
-					X: geom.Pt(float32(C.AMotionEvent_getX(e, i)) / pixelsPerPt),
-					Y: geom.Pt(float32(C.AMotionEvent_getY(e, i)) / pixelsPerPt),
-				},
 			}
 		}
 	default:

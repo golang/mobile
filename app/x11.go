@@ -90,12 +90,10 @@ func onResize(w, h int) {
 
 func sendTouch(t touch.Type, x, y float32) {
 	eventsIn <- touch.Event{
+		X:        x,
+		Y:        y,
 		Sequence: 0, // TODO: button??
 		Type:     t,
-		Loc: geom.Point{
-			X: geom.Pt(x / pixelsPerPt),
-			Y: geom.Pt(y / pixelsPerPt),
-		},
 	}
 }
 

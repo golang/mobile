@@ -61,7 +61,7 @@ func main() {
 				}
 				a.EndPaint(e)
 			case touch.Event:
-				comm.Send("touch", e.Type, e.Loc.X.Px(c.PixelsPerPt), e.Loc.Y.Px(c.PixelsPerPt))
+				comm.Send("touch", e.Type, e.X, e.Y)
 			}
 		}
 	})
