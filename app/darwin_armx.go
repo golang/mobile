@@ -151,12 +151,10 @@ func sendTouch(cTouch, cTouchType uintptr, x, y float32) {
 	}
 
 	eventsIn <- touch.Event{
+		X:        x,
+		Y:        y,
 		Sequence: touch.Sequence(id),
 		Type:     t,
-		Loc: geom.Point{
-			X: geom.Pt(x / pixelsPerPt),
-			Y: geom.Pt(y / pixelsPerPt),
-		},
 	}
 }
 

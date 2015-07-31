@@ -11,17 +11,16 @@ import (
 	"fmt"
 
 	"golang.org/x/mobile/event/key"
-	"golang.org/x/mobile/geom"
 )
 
 // Event is a mouse event.
 type Event struct {
+	// X and Y are the mouse location, in pixels.
+	X, Y float32
+
 	// Button is the mouse button being pressed or released. Its value may be
 	// zero, for a mouse move or drag without any button change.
 	Button Button
-
-	// Loc is the mouse location.
-	Loc geom.Point
 
 	// TODO: have a field to hold what other buttons are down, for detecting
 	// drags or button-chords.

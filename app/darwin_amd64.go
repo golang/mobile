@@ -111,17 +111,17 @@ func startloop(ctx C.GLintptr) {
 	go loop(ctx)
 }
 
-var windowHeightPt geom.Pt
+var windowHeightPx float32
 
 //export setGeom
 func setGeom(ppp float32, widthPx, heightPx int) {
 	pixelsPerPt = ppp
-	windowHeightPt = geom.Pt(float32(heightPx) / pixelsPerPt)
+	windowHeightPx = float32(heightPx)
 	eventsIn <- config.Event{
 		WidthPx:     widthPx,
 		HeightPx:    heightPx,
 		WidthPt:     geom.Pt(float32(widthPx) / pixelsPerPt),
-		HeightPt:    windowHeightPt,
+		HeightPt:    geom.Pt(float32(heightPx) / pixelsPerPt),
 		PixelsPerPt: pixelsPerPt,
 	}
 }
@@ -133,12 +133,10 @@ var touchEvents struct {
 
 func sendTouch(t touch.Type, x, y float32) {
 	eventsIn <- touch.Event{
+		X:        x,
+		Y:        windowHeightPx - y,
 		Sequence: 0,
 		Type:     t,
-		Loc: geom.Point{
-			X: geom.Pt(x / pixelsPerPt),
-			Y: windowHeightPt - geom.Pt(y/pixelsPerPt),
-		},
 	}
 }
 
