@@ -29,11 +29,17 @@ func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
 		if !os.IsNotExist(err) {
 			return nil, err
 		}
+
+		productName := rfc1034Label(libName)
+		if productName == "" {
+			productName = "ProductName" // like xcode.
+		}
+
 		buf := new(bytes.Buffer)
 		buf.WriteString(`<?xml version="1.0" encoding="utf-8"?>`)
 		err := manifestTmpl.Execute(buf, manifestTmplData{
 			// TODO(crawshaw): a better package path.
-			JavaPkgPath: "org.golang.todo." + libName,
+			JavaPkgPath: "org.golang.todo." + productName,
 			Name:        libName,
 			LibName:     libName,
 		})

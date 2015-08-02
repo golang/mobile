@@ -23,9 +23,16 @@ func goIOSBuild(pkg *build.Package) (map[string]bool, error) {
 		return nil, fmt.Errorf("-o must have an .app for target=ios")
 	}
 
+	productName := rfc1034Label(path.Base(pkg.ImportPath))
+	if productName == "" {
+		productName = "ProductName" // like xcode.
+	}
+
 	infoplist := new(bytes.Buffer)
-	if err := infoplistTmpl.Execute(infoplist, manifestTmplData{
-		Name: strings.Title(path.Base(pkg.ImportPath)),
+	if err := infoplistTmpl.Execute(infoplist, infoplistTmplData{
+		// TODO: better bundle id.
+		BundleID: "org.golang.todo." + productName,
+		Name:     strings.Title(path.Base(pkg.ImportPath)),
 	}); err != nil {
 		return nil, err
 	}
@@ -147,7 +154,8 @@ func iosCopyAssets(pkg *build.Package, xcodeProjDir string) error {
 }
 
 type infoplistTmplData struct {
-	Name string
+	BundleID string
+	Name     string
 }
 
 var infoplistTmpl = template.Must(template.New("infoplist").Parse(`<?xml version="1.0" encoding="UTF-8"?>
@@ -159,7 +167,7 @@ var infoplistTmpl = template.Must(template.New("infoplist").Parse(`<?xml version
   <key>CFBundleExecutable</key>
   <string>main</string>
   <key>CFBundleIdentifier</key>
-  <string>org.golang.todo.$(PRODUCT_NAME:rfc1034identifier)</string>
+  <string>{{.BundleID}}</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
@@ -518,3 +526,61 @@ const contentsJSON = `{
   }
 }
 `
+
+// rfc1034Label sanitizes the name to be usable in a uniform type identifier.
+// The sanitization is similar to xcode's rfc1034identifier macro that
+// replaces illegal characters (not conforming the rfc1034 label rule) with '-'.
+func rfc1034Label(name string) string {
+	// * Uniform type identifier:
+	//
+	// According to
+	// https://developer.apple.com/library/ios/documentation/FileManagement/Conceptual/understanding_utis/understand_utis_conc/understand_utis_conc.html
+	//
+	// A uniform type identifier is a Unicode string that usually contains characters
+	// in the ASCII character set. However, only a subset of the ASCII characters are
+	// permitted. You may use the Roman alphabet in upper and lower case (A–Z, a–z),
+	// the digits 0 through 9, the dot (“.”), and the hyphen (“-”). This restriction
+	// is based on DNS name restrictions, set forth in RFC 1035.
+	//
+	// Uniform type identifiers may also contain any of the Unicode characters greater
+	// than U+007F.
+	//
+	// Note: the actual implementation of xcode does not allow some unicode characters
+	// greater than U+007f. In this implementation, we just replace everything non
+	// alphanumeric with "-" like the rfc1034identifier macro.
+	//
+	// * RFC1034 Label
+	//
+	// <label> ::= <letter> [ [ <ldh-str> ] <let-dig> ]
+	// <ldh-str> ::= <let-dig-hyp> | <let-dig-hyp> <ldh-str>
+	// <let-dig-hyp> ::= <let-dig> | "-"
+	// <let-dig> ::= <letter> | <digit>
+	const surrSelf = 0x10000
+	begin := false
+
+	var res []rune
+	for i, r := range name {
+		if r == '.' && !begin {
+			continue
+		}
+		begin = true
+
+		switch {
+		case 'a' <= r && r <= 'z', 'A' <= r && r <= 'Z':
+			res = append(res, r)
+		case '0' <= r && r <= '9':
+			if i == 0 {
+				res = append(res, '-')
+			} else {
+				res = append(res, r)
+			}
+		default:
+			if r < surrSelf {
+				res = append(res, '-')
+			} else {
+				res = append(res, '-', '-')
+			}
+		}
+	}
+	return string(res)
+}
