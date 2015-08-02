@@ -68,7 +68,7 @@ func diffOutput(got string, wantTmpl *template.Template) (string, error) {
 		NDKARCH:   ndkarch,
 		Xproj:     projPbxproj,
 		Xcontents: contentsJSON,
-		Xinfo:     infoplistTmplData{Name: "Basic"},
+		Xinfo:     infoplistTmplData{BundleID: "org.golang.todo.basic", Name: "Basic"},
 		NumCPU:    strconv.Itoa(runtime.NumCPU()),
 	}
 	if goos == "windows" {
