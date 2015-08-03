@@ -18,6 +18,7 @@ gobind {
     /* Absolute path to the go binary */
     GO = "/PATH/TO/GO"
 
-    /* Absolute path to the gomobile binary */
-    GOMOBILE = "/PATH/TO/GOMOBILE"
+    /* Optionally, set the absolute path to the gomobile binary if the
+    /* gomobile binary is not located in the GOPATH's bin directory. */
+    // GOMOBILE = "/PATH/TO/GOMOBILE"
 }
