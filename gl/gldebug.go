@@ -1482,6 +1482,9 @@ func GetAttachedShaders(p Program) (r0 []Shader) {
 		log.Printf("gl.GetAttachedShaders(%v) %v%v", p, r0, errstr)
 	}()
 	shadersLen := GetProgrami(p, ATTACHED_SHADERS)
+	if shadersLen == 0 {
+		return nil
+	}
 	var n C.GLsizei
 	buf := make([]C.GLuint, shadersLen)
 	enqueue(call{

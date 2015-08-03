@@ -854,6 +854,9 @@ func GetActiveUniform(p Program, index uint32) (name string, size int, ty Enum) 
 // http://www.khronos.org/opengles/sdk/docs/man3/html/glGetAttachedShaders.xhtml
 func GetAttachedShaders(p Program) []Shader {
 	shadersLen := GetProgrami(p, ATTACHED_SHADERS)
+	if shadersLen == 0 {
+		return nil
+	}
 	var n C.GLsizei
 	buf := make([]C.GLuint, shadersLen)
 
