@@ -9,6 +9,8 @@
 package config // import "golang.org/x/mobile/event/config"
 
 import (
+	"image"
+
 	"golang.org/x/mobile/geom"
 )
 
@@ -28,4 +30,13 @@ type Event struct {
 	// tablets, so apps should be written to expect various non-integer
 	// PixelsPerPt values. In general, work in geom.Pt.
 	PixelsPerPt float32
+}
+
+// Bounds returns the window's bounds in pixels, at the time this configuration
+// event was sent.
+//
+// The top-left pixel is always (0, 0). The bottom-right pixel is given by the
+// width and height.
+func (e *Event) Bounds() image.Rectangle {
+	return image.Rectangle{Max: image.Point{e.WidthPx, e.HeightPx}}
 }
