@@ -8,9 +8,6 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <jni.h>
-#include <pthread.h>
-#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include "_cgo_export.h"
@@ -110,4 +107,72 @@ void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_
 	activity->callbacks->onLowMemory = onLowMemory;
 
 	onCreate(activity);
+}
+
+// TODO(crawshaw): Test configuration on more devices.
+const EGLint RGB_888[] = {
+	EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+	EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+	EGL_BLUE_SIZE, 8,
+	EGL_GREEN_SIZE, 8,
+	EGL_RED_SIZE, 8,
+	EGL_DEPTH_SIZE, 16,
+	EGL_CONFIG_CAVEAT, EGL_NONE,
+	EGL_NONE
+};
+
+EGLDisplay display = NULL;
+EGLSurface surface = NULL;
+
+char* initEGLDisplay() {
+	display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+	if (!eglInitialize(display, 0, 0)) {
+		return "EGL initialize failed";
+	}
+	return NULL;
+}
+
+char* createEGLSurface(ANativeWindow* window) {
+	char* err;
+	EGLint numConfigs, format;
+	EGLConfig config;
+	EGLContext context;
+
+	if (display == 0) {
+		if ((err = initEGLDisplay()) != NULL) {
+			return err;
+		}
+	}
+
+	if (!eglChooseConfig(display, RGB_888, &config, 1, &numConfigs)) {
+		return "EGL choose RGB_888 config failed";
+	}
+	if (numConfigs <= 0) {
+		return "EGL no config found";
+	}
+
+	eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
+	if (ANativeWindow_setBuffersGeometry(window, 0, 0, format) != 0) {
+		return "EGL set buffers geometry failed";
+	}
+
+	surface = eglCreateWindowSurface(display, config, window, NULL);
+	if (surface == EGL_NO_SURFACE) {
+		return "EGL create surface failed";
+	}
+
+	const EGLint contextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
+	context = eglCreateContext(display, config, EGL_NO_CONTEXT, contextAttribs);
+
+	if (eglMakeCurrent(display, surface, surface, context) == EGL_FALSE) {
+		return "eglMakeCurrent failed";
+	}
+	return NULL;
+}
+
+char* destroyEGLSurface() {
+	if (!eglDestroySurface(display, surface)) {
+		return "EGL destroy surface failed";
+	}
+	return NULL;
 }
