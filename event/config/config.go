@@ -30,6 +30,9 @@ type Event struct {
 	// tablets, so apps should be written to expect various non-integer
 	// PixelsPerPt values. In general, work in geom.Pt.
 	PixelsPerPt float32
+
+	// Orientation is the orientation of the device screen.
+	Orientation Orientation
 }
 
 // Bounds returns the window's bounds in pixels, at the time this configuration
@@ -40,3 +43,33 @@ type Event struct {
 func (e *Event) Bounds() image.Rectangle {
 	return image.Rectangle{Max: image.Point{e.WidthPx, e.HeightPx}}
 }
+
+// Orientation is the orientation of the device screen.
+type Orientation int
+
+const (
+	// OrientationUnknown means device orientation cannot be determined.
+	//
+	// Equivalent on Android to Configuration.ORIENTATION_UNKNOWN
+	// and on iOS to:
+	//	UIDeviceOrientationUnknown
+	//	UIDeviceOrientationFaceUp
+	//	UIDeviceOrientationFaceDown
+	OrientationUnknown Orientation = iota
+
+	// OrientationPortrait is a device oriented so it is tall and thin.
+	//
+	// Equivalent on Android to Configuration.ORIENTATION_PORTRAIT
+	// and on iOS to:
+	//	UIDeviceOrientationPortrait
+	//	UIDeviceOrientationPortraitUpsideDown
+	OrientationPortrait
+
+	// OrientationLandscape is a device oriented so it is short and wide.
+	//
+	// Equivalent on Android to Configuration.ORIENTATION_LANDSCAPE
+	// and on iOS to:
+	//	UIDeviceOrientationLandscapeLeft
+	//	UIDeviceOrientationLandscapeRight
+	OrientationLandscape
+)
