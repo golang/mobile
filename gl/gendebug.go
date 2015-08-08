@@ -84,14 +84,14 @@ func main() {
 
 	for _, d := range f.Decls {
 		// Before:
-		// func StencilMask(mask uint32) {
+		// func (ctx *context) StencilMask(mask uint32) {
 		//	C.glStencilMask(C.GLuint(mask))
 		// }
 		//
 		// After:
-		// func StencilMask(mask uint32) {
+		// func (ctx *context) StencilMask(mask uint32) {
 		// 	defer func() {
-		// 		errstr := errDrain()
+		// 		errstr := ctx.errDrain()
 		// 		log.Printf("gl.StencilMask(%v) %v", mask, errstr)
 		//	}()
 		//	C.glStencilMask(C.GLuint(mask))
@@ -100,7 +100,7 @@ func main() {
 		if !ok {
 			continue
 		}
-		if fn.Recv != nil {
+		if fn.Recv == nil || fn.Recv.List[0].Names[0].Name != "ctx" {
 			continue
 		}
 
@@ -112,7 +112,7 @@ func main() {
 		)
 
 		// Print function signature.
-		fmt.Fprintf(buf, "func %s(", fn.Name.Name)
+		fmt.Fprintf(buf, "func (ctx *context) %s(", fn.Name.Name)
 		for i, p := range fn.Type.Params.List {
 			if i > 0 {
 				fmt.Fprint(buf, ", ")
@@ -162,7 +162,7 @@ func main() {
 		if !skip {
 			// Insert a defer block for tracing.
 			fmt.Fprintf(buf, "defer func() {\n")
-			fmt.Fprintf(buf, "\terrstr := errDrain()\n")
+			fmt.Fprintf(buf, "\terrstr := ctx.errDrain()\n")
 			switch fn.Name.Name {
 			case "GetUniformLocation", "GetAttribLocation":
 				fmt.Fprintf(buf, "\tr0.name = name\n")
@@ -243,10 +243,10 @@ import (
 	"unsafe"
 )
 
-func errDrain() string {
+func (ctx *context) errDrain() string {
 	var errs []Enum
 	for {
-		e := GetError()
+		e := ctx.GetError()
 		if e == 0 {
 			break
 		}

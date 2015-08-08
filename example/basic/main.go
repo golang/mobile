@@ -59,6 +59,7 @@ var (
 
 func main() {
 	app.Main(func(a app.App) {
+		var glctx gl.Context
 		visible, sz := false, size.Event{}
 		for e := range a.Events() {
 			switch e := a.Filter(e).(type) {
@@ -66,17 +67,18 @@ func main() {
 				switch e.Crosses(lifecycle.StageVisible) {
 				case lifecycle.CrossOn:
 					visible = true
-					onStart()
+					glctx, _ = e.DrawContext.(gl.Context)
+					onStart(glctx)
 				case lifecycle.CrossOff:
 					visible = false
-					onStop()
+					onStart(glctx)
 				}
 			case size.Event:
 				sz = e
 				touchX = float32(sz.WidthPx / 2)
 				touchY = float32(sz.HeightPx / 2)
 			case paint.Event:
-				onPaint(sz)
+				onPaint(glctx, sz)
 				a.Publish()
 				if visible {
 					// Drive the animation by preparing to paint the next frame
@@ -95,52 +97,52 @@ func main() {
 	})
 }
 
-func onStart() {
+func onStart(glctx gl.Context) {
 	var err error
-	program, err = glutil.CreateProgram(vertexShader, fragmentShader)
+	program, err = glutil.CreateProgram(glctx, vertexShader, fragmentShader)
 	if err != nil {
 		log.Printf("error creating GL program: %v", err)
 		return
 	}
 
-	buf = gl.CreateBuffer()
-	gl.BindBuffer(gl.ARRAY_BUFFER, buf)
-	gl.BufferData(gl.ARRAY_BUFFER, triangleData, gl.STATIC_DRAW)
+	buf = glctx.CreateBuffer()
+	glctx.BindBuffer(gl.ARRAY_BUFFER, buf)
+	glctx.BufferData(gl.ARRAY_BUFFER, triangleData, gl.STATIC_DRAW)
 
-	position = gl.GetAttribLocation(program, "position")
-	color = gl.GetUniformLocation(program, "color")
-	offset = gl.GetUniformLocation(program, "offset")
+	position = glctx.GetAttribLocation(program, "position")
+	color = glctx.GetUniformLocation(program, "color")
+	offset = glctx.GetUniformLocation(program, "offset")
 
-	images = glutil.NewImages()
+	images = glutil.NewImages(glctx)
 	fps = debug.NewFPS(images)
 }
 
-func onStop() {
-	gl.DeleteProgram(program)
-	gl.DeleteBuffer(buf)
+func onStop(glctx gl.Context) {
+	glctx.DeleteProgram(program)
+	glctx.DeleteBuffer(buf)
 	fps.Release()
 	images.Release()
 }
 
-func onPaint(sz size.Event) {
-	gl.ClearColor(1, 0, 0, 1)
-	gl.Clear(gl.COLOR_BUFFER_BIT)
+func onPaint(glctx gl.Context, sz size.Event) {
+	glctx.ClearColor(1, 0, 0, 1)
+	glctx.Clear(gl.COLOR_BUFFER_BIT)
 
-	gl.UseProgram(program)
+	glctx.UseProgram(program)
 
 	green += 0.01
 	if green > 1 {
 		green = 0
 	}
-	gl.Uniform4f(color, 0, green, 0, 1)
+	glctx.Uniform4f(color, 0, green, 0, 1)
 
-	gl.Uniform2f(offset, touchX/float32(sz.WidthPx), touchY/float32(sz.HeightPx))
+	glctx.Uniform2f(offset, touchX/float32(sz.WidthPx), touchY/float32(sz.HeightPx))
 
-	gl.BindBuffer(gl.ARRAY_BUFFER, buf)
-	gl.EnableVertexAttribArray(position)
-	gl.VertexAttribPointer(position, coordsPerVertex, gl.FLOAT, false, 0, 0)
-	gl.DrawArrays(gl.TRIANGLES, 0, vertexCount)
-	gl.DisableVertexAttribArray(position)
+	glctx.BindBuffer(gl.ARRAY_BUFFER, buf)
+	glctx.EnableVertexAttribArray(position)
+	glctx.VertexAttribPointer(position, coordsPerVertex, gl.FLOAT, false, 0, 0)
+	glctx.DrawArrays(gl.TRIANGLES, 0, vertexCount)
+	glctx.DisableVertexAttribArray(position)
 
 	fps.Draw(sz)
 }

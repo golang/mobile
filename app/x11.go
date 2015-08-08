@@ -41,6 +41,11 @@ func init() {
 
 func main(f func(App)) {
 	runtime.LockOSThread()
+
+	var worker gl.Worker
+	glctx, worker = gl.NewContext()
+	workAvailable := worker.WorkAvailable()
+
 	C.createWindow()
 
 	// TODO: send lifecycle events when e.g. the X11 window is iconified or moved off-screen.
@@ -65,8 +70,8 @@ func main(f func(App)) {
 		select {
 		case <-donec:
 			return
-		case <-gl.WorkAvailable:
-			gl.DoWork()
+		case <-workAvailable:
+			worker.DoWork()
 		case <-theApp.publish:
 			C.swapBuffers()
 			tc = ticker.C

@@ -268,6 +268,10 @@ func main(f func(App)) {
 var mainUserFn func(App)
 
 func mainUI(vm, jniEnv, ctx uintptr) error {
+	var worker gl.Worker
+	glctx, worker = gl.NewContext()
+	workAvailable := worker.WorkAvailable()
+
 	donec := make(chan struct{})
 	go func() {
 		mainUserFn(theApp)
@@ -326,8 +330,8 @@ func mainUI(vm, jniEnv, ctx uintptr) error {
 			}
 			C.surface = nil
 			theApp.sendLifecycle(lifecycle.StageAlive)
-		case <-gl.WorkAvailable:
-			gl.DoWork()
+		case <-workAvailable:
+			worker.DoWork()
 		case <-theApp.publish:
 			// TODO: compare a generation number to redrawGen for stale paints?
 			if C.surface != nil {
