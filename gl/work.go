@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build darwin linux
+// +build darwin linux cgo
 
 package gl
 
@@ -20,71 +20,81 @@ package gl
 #include <stdint.h>
 #include "work.h"
 
-struct fnargs cargs[10];
-uintptr_t ret;
-
-void process(int count) {
+// TODO: return uintptr_t instead of taking ret.
+void process(struct fnargs* cargs, int count, uintptr_t* ret) {
 	int i;
 	for (i = 0; i < count; i++) {
-		processFn(&cargs[i]);
+		*ret = processFn(&cargs[i]);
 	}
 }
 */
 import "C"
 
-// work is a queue of calls to execute.
-var work = make(chan call, 10)
+const workbufLen = 10
 
-// retvalue is sent a return value when blocking calls complete.
-// It is safe to use a global unbuffered channel here as calls
-// cannot currently be made concurrently.
+type context struct {
+	cptr uintptr
+
+	workAvailable chan struct{}
+
+	// work is a queue of calls to execute.
+	work chan call
+
+	// retvalue is sent a return value when blocking calls complete.
+	// It is safe to use a global unbuffered channel here as calls
+	// cannot currently be made concurrently.
+	//
+	// TODO: the comment above about concurrent calls isn't actually true: package
+	// app calls package gl, but it has to do so in a separate goroutine, which
+	// means that its gl calls (which may be blocking) can race with other gl calls
+	// in the main program. We should make it safe to issue blocking gl calls
+	// concurrently, or get the gl calls out of package app, or both.
+	retvalue chan C.uintptr_t
+
+	cargs [workbufLen]C.struct_fnargs
+	ret   C.uintptr_t
+}
+
+func (ctx *context) WorkAvailable() <-chan struct{} { return ctx.workAvailable }
+
+// NewContext creates a cgo OpenGL context.
 //
-// TODO: the comment above about concurrent calls isn't actually true: package
-// app calls package gl, but it has to do so in a separate goroutine, which
-// means that its gl calls (which may be blocking) can race with other gl calls
-// in the main program. We should make it safe to issue blocking gl calls
-// concurrently, or get the gl calls out of package app, or both.
-var retvalue = make(chan C.uintptr_t)
+// See the Worker interface for more details on how it is used.
+func NewContext() (Context, Worker) {
+	glctx := &context{
+		workAvailable: make(chan struct{}, 1),
+		work:          make(chan call, workbufLen),
+		retvalue:      make(chan C.uintptr_t),
+	}
+	return glctx, glctx
+}
 
 type call struct {
 	args     C.struct_fnargs
 	blocking bool
 }
 
-func enqueue(c call) C.uintptr_t {
-	work <- c
+func (ctx *context) enqueue(c call) C.uintptr_t {
+	ctx.work <- c
 
 	select {
-	case workAvailable <- struct{}{}:
+	case ctx.workAvailable <- struct{}{}:
 	default:
 	}
 
 	if c.blocking {
-		return <-retvalue
+		return <-ctx.retvalue
 	}
 	return 0
 }
 
-var (
-	workAvailable = make(chan struct{}, 1)
-	// WorkAvailable communicates when DoWork should be called.
-	//
-	// This is an internal implementation detail and should only be used by the
-	// golang.org/x/mobile/app package.
-	WorkAvailable <-chan struct{} = workAvailable
-)
-
-// DoWork performs any pending OpenGL calls.
-//
-// This is an internal implementation detail and should only be used by the
-// golang.org/x/mobile/app package.
-func DoWork() {
-	queue := make([]call, 0, len(work))
+func (ctx *context) DoWork() {
+	queue := make([]call, 0, len(ctx.work))
 	for {
 		// Wait until at least one piece of work is ready.
 		// Accumulate work until a piece is marked as blocking.
 		select {
-		case w := <-work:
+		case w := <-ctx.work:
 			queue = append(queue, w)
 		default:
 			return
@@ -93,7 +103,7 @@ func DoWork() {
 	enqueue:
 		for len(queue) < cap(queue) && !blocking {
 			select {
-			case w := <-work:
+			case w := <-ctx.work:
 				queue = append(queue, w)
 				blocking = queue[len(queue)-1].blocking
 			default:
@@ -103,14 +113,14 @@ func DoWork() {
 
 		// Process the queued GL functions.
 		for i, q := range queue {
-			C.cargs[i] = q.args
+			ctx.cargs[i] = q.args
 		}
-		C.process(C.int(len(queue)))
+		C.process(&ctx.cargs[0], C.int(len(queue)), &ctx.ret)
 
 		// Cleanup and signal.
 		queue = queue[:0]
 		if blocking {
-			retvalue <- C.ret
+			ctx.retvalue <- ctx.ret
 		}
 	}
 }

@@ -176,4 +176,4 @@ struct fnargs {
 
 extern uintptr_t ret;
 
-extern void processFn(struct fnargs* args);
+extern uintptr_t processFn(struct fnargs* args);

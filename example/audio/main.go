@@ -72,6 +72,7 @@ var (
 
 func main() {
 	app.Main(func(a app.App) {
+		var glctx gl.Context
 		visible := false
 		for e := range a.Events() {
 			switch e := a.Filter(e).(type) {
@@ -79,7 +80,8 @@ func main() {
 				switch e.Crosses(lifecycle.StageVisible) {
 				case lifecycle.CrossOn:
 					visible = true
-					onStart()
+					glctx, _ = e.DrawContext.(gl.Context)
+					onStart(glctx)
 				case lifecycle.CrossOff:
 					visible = false
 					onStop()
@@ -87,7 +89,7 @@ func main() {
 			case size.Event:
 				sz = e
 			case paint.Event:
-				onPaint()
+				onPaint(glctx)
 				a.Publish()
 				if visible {
 					// Keep animating.
@@ -98,8 +100,8 @@ func main() {
 	})
 }
 
-func onStart() {
-	images = glutil.NewImages()
+func onStart(glctx gl.Context) {
+	images = glutil.NewImages(glctx)
 	eng = glsprite.Engine(images)
 	loadScene()
 
@@ -119,9 +121,9 @@ func onStop() {
 	player.Close()
 }
 
-func onPaint() {
-	gl.ClearColor(1, 1, 1, 1)
-	gl.Clear(gl.COLOR_BUFFER_BIT)
+func onPaint(glctx gl.Context) {
+	glctx.ClearColor(1, 1, 1, 1)
+	glctx.Clear(gl.COLOR_BUFFER_BIT)
 	now := clock.Time(time.Since(startTime) * 60 / time.Second)
 	eng.Render(scene, now, sz)
 }

@@ -8,7 +8,8 @@
 #include "_cgo_export.h"
 #include "work.h"
 
-void processFn(struct fnargs* args) {
+uintptr_t processFn(struct fnargs* args) {
+	uintptr_t ret = 0;
 	switch (args->fn) {
 	case glfnUNDEFINED:
 		abort(); // bad glfn
@@ -475,4 +476,5 @@ void processFn(struct fnargs* args) {
 		glViewport((GLint)args->a0, (GLint)args->a1, (GLint)args->a2, (GLint)args->a3);
 		break;
 	}
+	return ret;
 }

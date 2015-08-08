@@ -119,8 +119,6 @@ func updateConfig(width, height, orientation int32) {
 	}
 }
 
-var startedgl = false
-
 // touchIDs is the current active touches. The position in the array
 // is the ID, the value is the UITouch* pointer value.
 //
@@ -168,11 +166,19 @@ func sendTouch(cTouch, cTouchType uintptr, x, y float32) {
 	}
 }
 
+var (
+	worker        gl.Worker
+	workAvailable <-chan struct{}
+)
+
 //export drawgl
 func drawgl(ctx uintptr) {
-	if !startedgl {
-		startedgl = true
+	if glctx == nil {
 		C.setContext(unsafe.Pointer(ctx))
+
+		glctx, worker = gl.NewContext()
+		workAvailable = worker.WorkAvailable()
+
 		// TODO(crawshaw): not just on process start.
 		theApp.sendLifecycle(lifecycle.StageFocused)
 	}
@@ -183,8 +189,8 @@ func drawgl(ctx uintptr) {
 
 	for {
 		select {
-		case <-gl.WorkAvailable:
-			gl.DoWork()
+		case <-workAvailable:
+			worker.DoWork()
 		case <-theApp.publish:
 			theApp.publishResult <- PublishResult{}
 			return

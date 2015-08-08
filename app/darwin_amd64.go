@@ -78,17 +78,20 @@ func main(f func(App)) {
 func loop(ctx C.GLintptr) {
 	runtime.LockOSThread()
 	C.makeCurrentContext(ctx)
+	var worker gl.Worker
+	glctx, worker = gl.NewContext()
 
+	workAvailable := worker.WorkAvailable()
 	for {
 		select {
-		case <-gl.WorkAvailable:
-			gl.DoWork()
+		case <-workAvailable:
+			worker.DoWork()
 		case <-draw:
 		loop1:
 			for {
 				select {
-				case <-gl.WorkAvailable:
-					gl.DoWork()
+				case <-workAvailable:
+					worker.DoWork()
 				case <-theApp.publish:
 					C.CGLFlushDrawable(C.CGLGetCurrentContext())
 					theApp.publishResult <- PublishResult{}

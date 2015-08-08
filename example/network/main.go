@@ -43,9 +43,11 @@ import (
 	"net/http"
 
 	"golang.org/x/mobile/app"
+	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/paint"
 	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/exp/app/debug"
+	"golang.org/x/mobile/exp/gl/glutil"
 	"golang.org/x/mobile/gl"
 )
 
@@ -54,6 +56,7 @@ func main() {
 	go checkNetwork()
 
 	app.Main(func(a app.App) {
+		var glctx gl.Context
 		det, sz := determined, size.Event{}
 		for {
 			select {
@@ -63,10 +66,17 @@ func main() {
 
 			case e := <-a.Events():
 				switch e := a.Filter(e).(type) {
+				case lifecycle.Event:
+					glctx, _ = e.DrawContext.(gl.Context)
+					if glctx != nil {
+						glctx = e.DrawContext.(gl.Context)
+						images = glutil.NewImages(glctx)
+						fps = debug.NewFPS(images)
+					}
 				case size.Event:
 					sz = e
 				case paint.Event:
-					onDraw(sz)
+					onDraw(glctx, sz)
 					a.Publish()
 				}
 			}
@@ -75,6 +85,8 @@ func main() {
 }
 
 var (
+	images     *glutil.Images
+	fps        *debug.FPS
 	determined = make(chan struct{})
 	ok         = false
 )
@@ -89,18 +101,18 @@ func checkNetwork() {
 	ok = true
 }
 
-func onDraw(sz size.Event) {
+func onDraw(glctx gl.Context, sz size.Event) {
 	select {
 	case <-determined:
 		if ok {
-			gl.ClearColor(0, 1, 0, 1)
+			glctx.ClearColor(0, 1, 0, 1)
 		} else {
-			gl.ClearColor(1, 0, 0, 1)
+			glctx.ClearColor(1, 0, 0, 1)
 		}
 	default:
-		gl.ClearColor(0, 0, 0, 1)
+		glctx.ClearColor(0, 0, 0, 1)
 	}
-	gl.Clear(gl.COLOR_BUFFER_BIT)
+	glctx.Clear(gl.COLOR_BUFFER_BIT)
 
-	debug.DrawFPS(sz)
+	fps.Draw(sz)
 }

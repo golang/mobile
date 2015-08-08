@@ -20,6 +20,7 @@ import (
 
 // Images maintains the shared state used by a set of *Image objects.
 type Images struct {
+	glctx         gl.Context
 	quadXY        gl.Buffer
 	quadUV        gl.Buffer
 	program       gl.Program
@@ -29,35 +30,33 @@ type Images struct {
 	inUV          gl.Attrib
 	textureSample gl.Uniform
 
-	// TODO(crawshaw): store *gl.Context
-
 	mu           sync.Mutex
 	activeImages int
 }
 
 // NewImages creates an *Images.
-// TODO(crawshaw): take *gl.Context parameter
-func NewImages() *Images {
-	program, err := CreateProgram(vertexShader, fragmentShader)
+func NewImages(glctx gl.Context) *Images {
+	program, err := CreateProgram(glctx, vertexShader, fragmentShader)
 	if err != nil {
 		panic(err)
 	}
 
 	p := &Images{
-		quadXY:        gl.CreateBuffer(),
-		quadUV:        gl.CreateBuffer(),
+		glctx:         glctx,
+		quadXY:        glctx.CreateBuffer(),
+		quadUV:        glctx.CreateBuffer(),
 		program:       program,
-		pos:           gl.GetAttribLocation(program, "pos"),
-		mvp:           gl.GetUniformLocation(program, "mvp"),
-		uvp:           gl.GetUniformLocation(program, "uvp"),
-		inUV:          gl.GetAttribLocation(program, "inUV"),
-		textureSample: gl.GetUniformLocation(program, "textureSample"),
+		pos:           glctx.GetAttribLocation(program, "pos"),
+		mvp:           glctx.GetUniformLocation(program, "mvp"),
+		uvp:           glctx.GetUniformLocation(program, "uvp"),
+		inUV:          glctx.GetAttribLocation(program, "inUV"),
+		textureSample: glctx.GetUniformLocation(program, "textureSample"),
 	}
 
-	gl.BindBuffer(gl.ARRAY_BUFFER, p.quadXY)
-	gl.BufferData(gl.ARRAY_BUFFER, quadXYCoords, gl.STATIC_DRAW)
-	gl.BindBuffer(gl.ARRAY_BUFFER, p.quadUV)
-	gl.BufferData(gl.ARRAY_BUFFER, quadUVCoords, gl.STATIC_DRAW)
+	glctx.BindBuffer(gl.ARRAY_BUFFER, p.quadXY)
+	glctx.BufferData(gl.ARRAY_BUFFER, quadXYCoords, gl.STATIC_DRAW)
+	glctx.BindBuffer(gl.ARRAY_BUFFER, p.quadUV)
+	glctx.BufferData(gl.ARRAY_BUFFER, quadUVCoords, gl.STATIC_DRAW)
 
 	return p
 }
@@ -76,9 +75,9 @@ func (p *Images) Release() {
 		panic("glutil.Images.Release called, but active *Image objects remain")
 	}
 
-	gl.DeleteProgram(p.program)
-	gl.DeleteBuffer(p.quadXY)
-	gl.DeleteBuffer(p.quadUV)
+	p.glctx.DeleteProgram(p.program)
+	p.glctx.DeleteBuffer(p.quadXY)
+	p.glctx.DeleteBuffer(p.quadUV)
 
 	p.program = gl.Program{}
 }
@@ -122,14 +121,14 @@ func (p *Images) NewImage(w, h int) *Image {
 	p.activeImages++
 	p.mu.Unlock()
 
-	img.gltex = gl.CreateTexture()
+	img.gltex = p.glctx.CreateTexture()
 
-	gl.BindTexture(gl.TEXTURE_2D, img.gltex)
-	gl.TexImage2D(gl.TEXTURE_2D, 0, img.width, img.height, gl.RGBA, gl.UNSIGNED_BYTE, nil)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+	p.glctx.BindTexture(gl.TEXTURE_2D, img.gltex)
+	p.glctx.TexImage2D(gl.TEXTURE_2D, 0, img.width, img.height, gl.RGBA, gl.UNSIGNED_BYTE, nil)
+	p.glctx.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	p.glctx.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	p.glctx.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	p.glctx.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 
 	runtime.SetFinalizer(img, (*Image).Release)
 	return img
@@ -145,8 +144,8 @@ func roundToPower2(x int) int {
 
 // Upload copies the host image data to the GL device.
 func (img *Image) Upload() {
-	gl.BindTexture(gl.TEXTURE_2D, img.gltex)
-	gl.TexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, img.width, img.height, gl.RGBA, gl.UNSIGNED_BYTE, img.RGBA.Pix)
+	img.images.glctx.BindTexture(gl.TEXTURE_2D, img.gltex)
+	img.images.glctx.TexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, img.width, img.height, gl.RGBA, gl.UNSIGNED_BYTE, img.RGBA.Pix)
 }
 
 // Release invalidates the Image and removes any underlying data structures.
@@ -156,7 +155,7 @@ func (img *Image) Release() {
 		return
 	}
 
-	gl.DeleteTexture(img.gltex)
+	img.images.glctx.DeleteTexture(img.gltex)
 	img.gltex = gl.Texture{}
 
 	img.images.mu.Lock()
@@ -168,9 +167,10 @@ func (img *Image) Release() {
 // three of its corners, in the current GL framebuffer.
 func (img *Image) Draw(sz size.Event, topLeft, topRight, bottomLeft geom.Point, srcBounds image.Rectangle) {
 	glimage := img.images
+	glctx := img.images.glctx
 
 	// TODO(crawshaw): Adjust viewport for the top bar on android?
-	gl.UseProgram(glimage.program)
+	glctx.UseProgram(glimage.program)
 	{
 		// We are drawing a parallelogram PQRS, defined by three of its
 		// corners, onto the entire GL framebuffer ABCD. The two quads may
@@ -226,7 +226,7 @@ func (img *Image) Draw(sz size.Event, topLeft, topRight, bottomLeft geom.Point, 
 		// which gives:
 		//	a00 = (2*qx2 - 2*px2) / 2 = qx2 - px2
 		// and similarly for the other elements of a.
-		writeAffine(glimage.mvp, &f32.Affine{{
+		writeAffine(glctx, glimage.mvp, &f32.Affine{{
 			qx2 - px2,
 			px2 - sx2,
 			qx2 + sx2,
@@ -261,7 +261,7 @@ func (img *Image) Draw(sz size.Event, topLeft, topRight, bottomLeft geom.Point, 
 		//	a10 +   0 + a12 = qy = py
 		//	  0 + a01 + a02 = sx = px
 		//	  0 + a11 + a12 = sy
-		writeAffine(glimage.uvp, &f32.Affine{{
+		writeAffine(glctx, glimage.uvp, &f32.Affine{{
 			qx - px,
 			0,
 			px,
@@ -272,22 +272,22 @@ func (img *Image) Draw(sz size.Event, topLeft, topRight, bottomLeft geom.Point, 
 		}})
 	}
 
-	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, img.gltex)
-	gl.Uniform1i(glimage.textureSample, 0)
+	glctx.ActiveTexture(gl.TEXTURE0)
+	glctx.BindTexture(gl.TEXTURE_2D, img.gltex)
+	glctx.Uniform1i(glimage.textureSample, 0)
 
-	gl.BindBuffer(gl.ARRAY_BUFFER, glimage.quadXY)
-	gl.EnableVertexAttribArray(glimage.pos)
-	gl.VertexAttribPointer(glimage.pos, 2, gl.FLOAT, false, 0, 0)
+	glctx.BindBuffer(gl.ARRAY_BUFFER, glimage.quadXY)
+	glctx.EnableVertexAttribArray(glimage.pos)
+	glctx.VertexAttribPointer(glimage.pos, 2, gl.FLOAT, false, 0, 0)
 
-	gl.BindBuffer(gl.ARRAY_BUFFER, glimage.quadUV)
-	gl.EnableVertexAttribArray(glimage.inUV)
-	gl.VertexAttribPointer(glimage.inUV, 2, gl.FLOAT, false, 0, 0)
+	glctx.BindBuffer(gl.ARRAY_BUFFER, glimage.quadUV)
+	glctx.EnableVertexAttribArray(glimage.inUV)
+	glctx.VertexAttribPointer(glimage.inUV, 2, gl.FLOAT, false, 0, 0)
 
-	gl.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
+	glctx.DrawArrays(gl.TRIANGLE_STRIP, 0, 4)
 
-	gl.DisableVertexAttribArray(glimage.pos)
-	gl.DisableVertexAttribArray(glimage.inUV)
+	glctx.DisableVertexAttribArray(glimage.pos)
+	glctx.DisableVertexAttribArray(glimage.inUV)
 }
 
 var quadXYCoords = f32.Bytes(binary.LittleEndian,
