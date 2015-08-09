@@ -23,7 +23,8 @@ import (
 
 func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
 	libName := path.Base(pkg.ImportPath)
-	manifestData, err := ioutil.ReadFile(filepath.Join(pkg.Dir, "AndroidManifest.xml"))
+	manifestPath := filepath.Join(pkg.Dir, "AndroidManifest.xml")
+	manifestData, err := ioutil.ReadFile(manifestPath)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return nil, err
@@ -46,7 +47,7 @@ func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
 	} else {
 		libName, err = manifestLibName(manifestData)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error parsing %s: %v", manifestPath, err)
 		}
 	}
 	libPath := filepath.Join(tmpdir, "lib"+libName+".so")
