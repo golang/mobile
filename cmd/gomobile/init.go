@@ -10,6 +10,8 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -481,6 +483,7 @@ func fetch(url string) (dst string, err error) {
 			os.Remove(f.Name())
 		}
 	}()
+	hashw := sha256.New()
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -489,7 +492,7 @@ func fetch(url string) (dst string, err error) {
 	if resp.StatusCode != http.StatusOK {
 		err = fmt.Errorf("error fetching %v, status: %v", url, resp.Status)
 	} else {
-		_, err = io.Copy(f, resp.Body)
+		_, err = io.Copy(io.MultiWriter(hashw, f), resp.Body)
 	}
 	if err2 := resp.Body.Close(); err == nil {
 		err = err2
@@ -499,6 +502,10 @@ func fetch(url string) (dst string, err error) {
 	}
 	if err = f.Close(); err != nil {
 		return "", err
+	}
+	hash := hex.EncodeToString(hashw.Sum(nil))
+	if fetchHashes[name] != hash {
+		return "", fmt.Errorf("sha256 for %q: %v, want %v", name, hash, fetchHashes[name])
 	}
 	if err = os.Rename(f.Name(), dst); err != nil {
 		return "", err
