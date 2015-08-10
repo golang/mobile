@@ -45,7 +45,6 @@ type App interface {
 
 var (
 	lifecycleStage = lifecycle.StageDead
-	pixelsPerPt    = float32(1)
 
 	eventsOut = make(chan interface{})
 	eventsIn  = pump(eventsOut)

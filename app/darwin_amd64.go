@@ -114,8 +114,7 @@ func startloop(ctx C.GLintptr) {
 var windowHeightPx float32
 
 //export setGeom
-func setGeom(ppp float32, widthPx, heightPx int) {
-	pixelsPerPt = ppp
+func setGeom(pixelsPerPt float32, widthPx, heightPx int) {
 	windowHeightPx = float32(heightPx)
 	eventsIn <- config.Event{
 		WidthPx:     widthPx,

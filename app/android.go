@@ -166,13 +166,7 @@ func onContentRectChanged(activity *C.ANativeActivity, rect *C.ARect) {
 }
 
 type windowConfig struct {
-	// TODO(crawshaw): report orientation
-	//	ACONFIGURATION_ORIENTATION_ANY
-	//	ACONFIGURATION_ORIENTATION_PORT
-	//	ACONFIGURATION_ORIENTATION_LAND
-	//	ACONFIGURATION_ORIENTATION_SQUARE
-	// Needs to be merged with iOS's notion of orientation first.
-	orientation int
+	orientation config.Orientation
 	pixelsPerPt float32
 }
 
@@ -208,8 +202,16 @@ func windowConfigRead(activity *C.ANativeActivity) windowConfig {
 		}
 	}
 
+	o := config.OrientationUnknown
+	switch orient {
+	case C.ACONFIGURATION_ORIENTATION_PORT:
+		o = config.OrientationPortrait
+	case C.ACONFIGURATION_ORIENTATION_LAND:
+		o = config.OrientationLandscape
+	}
+
 	return windowConfig{
-		orientation: int(orient),
+		orientation: o,
 		pixelsPerPt: float32(dpi) / 72,
 	}
 }
@@ -250,6 +252,8 @@ func main(f func(App)) {
 	}()
 
 	var q *C.AInputQueue
+	var pixelsPerPt float32
+	var orientation config.Orientation
 
 	// Android can send a windowRedrawNeeded event any time, including
 	// in the middle of a paint cycle. The redraw event may have changed
@@ -274,8 +278,8 @@ func main(f func(App)) {
 		case <-donec:
 			return
 		case cfg := <-windowConfigChange:
-			// TODO save orientation
 			pixelsPerPt = cfg.pixelsPerPt
+			orientation = cfg.orientation
 		case w := <-windowRedrawNeeded:
 			if C.surface == nil {
 				if errStr := C.createEGLSurface(w); errStr != nil {
@@ -292,6 +296,7 @@ func main(f func(App)) {
 				WidthPt:     geom.Pt(float32(widthPx) / pixelsPerPt),
 				HeightPt:    geom.Pt(float32(heightPx) / pixelsPerPt),
 				PixelsPerPt: pixelsPerPt,
+				Orientation: orientation,
 			}
 			redrawGen++
 			eventsIn <- paint.Event{redrawGen}
