@@ -277,8 +277,7 @@ func main(f func(App)) {
 			// TODO save orientation
 			pixelsPerPt = cfg.pixelsPerPt
 		case w := <-windowRedrawNeeded:
-			newWindow := C.surface == nil
-			if newWindow {
+			if C.surface == nil {
 				if errStr := C.createEGLSurface(w); errStr != nil {
 					log.Printf("app: %s (%s)", C.GoString(errStr), eglGetError())
 					return
@@ -295,10 +294,7 @@ func main(f func(App)) {
 				PixelsPerPt: pixelsPerPt,
 			}
 			redrawGen++
-			if newWindow {
-				// New window, begin paint loop.
-				eventsIn <- paint.Event{redrawGen}
-			}
+			eventsIn <- paint.Event{redrawGen}
 		case <-windowDestroyed:
 			if C.surface != nil {
 				if errStr := C.destroyEGLSurface(); errStr != nil {
