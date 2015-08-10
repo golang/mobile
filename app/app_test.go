@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"golang.org/x/mobile/app/internal/apptest"
+	"golang.org/x/mobile/event/config"
 )
 
 // TestAndroidApp tests the lifecycle, event, and window semantics of a
@@ -67,6 +68,19 @@ func TestAndroidApp(t *testing.T) {
 	run(t, "adb", "shell", "input", "keyevent", KeycodePower)
 	run(t, "adb", "shell", "input", "keyevent", KeycodeUnlock)
 
+	const (
+		rotationPortrait  = "0"
+		rotationLandscape = "1"
+	)
+
+	rotate := func(rotation string) {
+		run(t, "adb", "shell", "content", "insert", "--uri", "content://settings/system", "--bind", "name:s:user_rotation", "--bind", "value:i:"+rotation)
+	}
+
+	// turn off automatic rotation and start in portrait
+	run(t, "adb", "shell", "content", "insert", "--uri", "content://settings/system", "--bind", "name:s:accelerometer_rotation", "--bind", "value:i:0")
+	rotate(rotationPortrait)
+
 	// start testapp
 	run(t,
 		"adb", "shell", "am", "start", "-n",
@@ -95,14 +109,15 @@ func TestAndroidApp(t *testing.T) {
 		Printf: t.Logf,
 	}
 
-	var PixelsPerPt float32
+	var pixelsPerPt float32
+	var orientation config.Orientation
 
 	comm.Recv("hello_from_testapp")
 	comm.Send("hello_from_host")
 	comm.Recv("lifecycle_visible")
-	comm.Recv("config", &PixelsPerPt)
-	if PixelsPerPt < 0.1 {
-		t.Fatalf("bad PixelsPerPt: %f", PixelsPerPt)
+	comm.Recv("config", &pixelsPerPt, &orientation)
+	if pixelsPerPt < 0.1 {
+		t.Fatalf("bad pixelsPerPt: %f", pixelsPerPt)
 	}
 	comm.Recv("paint")
 
@@ -117,6 +132,17 @@ func TestAndroidApp(t *testing.T) {
 	comm.Recv("touch", &ty, &x, &y)
 	if ty != "end" || x != 50 || y != 60 {
 		t.Errorf("want touch end(50, 60), got %s(%d,%d)", ty, x, y)
+	}
+
+	rotate(rotationLandscape)
+	comm.Recv("config", &pixelsPerPt, &orientation)
+	if want := config.OrientationLandscape; orientation != want {
+		t.Errorf("want orientation %d, got %d", want, orientation)
+	}
+	rotate(rotationPortrait)
+	comm.Recv("config", &pixelsPerPt, &orientation)
+	if want := config.OrientationPortrait; orientation != want {
+		t.Errorf("want orientation %d, got %d", want, orientation)
 	}
 
 	// TODO: screenshot of gl.Clear to test painting

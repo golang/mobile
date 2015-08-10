@@ -64,6 +64,7 @@ func main(f func(App)) {
 	panic("unexpected return from app.runApp")
 }
 
+var pixelsPerPt float32
 var screenScale int // [UIScreen mainScreen].scale, either 1, 2, or 3.
 
 //export setScreen

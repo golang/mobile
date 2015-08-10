@@ -53,7 +53,7 @@ func main() {
 				}
 			case config.Event:
 				c = e
-				comm.Send("config", c.PixelsPerPt)
+				comm.Send("config", c.PixelsPerPt, c.Orientation)
 			case paint.Event:
 				if sendPainting {
 					comm.Send("paint")
