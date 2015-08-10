@@ -13,6 +13,7 @@ package app
 #include <sys/utsname.h>
 #include <stdint.h>
 #include <pthread.h>
+#include <UIKit/UIDevice.h>
 
 extern struct utsname sysInfo;
 
@@ -97,15 +98,23 @@ func setScreen(scale int) {
 }
 
 //export updateConfig
-func updateConfig(width, height int) {
-	widthPx := screenScale * width
-	heightPx := screenScale * height
+func updateConfig(width, height, orientation int32) {
+	o := config.OrientationUnknown
+	switch orientation {
+	case C.UIDeviceOrientationPortrait, C.UIDeviceOrientationPortraitUpsideDown:
+		o = config.OrientationPortrait
+	case C.UIDeviceOrientationLandscapeLeft, C.UIDeviceOrientationLandscapeRight:
+		o = config.OrientationLandscape
+	}
+	widthPx := screenScale * int(width)
+	heightPx := screenScale * int(height)
 	eventsIn <- config.Event{
 		WidthPx:     widthPx,
 		HeightPx:    heightPx,
 		WidthPt:     geom.Pt(float32(widthPx) / pixelsPerPt),
 		HeightPt:    geom.Pt(float32(heightPx) / pixelsPerPt),
 		PixelsPerPt: pixelsPerPt,
+		Orientation: o,
 	}
 }
 

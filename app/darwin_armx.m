@@ -54,11 +54,17 @@ struct utsname sysInfo;
 	setScreen(scale);
 
 	CGSize size = [UIScreen mainScreen].bounds.size;
-	updateConfig((int)size.width, (int)size.height);
+	UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
+	updateConfig((int)size.width, (int)size.height, orientation);
 }
 
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
-	updateConfig((int)size.width, (int)size.height);
+	[coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+	      // TODO(crawshaw): come up with a plan to handle animations.
+	} completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+		UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
+		updateConfig((int)size.width, (int)size.height, orientation);
+	}];
 }
 
 - (void)update {
