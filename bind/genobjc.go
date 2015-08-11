@@ -74,7 +74,7 @@ func (g *objcGen) genH() error {
 	for _, obj := range g.names {
 		named := obj.Type().(*types.Named)
 		switch named.Underlying().(type) {
-		case *types.Struct, *types.Interface:
+		case *types.Struct:
 			g.Printf("@class %s%s;\n", g.namePrefix, obj.Name())
 		}
 		g.Printf("\n")
