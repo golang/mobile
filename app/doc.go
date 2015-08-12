@@ -24,8 +24,11 @@ Apps written entirely in Go have a main function, and can be built
 with `gomobile build`, which directly produces runnable output for
 Android and iOS.
 
-The gomobile tool can get installed with go get. For details, see
+The gomobile tool can get installed with go get. For reference, see
 https://golang.org/x/mobile/cmd/gomobile.
+
+For detailed instructions and documentation, see
+https://golang.org/wiki/Mobile.
 
 Event processing in Native Apps
 
