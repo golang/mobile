@@ -162,11 +162,8 @@ To install:
 	$ go get golang.org/x/mobile/cmd/gomobile
 	$ gomobile init
 
-At least Go 1.5 is required. Until it is released, build tip from
-source: http://golang.org/doc/install/source
-
-Initialization rebuilds the standard library and may download
-the Android NDK compiler.
+At least Go 1.5 is required.
+For detailed instructions, see https://golang.org/wiki/Mobile.
 
 Usage:
 

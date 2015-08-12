@@ -12,11 +12,8 @@ To install:
 	$ go get golang.org/x/mobile/cmd/gomobile
 	$ gomobile init
 
-At least Go 1.5 is required. Until it is released, build tip from
-source: http://golang.org/doc/install/source
-
-Initialization rebuilds the standard library and may download
-the Android NDK compiler.
+At least Go 1.5 is required.
+For detailed instructions, see https://golang.org/wiki/Mobile.
 
 Usage:
 
@@ -106,11 +103,11 @@ Usage:
 
 	gomobile init [-u]
 
-Init downloads and installs the Android C++ compiler toolchain.
+Init installs the Android C++ compiler toolchain and builds copies
+of the Go standard library for mobile devices.
 
+When first run, it downloads part of the Android NDK.
 The toolchain is installed in $GOPATH/pkg/gomobile.
-If the Android C++ compiler toolchain already exists in the path,
-it skips download and uses the existing toolchain.
 
 The -u option forces download and installation of the new toolchain
 even when the toolchain exists.
