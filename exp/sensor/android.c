@@ -2,12 +2,14 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build android
+
 #include <stdlib.h>
 #include <jni.h>
 
 #include <android/sensor.h>
 
-#include "sensors_android.h"
+#include "android.h"
 
 void android_createManager(int looperId, android_SensorManager* dst) {
   ASensorManager* manager = ASensorManager_getInstance();
