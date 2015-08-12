@@ -11,7 +11,7 @@
 
 #include "android.h"
 
-void android_createManager(int looperId, android_SensorManager* dst) {
+void GoAndroid_createManager(int looperId, GoAndroid_SensorManager* dst) {
   ASensorManager* manager = ASensorManager_getInstance();
 
   ALooper* looper = ALooper_forThread();
@@ -24,7 +24,7 @@ void android_createManager(int looperId, android_SensorManager* dst) {
   dst->looperId = looperId;
 }
 
-int android_enableSensor(ASensorEventQueue* q, int s, int32_t usec) {
+int GoAndroid_enableSensor(ASensorEventQueue* q, int s, int32_t usec) {
   ASensorManager* manager = ASensorManager_getInstance();
   const ASensor* sensor = ASensorManager_getDefaultSensor(manager, s);
   if (sensor == NULL) {
@@ -35,13 +35,13 @@ int android_enableSensor(ASensorEventQueue* q, int s, int32_t usec) {
   return 0;
 }
 
-void android_disableSensor(ASensorEventQueue* q, int s) {
+void GoAndroid_disableSensor(ASensorEventQueue* q, int s) {
   ASensorManager* manager = ASensorManager_getInstance();
   const ASensor* sensor = ASensorManager_getDefaultSensor(manager, s);
   ASensorEventQueue_disableSensor(q, sensor);
 }
 
-int android_readQueue(int looperId, ASensorEventQueue* q, int n, int32_t* types, int64_t* timestamps, float* vectors) {
+int GoAndroid_readQueue(int looperId, ASensorEventQueue* q, int n, int32_t* types, int64_t* timestamps, float* vectors) {
   int id;
   int events;
   ASensorEvent event;
@@ -66,7 +66,7 @@ int android_readQueue(int looperId, ASensorEventQueue* q, int n, int32_t* types,
   return i;
 }
 
-void android_destroyManager(android_SensorManager* m) {
+void GoAndroid_destroyManager(GoAndroid_SensorManager* m) {
   ASensorManager* manager = ASensorManager_getInstance();
   ASensorManager_destroyEventQueue(manager, m->queue);
   ALooper_release(m->looper);

@@ -62,7 +62,7 @@ type inOut struct {
 
 // manager is the Android-specific implementation of Manager.
 type manager struct {
-	m     *C.android_SensorManager
+	m     *C.GoAndroid_SensorManager
 	inout chan inOut
 }
 
@@ -80,23 +80,23 @@ func (m *manager) initialize() {
 			switch s := v.in.(type) {
 			case initSignal:
 				id := atomic.AddInt64(&nextLooperID, int64(1))
-				var mgr C.android_SensorManager
-				C.android_createManager(C.int(id), &mgr)
+				var mgr C.GoAndroid_SensorManager
+				C.GoAndroid_createManager(C.int(id), &mgr)
 				m.m = &mgr
 			case enableSignal:
 				usecsDelay := s.delay.Nanoseconds() * 1000
-				code := int(C.android_enableSensor(m.m.queue, typeToInt(s.t), C.int32_t(usecsDelay)))
+				code := int(C.GoAndroid_enableSensor(m.m.queue, typeToInt(s.t), C.int32_t(usecsDelay)))
 				if code != 0 {
 					*s.err = fmt.Errorf("sensor: no default %v sensor on the device", s.t)
 				}
 			case disableSignal:
-				C.android_disableSensor(m.m.queue, typeToInt(s.t))
+				C.GoAndroid_disableSensor(m.m.queue, typeToInt(s.t))
 			case readSignal:
 				n, err := readEvents(m, s.dst)
 				*s.n = n
 				*s.err = err
 			case closeSignal:
-				C.android_destroyManager(m.m)
+				C.GoAndroid_destroyManager(m.m)
 				close(v.out)
 				return // we don't need this goroutine anymore
 			}
@@ -151,7 +151,7 @@ func readEvents(m *manager, e []Event) (n int, err error) {
 	timestamps := make([]C.int64_t, num)
 	vectors := make([]C.float, 3*num)
 
-	n = int(C.android_readQueue(
+	n = int(C.GoAndroid_readQueue(
 		m.m.looperId, m.m.queue,
 		C.int(num),
 		(*C.int32_t)(unsafe.Pointer(&types[0])),
