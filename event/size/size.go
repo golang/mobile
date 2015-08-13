@@ -2,11 +2,11 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package config defines an event for the dimensions and physical resolution
-// of the app's window.
+// Package size defines an event for the dimensions, physical resolution and
+// orientation of the app's window.
 //
 // See the golang.org/x/mobile/app package for details on the event model.
-package config // import "golang.org/x/mobile/event/config"
+package size // import "golang.org/x/mobile/event/size"
 
 import (
 	"image"
@@ -14,7 +14,8 @@ import (
 	"golang.org/x/mobile/geom"
 )
 
-// Event holds the dimensions and physical resolution of the app's window.
+// Event holds the dimensions, physical resolution and orientation of the app's
+// window.
 type Event struct {
 	// WidthPx and HeightPx are the window's dimensions in pixels.
 	WidthPx, HeightPx int
@@ -35,8 +36,8 @@ type Event struct {
 	Orientation Orientation
 }
 
-// Bounds returns the window's bounds in pixels, at the time this configuration
-// event was sent.
+// Bounds returns the window's bounds in pixels, at the time this size event
+// was sent.
 //
 // The top-left pixel is always (0, 0). The bottom-right pixel is given by the
 // width and height.

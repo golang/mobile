@@ -28,10 +28,10 @@ import (
 	"runtime"
 	"sync"
 
-	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/event/key"
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/paint"
+	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/event/touch"
 	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/gl"
@@ -116,7 +116,7 @@ var windowHeightPx float32
 //export setGeom
 func setGeom(pixelsPerPt float32, widthPx, heightPx int) {
 	windowHeightPx = float32(heightPx)
-	eventsIn <- config.Event{
+	eventsIn <- size.Event{
 		WidthPx:     widthPx,
 		HeightPx:    heightPx,
 		WidthPt:     geom.Pt(float32(widthPx) / pixelsPerPt),

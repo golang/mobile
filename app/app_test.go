@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"golang.org/x/mobile/app/internal/apptest"
-	"golang.org/x/mobile/event/config"
+	"golang.org/x/mobile/event/size"
 )
 
 // TestAndroidApp tests the lifecycle, event, and window semantics of a
@@ -110,12 +110,12 @@ func TestAndroidApp(t *testing.T) {
 	}
 
 	var pixelsPerPt float32
-	var orientation config.Orientation
+	var orientation size.Orientation
 
 	comm.Recv("hello_from_testapp")
 	comm.Send("hello_from_host")
 	comm.Recv("lifecycle_visible")
-	comm.Recv("config", &pixelsPerPt, &orientation)
+	comm.Recv("size", &pixelsPerPt, &orientation)
 	if pixelsPerPt < 0.1 {
 		t.Fatalf("bad pixelsPerPt: %f", pixelsPerPt)
 	}
@@ -135,13 +135,13 @@ func TestAndroidApp(t *testing.T) {
 	}
 
 	rotate(rotationLandscape)
-	comm.Recv("config", &pixelsPerPt, &orientation)
-	if want := config.OrientationLandscape; orientation != want {
+	comm.Recv("size", &pixelsPerPt, &orientation)
+	if want := size.OrientationLandscape; orientation != want {
 		t.Errorf("want orientation %d, got %d", want, orientation)
 	}
 	rotate(rotationPortrait)
-	comm.Recv("config", &pixelsPerPt, &orientation)
-	if want := config.OrientationPortrait; orientation != want {
+	comm.Recv("size", &pixelsPerPt, &orientation)
+	if want := size.OrientationPortrait; orientation != want {
 		t.Errorf("want orientation %d, got %d", want, orientation)
 	}
 

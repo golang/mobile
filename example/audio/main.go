@@ -41,9 +41,9 @@ import (
 
 	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/asset"
-	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/paint"
+	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/exp/app/debug"
 	"golang.org/x/mobile/exp/audio"
 	"golang.org/x/mobile/exp/f32"
@@ -66,7 +66,7 @@ var (
 
 	player *audio.Player
 
-	cfg config.Event
+	sz size.Event
 )
 
 func main() {
@@ -80,8 +80,8 @@ func main() {
 				case lifecycle.CrossOff:
 					onStop()
 				}
-			case config.Event:
-				cfg = e
+			case size.Event:
+				sz = e
 			case paint.Event:
 				onPaint()
 				a.EndPaint(e)
@@ -112,8 +112,8 @@ func onPaint() {
 	gl.ClearColor(1, 1, 1, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 	now := clock.Time(time.Since(startTime) * 60 / time.Second)
-	eng.Render(scene, now, cfg)
-	debug.DrawFPS(cfg)
+	eng.Render(scene, now, sz)
+	debug.DrawFPS(sz)
 }
 
 func newNode() *sprite.Node {
@@ -136,7 +136,7 @@ func loadScene() {
 	dx, dy := float32(1), float32(1)
 
 	n := newNode()
-	// TODO: Shouldn't arranger pass the config.Event?
+	// TODO: Shouldn't arranger pass the size.Event?
 	n.Arranger = arrangerFunc(func(eng sprite.Engine, n *sprite.Node, t clock.Time) {
 		eng.SetSubTex(n, gopher)
 
@@ -148,11 +148,11 @@ func loadScene() {
 			dy = 1
 			boing()
 		}
-		if x+width > float32(cfg.WidthPt) {
+		if x+width > float32(sz.WidthPt) {
 			dx = -1
 			boing()
 		}
-		if y+height > float32(cfg.HeightPt) {
+		if y+height > float32(sz.HeightPt) {
 			dy = -1
 			boing()
 		}

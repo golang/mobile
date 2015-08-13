@@ -33,9 +33,9 @@ import (
 	"log"
 
 	"golang.org/x/mobile/app"
-	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/paint"
+	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/event/touch"
 	"golang.org/x/mobile/exp/app/debug"
 	"golang.org/x/mobile/exp/f32"
@@ -57,7 +57,7 @@ var (
 
 func main() {
 	app.Main(func(a app.App) {
-		var c config.Event
+		var sz size.Event
 		for e := range a.Events() {
 			switch e := app.Filter(e).(type) {
 			case lifecycle.Event:
@@ -67,12 +67,12 @@ func main() {
 				case lifecycle.CrossOff:
 					onStop()
 				}
-			case config.Event:
-				c = e
-				touchX = float32(c.WidthPx / 2)
-				touchY = float32(c.HeightPx / 2)
+			case size.Event:
+				sz = e
+				touchX = float32(sz.WidthPx / 2)
+				touchY = float32(sz.HeightPx / 2)
 			case paint.Event:
-				onPaint(c)
+				onPaint(sz)
 				a.EndPaint(e)
 			case touch.Event:
 				touchX = e.X
@@ -107,7 +107,7 @@ func onStop() {
 	gl.DeleteBuffer(buf)
 }
 
-func onPaint(c config.Event) {
+func onPaint(sz size.Event) {
 	gl.ClearColor(1, 0, 0, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 
@@ -119,7 +119,7 @@ func onPaint(c config.Event) {
 	}
 	gl.Uniform4f(color, 0, green, 0, 1)
 
-	gl.Uniform2f(offset, touchX/float32(c.WidthPx), touchY/float32(c.HeightPx))
+	gl.Uniform2f(offset, touchX/float32(sz.WidthPx), touchY/float32(sz.HeightPx))
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, buf)
 	gl.EnableVertexAttribArray(position)
@@ -127,7 +127,7 @@ func onPaint(c config.Event) {
 	gl.DrawArrays(gl.TRIANGLES, 0, vertexCount)
 	gl.DisableVertexAttribArray(position)
 
-	debug.DrawFPS(c)
+	debug.DrawFPS(sz)
 }
 
 var triangleData = f32.Bytes(binary.LittleEndian,

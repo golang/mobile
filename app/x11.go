@@ -27,9 +27,9 @@ import (
 	"runtime"
 	"time"
 
-	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/paint"
+	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/event/touch"
 	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/gl"
@@ -79,7 +79,7 @@ func onResize(w, h int) {
 	// TODO(nigeltao): don't assume 72 DPI. DisplayWidth and DisplayWidthMM
 	// is probably the best place to start looking.
 	pixelsPerPt := float32(1)
-	eventsIn <- config.Event{
+	eventsIn <- size.Event{
 		WidthPx:     w,
 		HeightPx:    h,
 		WidthPt:     geom.Pt(w),

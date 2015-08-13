@@ -69,10 +69,10 @@ goroutine as other code that calls OpenGL.
 An event is represented by the empty interface type interface{}. Any value can
 be an event. Commonly used types include Event types defined by the following
 packages:
-	- golang.org/x/mobile/event/config
 	- golang.org/x/mobile/event/lifecycle
 	- golang.org/x/mobile/event/mouse
 	- golang.org/x/mobile/event/paint
+	- golang.org/x/mobile/event/size
 	- golang.org/x/mobile/event/touch
 For example, touch.Event is the type that represents touch events. Other
 packages may define their own events, and send them on an app's event channel.
