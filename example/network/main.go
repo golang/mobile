@@ -43,8 +43,8 @@ import (
 	"net/http"
 
 	"golang.org/x/mobile/app"
-	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/event/paint"
+	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/exp/app/debug"
 	"golang.org/x/mobile/gl"
 )
@@ -54,13 +54,13 @@ func main() {
 	go checkNetwork()
 
 	app.Main(func(a app.App) {
-		var c config.Event
+		var sz size.Event
 		for e := range a.Events() {
 			switch e := app.Filter(e).(type) {
-			case config.Event:
-				c = e
+			case size.Event:
+				sz = e
 			case paint.Event:
-				onDraw(c)
+				onDraw(sz)
 				a.EndPaint(e)
 			}
 		}
@@ -82,7 +82,7 @@ func checkNetwork() {
 	ok = true
 }
 
-func onDraw(c config.Event) {
+func onDraw(sz size.Event) {
 	select {
 	case <-determined:
 		if ok {
@@ -95,5 +95,5 @@ func onDraw(c config.Event) {
 	}
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 
-	debug.DrawFPS(c)
+	debug.DrawFPS(sz)
 }

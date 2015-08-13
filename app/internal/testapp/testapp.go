@@ -13,9 +13,9 @@ import (
 
 	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/app/internal/apptest"
-	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/paint"
+	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/event/touch"
 )
 
@@ -40,7 +40,6 @@ func main() {
 		comm.Recv("hello_from_host")
 
 		sendPainting := false
-		var c config.Event
 		for e := range a.Events() {
 			switch e := app.Filter(e).(type) {
 			case lifecycle.Event:
@@ -51,9 +50,8 @@ func main() {
 				case lifecycle.CrossOff:
 					comm.Send("lifecycle_not_visible")
 				}
-			case config.Event:
-				c = e
-				comm.Send("config", c.PixelsPerPt, c.Orientation)
+			case size.Event:
+				comm.Send("size", e.PixelsPerPt, e.Orientation)
 			case paint.Event:
 				if sendPainting {
 					comm.Send("paint")

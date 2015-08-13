@@ -38,8 +38,8 @@ import (
 
 	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/asset"
-	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/event/paint"
+	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/exp/app/debug"
 	"golang.org/x/mobile/exp/f32"
 	"golang.org/x/mobile/exp/sprite"
@@ -56,28 +56,28 @@ var (
 
 func main() {
 	app.Main(func(a app.App) {
-		var c config.Event
+		var sz size.Event
 		for e := range a.Events() {
 			switch e := app.Filter(e).(type) {
-			case config.Event:
-				c = e
+			case size.Event:
+				sz = e
 			case paint.Event:
-				onPaint(c)
+				onPaint(sz)
 				a.EndPaint(e)
 			}
 		}
 	})
 }
 
-func onPaint(c config.Event) {
+func onPaint(sz size.Event) {
 	if scene == nil {
 		loadScene()
 	}
 	gl.ClearColor(1, 1, 1, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 	now := clock.Time(time.Since(startTime) * 60 / time.Second)
-	eng.Render(scene, now, c)
-	debug.DrawFPS(c)
+	eng.Render(scene, now, sz)
+	debug.DrawFPS(sz)
 }
 
 func newNode() *sprite.Node {

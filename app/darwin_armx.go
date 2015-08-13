@@ -29,9 +29,9 @@ import (
 	"sync"
 	"unsafe"
 
-	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/paint"
+	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/event/touch"
 	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/gl"
@@ -100,16 +100,16 @@ func setScreen(scale int) {
 
 //export updateConfig
 func updateConfig(width, height, orientation int32) {
-	o := config.OrientationUnknown
+	o := size.OrientationUnknown
 	switch orientation {
 	case C.UIDeviceOrientationPortrait, C.UIDeviceOrientationPortraitUpsideDown:
-		o = config.OrientationPortrait
+		o = size.OrientationPortrait
 	case C.UIDeviceOrientationLandscapeLeft, C.UIDeviceOrientationLandscapeRight:
-		o = config.OrientationLandscape
+		o = size.OrientationLandscape
 	}
 	widthPx := screenScale * int(width)
 	heightPx := screenScale * int(height)
-	eventsIn <- config.Event{
+	eventsIn <- size.Event{
 		WidthPx:     widthPx,
 		HeightPx:    heightPx,
 		WidthPt:     geom.Pt(float32(widthPx) / pixelsPerPt),

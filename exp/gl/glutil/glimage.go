@@ -14,8 +14,8 @@ import (
 	"sync"
 
 	"golang.org/x/mobile/app"
-	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/event/lifecycle"
+	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/exp/f32"
 	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/gl"
@@ -225,7 +225,7 @@ func (img *Image) Delete() {
 
 // Draw draws the srcBounds part of the image onto a parallelogram, defined by
 // three of its corners, in the current GL framebuffer.
-func (img *Image) Draw(c config.Event, topLeft, topRight, bottomLeft geom.Point, srcBounds image.Rectangle) {
+func (img *Image) Draw(sz size.Event, topLeft, topRight, bottomLeft geom.Point, srcBounds image.Rectangle) {
 	// TODO(crawshaw): Adjust viewport for the top bar on android?
 	gl.UseProgram(glimage.program)
 	tex := texmap.get(*img.key)
@@ -265,12 +265,12 @@ func (img *Image) Draw(c config.Event, topLeft, topRight, bottomLeft geom.Point,
 		// First of all, convert from geom space to framebuffer space. For
 		// later convenience, we divide everything by 2 here: px2 is half of
 		// the P.X co-ordinate (in framebuffer space).
-		px2 := -0.5 + float32(topLeft.X/c.WidthPt)
-		py2 := +0.5 - float32(topLeft.Y/c.HeightPt)
-		qx2 := -0.5 + float32(topRight.X/c.WidthPt)
-		qy2 := +0.5 - float32(topRight.Y/c.HeightPt)
-		sx2 := -0.5 + float32(bottomLeft.X/c.WidthPt)
-		sy2 := +0.5 - float32(bottomLeft.Y/c.HeightPt)
+		px2 := -0.5 + float32(topLeft.X/sz.WidthPt)
+		py2 := +0.5 - float32(topLeft.Y/sz.HeightPt)
+		qx2 := -0.5 + float32(topRight.X/sz.WidthPt)
+		qy2 := +0.5 - float32(topRight.Y/sz.HeightPt)
+		sx2 := -0.5 + float32(bottomLeft.X/sz.WidthPt)
+		sy2 := +0.5 - float32(bottomLeft.Y/sz.HeightPt)
 		// Next, solve for the affine transformation matrix
 		//	    [ a00 a01 a02 ]
 		//	a = [ a10 a11 a12 ]

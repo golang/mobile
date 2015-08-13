@@ -53,9 +53,9 @@ import (
 	"unsafe"
 
 	"golang.org/x/mobile/app/internal/callfn"
-	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/paint"
+	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/event/touch"
 	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/gl"
@@ -166,7 +166,7 @@ func onContentRectChanged(activity *C.ANativeActivity, rect *C.ARect) {
 }
 
 type windowConfig struct {
-	orientation config.Orientation
+	orientation size.Orientation
 	pixelsPerPt float32
 }
 
@@ -202,12 +202,12 @@ func windowConfigRead(activity *C.ANativeActivity) windowConfig {
 		}
 	}
 
-	o := config.OrientationUnknown
+	o := size.OrientationUnknown
 	switch orient {
 	case C.ACONFIGURATION_ORIENTATION_PORT:
-		o = config.OrientationPortrait
+		o = size.OrientationPortrait
 	case C.ACONFIGURATION_ORIENTATION_LAND:
-		o = config.OrientationLandscape
+		o = size.OrientationLandscape
 	}
 
 	return windowConfig{
@@ -253,7 +253,7 @@ func main(f func(App)) {
 
 	var q *C.AInputQueue
 	var pixelsPerPt float32
-	var orientation config.Orientation
+	var orientation size.Orientation
 
 	// Android can send a windowRedrawNeeded event any time, including
 	// in the middle of a paint cycle. The redraw event may have changed
@@ -290,7 +290,7 @@ func main(f func(App)) {
 			sendLifecycle(lifecycle.StageFocused)
 			widthPx := int(C.ANativeWindow_getWidth(w))
 			heightPx := int(C.ANativeWindow_getHeight(w))
-			eventsIn <- config.Event{
+			eventsIn <- size.Event{
 				WidthPx:     widthPx,
 				HeightPx:    heightPx,
 				WidthPt:     geom.Pt(float32(widthPx) / pixelsPerPt),

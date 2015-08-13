@@ -7,9 +7,9 @@
 package app
 
 import (
-	"golang.org/x/mobile/event/config"
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/paint"
+	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/gl"
 	_ "golang.org/x/mobile/internal/mobileinit"
 )
@@ -26,10 +26,10 @@ func Main(f func(App)) {
 type App interface {
 	// Events returns the events channel. It carries events from the system to
 	// the app. The type of such events include:
-	//  - config.Event
 	//  - lifecycle.Event
 	//  - mouse.Event
 	//  - paint.Event
+	//  - size.Event
 	//  - touch.Event
 	// from the golang.org/x/mobile/event/etc packages. Other packages may
 	// define other event types that are carried on this channel.
@@ -175,7 +175,7 @@ func pump(dst chan interface{}) (src chan interface{}) {
 // KitKat). If only x11 needs this, should we move this to x11.go??
 func registerGLViewportFilter() {
 	RegisterFilter(func(e interface{}) interface{} {
-		if e, ok := e.(config.Event); ok {
+		if e, ok := e.(size.Event); ok {
 			gl.Viewport(0, 0, e.WidthPx, e.HeightPx)
 		}
 		return e
