@@ -22,7 +22,9 @@ import (
 )
 
 func genPkg(pkg *build.Package) {
-	files := parseFiles(pkg.Dir, pkg.GoFiles)
+	packageFiles := pkg.GoFiles
+	packageFiles = append(packageFiles, pkg.CgoFiles...)
+	files := parseFiles(pkg.Dir, packageFiles)
 	if len(files) == 0 {
 		return // some error has been reported
 	}
