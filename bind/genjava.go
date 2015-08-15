@@ -350,7 +350,7 @@ func (g *javaGen) javaType(T types.Type) string {
 		if _, ok := T.Elem().(*types.Named); ok {
 			return g.javaType(T.Elem())
 		}
-		panic(fmt.Sprintf("unsupporter pointer to type: %s", T))
+		panic(fmt.Sprintf("unsupported pointer to type: %s", T))
 	case *types.Named:
 		n := T.Obj()
 		if n.Pkg() != g.pkg {
@@ -377,8 +377,10 @@ func (g *javaGen) javaTypeDefault(T types.Type) string {
 		case types.Bool:
 			return "false"
 		case types.Int, types.Int8, types.Int16, types.Int32,
-			types.Int64, types.Uint8, types.Float32, types.Float64:
+			types.Int64, types.Uint8:
 			return "0"
+		case types.Float32, types.Float64:
+			return "0.0"
 		case types.String:
 			return "null"
 		default:
