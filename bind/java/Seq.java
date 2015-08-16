@@ -216,12 +216,17 @@ public class Seq {
 	static final RefTracker tracker = new RefTracker();
 
 	static final class RefTracker {
+		private static final int REF_OFFSET = 42;
+
+		// use single Ref for null Seq.Object
+		private static final Ref nullRef = new Ref(REF_OFFSET - 1, null);
+
 		// Next Java object reference number.
 		//
 		// Reference numbers are positive for Java objects,
 		// and start, arbitrarily at a different offset to Go
 		// to make debugging by reading Seq hex a little easier.
-		private int next = 42; // next Java object ref
+		private int next = REF_OFFSET; // next Java object ref
 
 		// Java objects that have been passed to Go. refnum -> Ref
 		// The Ref obj field is non-null.
@@ -237,7 +242,10 @@ public class Seq {
 				// We don't keep track of the Go object.
 				return;
 			}
-			// Count Java objects passed to Go.
+			if (refnum == nullRef.refnum) {
+				return;
+			}
+			// Count how many times this ref's Java object is passed to Go.
 			if (ref.refcnt == Integer.MAX_VALUE) {
 				throw new RuntimeException("refnum " + refnum + " overflow");
 			}
@@ -259,6 +267,9 @@ public class Seq {
 				log.severe("dec request for Go object "+ refnum);
 				return;
 			}
+			if (refnum == nullRef.refnum) {
+				return;
+			}
 			// Java objects are removed on request of Go.
 			Ref obj = javaObjs.get(refnum);
 			if (obj == null) {
@@ -271,7 +282,9 @@ public class Seq {
 		}
 
 		synchronized Ref createRef(Seq.Object o) {
-			// TODO(crawshaw): use single Ref for null.
+			if (o == null) {
+				return nullRef;
+			}
 			if (next == Integer.MAX_VALUE) {
 				throw new RuntimeException("createRef overflow for " + o);
 			}
@@ -293,6 +306,9 @@ public class Seq {
 		// When we have real code, examine the tradeoffs.
 		synchronized Ref get(int refnum) {
 			if (refnum > 0) {
+				if (refnum == nullRef.refnum) {
+					return nullRef;
+				}
 				Ref ref = javaObjs.get(refnum);
 				if (ref == null) {
 					throw new RuntimeException("unknown java Ref: "+refnum);
