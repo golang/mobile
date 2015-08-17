@@ -176,3 +176,27 @@ char* destroyEGLSurface() {
 	}
 	return NULL;
 }
+
+char* attachJNI(void *vm) {
+	JavaVM* current_vm = (JavaVM*)(vm);
+	JNIEnv* env;
+
+	int attached = 0;
+	switch ((*current_vm)->GetEnv(current_vm, (void**)&env, JNI_VERSION_1_6)) {
+	case JNI_OK:
+		return NULL;
+	case JNI_EDETACHED:
+		// AttachCurrentThread is typically paired with a call to
+		// DetachCurrentThread, however attachJNI is called for
+		// the duration of the main function, which exits when the
+		// process exits. We let Unix take care of thread cleanup.
+		if ((*current_vm)->AttachCurrentThread(current_vm, &env, 0) != 0) {
+			return "cannot attach JVM";
+		}
+		return NULL;
+	case JNI_EVERSION:
+		return "bad JNI version";
+	default:
+		return "unknown GetEnv error";
+	}
+}

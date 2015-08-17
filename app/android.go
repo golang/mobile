@@ -42,6 +42,7 @@ EGLSurface surface;
 char* initEGLDisplay();
 char* createEGLSurface(ANativeWindow* window);
 char* destroyEGLSurface();
+char* attachJNI(void* vm);
 */
 import "C"
 import (
@@ -242,8 +243,16 @@ func init() {
 }
 
 func main(f func(App)) {
-	// Preserve this OS thread for the GL context created below.
+	// Preserve this OS thread for:
+	//	1. the attached JNI thread
+	//	2. the GL context
 	runtime.LockOSThread()
+
+	// Calls into NativeActivity functions must be made from
+	// a thread attached to the JNI.
+	if errStr := C.attachJNI(mobileinit.Context{}.JavaVM()); errStr != nil {
+		log.Fatalf("app: %s", C.GoString(errStr))
+	}
 
 	donec := make(chan struct{})
 	go func() {
