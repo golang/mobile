@@ -35,6 +35,8 @@ static jmethodID find_method(JNIEnv *env, jclass clazz, const char *name, const 
 	return m;
 }
 
+jmethodID key_rune_method;
+
 jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	JNIEnv* env;
 	if ((*vm)->GetEnv(vm, (void**)&env, JNI_VERSION_1_6) != JNI_OK) {
@@ -44,6 +46,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	// Load classes here, which uses the correct ClassLoader.
 	current_ctx_clazz = find_class(env, "org/golang/app/GoNativeActivity");
 	current_ctx_clazz = (jclass)(*env)->NewGlobalRef(env, current_ctx_clazz);
+	key_rune_method =  find_method(env, current_ctx_clazz, "getRune", "(III)I");
 
 	return JNI_VERSION_1_6;
 }
@@ -63,8 +66,8 @@ void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_
 		JNIEnv* env = activity->env;
 
 		// Note that activity->clazz is mis-named.
-		JavaVM* current_vm = activity->vm;
-		jobject current_ctx = activity->clazz;
+		current_vm = activity->vm;
+		current_ctx = activity->clazz;
 
 		setCurrentContext(current_vm, (*env)->NewGlobalRef(env, current_ctx));
 
@@ -177,12 +180,12 @@ char* destroyEGLSurface() {
 	return NULL;
 }
 
-char* attachJNI(void *vm) {
-	JavaVM* current_vm = (JavaVM*)(vm);
-	JNIEnv* env;
+char* attachJNI(JNIEnv** envp) {
+	if (current_vm == NULL) {
+		return "current_vm not set";
+	}
 
-	int attached = 0;
-	switch ((*current_vm)->GetEnv(current_vm, (void**)&env, JNI_VERSION_1_6)) {
+	switch ((*current_vm)->GetEnv(current_vm, (void**)envp, JNI_VERSION_1_6)) {
 	case JNI_OK:
 		return NULL;
 	case JNI_EDETACHED:
@@ -190,7 +193,7 @@ char* attachJNI(void *vm) {
 		// DetachCurrentThread, however attachJNI is called for
 		// the duration of the main function, which exits when the
 		// process exits. We let Unix take care of thread cleanup.
-		if ((*current_vm)->AttachCurrentThread(current_vm, &env, 0) != 0) {
+		if ((*current_vm)->AttachCurrentThread(current_vm, envp, 0) != 0) {
 			return "cannot attach JVM";
 		}
 		return NULL;
@@ -199,4 +202,15 @@ char* attachJNI(void *vm) {
 	default:
 		return "unknown GetEnv error";
 	}
+}
+
+int32_t getKeyRune(JNIEnv* env, AInputEvent* e) {
+	return (int32_t)(*env)->CallIntMethod(
+		env,
+		current_ctx,
+		key_rune_method,
+		AInputEvent_getDeviceId(e),
+		AKeyEvent_getKeyCode(e),
+		AKeyEvent_getMetaState(e)
+	);
 }

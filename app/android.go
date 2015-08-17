@@ -32,6 +32,8 @@ package app
 #include <pthread.h>
 #include <stdlib.h>
 
+JavaVM* current_vm;
+jobject current_ctx;
 jclass current_ctx_clazz;
 
 jclass app_find_class(JNIEnv* env, const char* name);
@@ -42,7 +44,8 @@ EGLSurface surface;
 char* initEGLDisplay();
 char* createEGLSurface(ANativeWindow* window);
 char* destroyEGLSurface();
-char* attachJNI(void* vm);
+char* attachJNI(JNIEnv**);
+int32_t getKeyRune(JNIEnv* env, AInputEvent* e);
 */
 import "C"
 import (
@@ -54,6 +57,7 @@ import (
 	"unsafe"
 
 	"golang.org/x/mobile/app/internal/callfn"
+	"golang.org/x/mobile/event/key"
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/paint"
 	"golang.org/x/mobile/event/size"
@@ -250,7 +254,8 @@ func main(f func(App)) {
 
 	// Calls into NativeActivity functions must be made from
 	// a thread attached to the JNI.
-	if errStr := C.attachJNI(mobileinit.Context{}.JavaVM()); errStr != nil {
+	var env *C.JNIEnv
+	if errStr := C.attachJNI(&env); errStr != nil {
 		log.Fatalf("app: %s", C.GoString(errStr))
 	}
 
@@ -279,7 +284,7 @@ func main(f func(App)) {
 
 	for {
 		if q != nil {
-			processEvents(q)
+			processEvents(env, q)
 		}
 		select {
 		case <-windowCreated:
@@ -342,21 +347,21 @@ func main(f func(App)) {
 	}
 }
 
-func processEvents(queue *C.AInputQueue) {
+func processEvents(env *C.JNIEnv, queue *C.AInputQueue) {
 	var event *C.AInputEvent
 	for C.AInputQueue_getEvent(queue, &event) >= 0 {
 		if C.AInputQueue_preDispatchEvent(queue, event) != 0 {
 			continue
 		}
-		processEvent(event)
+		processEvent(env, event)
 		C.AInputQueue_finishEvent(queue, event, 0)
 	}
 }
 
-func processEvent(e *C.AInputEvent) {
+func processEvent(env *C.JNIEnv, e *C.AInputEvent) {
 	switch C.AInputEvent_getType(e) {
 	case C.AINPUT_EVENT_TYPE_KEY:
-		log.Printf("TODO input event: key")
+		processKey(env, e)
 	case C.AINPUT_EVENT_TYPE_MOTION:
 		// At most one of the events in this batch is an up or down event; get its index and change.
 		upDownIndex := C.size_t(C.AMotionEvent_getAction(e)&C.AMOTION_EVENT_ACTION_POINTER_INDEX_MASK) >> C.AMOTION_EVENT_ACTION_POINTER_INDEX_SHIFT
@@ -383,6 +388,32 @@ func processEvent(e *C.AInputEvent) {
 	default:
 		log.Printf("unknown input event, type=%d", C.AInputEvent_getType(e))
 	}
+}
+
+func processKey(env *C.JNIEnv, e *C.AInputEvent) {
+	deviceID := C.AInputEvent_getDeviceId(e)
+	if deviceID == 0 {
+		// Software keyboard input, leaving for scribe/IME.
+		return
+	}
+
+	k := key.Event{
+		Rune: rune(C.getKeyRune(env, e)),
+	}
+	switch C.AKeyEvent_getAction(e) {
+	case C.AKEY_STATE_DOWN:
+		k.Direction = key.DirPress
+	case C.AKEY_STATE_UP:
+		k.Direction = key.DirRelease
+	default:
+		k.Direction = key.DirNone
+	}
+
+	// TODO(crawshaw): set Modifiers.
+	// TODO(crawshaw): map Android key codes to USB HID key codes.
+	//keyCode := C.AKeyEvent_getKeyCode(e)
+
+	eventsIn <- k
 }
 
 func eglGetError() string {
