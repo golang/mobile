@@ -25,6 +25,7 @@ package app
 #cgo LDFLAGS: -landroid -llog -lEGL -lGLESv2
 
 #include <android/configuration.h>
+#include <android/keycodes.h>
 #include <android/native_activity.h>
 #include <android/native_window.h>
 #include <EGL/egl.h>
@@ -399,6 +400,7 @@ func processKey(env *C.JNIEnv, e *C.AInputEvent) {
 
 	k := key.Event{
 		Rune: rune(C.getKeyRune(env, e)),
+		Code: convAndroidKeyCode(int32(C.AKeyEvent_getKeyCode(e))),
 	}
 	switch C.AKeyEvent_getAction(e) {
 	case C.AKEY_STATE_DOWN:
@@ -408,11 +410,7 @@ func processKey(env *C.JNIEnv, e *C.AInputEvent) {
 	default:
 		k.Direction = key.DirNone
 	}
-
 	// TODO(crawshaw): set Modifiers.
-	// TODO(crawshaw): map Android key codes to USB HID key codes.
-	//keyCode := C.AKeyEvent_getKeyCode(e)
-
 	eventsIn <- k
 }
 
@@ -451,4 +449,338 @@ func eglGetError() string {
 	default:
 		return fmt.Sprintf("Unknown EGL err: %d", errNum)
 	}
+}
+
+func convAndroidKeyCode(aKeyCode int32) key.Code {
+	// Many Android key codes do not map into USB HID codes.
+	// For those, key.CodeUnknown is returned. This switch has all
+	// cases, even the unknown ones, to serve as a documentation
+	// and search aid.
+	switch aKeyCode {
+	case C.AKEYCODE_UNKNOWN:
+	case C.AKEYCODE_SOFT_LEFT:
+	case C.AKEYCODE_SOFT_RIGHT:
+	case C.AKEYCODE_HOME:
+		return key.CodeHome
+	case C.AKEYCODE_BACK:
+	case C.AKEYCODE_CALL:
+	case C.AKEYCODE_ENDCALL:
+	case C.AKEYCODE_0:
+		return key.Code0
+	case C.AKEYCODE_1:
+		return key.Code1
+	case C.AKEYCODE_2:
+		return key.Code2
+	case C.AKEYCODE_3:
+		return key.Code3
+	case C.AKEYCODE_4:
+		return key.Code4
+	case C.AKEYCODE_5:
+		return key.Code5
+	case C.AKEYCODE_6:
+		return key.Code6
+	case C.AKEYCODE_7:
+		return key.Code7
+	case C.AKEYCODE_8:
+		return key.Code8
+	case C.AKEYCODE_9:
+		return key.Code9
+	case C.AKEYCODE_STAR:
+	case C.AKEYCODE_POUND:
+	case C.AKEYCODE_DPAD_UP:
+	case C.AKEYCODE_DPAD_DOWN:
+	case C.AKEYCODE_DPAD_LEFT:
+	case C.AKEYCODE_DPAD_RIGHT:
+	case C.AKEYCODE_DPAD_CENTER:
+	case C.AKEYCODE_VOLUME_UP:
+		return key.CodeVolumeUp
+	case C.AKEYCODE_VOLUME_DOWN:
+		return key.CodeVolumeDown
+	case C.AKEYCODE_POWER:
+	case C.AKEYCODE_CAMERA:
+	case C.AKEYCODE_CLEAR:
+	case C.AKEYCODE_A:
+		return key.CodeA
+	case C.AKEYCODE_B:
+		return key.CodeB
+	case C.AKEYCODE_C:
+		return key.CodeC
+	case C.AKEYCODE_D:
+		return key.CodeD
+	case C.AKEYCODE_E:
+		return key.CodeE
+	case C.AKEYCODE_F:
+		return key.CodeF
+	case C.AKEYCODE_G:
+		return key.CodeG
+	case C.AKEYCODE_H:
+		return key.CodeH
+	case C.AKEYCODE_I:
+		return key.CodeI
+	case C.AKEYCODE_J:
+		return key.CodeJ
+	case C.AKEYCODE_K:
+		return key.CodeK
+	case C.AKEYCODE_L:
+		return key.CodeL
+	case C.AKEYCODE_M:
+		return key.CodeM
+	case C.AKEYCODE_N:
+		return key.CodeN
+	case C.AKEYCODE_O:
+		return key.CodeO
+	case C.AKEYCODE_P:
+		return key.CodeP
+	case C.AKEYCODE_Q:
+		return key.CodeQ
+	case C.AKEYCODE_R:
+		return key.CodeR
+	case C.AKEYCODE_S:
+		return key.CodeS
+	case C.AKEYCODE_T:
+		return key.CodeT
+	case C.AKEYCODE_U:
+		return key.CodeU
+	case C.AKEYCODE_V:
+		return key.CodeV
+	case C.AKEYCODE_W:
+		return key.CodeW
+	case C.AKEYCODE_X:
+		return key.CodeX
+	case C.AKEYCODE_Y:
+		return key.CodeY
+	case C.AKEYCODE_Z:
+		return key.CodeZ
+	case C.AKEYCODE_COMMA:
+		return key.CodeComma
+	case C.AKEYCODE_PERIOD:
+		return key.CodeFullStop
+	case C.AKEYCODE_ALT_LEFT:
+		return key.CodeLeftAlt
+	case C.AKEYCODE_ALT_RIGHT:
+		return key.CodeRightAlt
+	case C.AKEYCODE_SHIFT_LEFT:
+		return key.CodeLeftShift
+	case C.AKEYCODE_SHIFT_RIGHT:
+		return key.CodeRightShift
+	case C.AKEYCODE_TAB:
+		return key.CodeTab
+	case C.AKEYCODE_SPACE:
+		return key.CodeSpacebar
+	case C.AKEYCODE_SYM:
+	case C.AKEYCODE_EXPLORER:
+	case C.AKEYCODE_ENVELOPE:
+	case C.AKEYCODE_ENTER:
+		return key.CodeReturnEnter
+	case C.AKEYCODE_DEL:
+		return key.CodeDeleteBackspace
+	case C.AKEYCODE_GRAVE:
+		return key.CodeGraveAccent
+	case C.AKEYCODE_MINUS:
+		return key.CodeHyphenMinus
+	case C.AKEYCODE_EQUALS:
+		return key.CodeEqualSign
+	case C.AKEYCODE_LEFT_BRACKET:
+		return key.CodeLeftSquareBracket
+	case C.AKEYCODE_RIGHT_BRACKET:
+		return key.CodeRightSquareBracket
+	case C.AKEYCODE_BACKSLASH:
+		return key.CodeBackslash
+	case C.AKEYCODE_SEMICOLON:
+		return key.CodeSemicolon
+	case C.AKEYCODE_APOSTROPHE:
+		return key.CodeApostrophe
+	case C.AKEYCODE_SLASH:
+		return key.CodeSlash
+	case C.AKEYCODE_AT:
+	case C.AKEYCODE_NUM:
+	case C.AKEYCODE_HEADSETHOOK:
+	case C.AKEYCODE_FOCUS:
+	case C.AKEYCODE_PLUS:
+	case C.AKEYCODE_MENU:
+	case C.AKEYCODE_NOTIFICATION:
+	case C.AKEYCODE_SEARCH:
+	case C.AKEYCODE_MEDIA_PLAY_PAUSE:
+	case C.AKEYCODE_MEDIA_STOP:
+	case C.AKEYCODE_MEDIA_NEXT:
+	case C.AKEYCODE_MEDIA_PREVIOUS:
+	case C.AKEYCODE_MEDIA_REWIND:
+	case C.AKEYCODE_MEDIA_FAST_FORWARD:
+	case C.AKEYCODE_MUTE:
+	case C.AKEYCODE_PAGE_UP:
+		return key.CodePageUp
+	case C.AKEYCODE_PAGE_DOWN:
+		return key.CodePageDown
+	case C.AKEYCODE_PICTSYMBOLS:
+	case C.AKEYCODE_SWITCH_CHARSET:
+	case C.AKEYCODE_BUTTON_A:
+	case C.AKEYCODE_BUTTON_B:
+	case C.AKEYCODE_BUTTON_C:
+	case C.AKEYCODE_BUTTON_X:
+	case C.AKEYCODE_BUTTON_Y:
+	case C.AKEYCODE_BUTTON_Z:
+	case C.AKEYCODE_BUTTON_L1:
+	case C.AKEYCODE_BUTTON_R1:
+	case C.AKEYCODE_BUTTON_L2:
+	case C.AKEYCODE_BUTTON_R2:
+	case C.AKEYCODE_BUTTON_THUMBL:
+	case C.AKEYCODE_BUTTON_THUMBR:
+	case C.AKEYCODE_BUTTON_START:
+	case C.AKEYCODE_BUTTON_SELECT:
+	case C.AKEYCODE_BUTTON_MODE:
+	case C.AKEYCODE_ESCAPE:
+		return key.CodeEscape
+	case C.AKEYCODE_FORWARD_DEL:
+		return key.CodeDeleteForward
+	case C.AKEYCODE_CTRL_LEFT:
+		return key.CodeLeftControl
+	case C.AKEYCODE_CTRL_RIGHT:
+		return key.CodeRightControl
+	case C.AKEYCODE_CAPS_LOCK:
+		return key.CodeCapsLock
+	case C.AKEYCODE_SCROLL_LOCK:
+	case C.AKEYCODE_META_LEFT:
+		return key.CodeLeftGUI
+	case C.AKEYCODE_META_RIGHT:
+		return key.CodeRightGUI
+	case C.AKEYCODE_FUNCTION:
+	case C.AKEYCODE_SYSRQ:
+	case C.AKEYCODE_BREAK:
+	case C.AKEYCODE_MOVE_HOME:
+	case C.AKEYCODE_MOVE_END:
+	case C.AKEYCODE_INSERT:
+		return key.CodeInsert
+	case C.AKEYCODE_FORWARD:
+	case C.AKEYCODE_MEDIA_PLAY:
+	case C.AKEYCODE_MEDIA_PAUSE:
+	case C.AKEYCODE_MEDIA_CLOSE:
+	case C.AKEYCODE_MEDIA_EJECT:
+	case C.AKEYCODE_MEDIA_RECORD:
+	case C.AKEYCODE_F1:
+		return key.CodeF1
+	case C.AKEYCODE_F2:
+		return key.CodeF2
+	case C.AKEYCODE_F3:
+		return key.CodeF3
+	case C.AKEYCODE_F4:
+		return key.CodeF4
+	case C.AKEYCODE_F5:
+		return key.CodeF5
+	case C.AKEYCODE_F6:
+		return key.CodeF6
+	case C.AKEYCODE_F7:
+		return key.CodeF7
+	case C.AKEYCODE_F8:
+		return key.CodeF8
+	case C.AKEYCODE_F9:
+		return key.CodeF9
+	case C.AKEYCODE_F10:
+		return key.CodeF10
+	case C.AKEYCODE_F11:
+		return key.CodeF11
+	case C.AKEYCODE_F12:
+		return key.CodeF12
+	case C.AKEYCODE_NUM_LOCK:
+		return key.CodeKeypadNumLock
+	case C.AKEYCODE_NUMPAD_0:
+		return key.CodeKeypad0
+	case C.AKEYCODE_NUMPAD_1:
+		return key.CodeKeypad1
+	case C.AKEYCODE_NUMPAD_2:
+		return key.CodeKeypad2
+	case C.AKEYCODE_NUMPAD_3:
+		return key.CodeKeypad3
+	case C.AKEYCODE_NUMPAD_4:
+		return key.CodeKeypad4
+	case C.AKEYCODE_NUMPAD_5:
+		return key.CodeKeypad5
+	case C.AKEYCODE_NUMPAD_6:
+		return key.CodeKeypad6
+	case C.AKEYCODE_NUMPAD_7:
+		return key.CodeKeypad7
+	case C.AKEYCODE_NUMPAD_8:
+		return key.CodeKeypad8
+	case C.AKEYCODE_NUMPAD_9:
+		return key.CodeKeypad9
+	case C.AKEYCODE_NUMPAD_DIVIDE:
+		return key.CodeKeypadSlash
+	case C.AKEYCODE_NUMPAD_MULTIPLY:
+		return key.CodeKeypadAsterisk
+	case C.AKEYCODE_NUMPAD_SUBTRACT:
+		return key.CodeKeypadHyphenMinus
+	case C.AKEYCODE_NUMPAD_ADD:
+		return key.CodeKeypadPlusSign
+	case C.AKEYCODE_NUMPAD_DOT:
+		return key.CodeKeypadFullStop
+	case C.AKEYCODE_NUMPAD_COMMA:
+	case C.AKEYCODE_NUMPAD_ENTER:
+		return key.CodeKeypadEnter
+	case C.AKEYCODE_NUMPAD_EQUALS:
+		return key.CodeKeypadEqualSign
+	case C.AKEYCODE_NUMPAD_LEFT_PAREN:
+	case C.AKEYCODE_NUMPAD_RIGHT_PAREN:
+	case C.AKEYCODE_VOLUME_MUTE:
+		return key.CodeMute
+	case C.AKEYCODE_INFO:
+	case C.AKEYCODE_CHANNEL_UP:
+	case C.AKEYCODE_CHANNEL_DOWN:
+	case C.AKEYCODE_ZOOM_IN:
+	case C.AKEYCODE_ZOOM_OUT:
+	case C.AKEYCODE_TV:
+	case C.AKEYCODE_WINDOW:
+	case C.AKEYCODE_GUIDE:
+	case C.AKEYCODE_DVR:
+	case C.AKEYCODE_BOOKMARK:
+	case C.AKEYCODE_CAPTIONS:
+	case C.AKEYCODE_SETTINGS:
+	case C.AKEYCODE_TV_POWER:
+	case C.AKEYCODE_TV_INPUT:
+	case C.AKEYCODE_STB_POWER:
+	case C.AKEYCODE_STB_INPUT:
+	case C.AKEYCODE_AVR_POWER:
+	case C.AKEYCODE_AVR_INPUT:
+	case C.AKEYCODE_PROG_RED:
+	case C.AKEYCODE_PROG_GREEN:
+	case C.AKEYCODE_PROG_YELLOW:
+	case C.AKEYCODE_PROG_BLUE:
+	case C.AKEYCODE_APP_SWITCH:
+	case C.AKEYCODE_BUTTON_1:
+	case C.AKEYCODE_BUTTON_2:
+	case C.AKEYCODE_BUTTON_3:
+	case C.AKEYCODE_BUTTON_4:
+	case C.AKEYCODE_BUTTON_5:
+	case C.AKEYCODE_BUTTON_6:
+	case C.AKEYCODE_BUTTON_7:
+	case C.AKEYCODE_BUTTON_8:
+	case C.AKEYCODE_BUTTON_9:
+	case C.AKEYCODE_BUTTON_10:
+	case C.AKEYCODE_BUTTON_11:
+	case C.AKEYCODE_BUTTON_12:
+	case C.AKEYCODE_BUTTON_13:
+	case C.AKEYCODE_BUTTON_14:
+	case C.AKEYCODE_BUTTON_15:
+	case C.AKEYCODE_BUTTON_16:
+	case C.AKEYCODE_LANGUAGE_SWITCH:
+	case C.AKEYCODE_MANNER_MODE:
+	case C.AKEYCODE_3D_MODE:
+	case C.AKEYCODE_CONTACTS:
+	case C.AKEYCODE_CALENDAR:
+	case C.AKEYCODE_MUSIC:
+	case C.AKEYCODE_CALCULATOR:
+	}
+	/* Defined in an NDK API version beyond what we use today:
+	C.AKEYCODE_ASSIST
+	C.AKEYCODE_BRIGHTNESS_DOWN
+	C.AKEYCODE_BRIGHTNESS_UP
+	C.AKEYCODE_EISU
+	C.AKEYCODE_HENKAN
+	C.AKEYCODE_KANA
+	C.AKEYCODE_KATAKANA_HIRAGANA
+	C.AKEYCODE_MEDIA_AUDIO_TRACK
+	C.AKEYCODE_MUHENKAN
+	C.AKEYCODE_RO
+	C.AKEYCODE_YEN
+	C.AKEYCODE_ZENKAKU_HANKAKU
+	*/
+	return key.CodeUnknown
 }
