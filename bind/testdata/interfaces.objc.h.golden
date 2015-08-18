@@ -8,9 +8,7 @@
 
 #include <Foundation/Foundation.h>
 
-@class GoInterfacesI;
 
-@class GoInterfacesWithParam;
 
 @protocol GoInterfacesI
 - (int32_t)Rand;
