@@ -24,11 +24,12 @@ import (
 )
 
 func TestImage(t *testing.T) {
-	done := make(chan struct{})
+	done := make(chan error)
 	defer close(done)
 	go func() {
 		runtime.LockOSThread()
-		ctx := createContext()
+		ctx, err := createContext()
+		done <- err
 		for {
 			select {
 			case <-gl.WorkAvailable:
@@ -39,6 +40,10 @@ func TestImage(t *testing.T) {
 			}
 		}
 	}()
+	if err := <-done; err != nil {
+		t.Fatalf("cannot create GL context: %v", err)
+	}
+
 	start()
 	defer stop()
 
