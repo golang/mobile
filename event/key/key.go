@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:generate stringer -type=Code
+
 // Package key defines an event for physical keyboard keys.
 //
 // On-screen software keyboards do not send key events.
