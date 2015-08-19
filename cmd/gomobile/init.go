@@ -435,6 +435,10 @@ func fetchFullNDK() error {
 	// is not used, and 7z.exe is not a normal dependency.
 	var inflate *exec.Cmd
 	if goos != "windows" {
+		// The downloaded archive is executed on linux and os x to unarchive.
+		// To do this execute permissions are needed.
+		os.Chmod(archive, 0755)
+
 		inflate = exec.Command(archive)
 	} else {
 		inflate = exec.Command("7z.exe", "x", archive)
