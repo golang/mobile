@@ -79,12 +79,12 @@ func (m *manager) initialize() {
 			v := <-m.inout
 			switch s := v.in.(type) {
 			case initSignal:
-				id := atomic.AddInt64(&nextLooperID, int64(1))
+				id := atomic.AddInt64(&nextLooperID, 1)
 				var mgr C.GoAndroid_SensorManager
 				C.GoAndroid_createManager(C.int(id), &mgr)
 				m.m = &mgr
 			case enableSignal:
-				usecsDelay := s.delay.Nanoseconds() * 1000
+				usecsDelay := s.delay.Nanoseconds() / 1000
 				code := int(C.GoAndroid_enableSensor(m.m.queue, typeToInt(s.t), C.int32_t(usecsDelay)))
 				if code != 0 {
 					*s.err = fmt.Errorf("sensor: no default %v sensor on the device", s.t)
