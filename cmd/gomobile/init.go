@@ -128,6 +128,14 @@ func runInit(cmd *command) error {
 		return err
 	}
 
+	// Install common x/mobile packages for local development.
+	// These are often slow to compile (due to cgo) and easy to forget.
+	for _, pkg := range commonPkgs {
+		if err := installPkg(pkg, nil); err != nil {
+			return err
+		}
+	}
+
 	// Install standard libraries for cross compilers.
 	start := time.Now()
 	if err := installStd(androidArmEnv); err != nil {
@@ -152,6 +160,12 @@ func runInit(cmd *command) error {
 	return nil
 }
 
+var commonPkgs = []string{
+	"golang.org/x/mobile/gl",
+	"golang.org/x/mobile/app",
+	"golang.org/x/mobile/exp/app/debug",
+}
+
 func installDarwin() error {
 	if goos != "darwin" {
 		return nil // Only build iOS compilers on OS X.
@@ -170,15 +184,25 @@ func installDarwin() error {
 }
 
 func installStd(env []string, args ...string) error {
-	tOS := getenv(env, "GOOS")
-	tArch := getenv(env, "GOARCH")
-	if buildV {
-		fmt.Fprintf(os.Stderr, "\n# Building standard library for %s/%s.\n", tOS, tArch)
+	return installPkg("std", env, args...)
+}
+
+func installPkg(pkg string, env []string, args ...string) error {
+	tOS, tArch, pd := getenv(env, "GOOS"), getenv(env, "GOARCH"), pkgdir(env)
+	if tOS != "" && tArch != "" {
+		if buildV {
+			fmt.Fprintf(os.Stderr, "\n# Installing %s for %s/%s.\n", pkg, tOS, tArch)
+		}
+		args = append(args, "-pkgdir="+pd)
+	} else {
+		if buildV {
+			fmt.Fprintf(os.Stderr, "\n# Installing %s.\n", pkg)
+		}
 	}
 
 	// The -p flag is to speed up darwin/arm builds.
 	// Remove when golang.org/issue/10477 is resolved.
-	cmd := exec.Command("go", "install", fmt.Sprintf("-p=%d", runtime.NumCPU()), "-pkgdir="+pkgdir(env))
+	cmd := exec.Command("go", "install", fmt.Sprintf("-p=%d", runtime.NumCPU()))
 	cmd.Args = append(cmd.Args, args...)
 	if buildV {
 		cmd.Args = append(cmd.Args, "-v")
@@ -189,7 +213,7 @@ func installStd(env []string, args ...string) error {
 	if buildWork {
 		cmd.Args = append(cmd.Args, "-work")
 	}
-	cmd.Args = append(cmd.Args, "std")
+	cmd.Args = append(cmd.Args, pkg)
 	cmd.Env = append([]string{}, env...)
 	return runCmd(cmd)
 }
