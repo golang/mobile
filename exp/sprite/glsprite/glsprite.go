@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build darwin linux
+
 // Package glsprite implements a sprite Engine using OpenGL ES 2.
 //
 // Each sprite.Texture is loaded as a GL texture object and drawn
