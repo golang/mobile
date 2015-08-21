@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build darwin linux
+
 // Package sensor provides sensor events from various movement sensors.
 package sensor // import "golang.org/x/mobile/exp/sensor"
 
