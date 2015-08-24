@@ -128,11 +128,18 @@ func runInit(cmd *command) error {
 		return err
 	}
 
-	// Install common x/mobile packages for local development.
-	// These are often slow to compile (due to cgo) and easy to forget.
-	for _, pkg := range commonPkgs {
-		if err := installPkg(pkg, nil); err != nil {
-			return err
+	if runtime.GOOS == "darwin" {
+		// Install common x/mobile packages for local development.
+		// These are often slow to compile (due to cgo) and easy to forget.
+		//
+		// Limited to darwin for now as it is common for linux to
+		// not have GLES installed.
+		//
+		// TODO: consider testing GLES installation and suggesting it here
+		for _, pkg := range commonPkgs {
+			if err := installPkg(pkg, nil); err != nil {
+				return err
+			}
 		}
 	}
 
