@@ -48,7 +48,7 @@ func TestAndroidBuild(t *testing.T) {
 	buildX = true
 	buildO = "basic.apk"
 	buildTarget = "android"
-	gopath = filepath.SplitList(os.Getenv("GOPATH"))[0]
+	gopath = filepath.ToSlash(filepath.SplitList(os.Getenv("GOPATH"))[0])
 	if goos == "windows" {
 		os.Setenv("HOMEDRIVE", "C:")
 	}
