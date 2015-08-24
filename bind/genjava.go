@@ -11,8 +11,7 @@ import (
 	"go/types"
 	"io"
 	"regexp"
-	"unicode"
-	"unicode/utf8"
+	"strings"
 )
 
 // TODO(crawshaw): disallow basic android java type names in exported symbols.
@@ -546,15 +545,43 @@ import go.Seq;
 
 `
 
+var javaNameReplacer = strings.NewReplacer(
+	"-", "_",
+	".", "_",
+)
+
+func (g *javaGen) javaPkgName() string {
+	s := javaNameReplacer.Replace(g.pkg.Name())
+	// Look for Java keywords that are not Go keywords, and avoid using
+	// them as a package name.
+	//
+	// This is not a problem for normal Go identifiers as we only expose
+	// exported symbols. The upper case first letter saves everything
+	// from accidentally matching except for the package name.
+	//
+	// Note that basic type names (like int) are not keywords in Go.
+	switch s {
+	case "abstract", "assert", "boolean", "byte", "catch", "char", "class",
+		"do", "double", "enum", "extends", "final", "finally", "float",
+		"implements", "instanceof", "int", "long", "native", "private",
+		"protected", "public", "short", "static", "strictfp", "super",
+		"synchronized", "this", "throw", "throws", "transient", "try",
+		"void", "volatile", "while":
+		s += "_"
+	}
+	return s
+}
+
+func (g *javaGen) className() string {
+	return strings.Title(javaNameReplacer.Replace(g.pkg.Name()))
+}
+
 func (g *javaGen) gen() error {
-	g.Printf(javaPreamble, g.pkg.Name(), g.pkg.Path(), g.pkg.Name())
+	g.Printf(javaPreamble, g.javaPkgName(), g.pkg.Path(), g.javaPkgName())
 
-	firstRune, size := utf8.DecodeRuneInString(g.pkg.Name())
-	className := string(unicode.ToUpper(firstRune)) + g.pkg.Name()[size:]
-
-	g.Printf("public abstract class %s {\n", className)
+	g.Printf("public abstract class %s {\n", g.className())
 	g.Indent()
-	g.Printf("private %s() {} // uninstantiable\n\n", className)
+	g.Printf("private %s() {} // uninstantiable\n\n", g.className())
 	scope := g.pkg.Scope()
 	names := scope.Names()
 	var funcs []string
