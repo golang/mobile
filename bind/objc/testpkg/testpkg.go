@@ -16,12 +16,24 @@ import (
 
 type I interface {
 	Times(v int32) int64
+	Error(triggerError bool) error
 }
 
 type myI struct{}
 
 func (i *myI) Times(v int32) int64 {
 	return int64(v) * 10
+}
+
+func (i *myI) Error(e bool) error {
+	if e {
+		return errors.New("some error")
+	}
+	return nil
+}
+
+func CallIError(i I, triggerError bool) error {
+	return i.Error(triggerError)
 }
 
 func NewI() I {

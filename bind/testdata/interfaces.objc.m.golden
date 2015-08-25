@@ -16,7 +16,67 @@ static NSString* errDomain = @"go.interfaces";
 #define _DESCRIPTOR_ "interfaces"
 
 #define _CALL_Add3_ 1
-#define _CALL_Seven_ 2
+#define _CALL_CallErr_ 2
+#define _CALL_Seven_ 3
+
+#define _GO_interfaces_Error_DESCRIPTOR_ "go.interfaces.Error"
+#define _GO_interfaces_Error_Err_ (0x10a)
+
+@interface GoInterfacesError : NSObject <GoInterfacesError> {
+}
+@property(strong, readonly) id ref;
+
+- (id)initWithRef:(id)ref;
+- (BOOL)Err:(NSError**)error;
+@end
+
+@implementation GoInterfacesError {
+}
+
+- (id)initWithRef:(id)ref {
+	self = [super init];
+	if (self) { _ref = ref; }
+	return self;
+}
+
+- (BOOL)Err:(NSError**)error {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	go_seq_writeRef(&in_, self.ref);
+	go_seq_send(_GO_interfaces_Error_DESCRIPTOR_, _GO_interfaces_Error_Err_, &in_, &out_);
+	NSString* _error = go_seq_readUTF8(&out_);
+	if ([_error length] != 0 && error != nil) {
+		NSMutableDictionary* details = [NSMutableDictionary dictionary];
+		[details setValue:_error forKey:NSLocalizedDescriptionKey];
+		*error = [NSError errorWithDomain:errDomain code:1 userInfo:details];
+	}
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+	return ([_error length] == 0);
+}
+
+@end
+
+static void proxyGoInterfacesError(id obj, int code, GoSeq* in, GoSeq* out) {
+	switch (code) {
+	case _GO_interfaces_Error_Err_: {
+		id<GoInterfacesError> o = (id<GoInterfacesError>)(obj);
+		NSError* error = NULL;
+		BOOL returnVal = [o Err:&error];
+		if (returnVal) {
+			go_seq_writeUTF8(out, NULL);
+		} else {
+			NSString* errorDesc = [error localizedDescription];
+			if (errorDesc == NULL || errorDesc.length == 0) {
+				errorDesc = @"gobind: unknown error";
+			}
+			go_seq_writeUTF8(out, errorDesc);
+		}
+	} break;
+	default:
+		NSLog(@"unknown code %x for _GO_interfaces_Error_DESCRIPTOR_", code);
+	}
+}
 
 #define _GO_interfaces_I_DESCRIPTOR_ "go.interfaces.I"
 #define _GO_interfaces_I_Rand_ (0x10a)
@@ -123,6 +183,27 @@ int32_t GoInterfacesAdd3(id<GoInterfacesI> r) {
 	return ret0_;
 }
 
+BOOL GoInterfacesCallErr(id<GoInterfacesError> e, NSError** error) {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	if ([(id<NSObject>)(e) isKindOfClass:[GoInterfacesError class]]) {
+		id<goSeqRefInterface> e_proxy = (id<goSeqRefInterface>)(e);
+		go_seq_writeRef(&in_, e_proxy.ref);
+	} else {
+		go_seq_writeObjcRef(&in_, e);
+	}
+	go_seq_send(_DESCRIPTOR_, _CALL_CallErr_, &in_, &out_);
+	NSString* _error = go_seq_readUTF8(&out_);
+	if ([_error length] != 0 && error != nil) {
+		NSMutableDictionary* details = [NSMutableDictionary dictionary];
+		[details setValue:_error forKey:NSLocalizedDescriptionKey];
+		*error = [NSError errorWithDomain:errDomain code:1 userInfo:details];
+	}
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+	return ([_error length] == 0);
+}
+
 id<GoInterfacesI> GoInterfacesSeven() {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
@@ -138,6 +219,7 @@ id<GoInterfacesI> GoInterfacesSeven() {
 }
 
 __attribute__((constructor)) static void init() {
+	go_seq_register_proxy("go.interfaces.Error", proxyGoInterfacesError);
 	go_seq_register_proxy("go.interfaces.I", proxyGoInterfacesI);
 	go_seq_register_proxy("go.interfaces.WithParam", proxyGoInterfacesWithParam);
 }
