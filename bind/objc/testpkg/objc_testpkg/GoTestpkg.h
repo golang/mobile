@@ -9,11 +9,24 @@
 #include <Foundation/Foundation.h>
 
 
+@class GoTestpkgNode;
+
 @class GoTestpkgS;
 
 @protocol GoTestpkgI
 - (BOOL)Error:(BOOL)triggerError error:(NSError**)error;
 - (int64_t)Times:(int32_t)v;
+@end
+
+@interface GoTestpkgNode : NSObject {
+}
+@property(strong, readonly) id ref;
+
+- (id)initWithRef:(id)ref;
+- (NSString*)V;
+- (void)setV:(NSString*)v;
+- (NSString*)Err;
+- (void)setErr:(NSString*)v;
 @end
 
 @interface GoTestpkgS : NSObject {
@@ -48,6 +61,8 @@ FOUNDATION_EXPORT void GoTestpkgInt(int32_t x);
 FOUNDATION_EXPORT int64_t GoTestpkgMultiply(int32_t idx, int32_t val);
 
 FOUNDATION_EXPORT id<GoTestpkgI> GoTestpkgNewI();
+
+FOUNDATION_EXPORT GoTestpkgNode* GoTestpkgNewNode(NSString* name);
 
 FOUNDATION_EXPORT GoTestpkgS* GoTestpkgNewS(double x, double y);
 

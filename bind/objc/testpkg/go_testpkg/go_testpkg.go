@@ -128,11 +128,62 @@ func proxy_NewI(out, in *seq.Buffer) {
 	out.WriteGoRef(res)
 }
 
+func proxy_NewNode(out, in *seq.Buffer) {
+	param_name := in.ReadString()
+	res := testpkg.NewNode(param_name)
+	out.WriteGoRef(res)
+}
+
 func proxy_NewS(out, in *seq.Buffer) {
 	param_x := in.ReadFloat64()
 	param_y := in.ReadFloat64()
 	res := testpkg.NewS(param_x, param_y)
 	out.WriteGoRef(res)
+}
+
+const (
+	proxyNode_Descriptor   = "go.testpkg.Node"
+	proxyNode_V_Get_Code   = 0x00f
+	proxyNode_V_Set_Code   = 0x01f
+	proxyNode_Err_Get_Code = 0x10f
+	proxyNode_Err_Set_Code = 0x11f
+)
+
+type proxyNode seq.Ref
+
+func proxyNode_V_Set(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := in.ReadString()
+	ref.Get().(*testpkg.Node).V = v
+}
+
+func proxyNode_V_Get(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := ref.Get().(*testpkg.Node).V
+	out.WriteString(v)
+}
+
+func proxyNode_Err_Set(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := in.ReadError()
+	ref.Get().(*testpkg.Node).Err = v
+}
+
+func proxyNode_Err_Get(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := ref.Get().(*testpkg.Node).Err
+	if v == nil {
+		out.WriteString("")
+	} else {
+		out.WriteString(v.Error())
+	}
+}
+
+func init() {
+	seq.Register(proxyNode_Descriptor, proxyNode_V_Set_Code, proxyNode_V_Set)
+	seq.Register(proxyNode_Descriptor, proxyNode_V_Get_Code, proxyNode_V_Get)
+	seq.Register(proxyNode_Descriptor, proxyNode_Err_Set_Code, proxyNode_Err_Set)
+	seq.Register(proxyNode_Descriptor, proxyNode_Err_Get_Code, proxyNode_Err_Get)
 }
 
 func proxy_RegisterI(out, in *seq.Buffer) {
@@ -242,9 +293,10 @@ func init() {
 	seq.Register("testpkg", 8, proxy_Int)
 	seq.Register("testpkg", 9, proxy_Multiply)
 	seq.Register("testpkg", 10, proxy_NewI)
-	seq.Register("testpkg", 11, proxy_NewS)
-	seq.Register("testpkg", 12, proxy_RegisterI)
-	seq.Register("testpkg", 13, proxy_ReturnsError)
-	seq.Register("testpkg", 14, proxy_Sum)
-	seq.Register("testpkg", 15, proxy_UnregisterI)
+	seq.Register("testpkg", 11, proxy_NewNode)
+	seq.Register("testpkg", 12, proxy_NewS)
+	seq.Register("testpkg", 13, proxy_RegisterI)
+	seq.Register("testpkg", 14, proxy_ReturnsError)
+	seq.Register("testpkg", 15, proxy_Sum)
+	seq.Register("testpkg", 16, proxy_UnregisterI)
 }
