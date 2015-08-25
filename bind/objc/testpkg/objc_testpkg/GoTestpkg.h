@@ -8,11 +8,11 @@
 
 #include <Foundation/Foundation.h>
 
-@class GoTestpkgI;
 
 @class GoTestpkgS;
 
 @protocol GoTestpkgI
+- (BOOL)Error:(BOOL)triggerError error:(NSError**)error;
 - (int64_t)Times:(int32_t)v;
 @end
 
@@ -30,6 +30,8 @@
 @end
 
 FOUNDATION_EXPORT NSData* GoTestpkgBytesAppend(NSData* a, NSData* b);
+
+FOUNDATION_EXPORT BOOL GoTestpkgCallIError(id<GoTestpkgI> i, BOOL triggerError, NSError** error);
 
 FOUNDATION_EXPORT double GoTestpkgCallSSum(GoTestpkgS* s);
 

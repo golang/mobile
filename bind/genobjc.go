@@ -13,6 +13,8 @@ import (
 	"unicode/utf8"
 )
 
+// TODO(hyangah): error code/domain propagation
+
 type objcGen struct {
 	*printer
 	fset *token.FileSet
@@ -546,22 +548,26 @@ func (g *objcGen) genInterfaceMethodProxy(obj *types.TypeName, s *funcSummary) {
 		}
 		return
 	}
-	for _, p := range s.retParams {
+	for i, p := range s.retParams {
 		if isErrorType(p.typ) {
-			g.Printf("if (%s == NULL) {\n", p.name)
+			if i == len(s.retParams)-1 { // last param.
+				g.Printf("if (returnVal) {\n")
+			} else {
+				g.Printf("if (%s == NULL) {\n", p.name)
+			}
 			g.Indent()
 			g.Printf("go_seq_writeUTF8(out, NULL);\n")
 			g.Outdent()
 			g.Printf("} else {\n")
 			g.Indent()
-			g.Printf("NSString* %sDesc = [%s localizedDescription];\n", p.name, p.name)
-			g.Printf("if (%sDesc == NULL || %sDesc.length == 0) {\n", p.name, p.name)
+			g.Printf("NSString* %[1]sDesc = [%[1]s localizedDescription];\n", p.name)
+			g.Printf("if (%[1]sDesc == NULL || %[1]sDesc.length == 0) {\n", p.name)
 			g.Indent()
-			g.Printf("%sDesc = NSString(@\"%@\", %s);\n", p.name, p.name)
+			g.Printf("%[1]sDesc = @\"gobind: unknown error\";\n", p.name)
 			g.Outdent()
 			g.Printf("}\n")
+			g.Printf("go_seq_writeUTF8(out, %sDesc);\n", p.name)
 			g.Outdent()
-			g.Printf("go_seq_writeUTF8(out, %sDesc);\n")
 			g.Printf("}\n")
 		} else if seqTyp := g.seqType(p.typ); seqTyp != "Ref" {
 			// TODO(hyangah): NULL.

@@ -10,6 +10,11 @@
 
 
 
+
+@protocol GoInterfacesError
+- (BOOL)Err:(NSError**)error;
+@end
+
 @protocol GoInterfacesI
 - (int32_t)Rand;
 @end
@@ -19,6 +24,8 @@
 @end
 
 FOUNDATION_EXPORT int32_t GoInterfacesAdd3(id<GoInterfacesI> r);
+
+FOUNDATION_EXPORT BOOL GoInterfacesCallErr(id<GoInterfacesError> e, NSError** error);
 
 FOUNDATION_EXPORT id<GoInterfacesI> GoInterfacesSeven();
 

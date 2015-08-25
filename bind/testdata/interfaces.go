@@ -23,3 +23,11 @@ func Seven() I { return seven{} }
 type WithParam interface {
 	HasParam(p bool)
 }
+
+type Error interface {
+	Err() error
+}
+
+func CallErr(e Error) error {
+	return e.Err()
+}
