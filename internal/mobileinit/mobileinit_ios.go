@@ -19,7 +19,7 @@ import (
 #include <stdlib.h>
 
 void asl_log_wrap(const char *str) {
-	asl_log(NULL, NULL, ASL_LEVEL_NOTICE, str);
+	asl_log(NULL, NULL, ASL_LEVEL_NOTICE, "%s", str);
 }
 */
 import "C"
