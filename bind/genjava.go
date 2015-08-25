@@ -287,7 +287,7 @@ func (g *javaGen) genInterface(o *types.TypeName) {
 }
 
 func isErrorType(T types.Type) bool {
-	return T == types.Universe.Lookup("error").Type()
+	return types.Identical(T, types.Universe.Lookup("error").Type())
 }
 
 func isJavaPrimitive(T types.Type) bool {
@@ -305,6 +305,12 @@ func isJavaPrimitive(T types.Type) bool {
 
 // javaType returns a string that can be used as a Java type.
 func (g *javaGen) javaType(T types.Type) string {
+	if isErrorType(T) {
+		// The error type is usually translated into an exception in
+		// Java, however the type can be exposed in other ways, such
+		// as an exported field.
+		return "String"
+	}
 	switch T := T.(type) {
 	case *types.Basic:
 		switch T.Kind() {
@@ -347,7 +353,11 @@ func (g *javaGen) javaType(T types.Type) string {
 	case *types.Named:
 		n := T.Obj()
 		if n.Pkg() != g.pkg {
-			panic(fmt.Sprintf("type %s is in package %s, must be defined in package %s", n.Name(), n.Pkg().Name(), g.pkg.Name()))
+			nPkgName := "<nilpkg>"
+			if nPkg := n.Pkg(); nPkg != nil {
+				nPkgName = nPkg.Name()
+			}
+			panic(fmt.Sprintf("type %s is in package %s, must be defined in package %s", n.Name(), nPkgName, g.pkg.Name()))
 		}
 		// TODO(crawshaw): more checking here
 		return n.Name()

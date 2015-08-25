@@ -134,3 +134,12 @@ func (s *S) Sum() float64 {
 func CallSSum(s *S) float64 {
 	return s.Sum()
 }
+
+type Node struct {
+	V   string
+	Err error
+}
+
+func NewNode(name string) *Node {
+	return &Node{V: name}
+}

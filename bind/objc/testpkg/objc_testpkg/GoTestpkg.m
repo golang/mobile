@@ -25,11 +25,12 @@ static NSString* errDomain = @"go.golang.org/x/mobile/bind/objc/testpkg";
 #define _CALL_Int_ 8
 #define _CALL_Multiply_ 9
 #define _CALL_NewI_ 10
-#define _CALL_NewS_ 11
-#define _CALL_RegisterI_ 12
-#define _CALL_ReturnsError_ 13
-#define _CALL_Sum_ 14
-#define _CALL_UnregisterI_ 15
+#define _CALL_NewNode_ 11
+#define _CALL_NewS_ 12
+#define _CALL_RegisterI_ 13
+#define _CALL_ReturnsError_ 14
+#define _CALL_Sum_ 15
+#define _CALL_UnregisterI_ 16
 
 #define _GO_testpkg_I_DESCRIPTOR_ "go.testpkg.I"
 #define _GO_testpkg_I_Error_ (0x10a)
@@ -96,7 +97,7 @@ static void proxyGoTestpkgI(id obj, int code, GoSeq* in, GoSeq* out) {
 		} else {
 			NSString* errorDesc = [error localizedDescription];
 			if (errorDesc == NULL || errorDesc.length == 0) {
-				errorDesc = @"unknown error";
+				errorDesc = @"gobind: unknown error";
 			}
 			go_seq_writeUTF8(out, errorDesc);
 		}
@@ -111,6 +112,65 @@ static void proxyGoTestpkgI(id obj, int code, GoSeq* in, GoSeq* out) {
 		NSLog(@"unknown code %x for _GO_testpkg_I_DESCRIPTOR_", code);
 	}
 }
+
+#define _GO_testpkg_Node_DESCRIPTOR_ "go.testpkg.Node"
+#define _GO_testpkg_Node_FIELD_V_GET_ (0x00f)
+#define _GO_testpkg_Node_FIELD_V_SET_ (0x01f)
+#define _GO_testpkg_Node_FIELD_Err_GET_ (0x10f)
+#define _GO_testpkg_Node_FIELD_Err_SET_ (0x11f)
+
+@implementation GoTestpkgNode {
+}
+
+- (id)initWithRef:(id)ref {
+	self = [super init];
+	if (self) { _ref = ref; }
+	return self;
+}
+
+- (NSString*)V {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	go_seq_writeRef(&in_, self.ref);
+	go_seq_send(_GO_testpkg_Node_DESCRIPTOR_, _GO_testpkg_Node_FIELD_V_GET_, &in_, &out_);
+	NSString* ret_ = go_seq_readUTF8(&out_);
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+	return ret_;
+}
+
+- (void)setV:(NSString*)v {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	go_seq_writeRef(&in_, self.ref);
+	go_seq_writeUTF8(&in_, v);
+	go_seq_send(_GO_testpkg_Node_DESCRIPTOR_, _GO_testpkg_Node_FIELD_V_SET_, &in_, &out_);
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+}
+
+- (NSString*)Err {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	go_seq_writeRef(&in_, self.ref);
+	go_seq_send(_GO_testpkg_Node_DESCRIPTOR_, _GO_testpkg_Node_FIELD_Err_GET_, &in_, &out_);
+	NSString* ret_ = go_seq_readUTF8(&out_);
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+	return ret_;
+}
+
+- (void)setErr:(NSString*)v {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	go_seq_writeRef(&in_, self.ref);
+	go_seq_writeUTF8(&in_, v);
+	go_seq_send(_GO_testpkg_Node_DESCRIPTOR_, _GO_testpkg_Node_FIELD_Err_SET_, &in_, &out_);
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+}
+
+@end
 
 #define _GO_testpkg_S_DESCRIPTOR_ "go.testpkg.S"
 #define _GO_testpkg_S_FIELD_X_GET_ (0x00f)
@@ -315,6 +375,21 @@ id<GoTestpkgI> GoTestpkgNewI() {
 	id<GoTestpkgI> ret0_ = ret0__ref.obj;
 	if (ret0_ == NULL) {
 		ret0_ = [[GoTestpkgI alloc] initWithRef:ret0__ref];
+	}
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+	return ret0_;
+}
+
+GoTestpkgNode* GoTestpkgNewNode(NSString* name) {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	go_seq_writeUTF8(&in_, name);
+	go_seq_send(_DESCRIPTOR_, _CALL_NewNode_, &in_, &out_);
+	GoSeqRef* ret0__ref = go_seq_readRef(&out_);
+	GoTestpkgNode* ret0_ = ret0__ref.obj;
+	if (ret0_ == NULL) {
+		ret0_ = [[GoTestpkgNode alloc] initWithRef:ret0__ref];
 	}
 	go_seq_free(&in_);
 	go_seq_free(&out_);

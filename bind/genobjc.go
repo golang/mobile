@@ -329,6 +329,42 @@ func (g *objcGen) genFuncM(obj *types.Func) {
 	g.Printf("}\n")
 }
 
+func (g *objcGen) genGetter(desc string, f *types.Var) {
+	t := f.Type()
+	if isErrorType(t) {
+		t = types.Typ[types.String]
+	}
+	s := &funcSummary{
+		name:      f.Name(),
+		ret:       g.objcType(t),
+		retParams: []paramInfo{{typ: t, name: "ret_"}},
+	}
+
+	g.Printf("- %s {\n", s.asMethod(g))
+	g.Indent()
+	g.genFunc(desc+"_DESCRIPTOR_", desc+"_FIELD_"+f.Name()+"_GET_", s, true)
+	g.Outdent()
+	g.Printf("}\n\n")
+}
+
+func (g *objcGen) genSetter(desc string, f *types.Var) {
+	t := f.Type()
+	if isErrorType(t) {
+		t = types.Typ[types.String]
+	}
+	s := &funcSummary{
+		name:   "set" + f.Name(),
+		ret:    "void",
+		params: []paramInfo{{typ: t, name: "v"}},
+	}
+
+	g.Printf("- %s {\n", s.asMethod(g))
+	g.Indent()
+	g.genFunc(desc+"_DESCRIPTOR_", desc+"_FIELD_"+f.Name()+"_SET_", s, true)
+	g.Outdent()
+	g.Printf("}\n\n")
+}
+
 func (g *objcGen) genFunc(pkgDesc, callDesc string, s *funcSummary, isMethod bool) {
 	g.Printf("GoSeq in_ = {};\n")
 	g.Printf("GoSeq out_ = {};\n")
@@ -596,8 +632,7 @@ func (g *objcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 
 	// accessors to exported fields.
 	for _, f := range exportedFields(t) {
-		// TODO(hyangah): error type field?
-		name, typ := f.Name(), g.objcType(f.Type())
+		name, typ := f.Name(), g.objcFieldType(f.Type())
 		g.Printf("- (%s)%s;\n", typ, name)
 		g.Printf("- (void)set%s:(%s)v;\n", name, typ)
 	}
@@ -636,32 +671,8 @@ func (g *objcGen) genStructM(obj *types.TypeName, t *types.Struct) {
 	g.Printf("}\n\n")
 
 	for _, f := range fields {
-		// getter
-		// TODO(hyangah): support error type fields?
-		s := &funcSummary{
-			name: f.Name(),
-			ret:  g.objcType(f.Type()),
-		}
-		s.retParams = append(s.retParams, paramInfo{typ: f.Type(), name: "ret_"})
-
-		g.Printf("- %s {\n", s.asMethod(g))
-		g.Indent()
-		g.genFunc(desc+"_DESCRIPTOR_", desc+"_FIELD_"+f.Name()+"_GET_", s, true)
-		g.Outdent()
-		g.Printf("}\n\n")
-
-		// setter
-		s = &funcSummary{
-			name: "set" + f.Name(),
-			ret:  "void",
-		}
-		s.params = append(s.params, paramInfo{typ: f.Type(), name: "v"})
-
-		g.Printf("- %s {\n", s.asMethod(g))
-		g.Indent()
-		g.genFunc(desc+"_DESCRIPTOR_", desc+"_FIELD_"+f.Name()+"_SET_", s, true)
-		g.Outdent()
-		g.Printf("}\n\n")
+		g.genGetter(desc, f)
+		g.genSetter(desc, f)
 	}
 
 	for _, m := range methods {
@@ -697,6 +708,13 @@ func (g *objcGen) refTypeBase(typ types.Type) string {
 
 	// fallback to whatever objcType returns. This must not happen.
 	return g.objcType(typ)
+}
+
+func (g *objcGen) objcFieldType(t types.Type) string {
+	if isErrorType(t) {
+		return "NSString*"
+	}
+	return g.objcType(t)
 }
 
 func (g *objcGen) objcType(typ types.Type) string {

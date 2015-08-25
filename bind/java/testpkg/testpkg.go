@@ -138,6 +138,7 @@ func UnnamedParams(_, _ int, p0 string) int {
 type Node struct {
 	V    string
 	Next *Node
+	Err  error
 }
 
 func NewNode(name string) *Node {

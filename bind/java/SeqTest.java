@@ -286,4 +286,12 @@ public class SeqTest extends AndroidTestCase {
     String got = a.String();
     assertEquals("want Node A points to Node B", "A:B:<end>", got);
   }
+
+  public void testErrorField() {
+    final String want = "an error message";
+    Testpkg.Node n = Testpkg.NewNode("ErrTest");
+    n.setErr(want);
+    String got = n.getErr();
+    assertEquals("want back the error message we set", want, got);
+  }
 }

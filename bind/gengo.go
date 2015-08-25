@@ -181,18 +181,11 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 	g.Printf("type proxy%s seq.Ref\n\n", obj.Name())
 
 	for _, f := range fields {
-		seqTyp := seqType(f.Type())
-
 		g.Printf("func proxy%s_%s_Set(out, in *seq.Buffer) {\n", obj.Name(), f.Name())
 		g.Indent()
 		g.Printf("ref := in.ReadRef()\n")
-		g.Printf("v := in.Read%s()\n", seqTyp)
-		if seqTyp == "Ref" {
-			g.Printf("ref.Get().(*%s.%s).%s = v.Get().(%s)\n", g.pkg.Name(), obj.Name(), f.Name(), g.typeString(f.Type()))
-		} else {
-			// TODO(crawshaw): other kinds of non-ptr types.
-			g.Printf("ref.Get().(*%s.%s).%s = v\n", g.pkg.Name(), obj.Name(), f.Name())
-		}
+		g.genRead("v", "in", f.Type())
+		g.Printf("ref.Get().(*%s.%s).%s = v\n", g.pkg.Name(), obj.Name(), f.Name())
 		g.Outdent()
 		g.Printf("}\n\n")
 
@@ -200,11 +193,7 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 		g.Indent()
 		g.Printf("ref := in.ReadRef()\n")
 		g.Printf("v := ref.Get().(*%s.%s).%s\n", g.pkg.Name(), obj.Name(), f.Name())
-		if seqTyp == "Ref" {
-			g.Printf("out.WriteGoRef(v)\n")
-		} else {
-			g.Printf("out.Write%s(v)\n", seqTyp)
-		}
+		g.genWrite("v", "out", f.Type())
 		g.Outdent()
 		g.Printf("}\n\n")
 	}
@@ -433,13 +422,15 @@ func (g *goGen) gen() error {
 		}
 	}
 
-	g.Printf("func init() {\n")
-	g.Indent()
-	for i, name := range funcs {
-		g.Printf("seq.Register(%q, %d, proxy_%s)\n", g.pkg.Name(), i+1, name)
+	if len(funcs) > 0 {
+		g.Printf("func init() {\n")
+		g.Indent()
+		for i, name := range funcs {
+			g.Printf("seq.Register(%q, %d, proxy_%s)\n", g.pkg.Name(), i+1, name)
+		}
+		g.Outdent()
+		g.Printf("}\n")
 	}
-	g.Outdent()
-	g.Printf("}\n")
 
 	if len(g.err) > 0 {
 		return g.err
