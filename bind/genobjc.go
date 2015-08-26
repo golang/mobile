@@ -47,7 +47,9 @@ func (g *objcGen) init() {
 		}
 		switch obj := obj.(type) {
 		case *types.Func:
-			g.funcs = append(g.funcs, obj)
+			if isCallable(obj) {
+				g.funcs = append(g.funcs, obj)
+			}
 		case *types.TypeName:
 			g.names = append(g.names, obj)
 			// TODO(hyangah): *types.Const, *types.Var
@@ -75,11 +77,14 @@ func (g *objcGen) genH() error {
 	// @class names
 	for _, obj := range g.names {
 		named := obj.Type().(*types.Named)
-		switch named.Underlying().(type) {
+		switch t := named.Underlying().(type) {
 		case *types.Struct:
-			g.Printf("@class %s%s;\n", g.namePrefix, obj.Name())
+			g.Printf("@class %s%s;\n\n", g.namePrefix, obj.Name())
+		case *types.Interface:
+			if !makeIfaceSummary(t).implementable {
+				g.Printf("@class %s%s;\n\n", g.namePrefix, obj.Name())
+			}
 		}
-		g.Printf("\n")
 	}
 
 	// @interfaces
@@ -88,10 +93,11 @@ func (g *objcGen) genH() error {
 		switch t := named.Underlying().(type) {
 		case *types.Struct:
 			g.genStructH(obj, t)
+			g.Printf("\n")
 		case *types.Interface:
 			g.genInterfaceH(obj, t)
+			g.Printf("\n")
 		}
-		g.Printf("\n")
 	}
 
 	// static functions.
@@ -139,8 +145,9 @@ func (g *objcGen) genM() error {
 		case *types.Struct:
 			g.genStructM(obj, t)
 		case *types.Interface:
-			interfaces = append(interfaces, obj)
-			g.genInterfaceM(obj, t)
+			if g.genInterfaceM(obj, t) {
+				interfaces = append(interfaces, obj)
+			}
 		}
 		g.Printf("\n")
 	}
@@ -450,37 +457,51 @@ func (g *objcGen) genFunc(pkgDesc, callDesc string, s *funcSummary, isMethod boo
 	}
 }
 
+func (g *objcGen) genInterfaceInterface(obj *types.TypeName, summary ifaceSummary, isProtocol bool) {
+	g.Printf("@interface %[1]s%[2]s : NSObject", g.namePrefix, obj.Name())
+	if isProtocol {
+		g.Printf(" <%[1]s%[2]s>", g.namePrefix, obj.Name())
+	}
+	g.Printf(" {\n}\n")
+	g.Printf("@property(strong, readonly) id ref;\n")
+	g.Printf("\n")
+	g.Printf("- (id)initWithRef:(id)ref;\n")
+	for _, m := range summary.callable {
+		s := g.funcSummary(m)
+		g.Printf("- %s;\n", s.asMethod(g))
+	}
+	g.Printf("@end\n")
+	g.Printf("\n")
+}
+
 func (g *objcGen) genInterfaceH(obj *types.TypeName, t *types.Interface) {
+	summary := makeIfaceSummary(t)
+	if !summary.implementable {
+		g.genInterfaceInterface(obj, summary, false)
+		return
+	}
 	g.Printf("@protocol %s%s\n", g.namePrefix, obj.Name())
-	for _, m := range exportedMethodSet(obj.Type()) {
+	for _, m := range makeIfaceSummary(t).callable {
 		s := g.funcSummary(m)
 		g.Printf("- %s;\n", s.asMethod(g))
 	}
 	g.Printf("@end\n")
 }
 
-func (g *objcGen) genInterfaceM(obj *types.TypeName, t *types.Interface) {
-	methods := exportedMethodSet(obj.Type())
+func (g *objcGen) genInterfaceM(obj *types.TypeName, t *types.Interface) bool {
+	summary := makeIfaceSummary(t)
 
 	desc := fmt.Sprintf("_GO_%s_%s", g.pkgName, obj.Name())
 	g.Printf("#define %s_DESCRIPTOR_ \"go.%s.%s\"\n", desc, g.pkgName, obj.Name())
-	for i, m := range methods {
+	for i, m := range summary.callable {
 		g.Printf("#define %s_%s_ (0x%x0a)\n", desc, m.Name(), i+1)
 	}
 	g.Printf("\n")
 
-	// @interface Interface -- similar to what genStructH does.
-	g.Printf("@interface %[1]s%[2]s : NSObject <%[1]s%[2]s> {\n", g.namePrefix, obj.Name())
-	g.Printf("}\n")
-	g.Printf("@property(strong, readonly) id ref;\n")
-	g.Printf("\n")
-	g.Printf("- (id)initWithRef:(id)ref;\n")
-	for _, m := range methods {
-		s := g.funcSummary(m)
-		g.Printf("- %s;\n", s.asMethod(g))
+	if summary.implementable {
+		// @interface Interface -- similar to what genStructH does.
+		g.genInterfaceInterface(obj, summary, true)
 	}
-	g.Printf("@end\n")
-	g.Printf("\n")
 
 	// @implementation Interface -- similar to what genStructM does.
 	g.Printf("@implementation %s%s {\n", g.namePrefix, obj.Name())
@@ -495,7 +516,7 @@ func (g *objcGen) genInterfaceM(obj *types.TypeName, t *types.Interface) {
 	g.Printf("}\n")
 	g.Printf("\n")
 
-	for _, m := range methods {
+	for _, m := range summary.callable {
 		s := g.funcSummary(m)
 		g.Printf("- %s {\n", s.asMethod(g))
 		g.Indent()
@@ -507,23 +528,27 @@ func (g *objcGen) genInterfaceM(obj *types.TypeName, t *types.Interface) {
 	g.Printf("\n")
 
 	// proxy function.
-	g.Printf("static void proxy%s%s(id obj, int code, GoSeq* in, GoSeq* out) {\n", g.namePrefix, obj.Name())
-	g.Indent()
-	g.Printf("switch (code) {\n")
-	for _, m := range methods {
-		g.Printf("case %s_%s_: {\n", desc, m.Name())
+	if summary.implementable {
+		g.Printf("static void proxy%s%s(id obj, int code, GoSeq* in, GoSeq* out) {\n", g.namePrefix, obj.Name())
 		g.Indent()
-		g.genInterfaceMethodProxy(obj, g.funcSummary(m))
+		g.Printf("switch (code) {\n")
+		for _, m := range summary.callable {
+			g.Printf("case %s_%s_: {\n", desc, m.Name())
+			g.Indent()
+			g.genInterfaceMethodProxy(obj, g.funcSummary(m))
+			g.Outdent()
+			g.Printf("} break;\n")
+		}
+		g.Printf("default:\n")
+		g.Indent()
+		g.Printf("NSLog(@\"unknown code %%x for %s_DESCRIPTOR_\", code);\n", desc)
 		g.Outdent()
-		g.Printf("} break;\n")
+		g.Printf("}\n")
+		g.Outdent()
+		g.Printf("}\n")
 	}
-	g.Printf("default:\n")
-	g.Indent()
-	g.Printf("NSLog(@\"unknown code %%x for %s_DESCRIPTOR_\", code);\n", desc)
-	g.Outdent()
-	g.Printf("}\n")
-	g.Outdent()
-	g.Printf("}\n")
+
+	return summary.implementable
 }
 
 func (g *objcGen) genInterfaceMethodProxy(obj *types.TypeName, s *funcSummary) {
@@ -778,9 +803,13 @@ func (g *objcGen) objcType(typ types.Type) string {
 			g.errorf("type %s is in package %s; only types defined in package %s is supported", n.Name(), n.Pkg().Name(), g.pkg.Name())
 			return "TODO"
 		}
-		switch typ.Underlying().(type) {
+		switch t := typ.Underlying().(type) {
 		case *types.Interface:
-			return "id<" + g.namePrefix + n.Name() + ">"
+			if makeIfaceSummary(t).implementable {
+				return "id<" + g.namePrefix + n.Name() + ">"
+			} else {
+				return g.namePrefix + n.Name() + "*"
+			}
 		case *types.Struct:
 			return g.namePrefix + n.Name()
 		}
