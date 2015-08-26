@@ -8,7 +8,6 @@
 
 #include <Foundation/Foundation.h>
 
-
 @class GoTestpkgNode;
 
 @class GoTestpkgS;

@@ -8,15 +8,34 @@
 
 #include <Foundation/Foundation.h>
 
-
-
-
 @protocol GoInterfacesError
 - (BOOL)Err:(NSError**)error;
 @end
 
 @protocol GoInterfacesI
 - (int32_t)Rand;
+@end
+
+@interface GoInterfacesI1 : NSObject {
+}
+@property(strong, readonly) id ref;
+
+- (id)initWithRef:(id)ref;
+- (void)J;
+@end
+
+
+@interface GoInterfacesI2 : NSObject {
+}
+@property(strong, readonly) id ref;
+
+- (id)initWithRef:(id)ref;
+- (void)G;
+@end
+
+
+@protocol GoInterfacesI3
+- (id<GoInterfacesI1>)F;
 @end
 
 @protocol GoInterfacesWithParam

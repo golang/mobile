@@ -252,12 +252,14 @@ const javaProxyPreamble = `static final class Proxy implements %s {
 func (g *javaGen) genInterface(o *types.TypeName) {
 	iface := o.Type().(*types.Named).Underlying().(*types.Interface)
 
+	summary := makeIfaceSummary(iface)
+
 	g.Printf("public interface %s extends go.Seq.Object {\n", o.Name())
 	g.Indent()
 
 	methodSigErr := false
-	for i := 0; i < iface.NumMethods(); i++ {
-		if err := g.funcSignature(iface.Method(i), false); err != nil {
+	for _, m := range summary.callable {
+		if err := g.funcSignature(m, false); err != nil {
 			methodSigErr = true
 			g.errorf("%v", err)
 		}
@@ -267,16 +269,18 @@ func (g *javaGen) genInterface(o *types.TypeName) {
 		return // skip stub generation, more of the same errors
 	}
 
-	g.genInterfaceStub(o, iface)
+	if summary.implementable {
+		g.genInterfaceStub(o, iface)
+	}
 
 	g.Printf(javaProxyPreamble, o.Name())
 	g.Indent()
 
-	for i := 0; i < iface.NumMethods(); i++ {
-		g.genFunc(iface.Method(i), true)
+	for _, m := range summary.callable {
+		g.genFunc(m, true)
 	}
-	for i := 0; i < iface.NumMethods(); i++ {
-		g.Printf("static final int CALL_%s = 0x%x0a;\n", iface.Method(i).Name(), i+1)
+	for i, m := range summary.callable {
+		g.Printf("static final int CALL_%s = 0x%x0a;\n", m.Name(), i+1)
 	}
 
 	g.Outdent()
@@ -284,10 +288,6 @@ func (g *javaGen) genInterface(o *types.TypeName) {
 
 	g.Outdent()
 	g.Printf("}\n\n")
-}
-
-func isErrorType(T types.Type) bool {
-	return types.Identical(T, types.Universe.Lookup("error").Type())
 }
 
 func isJavaPrimitive(T types.Type) bool {
@@ -605,8 +605,10 @@ func (g *javaGen) gen() error {
 		// TODO(crawshaw): case *types.Const:
 		// TODO(crawshaw): case *types.Var:
 		case *types.Func:
-			g.genFunc(o, false)
-			funcs = append(funcs, o.Name())
+			if isCallable(o) {
+				g.genFunc(o, false)
+				funcs = append(funcs, o.Name())
+			}
 		case *types.TypeName:
 			named := o.Type().(*types.Named)
 			switch t := named.Underlying().(type) {

@@ -91,6 +91,67 @@ func (p *proxyI) Rand() int32 {
 	return res_0
 }
 
+const (
+	proxyI1_Descriptor = "go.interfaces.I1"
+	proxyI1_J_Code     = 0x10a
+)
+
+func proxyI1_J(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := ref.Get().(interfaces.I1)
+	v.J()
+}
+
+func init() {
+	seq.Register(proxyI1_Descriptor, proxyI1_J_Code, proxyI1_J)
+}
+
+const (
+	proxyI2_Descriptor = "go.interfaces.I2"
+	proxyI2_G_Code     = 0x10a
+)
+
+func proxyI2_G(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := ref.Get().(interfaces.I2)
+	v.G()
+}
+
+func init() {
+	seq.Register(proxyI2_Descriptor, proxyI2_G_Code, proxyI2_G)
+}
+
+const (
+	proxyI3_Descriptor = "go.interfaces.I3"
+	proxyI3_F_Code     = 0x10a
+)
+
+func proxyI3_F(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := ref.Get().(interfaces.I3)
+	res := v.F()
+	out.WriteGoRef(res)
+}
+
+func init() {
+	seq.Register(proxyI3_Descriptor, proxyI3_F_Code, proxyI3_F)
+}
+
+type proxyI3 seq.Ref
+
+func (p *proxyI3) F() interfaces.I1 {
+	in := new(seq.Buffer)
+	out := seq.Transact((*seq.Ref)(p), "go.interfaces.I3", proxyI3_F_Code, in)
+	var res_0 interfaces.I1
+	res_0_ref := out.ReadRef()
+	if res_0_ref.Num < 0 { // go object
+		res_0 = res_0_ref.Get().(interfaces.I1)
+	} else { // foreign object
+		res_0 = (*proxyI1)(res_0_ref)
+	}
+	return res_0
+}
+
 func proxy_Seven(out, in *seq.Buffer) {
 	res := interfaces.Seven()
 	out.WriteGoRef(res)
