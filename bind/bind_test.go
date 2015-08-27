@@ -7,6 +7,7 @@ import (
 	"go/parser"
 	"go/token"
 	"go/types"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -96,7 +97,7 @@ func TestGenObjc(t *testing.T) {
 
 		for isHeader, suffix := range suffixes {
 			var buf bytes.Buffer
-			if err := GenObjc(&buf, fset, pkg, isHeader); err != nil {
+			if err := GenObjc(&buf, fset, pkg, "", isHeader); err != nil {
 				t.Errorf("%s: %v", filename, err)
 				continue
 			}
@@ -121,7 +122,7 @@ func TestGenJava(t *testing.T) {
 	for _, filename := range tests {
 		var buf bytes.Buffer
 		pkg := typeCheck(t, filename)
-		if err := GenJava(&buf, fset, pkg); err != nil {
+		if err := GenJava(&buf, fset, pkg, ""); err != nil {
 			t.Errorf("%s: %v", filename, err)
 			continue
 		}
@@ -159,6 +160,50 @@ func TestGenGo(t *testing.T) {
 			if *updateFlag {
 				t.Logf("Updating %s...", golden)
 				if err := exec.Command("/bin/cp", out, golden).Run(); err != nil {
+					t.Errorf("Update failed: %s", err)
+				}
+			}
+		}
+	}
+}
+
+func TestCustomPrefix(t *testing.T) {
+	const datafile = "testdata/customprefix.go"
+	const isHeader = true
+	pkg := typeCheck(t, datafile)
+
+	testCases := []struct {
+		golden string
+		gen    func(w io.Writer) error
+	}{
+		{
+			"testdata/customprefix.java.golden",
+			func(w io.Writer) error { return GenJava(w, fset, pkg, "com.example") },
+		},
+		{
+			"testdata/customprefix.objc.h.golden",
+			func(w io.Writer) error { return GenObjc(w, fset, pkg, "EX", isHeader) },
+		},
+		{
+			"testdata/customprefix.objc.m.golden",
+			func(w io.Writer) error { return GenObjc(w, fset, pkg, "EX", !isHeader) },
+		},
+	}
+
+	for _, tc := range testCases {
+		var buf bytes.Buffer
+		if err := tc.gen(&buf); err != nil {
+			t.Errorf("generating %s: %v", tc.golden, err)
+			continue
+		}
+		out := writeTempFile(t, "generated", buf.Bytes())
+		defer os.Remove(out)
+		if diffstr := diff(tc.golden, out); diffstr != "" {
+			t.Errorf("%s: generated file does not match:\b%s", tc.golden, diffstr)
+			if *updateFlag {
+				t.Logf("Updating %s...", tc.golden)
+				err := exec.Command("/bin/cp", out, tc.golden).Run()
+				if err != nil {
 					t.Errorf("Update failed: %s", err)
 				}
 			}

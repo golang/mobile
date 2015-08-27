@@ -13,8 +13,10 @@ import (
 )
 
 var (
-	lang   = flag.String("lang", "java", "target language for bindings, either java, go, or objc (experimental).")
-	outdir = flag.String("outdir", "", "result will be written to the directory instead of stdout.")
+	lang    = flag.String("lang", "java", "target language for bindings, either java, go, or objc (experimental).")
+	outdir  = flag.String("outdir", "", "result will be written to the directory instead of stdout.")
+	javaPkg = flag.String("javapkg", "", "custom Java package path used instead of the default 'go.<go package name>'. Valid only with -lang=java.")
+	prefix  = flag.String("prefix", "", "custom Objective-C name prefix used instead of the default 'Go'. Valid only with -lang=objc.")
 )
 
 var usage = `The Gobind tool generates Java language bindings for Go.
@@ -23,6 +25,12 @@ For usage details, see doc.go.`
 
 func main() {
 	flag.Parse()
+
+	if *lang != "java" && *javaPkg != "" {
+		log.Fatalf("Invalid option -javapkg for gobind -lang=%s", *lang)
+	} else if *lang != "objc" && *prefix != "" {
+		log.Fatalf("Invalid option -prefix for gobind -lang=%s", *lang)
+	}
 
 	cwd, err := os.Getwd()
 	if err != nil {

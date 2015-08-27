@@ -119,14 +119,16 @@ func (b *binder) GenObjc(outdir string) error {
 		printcmd("gobind -lang=objc %s > %s", b.pkg.Path(), mfile)
 	}
 
+	const objcPrefix = "" // TODO(hyangah): -prefix
+
 	generate := func(w io.Writer) error {
-		return bind.GenObjc(w, b.fset, b.pkg, false)
+		return bind.GenObjc(w, b.fset, b.pkg, objcPrefix, false)
 	}
 	if err := writeFile(mfile, generate); err != nil {
 		return err
 	}
 	generate = func(w io.Writer) error {
-		return bind.GenObjc(w, b.fset, b.pkg, true)
+		return bind.GenObjc(w, b.fset, b.pkg, objcPrefix, true)
 	}
 	if err := writeFile(hfile, generate); err != nil {
 		return err
@@ -147,8 +149,9 @@ func (b *binder) GenJava(outdir string) error {
 		printcmd("gobind -lang=java %s > %s", b.pkg.Path(), javaFile)
 	}
 
+	const javaPkg = "" // TODO(hyangah): -javapkg
 	generate := func(w io.Writer) error {
-		return bind.GenJava(w, b.fset, b.pkg)
+		return bind.GenJava(w, b.fset, b.pkg, javaPkg)
 	}
 	if err := writeFile(javaFile, generate); err != nil {
 		return err
