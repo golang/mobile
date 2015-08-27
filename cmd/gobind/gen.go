@@ -53,7 +53,7 @@ func genPkg(pkg *build.Package) {
 	switch *lang {
 	case "java":
 		w, closer := writer(fname, p)
-		processErr(bind.GenJava(w, fset, p))
+		processErr(bind.GenJava(w, fset, p, *javaPkg))
 		closer()
 	case "go":
 		w, closer := writer(fname, p)
@@ -61,15 +61,15 @@ func genPkg(pkg *build.Package) {
 		closer()
 	case "objc":
 		if fname == "" {
-			processErr(bind.GenObjc(os.Stdout, fset, p, true))
-			processErr(bind.GenObjc(os.Stdout, fset, p, false))
+			processErr(bind.GenObjc(os.Stdout, fset, p, *prefix, true))
+			processErr(bind.GenObjc(os.Stdout, fset, p, *prefix, false))
 		} else {
 			hname := fname[:len(fname)-2] + ".h"
 			w, closer := writer(hname, p)
-			processErr(bind.GenObjc(w, fset, p, true))
+			processErr(bind.GenObjc(w, fset, p, *prefix, true))
 			closer()
 			w, closer = writer(fname, p)
-			processErr(bind.GenObjc(w, fset, p, false))
+			processErr(bind.GenObjc(w, fset, p, *prefix, false))
 			closer()
 		}
 	default:
