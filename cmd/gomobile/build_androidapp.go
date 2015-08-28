@@ -40,7 +40,7 @@ func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
 		err := manifestTmpl.Execute(buf, manifestTmplData{
 			// TODO(crawshaw): a better package path.
 			JavaPkgPath: "org.golang.todo." + productName,
-			Name:        libName,
+			Name:        strings.Title(libName),
 			LibName:     libName,
 		})
 		if err != nil {
