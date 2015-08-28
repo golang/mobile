@@ -36,6 +36,12 @@ type Event struct {
 	Orientation Orientation
 }
 
+// Size returns the window's size in pixels, at the time this size event was
+// sent.
+func (e *Event) Size() image.Point {
+	return image.Point{e.WidthPx, e.HeightPx}
+}
+
 // Bounds returns the window's bounds in pixels, at the time this size event
 // was sent.
 //
