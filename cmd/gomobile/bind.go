@@ -49,10 +49,12 @@ the module import wizard (File > New > New Module > Import .JAR or
 (File > Project Structure > Dependencies).  This requires 'javac'
 (version 1.7+) and Android SDK (API level 9 or newer) to build the
 library for Android. The environment variable ANDROID_HOME must be set
-to the path to Android SDK.
+to the path to Android SDK. The generated Java class is in the java
+package 'go.<package_name>' unless -javapkg flag is specified.
 
 For -target ios, gomobile must be run on an OS X machine with Xcode
-installed. Support is not complete.
+installed. Support is not complete. The generated Objective-C types
+are prefixed with 'Go' unless the -prefix flag is provided.
 
 The -v flag provides verbose output, including the list of packages built.
 
@@ -80,6 +82,13 @@ func runBind(cmd *command) error {
 		return fmt.Errorf(`unknown -target, %q.`, buildTarget)
 	}
 
+	if bindJavaPkg != "" && ctx.GOOS != "android" {
+		return fmt.Errorf("-javapkg is supported only for android target")
+	}
+	if bindPrefix != "" && ctx.GOOS != "darwin" {
+		return fmt.Errorf("-prefix is supported only for ios target")
+	}
+
 	var pkg *build.Package
 	switch len(args) {
 	case 0:
@@ -104,6 +113,19 @@ func runBind(cmd *command) error {
 	}
 }
 
+var (
+	bindPrefix  string // -prefix
+	bindJavaPkg string // -javapkg
+)
+
+func init() {
+	// bind command specific commands.
+	cmdBind.flag.StringVar(&bindJavaPkg, "javapkg", "",
+		"specifies custom Java package path used instead of the default 'go.<go package name>'. Valid only with -target=android.")
+	cmdBind.flag.StringVar(&bindPrefix, "prefix", "",
+		"custom Objective-C name prefix used instead of the default 'Go'. Valid only with -lang=ios.")
+}
+
 type binder struct {
 	files []*ast.File
 	fset  *token.FileSet
@@ -112,23 +134,27 @@ type binder struct {
 
 func (b *binder) GenObjc(outdir string) error {
 	name := strings.Title(b.pkg.Name())
-	mfile := filepath.Join(outdir, "Go"+name+".m")
-	hfile := filepath.Join(outdir, "Go"+name+".h")
-
-	if buildX {
-		printcmd("gobind -lang=objc %s > %s", b.pkg.Path(), mfile)
+	bindOption := "-lang=objc"
+	prefix := "Go"
+	if bindPrefix != "" {
+		prefix = bindPrefix
+		bindOption += " -prefix=" + bindPrefix
 	}
 
-	const objcPrefix = "" // TODO(hyangah): -prefix
+	mfile := filepath.Join(outdir, prefix+name+".m")
+	hfile := filepath.Join(outdir, prefix+name+".h")
 
 	generate := func(w io.Writer) error {
-		return bind.GenObjc(w, b.fset, b.pkg, objcPrefix, false)
+		if buildX {
+			printcmd("gobind %s -outdir=%s %s", bindOption, outdir, b.pkg.Path())
+		}
+		return bind.GenObjc(w, b.fset, b.pkg, prefix, false)
 	}
 	if err := writeFile(mfile, generate); err != nil {
 		return err
 	}
 	generate = func(w io.Writer) error {
-		return bind.GenObjc(w, b.fset, b.pkg, objcPrefix, true)
+		return bind.GenObjc(w, b.fset, b.pkg, prefix, true)
 	}
 	if err := writeFile(hfile, generate); err != nil {
 		return err
@@ -144,14 +170,16 @@ func (b *binder) GenObjc(outdir string) error {
 func (b *binder) GenJava(outdir string) error {
 	className := strings.Title(b.pkg.Name())
 	javaFile := filepath.Join(outdir, className+".java")
-
-	if buildX {
-		printcmd("gobind -lang=java %s > %s", b.pkg.Path(), javaFile)
+	bindOption := "-lang=java"
+	if bindJavaPkg != "" {
+		bindOption += " -javapkg=" + bindJavaPkg
 	}
 
-	const javaPkg = "" // TODO(hyangah): -javapkg
 	generate := func(w io.Writer) error {
-		return bind.GenJava(w, b.fset, b.pkg, javaPkg)
+		if buildX {
+			printcmd("gobind %s -outdir=%s %s", bindOption, outdir, b.pkg.Path())
+		}
+		return bind.GenJava(w, b.fset, b.pkg, bindJavaPkg)
 	}
 	if err := writeFile(javaFile, generate); err != nil {
 		return err
@@ -161,13 +189,13 @@ func (b *binder) GenJava(outdir string) error {
 
 func (b *binder) GenGo(outdir string) error {
 	pkgName := "go_" + b.pkg.Name()
-	goFile := filepath.Join(outdir, pkgName, pkgName+"main.go")
-
-	if buildX {
-		printcmd("gobind -lang=go %s > %s", b.pkg.Path(), goFile)
-	}
+	outdir = filepath.Join(outdir, pkgName)
+	goFile := filepath.Join(outdir, pkgName+"main.go")
 
 	generate := func(w io.Writer) error {
+		if buildX {
+			printcmd("gobind -lang=go -outdir=%s %s", outdir, b.pkg.Path())
+		}
 		return bind.GenGo(w, b.fset, b.pkg)
 	}
 	if err := writeFile(goFile, generate); err != nil {
