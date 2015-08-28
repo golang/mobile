@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build linux,!android darwin,!arm,!arm64
+// +build linux,!android darwin,!arm,!arm64 windows
 
 package sensor
 
@@ -11,22 +11,16 @@ import (
 	"time"
 )
 
-type manager struct {
-}
+type manager struct{}
 
-func (m *manager) initialize() {
-}
+func (m *manager) initialize() {}
 
-func (m *manager) enable(t Type, delay time.Duration) error {
+func (m *manager) enable(s Sender, t Type, delay time.Duration) error {
 	return errors.New("sensor: no sensors available")
 }
 
 func (m *manager) disable(t Type) error {
 	return errors.New("sensor: no sensors available")
-}
-
-func (m *manager) read(e []Event) (n int, err error) {
-	return 0, errors.New("sensor: no sensor data available")
 }
 
 func (m *manager) close() error {

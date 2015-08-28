@@ -18,7 +18,7 @@ type manager struct {
 func (m *manager) initialize() {
 }
 
-func (m *manager) enable(t Type, delay time.Duration) error {
+func (m *manager) enable(s Sender, t Type, delay time.Duration) error {
 	return errors.New("sensor: no sensors available")
 }
 
