@@ -58,8 +58,11 @@ func goAndroidBind(pkg *build.Package) error {
 	}
 	repo := filepath.Clean(filepath.Join(p.Dir, "..")) // golang.org/x/mobile directory.
 
-	// TODO(crawshaw): use a better package path derived from the go package.
-	if err := binder.GenJava(filepath.Join(androidDir, "src/main/java/go/"+binder.pkg.Name())); err != nil {
+	pkgpath := strings.Replace(bindJavaPkg, ".", "/", -1)
+	if bindJavaPkg == "" {
+		pkgpath = "go/" + binder.pkg.Name()
+	}
+	if err := binder.GenJava(filepath.Join(androidDir, "src/main/java/"+pkgpath)); err != nil {
 		return err
 	}
 

@@ -64,20 +64,7 @@ func diffOutput(got string, wantTmpl *template.Template) (string, error) {
 	got = filepath.ToSlash(got)
 
 	wantBuf := new(bytes.Buffer)
-	data := outputData{
-		NDK:       ndkVersion,
-		GOOS:      goos,
-		GOARCH:    goarch,
-		GOPATH:    gopath,
-		NDKARCH:   ndkarch,
-		Xproj:     projPbxproj,
-		Xcontents: contentsJSON,
-		Xinfo:     infoplistTmplData{BundleID: "org.golang.todo.basic", Name: "Basic"},
-		NumCPU:    strconv.Itoa(runtime.NumCPU()),
-	}
-	if goos == "windows" {
-		data.EXE = ".exe"
-	}
+	data := defaultOutputData()
 	if err := wantTmpl.Execute(wantBuf, data); err != nil {
 		return "", err
 	}
@@ -99,6 +86,24 @@ type outputData struct {
 	Xcontents string
 	Xinfo     infoplistTmplData
 	NumCPU    string
+}
+
+func defaultOutputData() outputData {
+	data := outputData{
+		NDK:       ndkVersion,
+		GOOS:      goos,
+		GOARCH:    goarch,
+		GOPATH:    gopath,
+		NDKARCH:   ndkarch,
+		Xproj:     projPbxproj,
+		Xcontents: contentsJSON,
+		Xinfo:     infoplistTmplData{BundleID: "org.golang.todo.basic", Name: "Basic"},
+		NumCPU:    strconv.Itoa(runtime.NumCPU()),
+	}
+	if goos == "windows" {
+		data.EXE = ".exe"
+	}
+	return data
 }
 
 var initTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
