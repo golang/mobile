@@ -18,9 +18,18 @@ import "C"
 import (
 	"fmt"
 	"runtime"
+	"sync"
 	"sync/atomic"
 	"time"
 	"unsafe"
+)
+
+var (
+	collectingMu sync.Mutex // guards collecting
+
+	// collecting is true if sensor event collecting background
+	// job has already started.
+	collecting bool
 )
 
 var nextLooperID int64 // each underlying ALooper should have a unique ID.
@@ -114,7 +123,9 @@ func (m *manager) initialize() {
 	}
 }
 
-func (m *manager) enable(t Type, delay time.Duration) error {
+func (m *manager) enable(s Sender, t Type, delay time.Duration) error {
+	m.startCollecting(s)
+
 	var err error
 	done := make(chan struct{})
 	m.inout <- inOut{
@@ -125,6 +136,41 @@ func (m *manager) enable(t Type, delay time.Duration) error {
 	return err
 }
 
+func (m *manager) startCollecting(s Sender) {
+	collectingMu.Lock()
+	defer collectingMu.Unlock()
+
+	if collecting {
+		// already collecting.
+		return
+	}
+	collecting = true
+
+	// TODO(jbd): Disable the goroutine if all sensors are disabled?
+	// Read will block until there are new events, a goroutine will be
+	// parked forever until a sensor is enabled. There must be no
+	// performance cost other than allocating blocking an OS thread
+	// forever to keep the goroutine running.
+	go func() {
+		ev := make([]Event, 8)
+		var n int
+		var err error // TODO(jbd): How to handle the errors? error channel?
+		for {
+			// TODO(jbd): readSignal is not required anymore. Use the proxying
+			// goroutine to continously poll the queue and send the events to s.
+			done := make(chan struct{})
+			m.inout <- inOut{
+				in:  readSignal{dst: ev, n: &n, err: &err},
+				out: done,
+			}
+			<-done
+			for i := 0; i < n; i++ {
+				s.Send(ev[i])
+			}
+		}
+	}()
+}
+
 func (m *manager) disable(t Type) error {
 	done := make(chan struct{})
 	m.inout <- inOut{
@@ -133,16 +179,6 @@ func (m *manager) disable(t Type) error {
 	}
 	<-done
 	return nil
-}
-
-func (m *manager) read(e []Event) (n int, err error) {
-	done := make(chan struct{})
-	m.inout <- inOut{
-		in:  readSignal{dst: e, n: &n, err: &err},
-		out: done,
-	}
-	<-done
-	return
 }
 
 func readEvents(m *manager, e []Event) (n int, err error) {
@@ -172,6 +208,7 @@ func readEvents(m *manager, e []Event) (n int, err error) {
 	return
 }
 
+// TODO(jbd): Remove close?
 func (m *manager) close() error {
 	done := make(chan struct{})
 	m.inout <- inOut{
