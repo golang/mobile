@@ -29,7 +29,7 @@ var cmdBind = &command{
 	run:   runBind,
 	Name:  "bind",
 	Usage: "[-target android|ios] [-o output] [build flags] [package]",
-	Short: "build a shared library for android APK and iOS app",
+	Short: "build a library for Android and iOS",
 	Long: `
 Bind generates language bindings for the package named by the import
 path, and compiles a library for the named target system.
