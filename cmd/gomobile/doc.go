@@ -21,7 +21,7 @@ Usage:
 
 Commands:
 
-	bind        build a shared library for android APK and iOS app
+	bind        build a library for Android and iOS
 	build       compile android APK and iOS app
 	init        install android compiler toolchain
 	install     compile android APK and install on device
@@ -30,7 +30,7 @@ Commands:
 Use 'gomobile help [command]' for more information about that command.
 
 
-Build a shared library for android APK and iOS app
+Build a library for Android and iOS
 
 Usage:
 
