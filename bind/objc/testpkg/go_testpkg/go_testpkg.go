@@ -33,6 +33,24 @@ func proxy_CallIError(out, in *seq.Buffer) {
 	}
 }
 
+func proxy_CallIStringError(out, in *seq.Buffer) {
+	var param_i testpkg.I
+	param_i_ref := in.ReadRef()
+	if param_i_ref.Num < 0 { // go object
+		param_i = param_i_ref.Get().(testpkg.I)
+	} else { // foreign object
+		param_i = (*proxyI)(param_i_ref)
+	}
+	param_s := in.ReadString()
+	res, err := testpkg.CallIStringError(param_i, param_s)
+	out.WriteString(res)
+	if err == nil {
+		out.WriteString("")
+	} else {
+		out.WriteString(err.Error())
+	}
+}
+
 func proxy_CallSSum(out, in *seq.Buffer) {
 	// Must be a Go object
 	param_s_ref := in.ReadRef()
@@ -63,9 +81,10 @@ func proxy_Hi(out, in *seq.Buffer) {
 }
 
 const (
-	proxyI_Descriptor = "go.testpkg.I"
-	proxyI_Error_Code = 0x10a
-	proxyI_Times_Code = 0x20a
+	proxyI_Descriptor       = "go.testpkg.I"
+	proxyI_Error_Code       = 0x10a
+	proxyI_StringError_Code = 0x20a
+	proxyI_Times_Code       = 0x30a
 )
 
 func proxyI_Error(out, in *seq.Buffer) {
@@ -73,6 +92,19 @@ func proxyI_Error(out, in *seq.Buffer) {
 	v := ref.Get().(testpkg.I)
 	param_triggerError := in.ReadBool()
 	err := v.Error(param_triggerError)
+	if err == nil {
+		out.WriteString("")
+	} else {
+		out.WriteString(err.Error())
+	}
+}
+
+func proxyI_StringError(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := ref.Get().(testpkg.I)
+	param_s := in.ReadString()
+	res, err := v.StringError(param_s)
+	out.WriteString(res)
 	if err == nil {
 		out.WriteString("")
 	} else {
@@ -90,6 +122,7 @@ func proxyI_Times(out, in *seq.Buffer) {
 
 func init() {
 	seq.Register(proxyI_Descriptor, proxyI_Error_Code, proxyI_Error)
+	seq.Register(proxyI_Descriptor, proxyI_StringError_Code, proxyI_StringError)
 	seq.Register(proxyI_Descriptor, proxyI_Times_Code, proxyI_Times)
 }
 
@@ -101,6 +134,15 @@ func (p *proxyI) Error(triggerError bool) error {
 	out := seq.Transact((*seq.Ref)(p), "go.testpkg.I", proxyI_Error_Code, in)
 	res_0 := out.ReadError()
 	return res_0
+}
+
+func (p *proxyI) StringError(s string) (string, error) {
+	in := new(seq.Buffer)
+	in.WriteString(s)
+	out := seq.Transact((*seq.Ref)(p), "go.testpkg.I", proxyI_StringError_Code, in)
+	res_0 := out.ReadString()
+	res_1 := out.ReadError()
+	return res_0, res_1
 }
 
 func (p *proxyI) Times(v int32) int64 {
@@ -285,18 +327,19 @@ func proxy_UnregisterI(out, in *seq.Buffer) {
 func init() {
 	seq.Register("testpkg", 1, proxy_BytesAppend)
 	seq.Register("testpkg", 2, proxy_CallIError)
-	seq.Register("testpkg", 3, proxy_CallSSum)
-	seq.Register("testpkg", 4, proxy_CollectS)
-	seq.Register("testpkg", 5, proxy_GC)
-	seq.Register("testpkg", 6, proxy_Hello)
-	seq.Register("testpkg", 7, proxy_Hi)
-	seq.Register("testpkg", 8, proxy_Int)
-	seq.Register("testpkg", 9, proxy_Multiply)
-	seq.Register("testpkg", 10, proxy_NewI)
-	seq.Register("testpkg", 11, proxy_NewNode)
-	seq.Register("testpkg", 12, proxy_NewS)
-	seq.Register("testpkg", 13, proxy_RegisterI)
-	seq.Register("testpkg", 14, proxy_ReturnsError)
-	seq.Register("testpkg", 15, proxy_Sum)
-	seq.Register("testpkg", 16, proxy_UnregisterI)
+	seq.Register("testpkg", 3, proxy_CallIStringError)
+	seq.Register("testpkg", 4, proxy_CallSSum)
+	seq.Register("testpkg", 5, proxy_CollectS)
+	seq.Register("testpkg", 6, proxy_GC)
+	seq.Register("testpkg", 7, proxy_Hello)
+	seq.Register("testpkg", 8, proxy_Hi)
+	seq.Register("testpkg", 9, proxy_Int)
+	seq.Register("testpkg", 10, proxy_Multiply)
+	seq.Register("testpkg", 11, proxy_NewI)
+	seq.Register("testpkg", 12, proxy_NewNode)
+	seq.Register("testpkg", 13, proxy_NewS)
+	seq.Register("testpkg", 14, proxy_RegisterI)
+	seq.Register("testpkg", 15, proxy_ReturnsError)
+	seq.Register("testpkg", 16, proxy_Sum)
+	seq.Register("testpkg", 17, proxy_UnregisterI)
 }

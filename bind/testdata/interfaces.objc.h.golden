@@ -8,6 +8,10 @@
 
 #include <Foundation/Foundation.h>
 
+@class GoInterfacesI1;
+
+@class GoInterfacesI2;
+
 @protocol GoInterfacesError
 - (BOOL)Err:(NSError**)error;
 @end
@@ -35,7 +39,7 @@
 
 
 @protocol GoInterfacesI3
-- (id<GoInterfacesI1>)F;
+- (GoInterfacesI1*)F;
 @end
 
 @protocol GoInterfacesWithParam

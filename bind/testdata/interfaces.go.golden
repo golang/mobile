@@ -146,8 +146,6 @@ func (p *proxyI3) F() interfaces.I1 {
 	res_0_ref := out.ReadRef()
 	if res_0_ref.Num < 0 { // go object
 		res_0 = res_0_ref.Get().(interfaces.I1)
-	} else { // foreign object
-		res_0 = (*proxyI1)(res_0_ref)
 	}
 	return res_0
 }

@@ -597,7 +597,7 @@ func (g *objcGen) genInterfaceMethodProxy(obj *types.TypeName, s *funcSummary) {
 	if s.returnsVal() { // len(s.retParams) == 1 && s.retParams[0] != error
 		p := s.retParams[0]
 		if stype := g.seqType(p.typ); stype == "Ref" {
-			g.Printf("if [(id<NSObject>)(returnVal) isKindOfClass:[%s class]]) {\n", g.refTypeBase(p.typ))
+			g.Printf("if ([(id<NSObject>)(returnVal) isKindOfClass:[%s class]]) {\n", g.refTypeBase(p.typ))
 			g.Indent()
 			g.Printf("id<goSeqRefInterface>retVal_proxy = (id<goSeqRefInterface>)(returnVal);\n")
 			g.Printf("go_seq_writeRef(out, retVal_proxy.ref);\n")
@@ -633,9 +633,9 @@ func (g *objcGen) genInterfaceMethodProxy(obj *types.TypeName, s *funcSummary) {
 			g.Printf("go_seq_writeUTF8(out, %sDesc);\n", p.name)
 			g.Outdent()
 			g.Printf("}\n")
-		} else if seqTyp := g.seqType(p.typ); seqTyp != "Ref" {
+		} else if seqTyp := g.seqType(p.typ); seqTyp == "Ref" {
 			// TODO(hyangah): NULL.
-			g.Printf("if [(id<NSObject>)(%s) isKindOfClass:[%s class]]) {\n", p.name, g.refTypeBase(p.typ))
+			g.Printf("if ([(id<NSObject>)(%s) isKindOfClass:[%s class]]) {\n", p.name, g.refTypeBase(p.typ))
 			g.Indent()
 			g.Printf("id<goSeqRefInterface>%[1]s_proxy = (id<goSeqRefInterface>)(%[1]s);\n", p.name)
 			g.Printf("go_seq_writeRef(out, %s_proxy.ref);\n", p.name)
@@ -735,6 +735,7 @@ func (g *objcGen) refTypeBase(typ types.Type) string {
 	}
 
 	// fallback to whatever objcType returns. This must not happen.
+	panic(fmt.Sprintf("wtf: %+T", typ))
 	return g.objcType(typ)
 }
 

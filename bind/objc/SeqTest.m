@@ -107,6 +107,18 @@ static int numI = 0;
 }
 @synthesize value;
 
+- (BOOL)StringError:(NSString *)s
+              ret0_:(NSString **)ret0_
+              error:(NSError **)error {
+  if ([s isEqualTo:@"number"]) {
+    if (ret0_ != NULL) {
+      *ret0_ = @"OK";
+    }
+    return true;
+  }
+  return false;
+}
+
 - (BOOL)Error:(BOOL)triggerError error:(NSError **)error {
   if (!triggerError) {
     return YES;
@@ -120,6 +132,7 @@ static int numI = 0;
 - (int64_t)Times:(int32_t)v {
   return v * value;
 }
+
 - (void)dealloc {
   if (self.value == 0) {
     numI++;
@@ -176,6 +189,28 @@ void testIssue12307() {
   NSError *error2;
   if (GoTestpkgCallIError(num, NO, &error2) == NO) {
     ERROR(@"GoTestpkgCallIError(Number, NO) failed(%@); want success", error2);
+  }
+}
+
+void testIssue12403() {
+  Number *num = [[Number alloc] init];
+  num.value = 1024;
+
+  NSString *ret;
+  NSError *error;
+  if (GoTestpkgCallIStringError(num, @"alphabet", &ret, &error) == YES) {
+    ERROR(
+        @"GoTestpkgCallIStringError(Number, 'alphabet') succeeded; want error");
+  }
+  NSError *error2;
+  if (GoTestpkgCallIStringError(num, @"number", &ret, &error2) == NO) {
+    ERROR(
+        @"GoTestpkgCallIStringError(Number, 'number') failed(%@); want success",
+        error2);
+  } else if (![ret isEqualTo:@"OK"]) {
+    ERROR(@"GoTestpkgCallIStringError(Number, 'number') returned unexpected "
+          @"results %@",
+          ret);
   }
 }
 

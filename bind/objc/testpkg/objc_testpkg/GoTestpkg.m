@@ -17,24 +17,26 @@ static NSString* errDomain = @"go.golang.org/x/mobile/bind/objc/testpkg";
 
 #define _CALL_BytesAppend_ 1
 #define _CALL_CallIError_ 2
-#define _CALL_CallSSum_ 3
-#define _CALL_CollectS_ 4
-#define _CALL_GC_ 5
-#define _CALL_Hello_ 6
-#define _CALL_Hi_ 7
-#define _CALL_Int_ 8
-#define _CALL_Multiply_ 9
-#define _CALL_NewI_ 10
-#define _CALL_NewNode_ 11
-#define _CALL_NewS_ 12
-#define _CALL_RegisterI_ 13
-#define _CALL_ReturnsError_ 14
-#define _CALL_Sum_ 15
-#define _CALL_UnregisterI_ 16
+#define _CALL_CallIStringError_ 3
+#define _CALL_CallSSum_ 4
+#define _CALL_CollectS_ 5
+#define _CALL_GC_ 6
+#define _CALL_Hello_ 7
+#define _CALL_Hi_ 8
+#define _CALL_Int_ 9
+#define _CALL_Multiply_ 10
+#define _CALL_NewI_ 11
+#define _CALL_NewNode_ 12
+#define _CALL_NewS_ 13
+#define _CALL_RegisterI_ 14
+#define _CALL_ReturnsError_ 15
+#define _CALL_Sum_ 16
+#define _CALL_UnregisterI_ 17
 
 #define _GO_testpkg_I_DESCRIPTOR_ "go.testpkg.I"
 #define _GO_testpkg_I_Error_ (0x10a)
-#define _GO_testpkg_I_Times_ (0x20a)
+#define _GO_testpkg_I_StringError_ (0x20a)
+#define _GO_testpkg_I_Times_ (0x30a)
 
 @interface GoTestpkgI : NSObject <GoTestpkgI> {
 }
@@ -42,6 +44,7 @@ static NSString* errDomain = @"go.golang.org/x/mobile/bind/objc/testpkg";
 
 - (id)initWithRef:(id)ref;
 - (BOOL)Error:(BOOL)triggerError error:(NSError**)error;
+- (BOOL)StringError:(NSString*)s ret0_:(NSString**)ret0_ error:(NSError**)error;
 - (int64_t)Times:(int32_t)v;
 @end
 
@@ -60,6 +63,27 @@ static NSString* errDomain = @"go.golang.org/x/mobile/bind/objc/testpkg";
 	go_seq_writeRef(&in_, self.ref);
 	go_seq_writeBool(&in_, triggerError);
 	go_seq_send(_GO_testpkg_I_DESCRIPTOR_, _GO_testpkg_I_Error_, &in_, &out_);
+	NSString* _error = go_seq_readUTF8(&out_);
+	if ([_error length] != 0 && error != nil) {
+		NSMutableDictionary* details = [NSMutableDictionary dictionary];
+		[details setValue:_error forKey:NSLocalizedDescriptionKey];
+		*error = [NSError errorWithDomain:errDomain code:1 userInfo:details];
+	}
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+	return ([_error length] == 0);
+}
+
+- (BOOL)StringError:(NSString*)s ret0_:(NSString**)ret0_ error:(NSError**)error {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	go_seq_writeRef(&in_, self.ref);
+	go_seq_writeUTF8(&in_, s);
+	go_seq_send(_GO_testpkg_I_DESCRIPTOR_, _GO_testpkg_I_StringError_, &in_, &out_);
+	NSString* ret0__val = go_seq_readUTF8(&out_);
+	if (ret0_ != NULL) {
+		*ret0_ = ret0__val;
+	}
 	NSString* _error = go_seq_readUTF8(&out_);
 	if ([_error length] != 0 && error != nil) {
 		NSMutableDictionary* details = [NSMutableDictionary dictionary];
@@ -92,6 +116,23 @@ static void proxyGoTestpkgI(id obj, int code, GoSeq* in, GoSeq* out) {
 		BOOL triggerError = go_seq_readBool(in);
 		NSError* error = NULL;
 		BOOL returnVal = [o Error:triggerError error:&error];
+		if (returnVal) {
+			go_seq_writeUTF8(out, NULL);
+		} else {
+			NSString* errorDesc = [error localizedDescription];
+			if (errorDesc == NULL || errorDesc.length == 0) {
+				errorDesc = @"gobind: unknown error";
+			}
+			go_seq_writeUTF8(out, errorDesc);
+		}
+	} break;
+	case _GO_testpkg_I_StringError_: {
+		id<GoTestpkgI> o = (id<GoTestpkgI>)(obj);
+		NSString* s = go_seq_readUTF8(in);
+		NSString* ret0_;
+		NSError* error = NULL;
+		BOOL returnVal = [o StringError:s ret0_:&ret0_ error:&error];
+		go_seq_writeUTF8(out, ret0_);
 		if (returnVal) {
 			go_seq_writeUTF8(out, NULL);
 		} else {
@@ -280,6 +321,32 @@ BOOL GoTestpkgCallIError(id<GoTestpkgI> i, BOOL triggerError, NSError** error) {
 	}
 	go_seq_writeBool(&in_, triggerError);
 	go_seq_send(_DESCRIPTOR_, _CALL_CallIError_, &in_, &out_);
+	NSString* _error = go_seq_readUTF8(&out_);
+	if ([_error length] != 0 && error != nil) {
+		NSMutableDictionary* details = [NSMutableDictionary dictionary];
+		[details setValue:_error forKey:NSLocalizedDescriptionKey];
+		*error = [NSError errorWithDomain:errDomain code:1 userInfo:details];
+	}
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+	return ([_error length] == 0);
+}
+
+BOOL GoTestpkgCallIStringError(id<GoTestpkgI> i, NSString* s, NSString** ret0_, NSError** error) {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	if ([(id<NSObject>)(i) isKindOfClass:[GoTestpkgI class]]) {
+		id<goSeqRefInterface> i_proxy = (id<goSeqRefInterface>)(i);
+		go_seq_writeRef(&in_, i_proxy.ref);
+	} else {
+		go_seq_writeObjcRef(&in_, i);
+	}
+	go_seq_writeUTF8(&in_, s);
+	go_seq_send(_DESCRIPTOR_, _CALL_CallIStringError_, &in_, &out_);
+	NSString* ret0__val = go_seq_readUTF8(&out_);
+	if (ret0_ != NULL) {
+		*ret0_ = ret0__val;
+	}
 	NSString* _error = go_seq_readUTF8(&out_);
 	if ([_error length] != 0 && error != nil) {
 		NSMutableDictionary* details = [NSMutableDictionary dictionary];
