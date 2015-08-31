@@ -14,6 +14,7 @@
 
 @protocol GoTestpkgI
 - (BOOL)Error:(BOOL)triggerError error:(NSError**)error;
+- (BOOL)StringError:(NSString*)s ret0_:(NSString**)ret0_ error:(NSError**)error;
 - (int64_t)Times:(int32_t)v;
 @end
 
@@ -44,6 +45,8 @@
 FOUNDATION_EXPORT NSData* GoTestpkgBytesAppend(NSData* a, NSData* b);
 
 FOUNDATION_EXPORT BOOL GoTestpkgCallIError(id<GoTestpkgI> i, BOOL triggerError, NSError** error);
+
+FOUNDATION_EXPORT BOOL GoTestpkgCallIStringError(id<GoTestpkgI> i, NSString* s, NSString** ret0_, NSError** error);
 
 FOUNDATION_EXPORT double GoTestpkgCallSSum(GoTestpkgS* s);
 

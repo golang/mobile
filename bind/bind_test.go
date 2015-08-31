@@ -30,6 +30,7 @@ var tests = []string{
 	"testdata/interfaces.go",
 	"testdata/issue10788.go",
 	"testdata/issue12328.go",
+	"testdata/issue12403.go",
 	"testdata/try.go",
 }
 

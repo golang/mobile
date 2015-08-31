@@ -179,7 +179,7 @@ static void proxyGoInterfacesI(id obj, int code, GoSeq* in, GoSeq* out) {
 @property(strong, readonly) id ref;
 
 - (id)initWithRef:(id)ref;
-- (id<GoInterfacesI1>)F;
+- (GoInterfacesI1*)F;
 @end
 
 @implementation GoInterfacesI3 {
@@ -191,13 +191,13 @@ static void proxyGoInterfacesI(id obj, int code, GoSeq* in, GoSeq* out) {
 	return self;
 }
 
-- (id<GoInterfacesI1>)F {
+- (GoInterfacesI1*)F {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_writeRef(&in_, self.ref);
 	go_seq_send(_GO_interfaces_I3_DESCRIPTOR_, _GO_interfaces_I3_F_, &in_, &out_);
 	GoSeqRef* ret0__ref = go_seq_readRef(&out_);
-	id<GoInterfacesI1> ret0_ = ret0__ref.obj;
+	GoInterfacesI1* ret0_ = ret0__ref.obj;
 	if (ret0_ == NULL) {
 		ret0_ = [[GoInterfacesI1 alloc] initWithRef:ret0__ref];
 	}
@@ -212,8 +212,8 @@ static void proxyGoInterfacesI3(id obj, int code, GoSeq* in, GoSeq* out) {
 	switch (code) {
 	case _GO_interfaces_I3_F_: {
 		id<GoInterfacesI3> o = (id<GoInterfacesI3>)(obj);
-		id<GoInterfacesI1> returnVal = [o F];
-		if [(id<NSObject>)(returnVal) isKindOfClass:[GoInterfacesI1 class]]) {
+		GoInterfacesI1* returnVal = [o F];
+		if ([(id<NSObject>)(returnVal) isKindOfClass:[GoInterfacesI1 class]]) {
 			id<goSeqRefInterface>retVal_proxy = (id<goSeqRefInterface>)(returnVal);
 			go_seq_writeRef(out, retVal_proxy.ref);
 		} else {
