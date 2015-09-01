@@ -6,8 +6,10 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 var cmdInstall = &command{
@@ -34,10 +36,21 @@ func runInstall(cmd *command) error {
 	if err := runBuild(cmd); err != nil {
 		return err
 	}
-	return runCmd(exec.Command(
+
+	// Don't use runCmd as adb does not return a useful exit code.
+	c := exec.Command(
 		`adb`,
 		`install`,
 		`-r`,
 		filepath.Base(pkg.Dir)+`.apk`,
-	))
+	)
+	c.Stdout = os.Stdout
+	c.Stderr = os.Stderr
+	if buildX || buildN {
+		printcmd("%s", strings.Join(c.Args, " "))
+	}
+	if buildN {
+		return nil
+	}
+	return c.Run()
 }
