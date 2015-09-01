@@ -45,7 +45,6 @@ EGLSurface surface;
 char* initEGLDisplay();
 char* createEGLSurface(ANativeWindow* window);
 char* destroyEGLSurface();
-char* attachJNI(JNIEnv**);
 int32_t getKeyRune(JNIEnv* env, AInputEvent* e);
 */
 import "C"
@@ -53,7 +52,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"runtime"
 	"time"
 	"unsafe"
 
@@ -248,21 +246,23 @@ func init() {
 }
 
 func main(f func(App)) {
+	mainUserFn = f
 	// Preserve this OS thread for:
 	//	1. the attached JNI thread
 	//	2. the GL context
-	runtime.LockOSThread()
-
-	// Calls into NativeActivity functions must be made from
-	// a thread attached to the JNI.
-	var env *C.JNIEnv
-	if errStr := C.attachJNI(&env); errStr != nil {
-		log.Fatalf("app: %s", C.GoString(errStr))
+	if err := mobileinit.RunOnJVM(mainUI); err != nil {
+		log.Fatalf("app: %v", err)
 	}
+}
+
+var mainUserFn func(App)
+
+func mainUI(vm, jniEnv, ctx uintptr) error {
+	env := (*C.JNIEnv)(unsafe.Pointer(jniEnv)) // not a Go heap pointer
 
 	donec := make(chan struct{})
 	go func() {
-		f(app{})
+		mainUserFn(app{})
 		close(donec)
 	}()
 
@@ -291,15 +291,14 @@ func main(f func(App)) {
 		case <-windowCreated:
 		case q = <-inputQueue:
 		case <-donec:
-			return
+			return nil
 		case cfg := <-windowConfigChange:
 			pixelsPerPt = cfg.pixelsPerPt
 			orientation = cfg.orientation
 		case w := <-windowRedrawNeeded:
 			if C.surface == nil {
 				if errStr := C.createEGLSurface(w); errStr != nil {
-					log.Printf("app: %s (%s)", C.GoString(errStr), eglGetError())
-					return
+					return fmt.Errorf("%s (%s)", C.GoString(errStr), eglGetError())
 				}
 			}
 			sendLifecycle(lifecycle.StageFocused)
@@ -318,8 +317,7 @@ func main(f func(App)) {
 		case <-windowDestroyed:
 			if C.surface != nil {
 				if errStr := C.destroyEGLSurface(); errStr != nil {
-					log.Printf("app: %s (%s)", C.GoString(errStr), eglGetError())
-					return
+					return fmt.Errorf("%s (%s)", C.GoString(errStr), eglGetError())
 				}
 			}
 			C.surface = nil
