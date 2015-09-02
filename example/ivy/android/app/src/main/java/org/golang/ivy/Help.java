@@ -15,8 +15,6 @@ import android.view.MenuItem;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import go.mobile.Mobile;
-
 /*
  * Displays the help message for Ivy.
  */
@@ -37,7 +35,10 @@ public class Help extends AppCompatActivity {
             }
         });
         webView.getSettings().setDefaultTextEncodingName("utf-8");
+        // org.golang.ivy.Mobile was generated
+        // using gomobile bind -javapkg=org.golang.ivy robpike.io/ivy/mobile.
         String helpMsg = Mobile.Help();
+
         // loadData has a rendering bug: https://code.google.com/p/android/issues/detail?id=6965
         webView.loadDataWithBaseURL("http://godoc.org/robpike.io/ivy", helpMsg, "text/html", "UTF-8", null);
         webView.setBackgroundColor(getResources().getColor(R.color.body));

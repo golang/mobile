@@ -9,6 +9,9 @@ plugins {
 gobind {
     pkg = "robpike.io/ivy/mobile"
 
+    // -javapkg flag puts the generated java class into the specified package.
+    GOMOBILEFLAGS="-javapkg=org.golang.ivy"
+
     /* Set the following variable(s):
 
        GOPATH: where the Go package is; check `go env`. This is required.
@@ -16,9 +19,5 @@ gobind {
 
        GO:     if the Go binary is not in the usual place, specify
                the absolute path to the go binary.
-
-       GOMOBILE: optionally, you can set the absolute path to the gomobile
-               binary if the gomobile binary is not located in the GOPATH's
-               bin directory.
      */
 }

@@ -32,14 +32,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import go.mobile.Mobile; // gobind generated class name. golang.org/issues/9660.
-
 /*
  * Main activity that consists of an edit view to accept the expression
  * and a web view to display output of the expression.
  */
 public class MainActivity extends AppCompatActivity {
-    final String DEMO_SCRIPT = "demo.ivy";
+    final String DEMO_SCRIPT = "demo.ivy";  // in assets directory.
     final String DEBUG_TAG = "Ivy";
     final String PROMPT = "> ";
 
@@ -66,29 +64,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             clear();
         }
-
-        mWebView.setWebViewClient(new WebViewClient() {
-            // Disallow arbitrary contents loaded into our own webview.
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                view.getContext().startActivity(
-                        new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-                return true;
-            }
-        });
-        mWebView.getSettings().setJavaScriptEnabled(true);
-        mWebView.setFocusable(false);
-        mWebView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
-            @Override
-            public void onLayoutChange(View v, int left, int top, int right, int bottom,
-                                       int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                // It's possible that the layout is not complete.
-                // In that case we will get all zero values for the positions. Ignore this case.
-                if (left == 0 && top == 0 && right == 0 && bottom == 0) {
-                    return;
-                }
-                scrollToBottom();
-            }
-        });
+        configureWebView(mWebView);
 
         mEditText.requestFocus();
         mEditText.setOnKeyListener(new View.OnKeyListener() {
@@ -167,12 +143,53 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void clear() {
+        // As described in https://code.google.com/p/android/issues/detail?id=18726
+        // clearing the contents of the webview doesn't shrink the webview size in some
+        // old versions of Android. (e.g. Moto X running 4.4.4). I tried various techniques
+        // suggested in the Internet, but nothing worked except creating a new webview.
+        WebView newView = new WebView(this);
+        newView.setLayoutParams(mWebView.getLayoutParams());
+        newView.setId(R.id.webView);
+
+        configureWebView(newView);
+
+        mScroller.removeView(mWebView);
+        mWebView.destroy();
+
+        mWebView = newView;
         mWebView.loadUrl("file:///android_asset/tape.html");
         mWebView.setBackgroundColor(getResources().getColor(R.color.body));
-        mEditText.setText("");
+        mScroller.addView(mWebView);
 
+        mEditText.setText("");
         Mobile.Reset();
         unloadDemo();
+    }
+
+    void configureWebView(WebView webView) {
+        // We enable javascript, but disallow any url loading.
+        webView.getSettings().setJavaScriptEnabled(true);
+        webView.setWebViewClient(new WebViewClient() {
+            // Disallow arbitrary contents loaded into our own webview.
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                view.getContext().startActivity(
+                        new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+                return true;
+            }
+        });
+        webView.setFocusable(false);
+        webView.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+            @Override
+            public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                                       int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                // It's possible that the layout is not complete.
+                // In that case we will get all zero values for the positions. Ignore this case.
+                if (left == 0 && top == 0 && right == 0 && bottom == 0) {
+                    return;
+                }
+                scrollToBottom();
+            }
+        });
     }
 
     private void appendShowText(final String s, final String tag) {
@@ -234,6 +251,8 @@ public class MainActivity extends AppCompatActivity {
     private class IvyCallTask extends AsyncTask<String, Void, Pair<String, String> > {
         private String ivyEval(final String expr) {
             try {
+                // org.golang.ivy.Mobile was generated using
+                // gomobile bind -javapkg=org.golang.ivy robpike.io/ivy/mobile
                 return Mobile.Eval(expr);  // Gobind-generated method.
             } catch (Exception e) {
                 return "error: "+e.getMessage();
@@ -297,6 +316,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             });
+
         }
     }
 }

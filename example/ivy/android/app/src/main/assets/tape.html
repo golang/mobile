@@ -5,6 +5,7 @@ license that can be found in the LICENSE file.
 -->
 <html>
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <style>
         body {
             font-family: sans-serif;
@@ -45,13 +46,12 @@ function appendDiv(txt, tag) {
     } else if (tag == "expr") {
 
     } else {
-        el.classList.add("flow-hide");
+        el.classList.add("flow-show");
         el.onclick = function() {
                 flowClick(el);
         };
     }
     document.body.appendChild(el);
-    window.scrollBy(0, document.body.offsetHeight);
 }
 
 </script>
