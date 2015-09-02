@@ -2,8 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="org.golang.ivy"
-    android:versionCode="2"
-    android:versionName="1.0.1"
     android:installLocation="auto">
 
     <!-- undo gradle's auto addition of unrequested permissions
