@@ -13,7 +13,8 @@ void GoIOS_createManager() {
   manager = [[CMMotionManager alloc] init];
 }
 
-void GoIOS_startAccelerometer() {
+void GoIOS_startAccelerometer(float interval) {
+  manager.accelerometerUpdateInterval = interval;
   [manager startAccelerometerUpdates];
 }
 

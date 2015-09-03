@@ -76,6 +76,7 @@ var m = newManager()
 // Enable enables the specified sensor type with the given delay rate.
 // Sensor events will be sent to s, a typical example of Sender
 // implementations is app.App.
+// Enable is not safe for concurrent use.
 func Enable(s Sender, t Type, delay time.Duration) error {
 	if t < 0 || int(t) >= len(sensorNames) {
 		return errors.New("sensor: unknown sensor type")
@@ -84,6 +85,7 @@ func Enable(s Sender, t Type, delay time.Duration) error {
 }
 
 // Disable disables to feed the manager with the specified sensor.
+// Disable is not safe for concurrent use.
 func Disable(t Type) error {
 	if t < 0 || int(t) >= len(sensorNames) {
 		return errors.New("sensor: unknown sensor type")
