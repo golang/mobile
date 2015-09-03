@@ -15,12 +15,11 @@ package sensor
 
 void GoIOS_createManager();
 
-void GoIOS_startAccelerometer();
+void GoIOS_startAccelerometer(float interval);
 void GoIOS_stopAccelerometer();
 void GoIOS_readAccelerometer(int64_t* timestamp, float* vector);
 
 void GoIOS_destroyManager();
-
 */
 import "C"
 import (
@@ -55,7 +54,8 @@ func (m *manager) enable(s Sender, t Type, delay time.Duration) error {
 			return fmt.Errorf("sensor: cannot enable; %v sensor is already enabled", t)
 		}
 		// TODO(jbd): Check if accelerometer is available.
-		C.GoIOS_startAccelerometer()
+		interval := float64(delay) / float64(time.Second)
+		C.GoIOS_startAccelerometer(C.float(interval))
 		channels.acceleroDone = make(chan struct{})
 		go m.runAccelerometer(s, delay, channels.acceleroDone)
 	case Gyroscope:
