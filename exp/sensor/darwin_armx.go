@@ -41,12 +41,27 @@ func (m *manager) initialize() {
 	C.GoIOS_createManager()
 }
 
+// minDelay is the minimum delay allowed.
+//
+// From Event Handling Guide for iOS:
+//
+// "You can set the reporting interval to be as small as 10
+// milliseconds (ms), which corresponds to a 100 Hz update rate,
+// but most app operate sufficiently with a larger interval."
+//
+// There is no need to poll more frequently than once every 10ms.
+//
+// https://developer.apple.com/library/ios/documentation/EventHandling/Conceptual/EventHandlingiPhoneOS/motion_event_basics/motion_event_basics.html
+
+const minDelay = 10 * time.Millisecond
+
 func (m *manager) enable(s Sender, t Type, delay time.Duration) error {
-	// TODO(jbd): If delay is smaller than 10 milliseconds, set it to
-	// 10 milliseconds. It is highest frequency iOS SDK suppports and
-	// we don't want to have time.Tick durations smaller than this value.
 	channels.Lock()
 	defer channels.Unlock()
+
+	if delay < minDelay {
+		delay = minDelay
+	}
 
 	switch t {
 	case Accelerometer:
