@@ -30,6 +30,23 @@ void GoIOS_readAccelerometer(int64_t* timestamp, float* v) {
   v[2] = data.acceleration.z;
 }
 
+void GoIOS_startGyro(float interval) {
+  manager.gyroUpdateInterval = interval;
+  [manager startGyroUpdates];
+}
+
+void GoIOS_stopGyro() {
+  [manager stopGyroUpdates];
+}
+
+void GoIOS_readGyro(int64_t* timestamp, float* v) {
+  CMGyroData* data = manager.gyroData;
+  *timestamp = (int64_t)(data.timestamp * 1000 * 1000);
+  v[0] = data.rotationRate.x;
+  v[1] = data.rotationRate.y;
+  v[2] = data.rotationRate.z;
+}
+
 void GoIOS_destroyManager() {
   [manager release];
   manager = nil;

@@ -31,6 +31,7 @@ const (
 	Accelerometer = Type(0)
 	Gyroscope     = Type(1)
 	Magnetometer  = Type(2)
+	nTypes        = Type(3)
 )
 
 // Event represents a sensor event.
