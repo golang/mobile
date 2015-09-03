@@ -19,6 +19,10 @@ void GoIOS_startAccelerometer(float interval);
 void GoIOS_stopAccelerometer();
 void GoIOS_readAccelerometer(int64_t* timestamp, float* vector);
 
+void GoIOS_startGyro(float interval);
+void GoIOS_stopGyro();
+void GoIOS_readGyro(int64_t* timestamp, float* vector);
+
 void GoIOS_destroyManager();
 */
 import "C"
@@ -31,7 +35,7 @@ import (
 
 var channels struct {
 	sync.Mutex
-	acceleroDone chan struct{}
+	done [nTypes]chan struct{}
 }
 
 type manager struct {
@@ -59,25 +63,26 @@ func (m *manager) enable(s Sender, t Type, delay time.Duration) error {
 	channels.Lock()
 	defer channels.Unlock()
 
+	if channels.done[t] != nil {
+		return fmt.Errorf("sensor: cannot enable; %v sensor is already enabled", t)
+	}
+	channels.done[t] = make(chan struct{})
+
 	if delay < minDelay {
 		delay = minDelay
 	}
+	interval := float64(delay) / float64(time.Second)
 
 	switch t {
 	case Accelerometer:
-		if channels.acceleroDone != nil {
-			return fmt.Errorf("sensor: cannot enable; %v sensor is already enabled", t)
-		}
-		// TODO(jbd): Check if accelerometer is available.
-		interval := float64(delay) / float64(time.Second)
 		C.GoIOS_startAccelerometer(C.float(interval))
-		channels.acceleroDone = make(chan struct{})
-		go m.runAccelerometer(s, delay, channels.acceleroDone)
 	case Gyroscope:
+		C.GoIOS_startGyro(C.float(interval))
 	case Magnetometer:
-	default:
-		return fmt.Errorf("sensor: unknown sensor type: %v", t)
+		return fmt.Errorf("sensor: %v is not supported yet", t)
 	}
+
+	go m.pollSensor(s, t, delay, channels.done[t])
 	return nil
 }
 
@@ -85,15 +90,17 @@ func (m *manager) disable(t Type) error {
 	channels.Lock()
 	defer channels.Unlock()
 
+	if channels.done[t] == nil {
+		return fmt.Errorf("sensor: cannot disable; %v sensor is not enabled", t)
+	}
+	close(channels.done[t])
+	channels.done[t] = nil
+
 	switch t {
 	case Accelerometer:
-		if channels.acceleroDone == nil {
-			return fmt.Errorf("sensor: cannot disable; %v sensor is not enabled", t)
-		}
-		close(channels.acceleroDone)
-		channels.acceleroDone = nil
 		C.GoIOS_stopAccelerometer()
 	case Gyroscope:
+		C.GoIOS_stopGyro()
 	case Magnetometer:
 	default:
 		return fmt.Errorf("sensor: unknown sensor type: %v", t)
@@ -101,26 +108,33 @@ func (m *manager) disable(t Type) error {
 	return nil
 }
 
-func (m *manager) runAccelerometer(s Sender, d time.Duration, done chan struct{}) {
+func (m *manager) pollSensor(s Sender, t Type, d time.Duration, done chan struct{}) {
+	var lastTimestamp int64
+
 	var timestamp C.int64_t
 	var ev [3]C.float
-	var lastTimestamp int64
+
 	for {
 		select {
 		case <-done:
 			return
 		default:
-			C.GoIOS_readAccelerometer((*C.int64_t)(unsafe.Pointer(&timestamp)), (*C.float)(unsafe.Pointer(&ev[0])))
-			t := int64(timestamp)
-			if t > lastTimestamp {
+			switch t {
+			case Accelerometer:
+				C.GoIOS_readAccelerometer((*C.int64_t)(unsafe.Pointer(&timestamp)), (*C.float)(unsafe.Pointer(&ev[0])))
+			case Gyroscope:
+				C.GoIOS_readGyro((*C.int64_t)(unsafe.Pointer(&timestamp)), (*C.float)(unsafe.Pointer(&ev[0])))
+			}
+			ts := int64(timestamp)
+			if ts > lastTimestamp {
 				// TODO(jbd): Do we need to convert the values to another unit?
 				// How does iOS units compare to the Android units.
 				s.Send(Event{
-					Sensor:    Accelerometer,
-					Timestamp: t,
+					Sensor:    t,
+					Timestamp: ts,
 					Data:      []float64{float64(ev[0]), float64(ev[1]), float64(ev[2])},
 				})
-				lastTimestamp = t
+				lastTimestamp = ts
 				time.Sleep(d / 2)
 			}
 		}
