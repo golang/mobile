@@ -46,11 +46,10 @@ int GoAndroid_readQueue(int looperId, ASensorEventQueue* q, int n, int32_t* type
   int events;
   ASensorEvent event;
   int i = 0;
-  // Block for 30 secs at most, timeout if nothing happens.
   // Try n times read from the event queue.
   // If anytime timeout occurs, don't retry to read and immediately return.
   // Consume the event queue entirely between polls.
-  while (i < n && (id = ALooper_pollAll(30*1000, NULL, &events, NULL)) >= 0) {
+  while (i < n && (id = ALooper_pollAll(-1, NULL, &events, NULL)) >= 0) {
     if (id != looperId) {
       continue;
     }
