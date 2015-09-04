@@ -23,6 +23,10 @@ void GoIOS_startGyro(float interval);
 void GoIOS_stopGyro();
 void GoIOS_readGyro(int64_t* timestamp, float* vector);
 
+void GoIOS_startMagneto(float interval);
+void GoIOS_stopMagneto();
+void GoIOS_readMagneto(int64_t* timestamp, float* vector);
+
 void GoIOS_destroyManager();
 */
 import "C"
@@ -71,17 +75,16 @@ func (m *manager) enable(s Sender, t Type, delay time.Duration) error {
 	if delay < minDelay {
 		delay = minDelay
 	}
-	interval := float64(delay) / float64(time.Second)
+	interval := C.float(float64(delay) / float64(time.Second))
 
 	switch t {
 	case Accelerometer:
-		C.GoIOS_startAccelerometer(C.float(interval))
+		C.GoIOS_startAccelerometer(interval)
 	case Gyroscope:
-		C.GoIOS_startGyro(C.float(interval))
+		C.GoIOS_startGyro(interval)
 	case Magnetometer:
-		return fmt.Errorf("sensor: %v is not supported yet", t)
+		C.GoIOS_startMagneto(interval)
 	}
-
 	go m.pollSensor(s, t, delay, channels.done[t])
 	return nil
 }
@@ -102,8 +105,7 @@ func (m *manager) disable(t Type) error {
 	case Gyroscope:
 		C.GoIOS_stopGyro()
 	case Magnetometer:
-	default:
-		return fmt.Errorf("sensor: unknown sensor type: %v", t)
+		C.GoIOS_stopMagneto()
 	}
 	return nil
 }
@@ -119,11 +121,16 @@ func (m *manager) pollSensor(s Sender, t Type, d time.Duration, done chan struct
 		case <-done:
 			return
 		default:
+			tp := (*C.int64_t)(unsafe.Pointer(&timestamp))
+			vp := (*C.float)(unsafe.Pointer(&ev[0]))
+
 			switch t {
 			case Accelerometer:
-				C.GoIOS_readAccelerometer((*C.int64_t)(unsafe.Pointer(&timestamp)), (*C.float)(unsafe.Pointer(&ev[0])))
+				C.GoIOS_readAccelerometer(tp, vp)
 			case Gyroscope:
-				C.GoIOS_readGyro((*C.int64_t)(unsafe.Pointer(&timestamp)), (*C.float)(unsafe.Pointer(&ev[0])))
+				C.GoIOS_readGyro(tp, vp)
+			case Magnetometer:
+				C.GoIOS_readMagneto(tp, vp)
 			}
 			ts := int64(timestamp)
 			if ts > lastTimestamp {
