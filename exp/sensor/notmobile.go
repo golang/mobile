@@ -11,18 +11,14 @@ import (
 	"time"
 )
 
-type manager struct{}
-
-func (m *manager) initialize() {}
-
-func (m *manager) enable(s Sender, t Type, delay time.Duration) error {
+func enable(s Sender, t Type, delay time.Duration) error {
 	return errors.New("sensor: no sensors available")
 }
 
-func (m *manager) disable(t Type) error {
+func disable(t Type) error {
 	return errors.New("sensor: no sensors available")
 }
 
-func (m *manager) close() error {
+func destroy() error {
 	return nil
 }
