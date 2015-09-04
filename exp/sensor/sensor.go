@@ -15,7 +15,7 @@ type Type int
 
 var sensorNames = map[Type]string{
 	Accelerometer: "Accelerometer",
-	Gyroscope:     "Gyrsocope",
+	Gyroscope:     "Gyroscope",
 	Magnetometer:  "Magnetometer",
 }
 
@@ -71,9 +71,6 @@ type Sender interface {
 	Send(event interface{})
 }
 
-// m is the underlying platform-specific sensor manager.
-var m = newManager()
-
 // Enable enables the specified sensor type with the given delay rate.
 // Sensor events will be sent to s, a typical example of Sender
 // implementations is app.App.
@@ -82,7 +79,7 @@ func Enable(s Sender, t Type, delay time.Duration) error {
 	if t < 0 || int(t) >= len(sensorNames) {
 		return errors.New("sensor: unknown sensor type")
 	}
-	return m.enable(s, t, delay)
+	return enable(s, t, delay)
 }
 
 // Disable disables to feed the manager with the specified sensor.
@@ -91,13 +88,5 @@ func Disable(t Type) error {
 	if t < 0 || int(t) >= len(sensorNames) {
 		return errors.New("sensor: unknown sensor type")
 	}
-	return m.disable(t)
-}
-
-func newManager() *manager {
-	// TODO(jbd): manager type is unnecessary, flatten out the
-	// platform specific implementation.
-	mgr := new(manager)
-	mgr.initialize()
-	return mgr
+	return disable(t)
 }

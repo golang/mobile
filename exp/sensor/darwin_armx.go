@@ -42,10 +42,7 @@ var channels struct {
 	done [nTypes]chan struct{}
 }
 
-type manager struct {
-}
-
-func (m *manager) initialize() {
+func init() {
 	C.GoIOS_createManager()
 }
 
@@ -63,7 +60,7 @@ func (m *manager) initialize() {
 
 const minDelay = 10 * time.Millisecond
 
-func (m *manager) enable(s Sender, t Type, delay time.Duration) error {
+func enable(s Sender, t Type, delay time.Duration) error {
 	channels.Lock()
 	defer channels.Unlock()
 
@@ -85,11 +82,11 @@ func (m *manager) enable(s Sender, t Type, delay time.Duration) error {
 	case Magnetometer:
 		C.GoIOS_startMagneto(interval)
 	}
-	go m.pollSensor(s, t, delay, channels.done[t])
+	go pollSensor(s, t, delay, channels.done[t])
 	return nil
 }
 
-func (m *manager) disable(t Type) error {
+func disable(t Type) error {
 	channels.Lock()
 	defer channels.Unlock()
 
@@ -110,7 +107,7 @@ func (m *manager) disable(t Type) error {
 	return nil
 }
 
-func (m *manager) pollSensor(s Sender, t Type, d time.Duration, done chan struct{}) {
+func pollSensor(s Sender, t Type, d time.Duration, done chan struct{}) {
 	var lastTimestamp int64
 
 	var timestamp C.int64_t
@@ -148,8 +145,8 @@ func (m *manager) pollSensor(s Sender, t Type, d time.Duration, done chan struct
 	}
 }
 
-// TODO(jbd): Remove close?
-func (m *manager) close() error {
+// TODO(jbd): Remove destroy?
+func destroy() error {
 	C.GoIOS_destroyManager()
 	return nil
 }
