@@ -8,7 +8,6 @@ package app
 
 import (
 	"golang.org/x/mobile/event/lifecycle"
-	"golang.org/x/mobile/event/paint"
 	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/gl"
 	_ "golang.org/x/mobile/internal/mobileinit"
@@ -38,17 +37,25 @@ type App interface {
 	// Send sends an event on the events channel. It does not block.
 	Send(event interface{})
 
-	// EndPaint flushes any pending OpenGL commands or buffers to the screen.
-	// If EndPaint is called with an old generation number, it is ignored.
-	EndPaint(paint.Event)
+	// Publish flushes any pending drawing commands, such as OpenGL calls, and
+	// swaps the back buffer to the screen.
+	Publish() PublishResult
+}
+
+// PublishResult is the result of an App.Publish call.
+type PublishResult struct {
+	// BackBufferPreserved is whether the contents of the back buffer was
+	// preserved. If false, the contents are undefined.
+	BackBufferPreserved bool
 }
 
 var (
 	lifecycleStage = lifecycle.StageDead
 
-	eventsOut = make(chan interface{})
-	eventsIn  = pump(eventsOut)
-	endPaint  = make(chan paint.Event, 1)
+	eventsOut     = make(chan interface{})
+	eventsIn      = pump(eventsOut)
+	publish       = make(chan struct{})
+	publishResult = make(chan PublishResult)
 )
 
 func sendLifecycle(to lifecycle.Stage) {
@@ -72,7 +79,7 @@ func (app) Send(event interface{}) {
 	eventsIn <- event
 }
 
-func (app) EndPaint(e paint.Event) {
+func (app) Publish() PublishResult {
 	// gl.Flush is a lightweight (on modern GL drivers) blocking call
 	// that ensures all GL functions pending in the gl package have
 	// been passed onto the GL driver before the app package attempts
@@ -81,7 +88,8 @@ func (app) EndPaint(e paint.Event) {
 	// This enforces that the final receive (for this paint cycle) on
 	// gl.WorkAvailable happens before the send on endPaint.
 	gl.Flush()
-	endPaint <- e
+	publish <- struct{}{}
+	return <-publishResult
 }
 
 var filters []func(interface{}) interface{}

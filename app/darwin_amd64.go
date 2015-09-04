@@ -79,19 +79,24 @@ func loop(ctx C.GLintptr) {
 	runtime.LockOSThread()
 	C.makeCurrentContext(ctx)
 
-	for range draw {
-		eventsIn <- paint.Event{}
-	loop1:
-		for {
-			select {
-			case <-gl.WorkAvailable:
-				gl.DoWork()
-			case <-endPaint:
-				C.CGLFlushDrawable(C.CGLGetCurrentContext())
-				break loop1
+	for {
+		select {
+		case <-gl.WorkAvailable:
+			gl.DoWork()
+		case <-draw:
+		loop1:
+			for {
+				select {
+				case <-gl.WorkAvailable:
+					gl.DoWork()
+				case <-publish:
+					C.CGLFlushDrawable(C.CGLGetCurrentContext())
+					publishResult <- PublishResult{}
+					break loop1
+				}
 			}
+			drawDone <- struct{}{}
 		}
-		drawDone <- struct{}{}
 	}
 }
 
@@ -204,7 +209,10 @@ var mods = [...]struct {
 func lifecycleAlive() { sendLifecycle(lifecycle.StageAlive) }
 
 //export lifecycleVisible
-func lifecycleVisible() { sendLifecycle(lifecycle.StageVisible) }
+func lifecycleVisible() {
+	sendLifecycle(lifecycle.StageVisible)
+	eventsIn <- paint.Event{}
+}
 
 //export lifecycleFocused
 func lifecycleFocused() { sendLifecycle(lifecycle.StageFocused) }

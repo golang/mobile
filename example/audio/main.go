@@ -71,20 +71,27 @@ var (
 
 func main() {
 	app.Main(func(a app.App) {
+		visible := false
 		for e := range a.Events() {
 			switch e := app.Filter(e).(type) {
 			case lifecycle.Event:
 				switch e.Crosses(lifecycle.StageVisible) {
 				case lifecycle.CrossOn:
+					visible = true
 					onStart()
 				case lifecycle.CrossOff:
+					visible = false
 					onStop()
 				}
 			case size.Event:
 				sz = e
 			case paint.Event:
 				onPaint()
-				a.EndPaint(e)
+				a.Publish()
+				if visible {
+					// Keep animating.
+					a.Send(paint.Event{})
+				}
 			}
 		}
 	})

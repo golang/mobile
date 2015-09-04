@@ -38,6 +38,7 @@ import (
 
 	"golang.org/x/mobile/app"
 	"golang.org/x/mobile/asset"
+	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/paint"
 	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/exp/app/debug"
@@ -56,14 +57,25 @@ var (
 
 func main() {
 	app.Main(func(a app.App) {
-		var sz size.Event
+		visible, sz := false, size.Event{}
 		for e := range a.Events() {
 			switch e := app.Filter(e).(type) {
+			case lifecycle.Event:
+				switch e.Crosses(lifecycle.StageVisible) {
+				case lifecycle.CrossOn:
+					visible = true
+				case lifecycle.CrossOff:
+					visible = false
+				}
 			case size.Event:
 				sz = e
 			case paint.Event:
 				onPaint(sz)
-				a.EndPaint(e)
+				a.Publish()
+				if visible {
+					// Keep animating.
+					a.Send(paint.Event{})
+				}
 			}
 		}
 	})

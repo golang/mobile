@@ -54,14 +54,21 @@ func main() {
 	go checkNetwork()
 
 	app.Main(func(a app.App) {
-		var sz size.Event
-		for e := range a.Events() {
-			switch e := app.Filter(e).(type) {
-			case size.Event:
-				sz = e
-			case paint.Event:
-				onDraw(sz)
-				a.EndPaint(e)
+		det, sz := determined, size.Event{}
+		for {
+			select {
+			case <-det:
+				a.Send(paint.Event{})
+				det = nil
+
+			case e := <-a.Events():
+				switch e := app.Filter(e).(type) {
+				case size.Event:
+					sz = e
+				case paint.Event:
+					onDraw(sz)
+					a.Publish()
+				}
 			}
 		}
 	})

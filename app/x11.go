@@ -46,6 +46,10 @@ func main(f func(App)) {
 	// TODO: send lifecycle events when e.g. the X11 window is iconified or moved off-screen.
 	sendLifecycle(lifecycle.StageFocused)
 
+	// TODO: translate X11 expose events to shiny paint events, instead of
+	// sending this synthetic paint event as a hack.
+	eventsIn <- paint.Event{}
+
 	donec := make(chan struct{})
 	go func() {
 		f(app{})
@@ -55,7 +59,7 @@ func main(f func(App)) {
 	// TODO: can we get the actual vsync signal?
 	ticker := time.NewTicker(time.Second / 60)
 	defer ticker.Stop()
-	tc := ticker.C
+	var tc <-chan time.Time
 
 	for {
 		select {
@@ -63,12 +67,12 @@ func main(f func(App)) {
 			return
 		case <-gl.WorkAvailable:
 			gl.DoWork()
-		case <-endPaint:
+		case <-publish:
 			C.swapBuffers()
 			tc = ticker.C
 		case <-tc:
 			tc = nil
-			eventsIn <- paint.Event{}
+			publishResult <- PublishResult{}
 		}
 		C.processEvents()
 	}

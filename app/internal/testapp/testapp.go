@@ -61,7 +61,7 @@ func main() {
 					gl.ClearColor(0, 1, 0, 1)
 				}
 				gl.Clear(gl.COLOR_BUFFER_BIT)
-				a.EndPaint(e)
+				a.Publish()
 				if sendPainting {
 					comm.Send("paint", color)
 					sendPainting = false
@@ -76,6 +76,7 @@ func main() {
 					}
 					sendPainting = true
 				}
+				// TODO: send our own paint Event??
 			}
 		}
 	})

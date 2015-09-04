@@ -177,13 +177,16 @@ func drawgl(ctx uintptr) {
 		sendLifecycle(lifecycle.StageFocused)
 	}
 
+	// TODO(crawshaw): don't send a paint.Event unconditionally. Only send one
+	// if the window actually needs redrawing.
 	eventsIn <- paint.Event{}
 
 	for {
 		select {
 		case <-gl.WorkAvailable:
 			gl.DoWork()
-		case <-endPaint:
+		case <-publish:
+			publishResult <- PublishResult{}
 			return
 		}
 	}
