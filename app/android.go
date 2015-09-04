@@ -299,6 +299,8 @@ func mainUI(vm, jniEnv, ctx uintptr) error {
 	// visible on <-endPaint unless Generation agrees. If possible,
 	// windowRedrawDone is signalled, allowing onNativeWindowRedrawNeeded
 	// to return.
+	//
+	// TODO: is this still needed?
 	var redrawGen uint32
 
 	for {
@@ -338,10 +340,8 @@ func mainUI(vm, jniEnv, ctx uintptr) error {
 			sendLifecycle(lifecycle.StageAlive)
 		case <-gl.WorkAvailable:
 			gl.DoWork()
-		case p := <-endPaint:
-			if p.Generation != redrawGen {
-				continue
-			}
+		case <-publish:
+			// TODO: compare a generation number to redrawGen for stale paints?
 			if C.surface != nil {
 				// eglSwapBuffers blocks until vsync.
 				if C.eglSwapBuffers(C.display, C.surface) == C.EGL_FALSE {
@@ -352,10 +352,7 @@ func mainUI(vm, jniEnv, ctx uintptr) error {
 			case windowRedrawDone <- struct{}{}:
 			default:
 			}
-			if C.surface != nil {
-				redrawGen++
-				eventsIn <- paint.Event{redrawGen}
-			}
+			publishResult <- PublishResult{}
 		}
 	}
 }

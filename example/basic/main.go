@@ -57,14 +57,16 @@ var (
 
 func main() {
 	app.Main(func(a app.App) {
-		var sz size.Event
+		visible, sz := false, size.Event{}
 		for e := range a.Events() {
 			switch e := app.Filter(e).(type) {
 			case lifecycle.Event:
 				switch e.Crosses(lifecycle.StageVisible) {
 				case lifecycle.CrossOn:
+					visible = true
 					onStart()
 				case lifecycle.CrossOff:
+					visible = false
 					onStop()
 				}
 			case size.Event:
@@ -73,7 +75,16 @@ func main() {
 				touchY = float32(sz.HeightPx / 2)
 			case paint.Event:
 				onPaint(sz)
-				a.EndPaint(e)
+				a.Publish()
+				if visible {
+					// Drive the animation by preparing to paint the next frame
+					// after this one is shown.
+					//
+					// TODO: is paint.Event the right thing to send? Should we
+					// have a dedicated publish.Event type? Should App.Publish
+					// take an optional event sender and send a publish.Event?
+					a.Send(paint.Event{})
+				}
 			case touch.Event:
 				touchX = e.X
 				touchY = e.Y

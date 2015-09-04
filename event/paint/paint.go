@@ -11,5 +11,7 @@ package paint // import "golang.org/x/mobile/event/paint"
 // frame is completed by calling the App's EndPaint method.
 type Event struct {
 	// Generation is a monotonically increasing generation number.
+	//
+	// TODO: is a generation number the right model for stale paints?
 	Generation uint32
 }
