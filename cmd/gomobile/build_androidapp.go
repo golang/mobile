@@ -106,7 +106,7 @@ func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
 	if !buildN {
 		apkw = NewWriter(out, privKey)
 	}
-	apkwcreate := func(name string) (io.Writer, error) {
+	apkwCreate := func(name string) (io.Writer, error) {
 		if buildV {
 			fmt.Fprintf(os.Stderr, "apk: %s\n", name)
 		}
@@ -115,8 +115,25 @@ func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
 		}
 		return apkw.Create(name)
 	}
+	apkwWriteFile := func(dst, src string) error {
+		w, err := apkwCreate(dst)
+		if err != nil {
+			return err
+		}
+		if !buildN {
+			f, err := os.Open(src)
+			if err != nil {
+				return err
+			}
+			defer f.Close()
+			if _, err := io.Copy(w, f); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 
-	w, err := apkwcreate("AndroidManifest.xml")
+	w, err := apkwCreate("AndroidManifest.xml")
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +141,7 @@ func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
 		return nil, err
 	}
 
-	w, err = apkwcreate("classes.dex")
+	w, err = apkwCreate("classes.dex")
 	if err != nil {
 		return nil, err
 	}
@@ -136,44 +153,16 @@ func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
 		return nil, err
 	}
 
-	w, err = apkwcreate("lib/armeabi/lib" + libName + ".so")
-	if err != nil {
+	if err := apkwWriteFile("lib/armeabi/lib"+libName+".so", libPath); err != nil {
 		return nil, err
-	}
-	if !buildN {
-		r, err := os.Open(libPath)
-		if err != nil {
-			return nil, err
-		}
-		if _, err := io.Copy(w, r); err != nil {
-			return nil, err
-		}
 	}
 
 	if nmpkgs["golang.org/x/mobile/exp/audio/al"] {
-		alDir := filepath.Join(ndkccpath, "openal/lib")
-		filepath.Walk(alDir, func(path string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-			if info.IsDir() {
-				return nil
-			}
-			name := "lib/" + path[len(alDir)+1:]
-			w, err := apkwcreate(name)
-			if err != nil {
-				return err
-			}
-			if !buildN {
-				f, err := os.Open(path)
-				if err != nil {
-					return err
-				}
-				defer f.Close()
-				_, err = io.Copy(w, f)
-			}
-			return err
-		})
+		dst := "lib/armeabi/libopenal.so"
+		src := filepath.Join(ndkccpath, "openal/"+dst)
+		if err := apkwWriteFile(dst, src); err != nil {
+			return nil, err
+		}
 	}
 
 	// Add any assets.
@@ -198,17 +187,7 @@ func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
 				return nil
 			}
 			name := "assets/" + path[len(assetsDir)+1:]
-			w, err := apkwcreate(name)
-			if err != nil {
-				return err
-			}
-			f, err := os.Open(path)
-			if err != nil {
-				return err
-			}
-			defer f.Close()
-			_, err = io.Copy(w, f)
-			return err
+			return apkwWriteFile(name, path)
 		})
 		if err != nil {
 			return nil, fmt.Errorf("asset %v", err)
