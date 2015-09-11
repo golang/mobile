@@ -25,7 +25,9 @@ package app
 #cgo LDFLAGS: -landroid -llog -lEGL -lGLESv2
 
 #include <android/configuration.h>
+#include <android/input.h>
 #include <android/keycodes.h>
+#include <android/looper.h>
 #include <android/native_activity.h>
 #include <android/native_window.h>
 #include <EGL/egl.h>
@@ -157,12 +159,31 @@ func onNativeWindowDestroyed(activity *C.ANativeActivity, window *C.ANativeWindo
 
 //export onInputQueueCreated
 func onInputQueueCreated(activity *C.ANativeActivity, q *C.AInputQueue) {
-	inputQueue <- q
+	onInputQueue(q)
 }
 
 //export onInputQueueDestroyed
 func onInputQueueDestroyed(activity *C.ANativeActivity, q *C.AInputQueue) {
-	inputQueue <- nil
+	onInputQueue(nil)
+}
+
+func onInputQueue(q *C.AInputQueue) {
+	if inputQueueDonec != nil {
+		close(inputQueueDonec)
+		inputQueueDonec = nil
+	}
+	if q == nil {
+		return
+	}
+	// Disassociate the AInputQueue from this thread's looper.
+	C.AInputQueue_detachLooper(q)
+	inputQueueDonec = make(chan struct{})
+	f := runInputQueue(q, inputQueueDonec)
+	go func() {
+		if err := mobileinit.RunOnJVM(f); err != nil {
+			log.Fatalf("app: %v", err)
+		}
+	}()
 }
 
 //export onContentRectChanged
@@ -233,7 +254,7 @@ func onLowMemory(activity *C.ANativeActivity) {
 }
 
 var (
-	inputQueue         = make(chan *C.AInputQueue)
+	inputQueueDonec    = chan struct{}(nil)
 	windowDestroyed    = make(chan *C.ANativeWindow)
 	windowCreated      = make(chan *C.ANativeWindow)
 	windowRedrawNeeded = make(chan *C.ANativeWindow)
@@ -258,15 +279,12 @@ func main(f func(App)) {
 var mainUserFn func(App)
 
 func mainUI(vm, jniEnv, ctx uintptr) error {
-	env := (*C.JNIEnv)(unsafe.Pointer(jniEnv)) // not a Go heap pointer
-
 	donec := make(chan struct{})
 	go func() {
 		mainUserFn(app{})
 		close(donec)
 	}()
 
-	var q *C.AInputQueue
 	var pixelsPerPt float32
 	var orientation size.Orientation
 
@@ -284,12 +302,8 @@ func mainUI(vm, jniEnv, ctx uintptr) error {
 	var redrawGen uint32
 
 	for {
-		if q != nil {
-			processEvents(env, q)
-		}
 		select {
 		case <-windowCreated:
-		case q = <-inputQueue:
 		case <-donec:
 			return nil
 		case cfg := <-windowConfigChange:
@@ -346,14 +360,44 @@ func mainUI(vm, jniEnv, ctx uintptr) error {
 	}
 }
 
-func processEvents(env *C.JNIEnv, queue *C.AInputQueue) {
-	var event *C.AInputEvent
-	for C.AInputQueue_getEvent(queue, &event) >= 0 {
-		if C.AInputQueue_preDispatchEvent(queue, event) != 0 {
-			continue
+func runInputQueue(q *C.AInputQueue, donec <-chan struct{}) func(vm, jniEnv, ctx uintptr) error {
+	return func(vm, jniEnv, ctx uintptr) error {
+		env := (*C.JNIEnv)(unsafe.Pointer(jniEnv)) // not a Go heap pointer
+
+		// Android loopers select on OS file descriptors, not Go channels, so
+		// we translate the donec channel to an os.Pipe and connect the read
+		// end to a looper.
+		r, w, err := os.Pipe()
+		if err != nil {
+			return fmt.Errorf("os.Pipe: %v", err)
 		}
-		processEvent(env, event)
-		C.AInputQueue_finishEvent(queue, event, 0)
+		go func() {
+			<-donec
+			w.Close()
+		}()
+		defer r.Close()
+		rfd := C.int(r.Fd())
+		l := C.ALooper_prepare(C.ALOOPER_PREPARE_ALLOW_NON_CALLBACKS)
+		C.ALooper_addFd(l, rfd, 0, 0, nil, nil)
+
+		// Associate the AInputQueue with this thread's looper.
+		C.AInputQueue_attachLooper(q, l, 0, nil, nil)
+
+		var gotFD C.int
+		for C.ALooper_pollAll(-1, &gotFD, nil, nil) >= 0 {
+			if gotFD == rfd {
+				break
+			}
+			var e *C.AInputEvent
+			for C.AInputQueue_getEvent(q, &e) >= 0 {
+				if C.AInputQueue_preDispatchEvent(q, e) != 0 {
+					continue
+				}
+				processEvent(env, e)
+				C.AInputQueue_finishEvent(q, e, 0)
+			}
+		}
+		return nil
 	}
 }
 
