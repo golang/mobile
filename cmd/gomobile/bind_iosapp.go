@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"go/build"
 	"io"
+	"io/ioutil"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -77,11 +78,31 @@ func goIOSBind(pkg *build.Package) error {
 	}
 
 	// Copy header file next to output archive.
-	return copyFile(
+	err = copyFile(
 		headers+"/"+strings.Title(name)+".h",
 		tmpdir+"/objc/Go"+strings.Title(name)+".h",
 	)
+	if err != nil {
+		return err
+	}
+
+	resources := buildO + "/Versions/A/Resources"
+	if err := mkdir(resources); err != nil {
+		return err
+	}
+	if err := symlink("Versions/Current/Resources", buildO+"/Resources"); err != nil {
+		return err
+	}
+	return ioutil.WriteFile(buildO+"/Resources/Info.plist", []byte(iosBindInfoPlist), 0666)
 }
+
+const iosBindInfoPlist = `<?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+    <plist version="1.0">
+      <dict>
+      </dict>
+    </plist>
+`
 
 func goIOSBindArchive(name, path string, env []string) (string, error) {
 	arch := getenv(env, "GOARCH")
