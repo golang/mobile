@@ -118,6 +118,7 @@ func goIOSBindArchive(name, path string, env []string) (string, error) {
 		"-I", ".",
 		"-g", "-O2",
 		"-o", obj,
+		"-fobjc-arc", // enable ARC
 		"-c", "Go"+strings.Title(name)+".m",
 	)
 	cmd.Args = append(cmd.Args, strings.Split(getenv(env, "CGO_CFLAGS"), " ")...)
