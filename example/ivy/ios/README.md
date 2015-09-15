@@ -6,8 +6,8 @@ To build, first create the mobile.framework out of the Go
 implementation of Ivy. Run:
 
 ```
-	go get robpike.io/ivy
-	gomobile bind -target=ios robpike.io/ivy/mobile
+go get robpike.io/ivy
+gomobile bind -target=ios robpike.io/ivy/mobile
 ```
 
 Place the mobile.framework directory in this directory, and
