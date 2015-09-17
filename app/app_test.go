@@ -31,6 +31,22 @@ func TestAndroidApp(t *testing.T) {
 	if _, err := exec.Command("which", "adb").CombinedOutput(); err != nil {
 		t.Skip("command adb not found, skipping")
 	}
+	devicesTxt, err := exec.Command("adb", "devices").CombinedOutput()
+	if err != nil {
+		t.Errorf("adb devices failed: %v: %v", err, devicesTxt)
+	}
+	deviceCount := 0
+	for _, d := range strings.Split(strings.TrimSpace(string(devicesTxt)), "\n") {
+		if strings.Contains(d, "List of devices") {
+			continue
+		}
+		// TODO(crawshaw): I believe some unusable devices can appear in the
+		// list with note on them, but I cannot reproduce this right now.
+		deviceCount++
+	}
+	if deviceCount == 0 {
+		t.Skip("no android devices attached")
+	}
 
 	run(t, "gomobile", "version")
 
