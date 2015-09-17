@@ -137,8 +137,7 @@ func onWindowFocusChanged(activity *C.ANativeActivity, hasFocus int) {
 }
 
 //export onNativeWindowCreated
-func onNativeWindowCreated(activity *C.ANativeActivity, w *C.ANativeWindow) {
-	windowCreated <- w
+func onNativeWindowCreated(activity *C.ANativeActivity, window *C.ANativeWindow) {
 }
 
 //export onNativeWindowRedrawNeeded
@@ -256,7 +255,6 @@ func onLowMemory(activity *C.ANativeActivity) {
 var (
 	inputQueueDonec    = chan struct{}(nil)
 	windowDestroyed    = make(chan *C.ANativeWindow)
-	windowCreated      = make(chan *C.ANativeWindow)
 	windowRedrawNeeded = make(chan *C.ANativeWindow)
 	windowRedrawDone   = make(chan struct{})
 	windowConfigChange = make(chan windowConfig)
@@ -305,7 +303,6 @@ func mainUI(vm, jniEnv, ctx uintptr) error {
 
 	for {
 		select {
-		case <-windowCreated:
 		case <-donec:
 			return nil
 		case cfg := <-windowConfigChange:
