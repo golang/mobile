@@ -188,6 +188,10 @@ func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
 			if err != nil {
 				return err
 			}
+			if name := filepath.Base(path); strings.HasPrefix(name, ".") {
+				// Do not include the hidden files.
+				return nil
+			}
 			if info.IsDir() {
 				return nil
 			}
