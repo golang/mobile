@@ -44,6 +44,8 @@ import (
 )
 
 var (
+	images   *glutil.Images
+	fps      *debug.FPS
 	program  gl.Program
 	position gl.Attrib
 	offset   gl.Uniform
@@ -109,13 +111,15 @@ func onStart() {
 	color = gl.GetUniformLocation(program, "color")
 	offset = gl.GetUniformLocation(program, "offset")
 
-	// TODO(crawshaw): the debug package needs to put GL state init here
-	// Can this be an app.RegisterFilter call now??
+	images = glutil.NewImages()
+	fps = debug.NewFPS(images)
 }
 
 func onStop() {
 	gl.DeleteProgram(program)
 	gl.DeleteBuffer(buf)
+	fps.Release()
+	images.Release()
 }
 
 func onPaint(sz size.Event) {
@@ -138,7 +142,7 @@ func onPaint(sz size.Event) {
 	gl.DrawArrays(gl.TRIANGLES, 0, vertexCount)
 	gl.DisableVertexAttribArray(position)
 
-	debug.DrawFPS(sz)
+	fps.Draw(sz)
 }
 
 var triangleData = f32.Bytes(binary.LittleEndian,

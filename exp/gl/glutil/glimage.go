@@ -8,20 +8,18 @@ package glutil
 
 import (
 	"encoding/binary"
-	"fmt"
 	"image"
 	"runtime"
 	"sync"
 
-	"golang.org/x/mobile/app"
-	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/exp/f32"
 	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/gl"
 )
 
-var glimage struct {
+// Images maintains the shared state used by a set of *Image objects.
+type Images struct {
 	quadXY        gl.Buffer
 	quadUV        gl.Buffer
 	program       gl.Program
@@ -30,142 +28,59 @@ var glimage struct {
 	uvp           gl.Uniform
 	inUV          gl.Attrib
 	textureSample gl.Uniform
+
+	// TODO(crawshaw): store *gl.Context
+
+	mu           sync.Mutex
+	activeImages int
 }
 
-func init() {
-	app.RegisterFilter(func(e interface{}) interface{} {
-		if e, ok := e.(lifecycle.Event); ok {
-			switch e.Crosses(lifecycle.StageVisible) {
-			case lifecycle.CrossOn:
-				start()
-			case lifecycle.CrossOff:
-				stop()
-			}
-		}
-		return e
-	})
-}
-
-func start() {
-	var err error
-	glimage.program, err = CreateProgram(vertexShader, fragmentShader)
+// NewImages creates an *Images.
+// TODO(crawshaw): take *gl.Context parameter
+func NewImages() *Images {
+	program, err := CreateProgram(vertexShader, fragmentShader)
 	if err != nil {
 		panic(err)
 	}
 
-	glimage.quadXY = gl.CreateBuffer()
-	glimage.quadUV = gl.CreateBuffer()
+	p := &Images{
+		quadXY:        gl.CreateBuffer(),
+		quadUV:        gl.CreateBuffer(),
+		program:       program,
+		pos:           gl.GetAttribLocation(program, "pos"),
+		mvp:           gl.GetUniformLocation(program, "mvp"),
+		uvp:           gl.GetUniformLocation(program, "uvp"),
+		inUV:          gl.GetAttribLocation(program, "inUV"),
+		textureSample: gl.GetUniformLocation(program, "textureSample"),
+	}
 
-	gl.BindBuffer(gl.ARRAY_BUFFER, glimage.quadXY)
+	gl.BindBuffer(gl.ARRAY_BUFFER, p.quadXY)
 	gl.BufferData(gl.ARRAY_BUFFER, quadXYCoords, gl.STATIC_DRAW)
-	gl.BindBuffer(gl.ARRAY_BUFFER, glimage.quadUV)
+	gl.BindBuffer(gl.ARRAY_BUFFER, p.quadUV)
 	gl.BufferData(gl.ARRAY_BUFFER, quadUVCoords, gl.STATIC_DRAW)
 
-	glimage.pos = gl.GetAttribLocation(glimage.program, "pos")
-	glimage.mvp = gl.GetUniformLocation(glimage.program, "mvp")
-	glimage.uvp = gl.GetUniformLocation(glimage.program, "uvp")
-	glimage.inUV = gl.GetAttribLocation(glimage.program, "inUV")
-	glimage.textureSample = gl.GetUniformLocation(glimage.program, "textureSample")
-
-	texmap.Lock()
-	defer texmap.Unlock()
-	for key, tex := range texmap.texs {
-		texmap.init(key)
-		tex.needsUpload = true
-	}
+	return p
 }
 
-func stop() {
-	gl.DeleteProgram(glimage.program)
-	gl.DeleteBuffer(glimage.quadXY)
-	gl.DeleteBuffer(glimage.quadUV)
-
-	texmap.Lock()
-	for _, t := range texmap.texs {
-		if t.gltex.Value != 0 {
-			gl.DeleteTexture(t.gltex)
-		}
-		t.gltex = gl.Texture{}
-	}
-	texmap.Unlock()
-}
-
-type texture struct {
-	gltex       gl.Texture
-	width       int
-	height      int
-	needsUpload bool
-}
-
-var texmap = &texmapCache{
-	texs: make(map[texmapKey]*texture),
-	next: 1, // avoid using 0 to aid debugging
-}
-
-type texmapKey int
-
-type texmapCache struct {
-	sync.Mutex
-	texs map[texmapKey]*texture
-	next texmapKey
-
-	// TODO(crawshaw): This is a workaround for having nowhere better to clean up deleted textures.
-	// Better: app.UI(func() { gl.DeleteTexture(t) } in texmap.delete
-	// Best: Redesign the gl package to do away with this painful notion of a UI thread.
-	toDelete []gl.Texture
-}
-
-func (tm *texmapCache) create(dx, dy int) *texmapKey {
-	tm.Lock()
-	defer tm.Unlock()
-	key := tm.next
-	tm.next++
-	tm.texs[key] = &texture{
-		width:  dx,
-		height: dy,
-	}
-	tm.init(key)
-	return &key
-}
-
-// init creates an underlying GL texture for a key.
-// Must be called with a valid GL context.
-// Must hold tm.Mutex before calling.
-func (tm *texmapCache) init(key texmapKey) {
-	tex := tm.texs[key]
-	if tex.gltex.Value != 0 {
-		panic(fmt.Sprintf("attempting to init key (%v) with valid texture", key))
-	}
-	tex.gltex = gl.CreateTexture()
-
-	gl.BindTexture(gl.TEXTURE_2D, tex.gltex)
-	gl.TexImage2D(gl.TEXTURE_2D, 0, tex.width, tex.height, gl.RGBA, gl.UNSIGNED_BYTE, nil)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-
-	for _, t := range tm.toDelete {
-		gl.DeleteTexture(t)
-	}
-	tm.toDelete = nil
-}
-
-func (tm *texmapCache) delete(key texmapKey) {
-	tm.Lock()
-	defer tm.Unlock()
-	tex := tm.texs[key]
-	delete(tm.texs, key)
-	if tex == nil {
+// Release releases any held OpenGL resources.
+// All *Image objects must be released first, or this function panics.
+func (p *Images) Release() {
+	if p.program == (gl.Program{}) {
 		return
 	}
-	tm.toDelete = append(tm.toDelete, tex.gltex)
-}
 
-func (tm *texmapCache) get(key texmapKey) *texture {
-	tm.Lock()
-	defer tm.Unlock()
-	return tm.texs[key]
+	p.mu.Lock()
+	rem := p.activeImages
+	p.mu.Unlock()
+	if rem > 0 {
+		panic("glutil.Images.Release called, but active *Image objects remain")
+	}
+
+	gl.DeleteProgram(p.program)
+	gl.DeleteBuffer(p.quadXY)
+	gl.DeleteBuffer(p.quadUV)
+
+	p.program = gl.Program{}
 }
 
 // Image bridges between an *image.RGBA and an OpenGL texture.
@@ -177,13 +92,17 @@ func (tm *texmapCache) get(key texmapKey) *texture {
 // The typical use of an Image is as a texture atlas.
 type Image struct {
 	RGBA *image.RGBA
-	key  *texmapKey
+
+	gltex  gl.Texture
+	width  int
+	height int
+	images *Images
 }
 
 // NewImage creates an Image of the given size.
 //
 // Both a host-memory *image.RGBA and a GL texture are created.
-func NewImage(w, h int) *Image {
+func (p *Images) NewImage(w, h int) *Image {
 	dx := roundToPower2(w)
 	dy := roundToPower2(h)
 
@@ -193,12 +112,26 @@ func NewImage(w, h int) *Image {
 	m := image.NewRGBA(image.Rect(0, 0, dx, dy))
 
 	img := &Image{
-		RGBA: m.SubImage(image.Rect(0, 0, w, h)).(*image.RGBA),
-		key:  texmap.create(dx, dy),
+		RGBA:   m.SubImage(image.Rect(0, 0, w, h)).(*image.RGBA),
+		images: p,
+		width:  dx,
+		height: dy,
 	}
-	runtime.SetFinalizer(img.key, func(key *texmapKey) {
-		texmap.delete(*key)
-	})
+
+	p.mu.Lock()
+	p.activeImages++
+	p.mu.Unlock()
+
+	img.gltex = gl.CreateTexture()
+
+	gl.BindTexture(gl.TEXTURE_2D, img.gltex)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, img.width, img.height, gl.RGBA, gl.UNSIGNED_BYTE, nil)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+
+	runtime.SetFinalizer(img, (*Image).Release)
 	return img
 }
 
@@ -212,28 +145,32 @@ func roundToPower2(x int) int {
 
 // Upload copies the host image data to the GL device.
 func (img *Image) Upload() {
-	tex := texmap.get(*img.key)
-	gl.BindTexture(gl.TEXTURE_2D, tex.gltex)
-	gl.TexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, tex.width, tex.height, gl.RGBA, gl.UNSIGNED_BYTE, img.RGBA.Pix)
+	gl.BindTexture(gl.TEXTURE_2D, img.gltex)
+	gl.TexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, img.width, img.height, gl.RGBA, gl.UNSIGNED_BYTE, img.RGBA.Pix)
 }
 
-// Delete invalidates the Image and removes any underlying data structures.
+// Release invalidates the Image and removes any underlying data structures.
 // The Image cannot be used after being deleted.
-func (img *Image) Delete() {
-	texmap.delete(*img.key)
+func (img *Image) Release() {
+	if img.gltex == (gl.Texture{}) {
+		return
+	}
+
+	gl.DeleteTexture(img.gltex)
+	img.gltex = gl.Texture{}
+
+	img.images.mu.Lock()
+	img.images.activeImages--
+	img.images.mu.Unlock()
 }
 
 // Draw draws the srcBounds part of the image onto a parallelogram, defined by
 // three of its corners, in the current GL framebuffer.
 func (img *Image) Draw(sz size.Event, topLeft, topRight, bottomLeft geom.Point, srcBounds image.Rectangle) {
+	glimage := img.images
+
 	// TODO(crawshaw): Adjust viewport for the top bar on android?
 	gl.UseProgram(glimage.program)
-	tex := texmap.get(*img.key)
-	if tex.needsUpload {
-		img.Upload()
-		tex.needsUpload = false
-	}
-
 	{
 		// We are drawing a parallelogram PQRS, defined by three of its
 		// corners, onto the entire GL framebuffer ABCD. The two quads may
@@ -309,8 +246,8 @@ func (img *Image) Draw(sz size.Event, topLeft, topRight, bottomLeft geom.Point, 
 		//
 		// and the PQRS quad is always axis-aligned. First of all, convert
 		// from pixel space to texture space.
-		w := float32(tex.width)
-		h := float32(tex.height)
+		w := float32(img.width)
+		h := float32(img.height)
 		px := float32(srcBounds.Min.X-img.RGBA.Rect.Min.X) / w
 		py := float32(srcBounds.Min.Y-img.RGBA.Rect.Min.Y) / h
 		qx := float32(srcBounds.Max.X-img.RGBA.Rect.Min.X) / w
@@ -336,7 +273,7 @@ func (img *Image) Draw(sz size.Event, topLeft, topRight, bottomLeft geom.Point, 
 	}
 
 	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, tex.gltex)
+	gl.BindTexture(gl.TEXTURE_2D, img.gltex)
 	gl.Uniform1i(glimage.textureSample, 0)
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, glimage.quadXY)

@@ -28,6 +28,7 @@ type node struct {
 }
 
 type texture struct {
+	e       *engine
 	glImage *glutil.Image
 	b       image.Rectangle
 }
@@ -43,18 +44,23 @@ func (t *texture) Upload(r image.Rectangle, src image.Image) {
 	t.glImage.Upload()
 }
 
-func (t *texture) Unload() {
-	panic("TODO")
+func (t *texture) Release() {
+	t.glImage.Release()
+	delete(t.e.textures, t)
 }
 
-func Engine() sprite.Engine {
+// Engine creates an OpenGL-based sprite.Engine.
+func Engine(images *glutil.Images) sprite.Engine {
 	return &engine{
-		nodes: []*node{nil},
+		nodes:    []*node{nil},
+		images:   images,
+		textures: make(map[*texture]struct{}),
 	}
 }
 
 type engine struct {
-	glImages map[sprite.Texture]*glutil.Image
+	images   *glutil.Images
+	textures map[*texture]struct{}
 	nodes    []*node
 
 	absTransforms []f32.Affine
@@ -77,7 +83,12 @@ func (e *engine) Unregister(n *sprite.Node) {
 
 func (e *engine) LoadTexture(src image.Image) (sprite.Texture, error) {
 	b := src.Bounds()
-	t := &texture{glutil.NewImage(b.Dx(), b.Dy()), b}
+	t := &texture{
+		e:       e,
+		glImage: e.images.NewImage(b.Dx(), b.Dy()),
+		b:       b,
+	}
+	e.textures[t] = struct{}{}
 	t.Upload(b, src)
 	// TODO: set "glImage.Pix = nil"?? We don't need the CPU-side image any more.
 	return t, nil
@@ -141,4 +152,10 @@ func (e *engine) render(n *sprite.Node, t clock.Time, sz size.Event) {
 
 	// Pop absTransforms.
 	e.absTransforms = e.absTransforms[:len(e.absTransforms)-1]
+}
+
+func (e *engine) Release() {
+	for img := range e.textures {
+		img.Release()
+	}
 }
