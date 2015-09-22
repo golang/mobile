@@ -40,6 +40,17 @@ type App interface {
 	// Publish flushes any pending drawing commands, such as OpenGL calls, and
 	// swaps the back buffer to the screen.
 	Publish() PublishResult
+
+	// TODO: replace filters (and the Events channel) with a NextEvent method?
+
+	// Filter calls each registered event filter function in sequence.
+	Filter(event interface{}) interface{}
+
+	// RegisterFilter registers a event filter function to be called by Filter. The
+	// function can return a different event, or return nil to consume the event,
+	// but the function can also return its argument unchanged, where its purpose
+	// is to trigger a side effect rather than modify the event.
+	RegisterFilter(f func(interface{}) interface{})
 }
 
 // PublishResult is the result of an App.Publish call.
@@ -49,37 +60,47 @@ type PublishResult struct {
 	BackBufferPreserved bool
 }
 
-var (
-	lifecycleStage = lifecycle.StageDead
+var theApp = &app{
+	eventsOut:      make(chan interface{}),
+	lifecycleStage: lifecycle.StageDead,
+	publish:        make(chan struct{}),
+	publishResult:  make(chan PublishResult),
+}
 
-	eventsOut     = make(chan interface{})
-	eventsIn      = pump(eventsOut)
-	publish       = make(chan struct{})
-	publishResult = make(chan PublishResult)
-)
+func init() {
+	theApp.eventsIn = pump(theApp.eventsOut)
+}
 
-func sendLifecycle(to lifecycle.Stage) {
-	if lifecycleStage == to {
+func (a *app) sendLifecycle(to lifecycle.Stage) {
+	if a.lifecycleStage == to {
 		return
 	}
-	eventsIn <- lifecycle.Event{
-		From: lifecycleStage,
+	a.eventsIn <- lifecycle.Event{
+		From: a.lifecycleStage,
 		To:   to,
 	}
-	lifecycleStage = to
+	a.lifecycleStage = to
 }
 
-type app struct{}
+type app struct {
+	filters []func(interface{}) interface{}
 
-func (app) Events() <-chan interface{} {
-	return eventsOut
+	eventsOut      chan interface{}
+	eventsIn       chan interface{}
+	lifecycleStage lifecycle.Stage
+	publish        chan struct{}
+	publishResult  chan PublishResult
 }
 
-func (app) Send(event interface{}) {
-	eventsIn <- event
+func (a *app) Events() <-chan interface{} {
+	return a.eventsOut
 }
 
-func (app) Publish() PublishResult {
+func (a *app) Send(event interface{}) {
+	a.eventsIn <- event
+}
+
+func (a *app) Publish() PublishResult {
 	// gl.Flush is a lightweight (on modern GL drivers) blocking call
 	// that ensures all GL functions pending in the gl package have
 	// been passed onto the GL driver before the app package attempts
@@ -88,28 +109,19 @@ func (app) Publish() PublishResult {
 	// This enforces that the final receive (for this paint cycle) on
 	// gl.WorkAvailable happens before the send on endPaint.
 	gl.Flush()
-	publish <- struct{}{}
-	return <-publishResult
+	a.publish <- struct{}{}
+	return <-a.publishResult
 }
 
-var filters []func(interface{}) interface{}
-
-// Filter calls each registered event filter function in sequence.
-func Filter(event interface{}) interface{} {
-	for _, f := range filters {
+func (a *app) Filter(event interface{}) interface{} {
+	for _, f := range a.filters {
 		event = f(event)
 	}
 	return event
 }
 
-// RegisterFilter registers a event filter function to be called by Filter. The
-// function can return a different event, or return nil to consume the event,
-// but the function can also return its argument unchanged, where its purpose
-// is to trigger a side effect rather than modify the event.
-//
-// RegisterFilter should only be called from init functions.
-func RegisterFilter(f func(interface{}) interface{}) {
-	filters = append(filters, f)
+func (a *app) RegisterFilter(f func(interface{}) interface{}) {
+	a.filters = append(a.filters, f)
 }
 
 type stopPumping struct{}
@@ -181,8 +193,8 @@ func pump(dst chan interface{}) (src chan interface{}) {
 //
 // TODO: does Android need this?? It seems to work without it (Nexus 7,
 // KitKat). If only x11 needs this, should we move this to x11.go??
-func registerGLViewportFilter() {
-	RegisterFilter(func(e interface{}) interface{} {
+func (a *app) registerGLViewportFilter() {
+	a.RegisterFilter(func(e interface{}) interface{} {
 		if e, ok := e.(size.Event); ok {
 			gl.Viewport(0, 0, e.WidthPx, e.HeightPx)
 		}

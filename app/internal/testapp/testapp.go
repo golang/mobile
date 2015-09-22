@@ -43,7 +43,7 @@ func main() {
 		color := "red"
 		sendPainting := false
 		for e := range a.Events() {
-			switch e := app.Filter(e).(type) {
+			switch e := a.Filter(e).(type) {
 			case lifecycle.Event:
 				switch e.Crosses(lifecycle.StageVisible) {
 				case lifecycle.CrossOn:

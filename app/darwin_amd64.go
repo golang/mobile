@@ -57,7 +57,7 @@ func main(f func(App)) {
 	}
 
 	go func() {
-		f(app{})
+		f(theApp)
 		C.stopApp()
 		// TODO(crawshaw): trigger runApp to return
 	}()
@@ -89,9 +89,9 @@ func loop(ctx C.GLintptr) {
 				select {
 				case <-gl.WorkAvailable:
 					gl.DoWork()
-				case <-publish:
+				case <-theApp.publish:
 					C.CGLFlushDrawable(C.CGLGetCurrentContext())
-					publishResult <- PublishResult{}
+					theApp.publishResult <- PublishResult{}
 					break loop1
 				}
 			}
@@ -121,7 +121,7 @@ var windowHeightPx float32
 //export setGeom
 func setGeom(pixelsPerPt float32, widthPx, heightPx int) {
 	windowHeightPx = float32(heightPx)
-	eventsIn <- size.Event{
+	theApp.eventsIn <- size.Event{
 		WidthPx:     widthPx,
 		HeightPx:    heightPx,
 		WidthPt:     geom.Pt(float32(widthPx) / pixelsPerPt),
@@ -136,7 +136,7 @@ var touchEvents struct {
 }
 
 func sendTouch(t touch.Type, x, y float32) {
-	eventsIn <- touch.Event{
+	theApp.eventsIn <- touch.Event{
 		X:        x,
 		Y:        windowHeightPx - y,
 		Sequence: 0,
@@ -154,7 +154,7 @@ func eventMouseDragged(x, y float32) { sendTouch(touch.TypeMove, x, y) }
 func eventMouseEnd(x, y float32) { sendTouch(touch.TypeEnd, x, y) }
 
 //export lifecycleDead
-func lifecycleDead() { sendLifecycle(lifecycle.StageDead) }
+func lifecycleDead() { theApp.sendLifecycle(lifecycle.StageDead) }
 
 //export eventKey
 func eventKey(runeVal int32, direction uint8, code uint16, flags uint32) {
@@ -165,7 +165,7 @@ func eventKey(runeVal int32, direction uint8, code uint16, flags uint32) {
 		}
 	}
 
-	eventsIn <- key.Event{
+	theApp.eventsIn <- key.Event{
 		Rune:      convRune(rune(runeVal)),
 		Code:      convVirtualKeyCode(code),
 		Modifiers: modifiers,
@@ -206,16 +206,16 @@ var mods = [...]struct {
 }
 
 //export lifecycleAlive
-func lifecycleAlive() { sendLifecycle(lifecycle.StageAlive) }
+func lifecycleAlive() { theApp.sendLifecycle(lifecycle.StageAlive) }
 
 //export lifecycleVisible
 func lifecycleVisible() {
-	sendLifecycle(lifecycle.StageVisible)
-	eventsIn <- paint.Event{}
+	theApp.sendLifecycle(lifecycle.StageVisible)
+	theApp.eventsIn <- paint.Event{}
 }
 
 //export lifecycleFocused
-func lifecycleFocused() { sendLifecycle(lifecycle.StageFocused) }
+func lifecycleFocused() { theApp.sendLifecycle(lifecycle.StageFocused) }
 
 // convRune marks the Carbon/Cocoa private-range unicode rune representing
 // a non-unicode key event to -1, used for Rune in the key package.

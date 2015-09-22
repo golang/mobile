@@ -62,7 +62,7 @@ func main() {
 	app.Main(func(a app.App) {
 		visible, sz := false, size.Event{}
 		for e := range a.Events() {
-			switch e := app.Filter(e).(type) {
+			switch e := a.Filter(e).(type) {
 			case lifecycle.Event:
 				switch e.Crosses(lifecycle.StageVisible) {
 				case lifecycle.CrossOn:

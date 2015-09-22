@@ -36,7 +36,7 @@ import (
 )
 
 func init() {
-	registerGLViewportFilter()
+	theApp.registerGLViewportFilter()
 }
 
 func main(f func(App)) {
@@ -44,15 +44,15 @@ func main(f func(App)) {
 	C.createWindow()
 
 	// TODO: send lifecycle events when e.g. the X11 window is iconified or moved off-screen.
-	sendLifecycle(lifecycle.StageFocused)
+	theApp.sendLifecycle(lifecycle.StageFocused)
 
 	// TODO: translate X11 expose events to shiny paint events, instead of
 	// sending this synthetic paint event as a hack.
-	eventsIn <- paint.Event{}
+	theApp.eventsIn <- paint.Event{}
 
 	donec := make(chan struct{})
 	go func() {
-		f(app{})
+		f(theApp)
 		close(donec)
 	}()
 
@@ -83,7 +83,7 @@ func onResize(w, h int) {
 	// TODO(nigeltao): don't assume 72 DPI. DisplayWidth and DisplayWidthMM
 	// is probably the best place to start looking.
 	pixelsPerPt := float32(1)
-	eventsIn <- size.Event{
+	theApp.eventsIn <- size.Event{
 		WidthPx:     w,
 		HeightPx:    h,
 		WidthPt:     geom.Pt(w),
@@ -93,7 +93,7 @@ func onResize(w, h int) {
 }
 
 func sendTouch(t touch.Type, x, y float32) {
-	eventsIn <- touch.Event{
+	theApp.eventsIn <- touch.Event{
 		X:        x,
 		Y:        y,
 		Sequence: 0, // TODO: button??
@@ -118,6 +118,6 @@ func onStop() {
 		return
 	}
 	stopped = true
-	sendLifecycle(lifecycle.StageDead)
-	eventsIn <- stopPumping{}
+	theApp.sendLifecycle(lifecycle.StageDead)
+	theApp.eventsIn <- stopPumping{}
 }
