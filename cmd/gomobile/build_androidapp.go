@@ -179,6 +179,11 @@ func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
 		assetsDirExists = fi.IsDir()
 	}
 	if assetsDirExists {
+		// if assets is a symlink, follow the symlink.
+		assetsDir, err = filepath.EvalSymlinks(assetsDir)
+		if err != nil {
+			return nil, err
+		}
 		err = filepath.Walk(assetsDir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err

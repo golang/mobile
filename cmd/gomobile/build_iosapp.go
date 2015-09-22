@@ -140,7 +140,11 @@ func iosCopyAssets(pkg *build.Package, xcodeProjDir string) error {
 		// skip walking through to deep copy.
 		return nil
 	}
-
+	// if assets is a symlink, follow the symlink.
+	srcAssets, err = filepath.EvalSymlinks(srcAssets)
+	if err != nil {
+		return err
+	}
 	return filepath.Walk(srcAssets, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
