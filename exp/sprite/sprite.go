@@ -41,7 +41,7 @@ type Texture interface {
 	Bounds() (w, h int)
 	Download(r image.Rectangle, dst draw.Image)
 	Upload(r image.Rectangle, src image.Image)
-	Unload()
+	Release()
 }
 
 type SubTex struct {
@@ -61,6 +61,8 @@ type Engine interface {
 	// Render renders the scene arranged at the given time, for the given
 	// window configuration (dimensions and resolution).
 	Render(scene *Node, t clock.Time, sz size.Event)
+
+	Release()
 }
 
 // A Node is a renderable element and forms a tree of Nodes.

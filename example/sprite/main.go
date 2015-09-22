@@ -43,6 +43,7 @@ import (
 	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/exp/app/debug"
 	"golang.org/x/mobile/exp/f32"
+	"golang.org/x/mobile/exp/gl/glutil"
 	"golang.org/x/mobile/exp/sprite"
 	"golang.org/x/mobile/exp/sprite/clock"
 	"golang.org/x/mobile/exp/sprite/glsprite"
@@ -51,8 +52,10 @@ import (
 
 var (
 	startTime = time.Now()
-	eng       = glsprite.Engine()
+	images    *glutil.Images
+	eng       sprite.Engine
 	scene     *sprite.Node
+	fps       *debug.FPS
 )
 
 func main() {
@@ -83,13 +86,16 @@ func main() {
 
 func onPaint(sz size.Event) {
 	if scene == nil {
+		images = glutil.NewImages()
+		fps = debug.NewFPS(images)
+		eng = glsprite.Engine(images)
 		loadScene()
 	}
 	gl.ClearColor(1, 1, 1, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 	now := clock.Time(time.Since(startTime) * 60 / time.Second)
 	eng.Render(scene, now, sz)
-	debug.DrawFPS(sz)
+	fps.Draw(sz)
 }
 
 func newNode() *sprite.Node {

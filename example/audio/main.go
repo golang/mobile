@@ -44,9 +44,9 @@ import (
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/paint"
 	"golang.org/x/mobile/event/size"
-	"golang.org/x/mobile/exp/app/debug"
 	"golang.org/x/mobile/exp/audio"
 	"golang.org/x/mobile/exp/f32"
+	"golang.org/x/mobile/exp/gl/glutil"
 	"golang.org/x/mobile/exp/sprite"
 	"golang.org/x/mobile/exp/sprite/clock"
 	"golang.org/x/mobile/exp/sprite/glsprite"
@@ -61,8 +61,9 @@ const (
 var (
 	startTime = time.Now()
 
-	eng   = glsprite.Engine()
-	scene *sprite.Node
+	images *glutil.Images
+	eng    sprite.Engine
+	scene  *sprite.Node
 
 	player *audio.Player
 
@@ -98,6 +99,10 @@ func main() {
 }
 
 func onStart() {
+	images = glutil.NewImages()
+	eng = glsprite.Engine(images)
+	loadScene()
+
 	rc, err := asset.Open("boing.wav")
 	if err != nil {
 		log.Fatal(err)
@@ -109,18 +114,16 @@ func onStart() {
 }
 
 func onStop() {
+	eng.Release()
+	images.Release()
 	player.Close()
 }
 
 func onPaint() {
-	if scene == nil {
-		loadScene()
-	}
 	gl.ClearColor(1, 1, 1, 1)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 	now := clock.Time(time.Since(startTime) * 60 / time.Second)
 	eng.Render(scene, now, sz)
-	debug.DrawFPS(sz)
 }
 
 func newNode() *sprite.Node {
