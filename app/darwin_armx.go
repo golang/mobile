@@ -57,7 +57,7 @@ func main(f func(App)) {
 	}
 
 	go func() {
-		f(app{})
+		f(theApp)
 		// TODO(crawshaw): trigger runApp to return
 	}()
 	C.runApp()
@@ -109,7 +109,7 @@ func updateConfig(width, height, orientation int32) {
 	}
 	widthPx := screenScale * int(width)
 	heightPx := screenScale * int(height)
-	eventsIn <- size.Event{
+	theApp.eventsIn <- size.Event{
 		WidthPx:     widthPx,
 		HeightPx:    heightPx,
 		WidthPt:     geom.Pt(float32(widthPx) / pixelsPerPt),
@@ -160,7 +160,7 @@ func sendTouch(cTouch, cTouchType uintptr, x, y float32) {
 		touchIDs[id] = 0
 	}
 
-	eventsIn <- touch.Event{
+	theApp.eventsIn <- touch.Event{
 		X:        x,
 		Y:        y,
 		Sequence: touch.Sequence(id),
@@ -174,19 +174,19 @@ func drawgl(ctx uintptr) {
 		startedgl = true
 		C.setContext(unsafe.Pointer(ctx))
 		// TODO(crawshaw): not just on process start.
-		sendLifecycle(lifecycle.StageFocused)
+		theApp.sendLifecycle(lifecycle.StageFocused)
 	}
 
 	// TODO(crawshaw): don't send a paint.Event unconditionally. Only send one
 	// if the window actually needs redrawing.
-	eventsIn <- paint.Event{}
+	theApp.eventsIn <- paint.Event{}
 
 	for {
 		select {
 		case <-gl.WorkAvailable:
 			gl.DoWork()
 		case <-publish:
-			publishResult <- PublishResult{}
+			theApp.publishResult <- PublishResult{}
 			return
 		}
 	}

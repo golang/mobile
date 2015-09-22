@@ -55,7 +55,7 @@ goroutine as other code that calls OpenGL.
 	func main() {
 		app.Main(func(a app.App) {
 			for e := range a.Events() {
-				switch e := app.Filter(e).(type) {
+				switch e := a.Filter(e).(type) {
 				case lifecycle.Event:
 					// ...
 				case paint.Event:

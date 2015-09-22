@@ -62,7 +62,7 @@ func main() {
 				det = nil
 
 			case e := <-a.Events():
-				switch e := app.Filter(e).(type) {
+				switch e := a.Filter(e).(type) {
 				case size.Event:
 					sz = e
 				case paint.Event:

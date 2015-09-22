@@ -246,7 +246,7 @@ var (
 )
 
 func init() {
-	registerGLViewportFilter()
+	theApp.registerGLViewportFilter()
 }
 
 func main(f func(App)) {
@@ -270,7 +270,7 @@ var mainUserFn func(App)
 func mainUI(vm, jniEnv, ctx uintptr) error {
 	donec := make(chan struct{})
 	go func() {
-		mainUserFn(app{})
+		mainUserFn(theApp)
 		close(donec)
 	}()
 
@@ -305,10 +305,10 @@ func mainUI(vm, jniEnv, ctx uintptr) error {
 					return fmt.Errorf("%s (%s)", C.GoString(errStr), eglGetError())
 				}
 			}
-			sendLifecycle(lifecycle.StageFocused)
+			theApp.sendLifecycle(lifecycle.StageFocused)
 			widthPx := int(C.ANativeWindow_getWidth(w))
 			heightPx := int(C.ANativeWindow_getHeight(w))
-			eventsIn <- size.Event{
+			theApp.eventsIn <- size.Event{
 				WidthPx:     widthPx,
 				HeightPx:    heightPx,
 				WidthPt:     geom.Pt(float32(widthPx) / pixelsPerPt),
@@ -317,7 +317,7 @@ func mainUI(vm, jniEnv, ctx uintptr) error {
 				Orientation: orientation,
 			}
 			redrawGen++
-			eventsIn <- paint.Event{redrawGen}
+			theApp.eventsIn <- paint.Event{redrawGen}
 		case <-windowDestroyed:
 			if C.surface != nil {
 				if errStr := C.destroyEGLSurface(); errStr != nil {
@@ -325,10 +325,10 @@ func mainUI(vm, jniEnv, ctx uintptr) error {
 				}
 			}
 			C.surface = nil
-			sendLifecycle(lifecycle.StageAlive)
+			theApp.sendLifecycle(lifecycle.StageAlive)
 		case <-gl.WorkAvailable:
 			gl.DoWork()
-		case <-publish:
+		case <-theApp.publish:
 			// TODO: compare a generation number to redrawGen for stale paints?
 			if C.surface != nil {
 				// eglSwapBuffers blocks until vsync.
@@ -340,7 +340,7 @@ func mainUI(vm, jniEnv, ctx uintptr) error {
 			case windowRedrawDone <- struct{}{}:
 			default:
 			}
-			publishResult <- PublishResult{}
+			theApp.publishResult <- PublishResult{}
 		}
 	}
 }
@@ -413,7 +413,7 @@ func processEvent(env *C.JNIEnv, e *C.AInputEvent) {
 			if i == upDownIndex {
 				t = upDownType
 			}
-			eventsIn <- touch.Event{
+			theApp.eventsIn <- touch.Event{
 				X:        float32(C.AMotionEvent_getX(e, i)),
 				Y:        float32(C.AMotionEvent_getY(e, i)),
 				Sequence: touch.Sequence(C.AMotionEvent_getPointerId(e, i)),
@@ -445,7 +445,7 @@ func processKey(env *C.JNIEnv, e *C.AInputEvent) {
 		k.Direction = key.DirNone
 	}
 	// TODO(crawshaw): set Modifiers.
-	eventsIn <- k
+	theApp.eventsIn <- k
 }
 
 func eglGetError() string {
