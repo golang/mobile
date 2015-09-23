@@ -67,12 +67,12 @@ func main(f func(App)) {
 			return
 		case <-gl.WorkAvailable:
 			gl.DoWork()
-		case <-publish:
+		case <-theApp.publish:
 			C.swapBuffers()
 			tc = ticker.C
 		case <-tc:
 			tc = nil
-			publishResult <- PublishResult{}
+			theApp.publishResult <- PublishResult{}
 		}
 		C.processEvents()
 	}
