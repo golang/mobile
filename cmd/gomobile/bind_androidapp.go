@@ -155,8 +155,9 @@ func buildAAR(androidDir string, pkg *build.Package) (err error) {
 	if err != nil {
 		return err
 	}
-	const manifestFmt = `<manifest xmlns:android="http://schemas.android.com/apk/res/android" package=%q />`
-	fmt.Fprintf(w, manifestFmt, "go."+pkg.Name+".gojni")
+	const manifestFmt = `<manifest xmlns:android="http://schemas.android.com/apk/res/android" package=%q>
+<uses-sdk android:minSdkVersion=%q/></manifest>`
+	fmt.Fprintf(w, manifestFmt, "go."+pkg.Name+".gojni", minAndroidAPI)
 
 	w, err = aarwcreate("proguard.txt")
 	if err != nil {
