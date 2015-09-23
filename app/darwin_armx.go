@@ -185,7 +185,7 @@ func drawgl(ctx uintptr) {
 		select {
 		case <-gl.WorkAvailable:
 			gl.DoWork()
-		case <-publish:
+		case <-theApp.publish:
 			theApp.publishResult <- PublishResult{}
 			return
 		}
