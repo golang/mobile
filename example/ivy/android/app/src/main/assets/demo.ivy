@@ -17,7 +17,7 @@
 # Binary operators operate on the item immediately to the left, and everything to the right.
 2*3+4     # Parsed as 2*(3+4), not the usual (2*3)+4.
 2**2+3    # 2**5, not (2**2) + 3
-2**(2+3)  # Use parentheses if you need to group differently.
+(2**2)+3  # Use parentheses if you need to group differently.
 # Ivy can do rational arithmetic, so 1/3 is really 1/3, not 0.333....
 1/3
 1/3 + 4/5
@@ -30,7 +30,7 @@
 1e10/3     # Not an integer, but an exact rational.
 3/1e10     # Not an integer, but an exact rational.
 2**64      # They can get big.
-2**640     # They can get really big.  
+2**640     # They can get really big.
 # They can get really really big. Type a newline to see 2**6400 scroll by.
 2**6400
 # Ivy also has characters, which represent a Unicode code point.
@@ -101,7 +101,7 @@ x/2
 x**2
 x**3
 x**10
-# Inner product is written with a . between the operators. 
+# Inner product is written with a . between the operators.
 # This gives dot product: multiply corresponding elements and add the result.
 1 2 3 4 +.* 2 3 4 5
 # Any operator works. How many items are the same?
