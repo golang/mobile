@@ -71,7 +71,7 @@ func main() {
 					onStart(glctx)
 				case lifecycle.CrossOff:
 					visible = false
-					onStart(glctx)
+					onStop(glctx)
 				}
 			case size.Event:
 				sz = e
