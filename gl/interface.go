@@ -828,29 +828,26 @@ type Context interface {
 //		// into thread-local storage.
 //
 //		glctx, worker := gl.NewContext()
-//		workAvailable := glctx.WorkAvailable()
+//		workAvailable := worker.WorkAvailable()
 //		go userAppCode(glctx)
 //		for {
 //			select {
 //			case <-workAvailable:
-//				glctx.DoWork()
+//				worker.DoWork()
 //			case <-drawEvent:
 //				// ... platform-specific cgo call to draw screen
 //			}
 //		}
 //	}()
+//
+// This interface is an internal implementation detail and should only be used
+// by the package responsible for managing the screen, such as
+// golang.org/x/mobile/app.
 type Worker interface {
-	// WorkAvailable returns a channel that communicates when DoWork
-	// should be called.
-	//
-	// This is an internal implementation detail and should only be
-	// used by the package responsible for managing the screen (e.g.
-	// golang.org/x/mobile/app).
+	// WorkAvailable returns a channel that communicates when DoWork should be
+	// called.
 	WorkAvailable() <-chan struct{}
 
 	// DoWork performs any pending OpenGL calls.
-	//
-	// This is an internal implementation detail and should only be used by the
-	// golang.org/x/mobile/app package.
 	DoWork()
 }
