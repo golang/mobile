@@ -154,14 +154,14 @@ func TestAndroidApp(t *testing.T) {
 	var x, y int
 	var ty string
 
-	tap(t, 50, 60)
+	tap(t, 50, 260)
 	comm.Recv("touch", &ty, &x, &y)
-	if ty != "begin" || x != 50 || y != 60 {
-		t.Errorf("want touch begin(50, 60), got %s(%d,%d)", ty, x, y)
+	if ty != "begin" || x != 50 || y != 260 {
+		t.Errorf("want touch begin(50, 260), got %s(%d,%d)", ty, x, y)
 	}
 	comm.Recv("touch", &ty, &x, &y)
-	if ty != "end" || x != 50 || y != 60 {
-		t.Errorf("want touch end(50, 60), got %s(%d,%d)", ty, x, y)
+	if ty != "end" || x != 50 || y != 260 {
+		t.Errorf("want touch end(50, 260), got %s(%d,%d)", ty, x, y)
 	}
 
 	comm.Recv("paint", &color)
@@ -175,7 +175,7 @@ func TestAndroidApp(t *testing.T) {
 		t.Errorf("want orientation %d, got %d", want, orientation)
 	}
 
-	tap(t, 50, 60)
+	tap(t, 50, 260)
 	comm.Recv("touch", &ty, &x, &y) // touch begin
 	comm.Recv("touch", &ty, &x, &y) // touch end
 	comm.Recv("paint", &color)

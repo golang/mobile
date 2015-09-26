@@ -22,6 +22,11 @@ import (
 
 func main() {
 	app.Main(func(a app.App) {
+		var (
+			glctx   gl.Context
+			visible bool
+		)
+
 		addr := "127.0.0.1:" + apptest.Port
 		log.Printf("addr: %s", addr)
 
@@ -49,19 +54,24 @@ func main() {
 				case lifecycle.CrossOn:
 					comm.Send("lifecycle_visible")
 					sendPainting = true
+					visible = true
+					glctx, _ = e.DrawContext.(gl.Context)
 				case lifecycle.CrossOff:
 					comm.Send("lifecycle_not_visible")
+					visible = false
 				}
 			case size.Event:
 				comm.Send("size", e.PixelsPerPt, e.Orientation)
 			case paint.Event:
-				if color == "red" {
-					gl.ClearColor(1, 0, 0, 1)
-				} else {
-					gl.ClearColor(0, 1, 0, 1)
+				if visible {
+					if color == "red" {
+						glctx.ClearColor(1, 0, 0, 1)
+					} else {
+						glctx.ClearColor(0, 1, 0, 1)
+					}
+					glctx.Clear(gl.COLOR_BUFFER_BIT)
+					a.Publish()
 				}
-				gl.Clear(gl.COLOR_BUFFER_BIT)
-				a.Publish()
 				if sendPainting {
 					comm.Send("paint", color)
 					sendPainting = false
@@ -75,8 +85,9 @@ func main() {
 						color = "red"
 					}
 					sendPainting = true
+					// Send a paint event so the screen gets redrawn.
+					a.Send(paint.Event{})
 				}
-				// TODO: send our own paint Event??
 			}
 		}
 	})
