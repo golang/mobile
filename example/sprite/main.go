@@ -60,6 +60,7 @@ var (
 
 func main() {
 	app.Main(func(a app.App) {
+		var glctx gl.Context
 		visible, sz := false, size.Event{}
 		for e := range a.Events() {
 			switch e := a.Filter(e).(type) {
@@ -67,15 +68,18 @@ func main() {
 				switch e.Crosses(lifecycle.StageVisible) {
 				case lifecycle.CrossOn:
 					visible = true
+					glctx, _ = e.DrawContext.(gl.Context)
+					onStart(glctx)
 				case lifecycle.CrossOff:
 					visible = false
+					onStop()
 				}
 			case size.Event:
 				sz = e
 			case paint.Event:
-				onPaint(sz)
-				a.Publish()
 				if visible {
+					onPaint(glctx, sz)
+					a.Publish()
 					// Keep animating.
 					a.Send(paint.Event{})
 				}
@@ -84,15 +88,22 @@ func main() {
 	})
 }
 
-func onPaint(sz size.Event) {
-	if scene == nil {
-		images = glutil.NewImages()
-		fps = debug.NewFPS(images)
-		eng = glsprite.Engine(images)
-		loadScene()
-	}
-	gl.ClearColor(1, 1, 1, 1)
-	gl.Clear(gl.COLOR_BUFFER_BIT)
+func onStart(glctx gl.Context) {
+	images = glutil.NewImages(glctx)
+	fps = debug.NewFPS(images)
+	eng = glsprite.Engine(images)
+	loadScene()
+}
+
+func onStop() {
+	eng.Release()
+	fps.Release()
+	images.Release()
+}
+
+func onPaint(glctx gl.Context, sz size.Event) {
+	glctx.ClearColor(1, 1, 1, 1)
+	glctx.Clear(gl.COLOR_BUFFER_BIT)
 	now := clock.Time(time.Since(startTime) * 60 / time.Second)
 	eng.Render(scene, now, sz)
 	fps.Draw(sz)
