@@ -93,7 +93,24 @@ func goIOSBind(pkg *build.Package) error {
 	if err := symlink("Versions/Current/Resources", buildO+"/Resources"); err != nil {
 		return err
 	}
-	return ioutil.WriteFile(buildO+"/Resources/Info.plist", []byte(iosBindInfoPlist), 0666)
+	if err := ioutil.WriteFile(buildO+"/Resources/Info.plist", []byte(iosBindInfoPlist), 0666); err != nil {
+		return err
+	}
+
+	var mmVals = struct {
+		Module string
+		Header string
+	}{
+		Module: name,
+		Header: strings.Title(name) + ".h",
+	}
+	err = writeFile(buildO+"/Versions/A/Modules/module.modulemap", func(w io.Writer) error {
+		return iosModuleMapTmpl.Execute(w, mmVals)
+	})
+	if err != nil {
+		return err
+	}
+	return symlink("Versions/Current/Modules", buildO+"/Modules")
 }
 
 const iosBindInfoPlist = `<?xml version="1.0" encoding="UTF-8"?>
@@ -103,6 +120,11 @@ const iosBindInfoPlist = `<?xml version="1.0" encoding="UTF-8"?>
       </dict>
     </plist>
 `
+
+var iosModuleMapTmpl = template.Must(template.New("iosmmap").Parse(`framework module "{{.Module}}" {
+    header "{{.Header}}"
+    export *
+}`))
 
 func goIOSBindArchive(name, path string, env []string) (string, error) {
 	arch := getenv(env, "GOARCH")
