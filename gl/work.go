@@ -20,17 +20,25 @@ package gl
 #include <stdint.h>
 #include "work.h"
 
-// TODO: return uintptr_t instead of taking ret.
-void process(struct fnargs* cargs, int count, uintptr_t* ret) {
-	int i;
-	for (i = 0; i < count; i++) {
-		*ret = processFn(&cargs[i]);
+uintptr_t process(struct fnargs* cargs, char* parg0, char* parg1, char* parg2, int count) {
+	uintptr_t ret;
+
+	ret = processFn(&cargs[0], parg0);
+	if (count > 1) {
+		ret = processFn(&cargs[1], parg1);
 	}
+	if (count > 2) {
+		ret = processFn(&cargs[2], parg2);
+	}
+
+	return ret;
 }
 */
 import "C"
 
-const workbufLen = 10
+import "unsafe"
+
+const workbufLen = 3
 
 type context struct {
 	cptr uintptr
@@ -52,7 +60,7 @@ type context struct {
 	retvalue chan C.uintptr_t
 
 	cargs [workbufLen]C.struct_fnargs
-	ret   C.uintptr_t
+	parg  [workbufLen]*C.char
 }
 
 func (ctx *context) WorkAvailable() <-chan struct{} { return ctx.workAvailable }
@@ -71,6 +79,7 @@ func NewContext() (Context, Worker) {
 
 type call struct {
 	args     C.struct_fnargs
+	parg     unsafe.Pointer
 	blocking bool
 }
 
@@ -89,7 +98,7 @@ func (ctx *context) enqueue(c call) C.uintptr_t {
 }
 
 func (ctx *context) DoWork() {
-	queue := make([]call, 0, len(ctx.work))
+	queue := make([]call, 0, len(ctx.work)) // len(ctx.work) == workbufLen
 	for {
 		// Wait until at least one piece of work is ready.
 		// Accumulate work until a piece is marked as blocking.
@@ -114,13 +123,14 @@ func (ctx *context) DoWork() {
 		// Process the queued GL functions.
 		for i, q := range queue {
 			ctx.cargs[i] = q.args
+			ctx.parg[i] = (*C.char)(q.parg)
 		}
-		C.process(&ctx.cargs[0], C.int(len(queue)), &ctx.ret)
+		ret := C.process(&ctx.cargs[0], ctx.parg[0], ctx.parg[1], ctx.parg[2], C.int(len(queue)))
 
 		// Cleanup and signal.
 		queue = queue[:0]
 		if blocking {
-			ctx.retvalue <- ctx.ret
+			ctx.retvalue <- ret
 		}
 	}
 }

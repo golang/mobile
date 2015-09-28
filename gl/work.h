@@ -171,9 +171,8 @@ struct fnargs {
 	uintptr_t a5;
 	uintptr_t a6;
 	uintptr_t a7;
-	uintptr_t a8;
 };
 
 extern uintptr_t ret;
 
-extern uintptr_t processFn(struct fnargs* args);
+extern uintptr_t processFn(struct fnargs* args, char* parg);

@@ -806,14 +806,18 @@ func (ctx *context) BufferData(target Enum, src []byte, usage Enum) {
 		errstr := ctx.errDrain()
 		log.Printf("gl.BufferData(%v, len(%d), %v) %v", target, len(src), usage, errstr)
 	}()
+	parg := unsafe.Pointer(nil)
+	if len(src) > 0 {
+		parg = unsafe.Pointer(&src[0])
+	}
 	ctx.enqueue(call{
 		args: C.struct_fnargs{
 			fn: C.glfnBufferData,
 			a0: target.c(),
 			a1: C.uintptr_t(len(src)),
-			a2: (C.uintptr_t)(uintptr(unsafe.Pointer(&src[0]))),
-			a3: usage.c(),
+			a2: usage.c(),
 		},
+		parg:     parg,
 		blocking: true,
 	})
 }
@@ -845,8 +849,8 @@ func (ctx *context) BufferSubData(target Enum, offset int, data []byte) {
 			a0: target.c(),
 			a1: C.uintptr_t(offset),
 			a2: C.uintptr_t(len(data)),
-			a3: (C.uintptr_t)(uintptr(unsafe.Pointer(&data[0]))),
 		},
+		parg:     unsafe.Pointer(&data[0]),
 		blocking: true,
 	})
 }
@@ -964,8 +968,8 @@ func (ctx *context) CompressedTexImage2D(target Enum, level int, internalformat 
 			a4: C.uintptr_t(height),
 			a5: C.uintptr_t(border),
 			a6: C.uintptr_t(len(data)),
-			a7: C.uintptr_t(uintptr(unsafe.Pointer(&data[0]))),
 		},
+		parg:     unsafe.Pointer(&data[0]),
 		blocking: true,
 	})
 }
@@ -986,8 +990,8 @@ func (ctx *context) CompressedTexSubImage2D(target Enum, level, xoffset, yoffset
 			a5: C.uintptr_t(height),
 			a6: format.c(),
 			a7: C.uintptr_t(len(data)),
-			a8: C.uintptr_t(uintptr(unsafe.Pointer(&data[0]))),
 		},
+		parg:     unsafe.Pointer(&data[0]),
 		blocking: true,
 	})
 }
@@ -1549,8 +1553,8 @@ func (ctx *context) GetFloatv(dst []float32, pname Enum) {
 		args: C.struct_fnargs{
 			fn: C.glfnGetFloatv,
 			a0: pname.c(),
-			a1: C.uintptr_t(uintptr(unsafe.Pointer(&dst[0]))),
 		},
+		parg:     unsafe.Pointer(&dst[0]),
 		blocking: true,
 	})
 }
@@ -1565,8 +1569,8 @@ func (ctx *context) GetIntegerv(dst []int32, pname Enum) {
 		args: C.struct_fnargs{
 			fn: C.glfnGetIntegerv,
 			a0: pname.c(),
-			a1: C.uintptr_t(uintptr(unsafe.Pointer(&buf[0]))),
 		},
+		parg:     unsafe.Pointer(&buf[0]),
 		blocking: true,
 	})
 	for i, v := range buf {
@@ -1780,8 +1784,8 @@ func (ctx *context) GetTexParameterfv(dst []float32, target, pname Enum) {
 			fn: C.glfnGetTexParameterfv,
 			a0: target.c(),
 			a1: pname.c(),
-			a2: C.uintptr_t(uintptr(unsafe.Pointer(&dst[0]))),
 		},
+		parg:     unsafe.Pointer(&dst[0]),
 		blocking: true,
 	})
 }
@@ -1796,7 +1800,6 @@ func (ctx *context) GetTexParameteriv(dst []int32, target, pname Enum) {
 			fn: C.glfnGetTexParameteriv,
 			a0: target.c(),
 			a1: pname.c(),
-			a2: C.uintptr_t(uintptr(unsafe.Pointer(&dst[0]))),
 		},
 		blocking: true,
 	})
@@ -1812,8 +1815,8 @@ func (ctx *context) GetUniformfv(dst []float32, src Uniform, p Program) {
 			fn: C.glfnGetUniformfv,
 			a0: p.c(),
 			a1: src.c(),
-			a2: C.uintptr_t(uintptr(unsafe.Pointer(&dst[0]))),
 		},
+		parg:     unsafe.Pointer(&dst[0]),
 		blocking: true,
 	})
 }
@@ -1828,8 +1831,8 @@ func (ctx *context) GetUniformiv(dst []int32, src Uniform, p Program) {
 			fn: C.glfnGetUniformiv,
 			a0: p.c(),
 			a1: src.c(),
-			a2: C.uintptr_t(uintptr(unsafe.Pointer(&dst[0]))),
 		},
+		parg:     unsafe.Pointer(&dst[0]),
 		blocking: true,
 	})
 }
@@ -1844,8 +1847,8 @@ func (ctx *context) GetUniformLocation(p Program, name string) (r0 Uniform) {
 		args: C.struct_fnargs{
 			fn: C.glfnGetUniformLocation,
 			a0: p.c(),
-			a1: C.uintptr_t(uintptr(unsafe.Pointer(C.CString(name)))),
 		},
+		parg:     unsafe.Pointer(C.CString(name)),
 		blocking: true,
 	}))}
 }
@@ -1870,8 +1873,8 @@ func (ctx *context) GetVertexAttribfv(dst []float32, src Attrib, pname Enum) {
 			fn: C.glfnGetVertexAttribfv,
 			a0: src.c(),
 			a1: pname.c(),
-			a2: C.uintptr_t(uintptr(unsafe.Pointer(&dst[0]))),
 		},
+		parg:     unsafe.Pointer(&dst[0]),
 		blocking: true,
 	})
 }
@@ -1896,8 +1899,8 @@ func (ctx *context) GetVertexAttribiv(dst []int32, src Attrib, pname Enum) {
 			fn: C.glfnGetVertexAttribiv,
 			a0: src.c(),
 			a1: pname.c(),
-			a2: C.uintptr_t(uintptr(unsafe.Pointer(&dst[0]))),
 		},
+		parg:     unsafe.Pointer(&dst[0]),
 		blocking: true,
 	})
 }
@@ -2083,8 +2086,8 @@ func (ctx *context) ReadPixels(dst []byte, x, y, width, height int, format, ty E
 			a3: C.uintptr_t(height),
 			a4: format.c(),
 			a5: ty.c(),
-			a6: C.uintptr_t(uintptr(unsafe.Pointer(&dst[0]))),
 		},
+		parg:     unsafe.Pointer(&dst[0]),
 		blocking: true,
 	})
 }
@@ -2259,9 +2262,9 @@ func (ctx *context) TexImage2D(target Enum, level int, width, height int, format
 		errstr := ctx.errDrain()
 		log.Printf("gl.TexImage2D(%v, %v, %v, %v, %v, %v, len(%d)) %v", target, level, width, height, format, ty, len(data), errstr)
 	}()
-	blocking, a7 := false, C.uintptr_t(0)
+	parg := unsafe.Pointer(nil)
 	if len(data) > 0 {
-		blocking, a7 = true, C.uintptr_t(uintptr(unsafe.Pointer(&data[0])))
+		parg = unsafe.Pointer(&data[0])
 	}
 	ctx.enqueue(call{
 		args: C.struct_fnargs{
@@ -2274,9 +2277,9 @@ func (ctx *context) TexImage2D(target Enum, level int, width, height int, format
 			a4: C.uintptr_t(height),
 			a5: format.c(),
 			a6: ty.c(),
-			a7: a7,
 		},
-		blocking: blocking,
+		parg:     parg,
+		blocking: parg != nil,
 	})
 }
 
@@ -2297,8 +2300,8 @@ func (ctx *context) TexSubImage2D(target Enum, level int, x, y, width, height in
 			a5: C.uintptr_t(height),
 			a6: format.c(),
 			a7: ty.c(),
-			a8: C.uintptr_t(uintptr(unsafe.Pointer(&data[0]))),
 		},
+		parg:     unsafe.Pointer(&data[0]),
 		blocking: true,
 	})
 }
@@ -2328,8 +2331,8 @@ func (ctx *context) TexParameterfv(target, pname Enum, params []float32) {
 			fn: C.glfnTexParameterfv,
 			a0: target.c(),
 			a1: pname.c(),
-			a2: C.uintptr_t(uintptr(unsafe.Pointer(&params[0]))),
 		},
+		parg:     unsafe.Pointer(&params[0]),
 		blocking: true,
 	})
 }
@@ -2359,8 +2362,8 @@ func (ctx *context) TexParameteriv(target, pname Enum, params []int32) {
 			fn: C.glfnTexParameteriv,
 			a0: target.c(),
 			a1: pname.c(),
-			a2: C.uintptr_t(uintptr(unsafe.Pointer(&params[0]))),
 		},
+		parg:     unsafe.Pointer(&params[0]),
 		blocking: true,
 	})
 }
@@ -2389,8 +2392,8 @@ func (ctx *context) Uniform1fv(dst Uniform, src []float32) {
 			fn: C.glfnUniform1fv,
 			a0: dst.c(),
 			a1: C.uintptr_t(len(src)),
-			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
 		},
+		parg:     unsafe.Pointer(&src[0]),
 		blocking: true,
 	})
 }
@@ -2419,8 +2422,8 @@ func (ctx *context) Uniform1iv(dst Uniform, src []int32) {
 			fn: C.glfnUniform1iv,
 			a0: dst.c(),
 			a1: C.uintptr_t(len(src)),
-			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
 		},
+		parg:     unsafe.Pointer(&src[0]),
 		blocking: true,
 	})
 }
@@ -2450,8 +2453,8 @@ func (ctx *context) Uniform2fv(dst Uniform, src []float32) {
 			fn: C.glfnUniform2fv,
 			a0: dst.c(),
 			a1: C.uintptr_t(len(src) / 2),
-			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
 		},
+		parg:     unsafe.Pointer(&src[0]),
 		blocking: true,
 	})
 }
@@ -2481,8 +2484,8 @@ func (ctx *context) Uniform2iv(dst Uniform, src []int32) {
 			fn: C.glfnUniform2iv,
 			a0: dst.c(),
 			a1: C.uintptr_t(len(src) / 2),
-			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
 		},
+		parg:     unsafe.Pointer(&src[0]),
 		blocking: true,
 	})
 }
@@ -2513,8 +2516,8 @@ func (ctx *context) Uniform3fv(dst Uniform, src []float32) {
 			fn: C.glfnUniform3fv,
 			a0: dst.c(),
 			a1: C.uintptr_t(len(src) / 3),
-			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
 		},
+		parg:     unsafe.Pointer(&src[0]),
 		blocking: true,
 	})
 }
@@ -2545,8 +2548,8 @@ func (ctx *context) Uniform3iv(dst Uniform, src []int32) {
 			fn: C.glfnUniform3iv,
 			a0: dst.c(),
 			a1: C.uintptr_t(len(src) / 3),
-			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
 		},
+		parg:     unsafe.Pointer(&src[0]),
 		blocking: true,
 	})
 }
@@ -2578,8 +2581,8 @@ func (ctx *context) Uniform4fv(dst Uniform, src []float32) {
 			fn: C.glfnUniform4fv,
 			a0: dst.c(),
 			a1: C.uintptr_t(len(src) / 4),
-			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
 		},
+		parg:     unsafe.Pointer(&src[0]),
 		blocking: true,
 	})
 }
@@ -2611,8 +2614,8 @@ func (ctx *context) Uniform4iv(dst Uniform, src []int32) {
 			fn: C.glfnUniform4iv,
 			a0: dst.c(),
 			a1: C.uintptr_t(len(src) / 4),
-			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
 		},
+		parg:     unsafe.Pointer(&src[0]),
 		blocking: true,
 	})
 }
@@ -2628,8 +2631,8 @@ func (ctx *context) UniformMatrix2fv(dst Uniform, src []float32) {
 
 			a0: dst.c(),
 			a1: C.uintptr_t(len(src) / 4),
-			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
 		},
+		parg:     unsafe.Pointer(&src[0]),
 		blocking: true,
 	})
 }
@@ -2644,8 +2647,8 @@ func (ctx *context) UniformMatrix3fv(dst Uniform, src []float32) {
 			fn: C.glfnUniformMatrix3fv,
 			a0: dst.c(),
 			a1: C.uintptr_t(len(src) / 9),
-			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
 		},
+		parg:     unsafe.Pointer(&src[0]),
 		blocking: true,
 	})
 }
@@ -2660,8 +2663,8 @@ func (ctx *context) UniformMatrix4fv(dst Uniform, src []float32) {
 			fn: C.glfnUniformMatrix4fv,
 			a0: dst.c(),
 			a1: C.uintptr_t(len(src) / 16),
-			a2: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
 		},
+		parg:     unsafe.Pointer(&src[0]),
 		blocking: true,
 	})
 }
@@ -2715,8 +2718,8 @@ func (ctx *context) VertexAttrib1fv(dst Attrib, src []float32) {
 		args: C.struct_fnargs{
 			fn: C.glfnVertexAttrib1fv,
 			a0: dst.c(),
-			a1: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
 		},
+		parg:     unsafe.Pointer(&src[0]),
 		blocking: true,
 	})
 }
@@ -2745,8 +2748,8 @@ func (ctx *context) VertexAttrib2fv(dst Attrib, src []float32) {
 		args: C.struct_fnargs{
 			fn: C.glfnVertexAttrib2fv,
 			a0: dst.c(),
-			a1: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
 		},
+		parg:     unsafe.Pointer(&src[0]),
 		blocking: true,
 	})
 }
@@ -2776,8 +2779,8 @@ func (ctx *context) VertexAttrib3fv(dst Attrib, src []float32) {
 		args: C.struct_fnargs{
 			fn: C.glfnVertexAttrib3fv,
 			a0: dst.c(),
-			a1: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
 		},
+		parg:     unsafe.Pointer(&src[0]),
 		blocking: true,
 	})
 }
@@ -2808,8 +2811,8 @@ func (ctx *context) VertexAttrib4fv(dst Attrib, src []float32) {
 		args: C.struct_fnargs{
 			fn: C.glfnVertexAttrib4fv,
 			a0: dst.c(),
-			a1: C.uintptr_t(uintptr(unsafe.Pointer(&src[0]))),
 		},
+		parg:     unsafe.Pointer(&src[0]),
 		blocking: true,
 	})
 }
