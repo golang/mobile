@@ -17,6 +17,22 @@ public class SeqTest extends AndroidTestCase {
   public SeqTest() {
   }
 
+  public void testConst() {
+    assertEquals("const String", "a string", Testpkg.AString);
+    assertEquals("const Int", 7, Testpkg.AnInt);
+    assertEquals("const Bool", true, Testpkg.ABool);
+    assertEquals("const Float", 0.12345, Testpkg.AFloat, 0.0001);
+
+    assertEquals("const MinInt32", -1<<31, Testpkg.MinInt32);
+    assertEquals("const MaxInt32", (1<<31) - 1, Testpkg.MaxInt32);
+    assertEquals("const MinInt64", -1L<<63, Testpkg.MinInt64);
+    assertEquals("const MaxInt64", (1L<<63) - 1, Testpkg.MaxInt64);
+    assertEquals("const SmallestNonzeroFloat64", 4.940656458412465441765687928682213723651e-324, Testpkg.SmallestNonzeroFloat64, 1e-323);
+    assertEquals("const MaxFloat64", 1.797693134862315708145274237317043567981e+308, Testpkg.MaxFloat64, 0.0001);
+    assertEquals("const SmallestNonzeroFloat32", 1.401298464324817070923729583289916131280e-45, Testpkg.SmallestNonzeroFloat32, 1e-44);
+    assertEquals("const MaxFloat32", 3.40282346638528859811704183484516925440e+38, Testpkg.MaxFloat32, 0.0001);
+    assertEquals("const Log2E", 1/0.693147180559945309417232121458176568075500134360255254120680009, Testpkg.Log2E, 0.0001);
+  }
   public void testAssets() {
     String want = "Hello, Assets.\n";
     String got = Testpkg.ReadAsset();

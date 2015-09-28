@@ -42,6 +42,20 @@
 - (NSString*)TryTwoStrings:(NSString*)first second:(NSString*)second;
 @end
 
+FOUNDATION_EXPORT const BOOL GoTestpkgABool;
+FOUNDATION_EXPORT const double GoTestpkgAFloat;
+FOUNDATION_EXPORT NSString* const GoTestpkgAString;
+FOUNDATION_EXPORT const int64_t GoTestpkgAnInt;
+FOUNDATION_EXPORT const double GoTestpkgLog2E;
+FOUNDATION_EXPORT const float GoTestpkgMaxFloat32;
+FOUNDATION_EXPORT const double GoTestpkgMaxFloat64;
+FOUNDATION_EXPORT const int32_t GoTestpkgMaxInt32;
+FOUNDATION_EXPORT const int64_t GoTestpkgMaxInt64;
+FOUNDATION_EXPORT const int32_t GoTestpkgMinInt32;
+FOUNDATION_EXPORT const int64_t GoTestpkgMinInt64;
+FOUNDATION_EXPORT const float GoTestpkgSmallestNonzeroFloat32;
+FOUNDATION_EXPORT const double GoTestpkgSmallestNonzeroFloat64;
+
 FOUNDATION_EXPORT NSData* GoTestpkgBytesAppend(NSData* a, NSData* b);
 
 FOUNDATION_EXPORT BOOL GoTestpkgCallIError(id<GoTestpkgI> i, BOOL triggerError, NSError** error);

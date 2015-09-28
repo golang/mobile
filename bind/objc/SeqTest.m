@@ -15,6 +15,63 @@
 
 static int err = 0;
 
+void testConst() {
+  if (![GoTestpkgAString isEqualToString:@"a string"]) {
+    ERROR(@"GoTestpkgAString = %@, want 'a string'", GoTestpkgAString);
+  }
+  if (GoTestpkgAnInt != 7) {
+    ERROR(@"GoTestpkgAnInt = %lld, want 7", GoTestpkgAnInt);
+  }
+  if (ABS(GoTestpkgAFloat - 0.12345) > 0.0001) {
+    ERROR(@"GoTestpkgAFloat = %f, want 0.12345", GoTestpkgAFloat);
+  }
+  if (GoTestpkgABool != YES) {
+    ERROR(@"GoTestpkgABool = %@, want YES", GoTestpkgAFloat ? @"YES" : @"NO");
+  }
+
+  if (GoTestpkgMinInt32 != INT32_MIN) {
+    ERROR(@"GoTestpkgMinInt32 = %d, want %d", GoTestpkgMinInt32, INT32_MIN);
+  }
+  if (GoTestpkgMaxInt32 != INT32_MAX) {
+    ERROR(@"GoTestpkgMaxInt32 = %d, want %d", GoTestpkgMaxInt32, INT32_MAX);
+  }
+  if (GoTestpkgMinInt64 != INT64_MIN) {
+    ERROR(@"GoTestpkgMinInt64 = %lld, want %lld", GoTestpkgMinInt64, INT64_MIN);
+  }
+  if (GoTestpkgMaxInt64 != INT64_MAX) {
+    ERROR(@"GoTestpkgMaxInt64 = %lld, want %lld", GoTestpkgMaxInt64, INT64_MAX);
+  }
+  if (ABS(GoTestpkgSmallestNonzeroFloat64 -
+          4.940656458412465441765687928682213723651e-324) > 1e-323) {
+    ERROR(@"GoTestpkgSmallestNonzeroFloat64 = %f, want %f",
+          GoTestpkgSmallestNonzeroFloat64,
+          4.940656458412465441765687928682213723651e-324);
+  }
+  if (ABS(GoTestpkgMaxFloat64 -
+          1.797693134862315708145274237317043567981e+308) > 0.0001) {
+    ERROR(@"GoTestpkgMaxFloat64 = %f, want %f", GoTestpkgMaxFloat64,
+          1.797693134862315708145274237317043567981e+308);
+  }
+  if (ABS(GoTestpkgSmallestNonzeroFloat32 -
+          1.401298464324817070923729583289916131280e-45) > 1e-44) {
+    ERROR(@"GoTestpkgSmallestNonzeroFloat32 = %f, want %f",
+          GoTestpkgSmallestNonzeroFloat32,
+          1.401298464324817070923729583289916131280e-45);
+  }
+  if (ABS(GoTestpkgMaxFloat32 - 3.40282346638528859811704183484516925440e+38) >
+      0.0001) {
+    ERROR(@"GoTestpkgMaxFloat32 = %f, want %f", GoTestpkgMaxFloat32,
+          3.40282346638528859811704183484516925440e+38);
+  }
+  if (ABS(GoTestpkgLog2E -
+          1 / 0.693147180559945309417232121458176568075500134360255254120680009) >
+      0.0001) {
+    ERROR(
+        @"GoTestpkgLog2E = %f, want %f", GoTestpkgLog2E,
+        1 / 0.693147180559945309417232121458176568075500134360255254120680009);
+  }
+}
+
 void testHello(NSString *input) {
   NSString *got = GoTestpkgHello(input);
   NSString *want = [NSString stringWithFormat:@"Hello, %@!", input];
@@ -228,6 +285,8 @@ int main(void) {
     if (sum != 52) {
       ERROR(@"GoTestpkgSum(31, 21) = %lld, want 52\n", sum);
     }
+
+    testConst();
 
     testHello(@"세계"); // korean, utf-8, world.
 

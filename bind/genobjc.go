@@ -6,8 +6,10 @@ package bind
 
 import (
 	"fmt"
+	"go/constant"
 	"go/token"
 	"go/types"
+	"math"
 	"strings"
 )
 
@@ -26,6 +28,7 @@ type objcGen struct {
 	namePrefix string
 	funcs      []*types.Func
 	names      []*types.TypeName
+	constants  []*types.Const
 }
 
 func (g *objcGen) init() {
@@ -47,7 +50,15 @@ func (g *objcGen) init() {
 			}
 		case *types.TypeName:
 			g.names = append(g.names, obj)
-			// TODO(hyangah): *types.Const, *types.Var
+		case *types.Const:
+			if _, ok := obj.Type().(*types.Basic); !ok {
+				g.errorf("unsupported exported const for %s: %T", obj.Name(), obj)
+				continue
+			}
+			g.constants = append(g.constants, obj)
+		default:
+			g.errorf("unsupported exported type for %s: %T", obj.Name(), obj)
+			// TODO(hyangah): *types.Var
 		}
 	}
 }
@@ -93,6 +104,19 @@ func (g *objcGen) genH() error {
 			g.genInterfaceH(obj, t)
 			g.Printf("\n")
 		}
+	}
+
+	// const
+	for _, obj := range g.constants {
+		switch b := obj.Type().(*types.Basic); b.Kind() {
+		case types.String, types.UntypedString:
+			g.Printf("FOUNDATION_EXPORT NSString* const %s%s;\n", g.namePrefix, obj.Name())
+		default:
+			g.Printf("FOUNDATION_EXPORT const %s %s%s;\n", g.objcType(obj.Type()), g.namePrefix, obj.Name())
+		}
+	}
+	if len(g.constants) > 0 {
+		g.Printf("\n")
 	}
 
 	// static functions.
@@ -155,6 +179,13 @@ func (g *objcGen) genM() error {
 		g.Printf("\n")
 	}
 
+	// const
+	for _, o := range g.constants {
+		g.genConstM(o)
+	}
+	if len(g.constants) > 0 {
+		g.Printf("\n")
+	}
 	// global functions.
 	for _, obj := range g.funcs {
 		g.genFuncM(obj)
@@ -177,6 +208,51 @@ func (g *objcGen) genM() error {
 	}
 
 	return nil
+}
+
+func (g *objcGen) genConstM(o *types.Const) {
+	cName := fmt.Sprintf("%s%s", g.namePrefix, o.Name())
+	cType := g.objcType(o.Type())
+
+	switch b := o.Type().(*types.Basic); b.Kind() {
+	case types.Bool, types.UntypedBool:
+		v := "NO"
+		if constant.BoolVal(o.Val()) {
+			v = "YES"
+		}
+		g.Printf("const BOOL %s = %s;\n", cName, v)
+
+	case types.String, types.UntypedString:
+		g.Printf("NSString* const %s = @%s;\n", cName, o.Val())
+
+	case types.Int, types.Int8, types.Int16, types.Int32:
+		g.Printf("const %s %s = %s;\n", cType, cName, o.Val())
+
+	case types.Int64, types.UntypedInt:
+		i, exact := constant.Int64Val(o.Val())
+		if !exact {
+			g.errorf("const value %s for %s cannot be represented as %s", o.Val(), o.Name(), cType)
+			return
+		}
+		if i == math.MinInt64 {
+			// -9223372036854775808LL does not work because 922337203685477508 is
+			// larger than max int64.
+			g.Printf("const int64_t %s = %dLL-1;\n", cName, i+1)
+		} else {
+			g.Printf("const int64_t %s = %dLL;\n", cName, i)
+		}
+
+	case types.Float32, types.Float64, types.UntypedFloat:
+		f, _ := constant.Float64Val(o.Val())
+		if math.IsInf(f, 0) || math.Abs(f) > math.MaxFloat64 {
+			g.errorf("const value %s for %s cannot be represented as double", o.Val(), o.Name())
+			return
+		}
+		g.Printf("const %s %s = %g;\n", cType, cName, f)
+
+	default:
+		g.errorf("unsupported const type %s for %s", b, o.Name())
+	}
 }
 
 type funcSummary struct {
@@ -754,7 +830,7 @@ func (g *objcGen) objcType(typ types.Type) string {
 	switch typ := typ.(type) {
 	case *types.Basic:
 		switch typ.Kind() {
-		case types.Bool:
+		case types.Bool, types.UntypedBool:
 			return "BOOL"
 		case types.Int:
 			return "int"
@@ -762,9 +838,9 @@ func (g *objcGen) objcType(typ types.Type) string {
 			return "int8_t"
 		case types.Int16:
 			return "int16_t"
-		case types.Int32:
+		case types.Int32, types.UntypedRune: // types.Rune
 			return "int32_t"
-		case types.Int64:
+		case types.Int64, types.UntypedInt:
 			return "int64_t"
 		case types.Uint8:
 			// byte is an alias of uint8, and the alias is lost.
@@ -777,9 +853,9 @@ func (g *objcGen) objcType(typ types.Type) string {
 			return "uint64_t"
 		case types.Float32:
 			return "float"
-		case types.Float64:
+		case types.Float64, types.UntypedFloat:
 			return "double"
-		case types.String:
+		case types.String, types.UntypedString:
 			return "NSString*"
 		default:
 			g.errorf("unsupported type: %s", typ)

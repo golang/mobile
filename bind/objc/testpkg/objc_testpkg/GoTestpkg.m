@@ -298,6 +298,20 @@ static void proxyGoTestpkgI(id obj, int code, GoSeq* in, GoSeq* out) {
 
 @end
 
+const BOOL GoTestpkgABool = YES;
+const double GoTestpkgAFloat = 0.12345;
+NSString* const GoTestpkgAString = @"a string";
+const int64_t GoTestpkgAnInt = 7LL;
+const double GoTestpkgLog2E = 1.4426950408889634;
+const float GoTestpkgMaxFloat32 = 3.4028234663852886e+38;
+const double GoTestpkgMaxFloat64 = 1.7976931348623157e+308;
+const int32_t GoTestpkgMaxInt32 = 2147483647;
+const int64_t GoTestpkgMaxInt64 = 9223372036854775807LL;
+const int32_t GoTestpkgMinInt32 = -2147483648;
+const int64_t GoTestpkgMinInt64 = -9223372036854775807LL-1;
+const float GoTestpkgSmallestNonzeroFloat32 = 0;
+const double GoTestpkgSmallestNonzeroFloat64 = 5e-324;
+
 NSData* GoTestpkgBytesAppend(NSData* a, NSData* b) {
 	GoSeq in_ = {};
 	GoSeq out_ = {};

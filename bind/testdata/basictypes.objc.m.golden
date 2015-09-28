@@ -21,6 +21,13 @@ static NSString* errDomain = @"go.basictypes";
 #define _CALL_ErrorPair_ 4
 #define _CALL_Ints_ 5
 
+const BOOL GoBasictypesABool = YES;
+const double GoBasictypesAFloat = 0.2015;
+const int32_t GoBasictypesARune = 32;
+NSString* const GoBasictypesAString = @"a string";
+const int64_t GoBasictypesAnInt = 7LL;
+const int64_t GoBasictypesAnInt2 = 9223372036854775807LL;
+
 BOOL GoBasictypesBool(BOOL p0) {
 	GoSeq in_ = {};
 	GoSeq out_ = {};

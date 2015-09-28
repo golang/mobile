@@ -7,9 +7,11 @@ package bind
 import (
 	"bytes"
 	"fmt"
+	"go/constant"
 	"go/token"
 	"go/types"
 	"io"
+	"math"
 	"regexp"
 	"strings"
 )
@@ -315,7 +317,7 @@ func (g *javaGen) javaType(T types.Type) string {
 	switch T := T.(type) {
 	case *types.Basic:
 		switch T.Kind() {
-		case types.Bool:
+		case types.Bool, types.UntypedBool:
 			return "boolean"
 		case types.Int:
 			return "long"
@@ -323,23 +325,23 @@ func (g *javaGen) javaType(T types.Type) string {
 			return "byte"
 		case types.Int16:
 			return "short"
-		case types.Int32:
+		case types.Int32, types.UntypedRune: // types.Rune
 			return "int"
-		case types.Int64:
+		case types.Int64, types.UntypedInt:
 			return "long"
-		case types.Uint8:
+		case types.Uint8: // types.Byte
 			// TODO(crawshaw): Java bytes are signed, so this is
 			// questionable, but vital.
 			return "byte"
 		// TODO(crawshaw): case types.Uint, types.Uint16, types.Uint32, types.Uint64:
 		case types.Float32:
 			return "float"
-		case types.Float64:
+		case types.Float64, types.UntypedFloat:
 			return "double"
-		case types.String:
+		case types.String, types.UntypedString:
 			return "String"
 		default:
-			g.errorf("unsupported return type: %s", T)
+			g.errorf("unsupported basic type: %s", T)
 			return "TODO"
 		}
 	case *types.Slice:
@@ -597,6 +599,35 @@ func (g *javaGen) className() string {
 	return strings.Title(javaNameReplacer.Replace(g.pkg.Name()))
 }
 
+func (g *javaGen) genConst(o *types.Const) {
+	// TODO(hyangah): should const names use upper cases + "_"?
+	// TODO(hyangah): check invalid names.
+	jType := g.javaType(o.Type())
+	val := o.Val().String()
+	switch b := o.Type().(*types.Basic); b.Kind() {
+	case types.Int64, types.UntypedInt:
+		i, exact := constant.Int64Val(o.Val())
+		if !exact {
+			g.errorf("const value %s for %s cannot be represented as %s", val, o.Name(), jType)
+			return
+		}
+		val = fmt.Sprintf("%dL", i)
+
+	case types.Float32:
+		f, _ := constant.Float32Val(o.Val())
+		val = fmt.Sprintf("%gf", f)
+
+	case types.Float64, types.UntypedFloat:
+		f, _ := constant.Float64Val(o.Val())
+		if math.IsInf(f, 0) || math.Abs(f) > math.MaxFloat64 {
+			g.errorf("const value %s for %s cannot be represented as %s", val, o.Name(), jType)
+			return
+		}
+		val = fmt.Sprintf("%g", f)
+	}
+	g.Printf("public static final %s %s = %s;\n", g.javaType(o.Type()), o.Name(), val)
+}
+
 func (g *javaGen) gen() error {
 	g.Printf(javaPreamble, g.javaPkg, g.className(), g.gobindOpts(), g.pkg.Path())
 
@@ -613,7 +644,6 @@ func (g *javaGen) gen() error {
 		}
 
 		switch o := obj.(type) {
-		// TODO(crawshaw): case *types.Const:
 		// TODO(crawshaw): case *types.Var:
 		case *types.Func:
 			if isCallable(o) {
@@ -631,8 +661,10 @@ func (g *javaGen) gen() error {
 				g.errorf("%s: cannot generate binding for %s: %T", g.fset.Position(o.Pos()), o.Name(), t)
 				continue
 			}
+		case *types.Const:
+			g.genConst(o)
 		default:
-			g.errorf("unsupported exported type: ", obj)
+			g.errorf("unsupported exported type: %T", obj)
 		}
 	}
 
