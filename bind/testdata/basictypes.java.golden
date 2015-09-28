@@ -9,6 +9,12 @@ import go.Seq;
 public abstract class Basictypes {
     private Basictypes() {} // uninstantiable
     
+    public static final boolean ABool = true;
+    public static final double AFloat = 0.2015;
+    public static final int ARune = 32;
+    public static final String AString = "a string";
+    public static final long AnInt = 7L;
+    public static final long AnInt2 = 9223372036854775807L;
     public static boolean Bool(boolean p0) {
         go.Seq _in = new go.Seq();
         go.Seq _out = new go.Seq();

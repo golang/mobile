@@ -10,8 +10,26 @@ package testpkg
 import (
 	"errors"
 	"fmt"
+	"math"
 	"runtime"
 	"time"
+)
+
+const (
+	AString = "a string"
+	AnInt   = 7
+	ABool   = true
+	AFloat  = 0.12345
+
+	MinInt32               int32   = math.MinInt32
+	MaxInt32               int32   = math.MaxInt32
+	MinInt64                       = math.MinInt64
+	MaxInt64                       = math.MaxInt64
+	SmallestNonzeroFloat64         = math.SmallestNonzeroFloat64
+	MaxFloat64                     = math.MaxFloat64
+	SmallestNonzeroFloat32 float32 = math.SmallestNonzeroFloat64
+	MaxFloat32             float32 = math.MaxFloat32
+	Log2E                          = math.Log2E
 )
 
 type I interface {
