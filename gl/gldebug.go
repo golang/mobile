@@ -640,7 +640,7 @@ func (ctx *context) ActiveTexture(texture Enum) {
 			fn: C.glfnActiveTexture,
 			a0: texture.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) AttachShader(p Program, s Shader) {
@@ -654,7 +654,7 @@ func (ctx *context) AttachShader(p Program, s Shader) {
 			a0: p.c(),
 			a1: s.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) BindAttribLocation(p Program, a Attrib, name string) {
@@ -669,7 +669,7 @@ func (ctx *context) BindAttribLocation(p Program, a Attrib, name string) {
 			a1: a.c(),
 			a2: C.uintptr_t(uintptr(unsafe.Pointer(C.CString(name)))),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) BindBuffer(target Enum, b Buffer) {
@@ -683,7 +683,7 @@ func (ctx *context) BindBuffer(target Enum, b Buffer) {
 			a0: target.c(),
 			a1: b.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) BindFramebuffer(target Enum, fb Framebuffer) {
@@ -697,7 +697,7 @@ func (ctx *context) BindFramebuffer(target Enum, fb Framebuffer) {
 			a0: target.c(),
 			a1: fb.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) BindRenderbuffer(target Enum, rb Renderbuffer) {
@@ -711,7 +711,7 @@ func (ctx *context) BindRenderbuffer(target Enum, rb Renderbuffer) {
 			a0: target.c(),
 			a1: rb.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) BindTexture(target Enum, t Texture) {
@@ -725,7 +725,7 @@ func (ctx *context) BindTexture(target Enum, t Texture) {
 			a0: target.c(),
 			a1: t.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) BlendColor(red, green, blue, alpha float32) {
@@ -741,7 +741,7 @@ func (ctx *context) BlendColor(red, green, blue, alpha float32) {
 			a2: C.uintptr_t(math.Float32bits(blue)),
 			a3: C.uintptr_t(math.Float32bits(alpha)),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) BlendEquation(mode Enum) {
@@ -754,7 +754,7 @@ func (ctx *context) BlendEquation(mode Enum) {
 			fn: C.glfnBlendEquation,
 			a0: mode.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) BlendEquationSeparate(modeRGB, modeAlpha Enum) {
@@ -768,7 +768,7 @@ func (ctx *context) BlendEquationSeparate(modeRGB, modeAlpha Enum) {
 			a0: modeRGB.c(),
 			a1: modeAlpha.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) BlendFunc(sfactor, dfactor Enum) {
@@ -782,7 +782,7 @@ func (ctx *context) BlendFunc(sfactor, dfactor Enum) {
 			a0: sfactor.c(),
 			a1: dfactor.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) BlendFuncSeparate(sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha Enum) {
@@ -798,7 +798,7 @@ func (ctx *context) BlendFuncSeparate(sfactorRGB, dfactorRGB, sfactorAlpha, dfac
 			a2: sfactorAlpha.c(),
 			a3: dfactorAlpha.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) BufferData(target Enum, src []byte, usage Enum) {
@@ -835,7 +835,7 @@ func (ctx *context) BufferInit(target Enum, size int, usage Enum) {
 			a2: 0,
 			a3: usage.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) BufferSubData(target Enum, offset int, data []byte) {
@@ -879,7 +879,7 @@ func (ctx *context) Clear(mask Enum) {
 			fn: C.glfnClear,
 			a0: C.uintptr_t(mask),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) ClearColor(red, green, blue, alpha float32) {
@@ -895,7 +895,7 @@ func (ctx *context) ClearColor(red, green, blue, alpha float32) {
 			a2: C.uintptr_t(math.Float32bits(blue)),
 			a3: C.uintptr_t(math.Float32bits(alpha)),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) ClearDepthf(d float32) {
@@ -908,7 +908,7 @@ func (ctx *context) ClearDepthf(d float32) {
 			fn: C.glfnClearDepthf,
 			a0: C.uintptr_t(math.Float32bits(d)),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) ClearStencil(s int) {
@@ -921,7 +921,7 @@ func (ctx *context) ClearStencil(s int) {
 			fn: C.glfnClearStencil,
 			a0: C.uintptr_t(s),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) ColorMask(red, green, blue, alpha bool) {
@@ -937,7 +937,7 @@ func (ctx *context) ColorMask(red, green, blue, alpha bool) {
 			a2: glBoolean(blue),
 			a3: glBoolean(alpha),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) CompileShader(s Shader) {
@@ -950,7 +950,7 @@ func (ctx *context) CompileShader(s Shader) {
 			fn: C.glfnCompileShader,
 			a0: s.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) CompressedTexImage2D(target Enum, level int, internalformat Enum, width, height, border int, data []byte) {
@@ -1013,7 +1013,7 @@ func (ctx *context) CopyTexImage2D(target Enum, level int, internalformat Enum, 
 			a6: C.uintptr_t(height),
 			a7: C.uintptr_t(border),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) CopyTexSubImage2D(target Enum, level, xoffset, yoffset, x, y, width, height int) {
@@ -1033,7 +1033,7 @@ func (ctx *context) CopyTexSubImage2D(target Enum, level, xoffset, yoffset, x, y
 			a6: C.uintptr_t(width),
 			a7: C.uintptr_t(height),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) CreateBuffer() (r0 Buffer) {
@@ -1125,7 +1125,7 @@ func (ctx *context) CullFace(mode Enum) {
 			fn: C.glfnCullFace,
 			a0: mode.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) DeleteBuffer(v Buffer) {
@@ -1138,7 +1138,7 @@ func (ctx *context) DeleteBuffer(v Buffer) {
 			fn: C.glfnDeleteBuffer,
 			a0: C.uintptr_t(v.Value),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) DeleteFramebuffer(v Framebuffer) {
@@ -1151,7 +1151,7 @@ func (ctx *context) DeleteFramebuffer(v Framebuffer) {
 			fn: C.glfnDeleteFramebuffer,
 			a0: C.uintptr_t(v.Value),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) DeleteProgram(p Program) {
@@ -1164,7 +1164,7 @@ func (ctx *context) DeleteProgram(p Program) {
 			fn: C.glfnDeleteProgram,
 			a0: p.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) DeleteRenderbuffer(v Renderbuffer) {
@@ -1177,7 +1177,7 @@ func (ctx *context) DeleteRenderbuffer(v Renderbuffer) {
 			fn: C.glfnDeleteRenderbuffer,
 			a0: v.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) DeleteShader(s Shader) {
@@ -1190,7 +1190,7 @@ func (ctx *context) DeleteShader(s Shader) {
 			fn: C.glfnDeleteShader,
 			a0: s.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) DeleteTexture(v Texture) {
@@ -1203,7 +1203,7 @@ func (ctx *context) DeleteTexture(v Texture) {
 			fn: C.glfnDeleteTexture,
 			a0: v.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) DepthFunc(fn Enum) {
@@ -1216,7 +1216,7 @@ func (ctx *context) DepthFunc(fn Enum) {
 			fn: C.glfnDepthFunc,
 			a0: fn.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) DepthMask(flag bool) {
@@ -1229,7 +1229,7 @@ func (ctx *context) DepthMask(flag bool) {
 			fn: C.glfnDepthMask,
 			a0: glBoolean(flag),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) DepthRangef(n, f float32) {
@@ -1243,7 +1243,7 @@ func (ctx *context) DepthRangef(n, f float32) {
 			a0: C.uintptr_t(math.Float32bits(n)),
 			a1: C.uintptr_t(math.Float32bits(f)),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) DetachShader(p Program, s Shader) {
@@ -1257,7 +1257,7 @@ func (ctx *context) DetachShader(p Program, s Shader) {
 			a0: p.c(),
 			a1: s.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) Disable(cap Enum) {
@@ -1270,7 +1270,7 @@ func (ctx *context) Disable(cap Enum) {
 			fn: C.glfnDisable,
 			a0: cap.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) DisableVertexAttribArray(a Attrib) {
@@ -1283,7 +1283,7 @@ func (ctx *context) DisableVertexAttribArray(a Attrib) {
 			fn: C.glfnDisableVertexAttribArray,
 			a0: a.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) DrawArrays(mode Enum, first, count int) {
@@ -1298,7 +1298,7 @@ func (ctx *context) DrawArrays(mode Enum, first, count int) {
 			a1: C.uintptr_t(first),
 			a2: C.uintptr_t(count),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) DrawElements(mode Enum, count int, ty Enum, offset int) {
@@ -1314,7 +1314,7 @@ func (ctx *context) DrawElements(mode Enum, count int, ty Enum, offset int) {
 			a2: ty.c(),
 			a3: C.uintptr_t(offset),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) Enable(cap Enum) {
@@ -1327,7 +1327,7 @@ func (ctx *context) Enable(cap Enum) {
 			fn: C.glfnEnable,
 			a0: cap.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) EnableVertexAttribArray(a Attrib) {
@@ -1340,7 +1340,7 @@ func (ctx *context) EnableVertexAttribArray(a Attrib) {
 			fn: C.glfnEnableVertexAttribArray,
 			a0: a.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) Finish() {
@@ -1382,7 +1382,7 @@ func (ctx *context) FramebufferRenderbuffer(target, attachment, rbTarget Enum, r
 			a2: rbTarget.c(),
 			a3: rb.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) FramebufferTexture2D(target, attachment, texTarget Enum, t Texture, level int) {
@@ -1399,7 +1399,7 @@ func (ctx *context) FramebufferTexture2D(target, attachment, texTarget Enum, t T
 			a3: t.c(),
 			a4: C.uintptr_t(level),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) FrontFace(mode Enum) {
@@ -1412,7 +1412,7 @@ func (ctx *context) FrontFace(mode Enum) {
 			fn: C.glfnFrontFace,
 			a0: mode.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) GenerateMipmap(target Enum) {
@@ -1425,7 +1425,7 @@ func (ctx *context) GenerateMipmap(target Enum) {
 			fn: C.glfnGenerateMipmap,
 			a0: target.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) GetActiveAttrib(p Program, index uint32) (name string, size int, ty Enum) {
@@ -1916,7 +1916,7 @@ func (ctx *context) Hint(target, mode Enum) {
 			a0: target.c(),
 			a1: mode.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) IsBuffer(b Buffer) (r0 bool) {
@@ -2027,7 +2027,7 @@ func (ctx *context) LineWidth(width float32) {
 			fn: C.glfnLineWidth,
 			a0: C.uintptr_t(math.Float32bits(width)),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) LinkProgram(p Program) {
@@ -2040,7 +2040,7 @@ func (ctx *context) LinkProgram(p Program) {
 			fn: C.glfnLinkProgram,
 			a0: p.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) PixelStorei(pname Enum, param int32) {
@@ -2054,7 +2054,7 @@ func (ctx *context) PixelStorei(pname Enum, param int32) {
 			a0: pname.c(),
 			a1: C.uintptr_t(param),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) PolygonOffset(factor, units float32) {
@@ -2068,7 +2068,7 @@ func (ctx *context) PolygonOffset(factor, units float32) {
 			a0: C.uintptr_t(math.Float32bits(factor)),
 			a1: C.uintptr_t(math.Float32bits(units)),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) ReadPixels(dst []byte, x, y, width, height int, format, ty Enum) {
@@ -2101,7 +2101,7 @@ func (ctx *context) ReleaseShaderCompiler() {
 		args: C.struct_fnargs{
 			fn: C.glfnReleaseShaderCompiler,
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) RenderbufferStorage(target, internalFormat Enum, width, height int) {
@@ -2117,7 +2117,7 @@ func (ctx *context) RenderbufferStorage(target, internalFormat Enum, width, heig
 			a2: C.uintptr_t(width),
 			a3: C.uintptr_t(height),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) SampleCoverage(value float32, invert bool) {
@@ -2131,7 +2131,7 @@ func (ctx *context) SampleCoverage(value float32, invert bool) {
 			a0: C.uintptr_t(math.Float32bits(value)),
 			a1: glBoolean(invert),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) Scissor(x, y, width, height int32) {
@@ -2147,7 +2147,7 @@ func (ctx *context) Scissor(x, y, width, height int32) {
 			a2: C.uintptr_t(width),
 			a3: C.uintptr_t(height),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) ShaderSource(s Shader, src string) {
@@ -2165,7 +2165,7 @@ func (ctx *context) ShaderSource(s Shader, src string) {
 			a1: 1,
 			a2: C.uintptr_t(uintptr(unsafe.Pointer(cstrp))),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) StencilFunc(fn Enum, ref int, mask uint32) {
@@ -2180,7 +2180,7 @@ func (ctx *context) StencilFunc(fn Enum, ref int, mask uint32) {
 			a1: C.uintptr_t(ref),
 			a2: C.uintptr_t(mask),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) StencilFuncSeparate(face, fn Enum, ref int, mask uint32) {
@@ -2196,7 +2196,7 @@ func (ctx *context) StencilFuncSeparate(face, fn Enum, ref int, mask uint32) {
 			a2: C.uintptr_t(ref),
 			a3: C.uintptr_t(mask),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) StencilMask(mask uint32) {
@@ -2209,7 +2209,7 @@ func (ctx *context) StencilMask(mask uint32) {
 			fn: C.glfnStencilMask,
 			a0: C.uintptr_t(mask),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) StencilMaskSeparate(face Enum, mask uint32) {
@@ -2223,7 +2223,7 @@ func (ctx *context) StencilMaskSeparate(face Enum, mask uint32) {
 			a0: face.c(),
 			a1: C.uintptr_t(mask),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) StencilOp(fail, zfail, zpass Enum) {
@@ -2238,7 +2238,7 @@ func (ctx *context) StencilOp(fail, zfail, zpass Enum) {
 			a1: zfail.c(),
 			a2: zpass.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) StencilOpSeparate(face, sfail, dpfail, dppass Enum) {
@@ -2254,7 +2254,7 @@ func (ctx *context) StencilOpSeparate(face, sfail, dpfail, dppass Enum) {
 			a2: dpfail.c(),
 			a3: dppass.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) TexImage2D(target Enum, level int, width, height int, format Enum, ty Enum, data []byte) {
@@ -2279,7 +2279,7 @@ func (ctx *context) TexImage2D(target Enum, level int, width, height int, format
 			a6: ty.c(),
 		},
 		parg:     parg,
-		blocking: parg != nil,
+		blocking: true,
 	})
 }
 
@@ -2318,7 +2318,7 @@ func (ctx *context) TexParameterf(target, pname Enum, param float32) {
 			a1: pname.c(),
 			a2: C.uintptr_t(math.Float32bits(param)),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) TexParameterfv(target, pname Enum, params []float32) {
@@ -2349,7 +2349,7 @@ func (ctx *context) TexParameteri(target, pname Enum, param int) {
 			a1: pname.c(),
 			a2: C.uintptr_t(param),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) TexParameteriv(target, pname Enum, params []int32) {
@@ -2379,7 +2379,7 @@ func (ctx *context) Uniform1f(dst Uniform, v float32) {
 			a0: dst.c(),
 			a1: C.uintptr_t(math.Float32bits(v)),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) Uniform1fv(dst Uniform, src []float32) {
@@ -2409,7 +2409,7 @@ func (ctx *context) Uniform1i(dst Uniform, v int) {
 			a0: dst.c(),
 			a1: C.uintptr_t(v),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) Uniform1iv(dst Uniform, src []int32) {
@@ -2440,7 +2440,7 @@ func (ctx *context) Uniform2f(dst Uniform, v0, v1 float32) {
 			a1: C.uintptr_t(math.Float32bits(v0)),
 			a2: C.uintptr_t(math.Float32bits(v1)),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) Uniform2fv(dst Uniform, src []float32) {
@@ -2471,7 +2471,7 @@ func (ctx *context) Uniform2i(dst Uniform, v0, v1 int) {
 			a1: C.uintptr_t(v0),
 			a2: C.uintptr_t(v1),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) Uniform2iv(dst Uniform, src []int32) {
@@ -2503,7 +2503,7 @@ func (ctx *context) Uniform3f(dst Uniform, v0, v1, v2 float32) {
 			a2: C.uintptr_t(math.Float32bits(v1)),
 			a3: C.uintptr_t(math.Float32bits(v2)),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) Uniform3fv(dst Uniform, src []float32) {
@@ -2535,7 +2535,7 @@ func (ctx *context) Uniform3i(dst Uniform, v0, v1, v2 int32) {
 			a2: C.uintptr_t(v1),
 			a3: C.uintptr_t(v2),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) Uniform3iv(dst Uniform, src []int32) {
@@ -2568,7 +2568,7 @@ func (ctx *context) Uniform4f(dst Uniform, v0, v1, v2, v3 float32) {
 			a3: C.uintptr_t(math.Float32bits(v2)),
 			a4: C.uintptr_t(math.Float32bits(v3)),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) Uniform4fv(dst Uniform, src []float32) {
@@ -2601,7 +2601,7 @@ func (ctx *context) Uniform4i(dst Uniform, v0, v1, v2, v3 int32) {
 			a3: C.uintptr_t(v2),
 			a4: C.uintptr_t(v3),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) Uniform4iv(dst Uniform, src []int32) {
@@ -2679,7 +2679,7 @@ func (ctx *context) UseProgram(p Program) {
 			fn: C.glfnUseProgram,
 			a0: p.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) ValidateProgram(p Program) {
@@ -2692,7 +2692,7 @@ func (ctx *context) ValidateProgram(p Program) {
 			fn: C.glfnValidateProgram,
 			a0: p.c(),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) VertexAttrib1f(dst Attrib, x float32) {
@@ -2706,7 +2706,7 @@ func (ctx *context) VertexAttrib1f(dst Attrib, x float32) {
 			a0: dst.c(),
 			a1: C.uintptr_t(math.Float32bits(x)),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) VertexAttrib1fv(dst Attrib, src []float32) {
@@ -2736,7 +2736,7 @@ func (ctx *context) VertexAttrib2f(dst Attrib, x, y float32) {
 			a1: C.uintptr_t(math.Float32bits(x)),
 			a2: C.uintptr_t(math.Float32bits(y)),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) VertexAttrib2fv(dst Attrib, src []float32) {
@@ -2767,7 +2767,7 @@ func (ctx *context) VertexAttrib3f(dst Attrib, x, y, z float32) {
 			a2: C.uintptr_t(math.Float32bits(y)),
 			a3: C.uintptr_t(math.Float32bits(z)),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) VertexAttrib3fv(dst Attrib, src []float32) {
@@ -2799,7 +2799,7 @@ func (ctx *context) VertexAttrib4f(dst Attrib, x, y, z, w float32) {
 			a3: C.uintptr_t(math.Float32bits(z)),
 			a4: C.uintptr_t(math.Float32bits(w)),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) VertexAttrib4fv(dst Attrib, src []float32) {
@@ -2832,7 +2832,7 @@ func (ctx *context) VertexAttribPointer(dst Attrib, size int, ty Enum, normalize
 			a4: C.uintptr_t(stride),
 			a5: C.uintptr_t(offset),
 		},
-	})
+		blocking: true})
 }
 
 func (ctx *context) Viewport(x, y, width, height int) {
@@ -2848,5 +2848,5 @@ func (ctx *context) Viewport(x, y, width, height int) {
 			a2: C.uintptr_t(width),
 			a3: C.uintptr_t(height),
 		},
-	})
+		blocking: true})
 }
