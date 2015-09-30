@@ -201,6 +201,7 @@ func main() {
 		// Print original body of function.
 		for _, s := range fn.Body.List {
 			if c := enqueueCall(s); c != nil {
+				c.Fun.(*ast.SelectorExpr).Sel.Name = "enqueueDebug"
 				setEnqueueBlocking(c)
 			}
 			printer.Fprint(buf, fset, s)
@@ -280,6 +281,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"sync/atomic"
 	"unsafe"
 )
 
@@ -296,6 +298,20 @@ func (ctx *context) errDrain() string {
 		return fmt.Sprintf(" error: %v", errs)
 	}
 	return ""
+}
+
+func (ctx *context) enqueueDebug(c call) C.uintptr_t {
+	numCalls := atomic.AddInt32(&ctx.debug, 1)
+	if numCalls > 1 {
+		panic("concurrent calls made to the same GL context")
+	}
+	defer func() {
+		if atomic.AddInt32(&ctx.debug, -1) > 0 {
+			select {} // block so you see us in the panic
+		}
+	}()
+
+	return ctx.enqueue(c)
 }
 
 `
