@@ -41,7 +41,8 @@ import "unsafe"
 const workbufLen = 3
 
 type context struct {
-	cptr uintptr
+	cptr  uintptr
+	debug int32
 
 	workAvailable chan struct{}
 
