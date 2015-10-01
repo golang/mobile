@@ -21,12 +21,13 @@ func goIOSBind(pkg *build.Package) error {
 		return err
 	}
 	name := binder.pkg.Name()
+	title := strings.Title(name)
 
 	if buildO != "" && !strings.HasSuffix(buildO, ".framework") {
 		return fmt.Errorf("static framework name %q missing .framework suffix", buildO)
 	}
 	if buildO == "" {
-		buildO = name + ".framework"
+		buildO = title + ".framework"
 	}
 
 	if err := binder.GenGo(filepath.Join(tmpdir, "src")); err != nil {
@@ -68,19 +69,19 @@ func goIOSBind(pkg *build.Package) error {
 	if err := symlink("Versions/Current/Headers", buildO+"/Headers"); err != nil {
 		return err
 	}
-	if err := symlink("Versions/Current/"+strings.Title(name), buildO+"/"+strings.Title(name)); err != nil {
+	if err := symlink("Versions/Current/"+title, buildO+"/"+title); err != nil {
 		return err
 	}
 
-	cmd.Args = append(cmd.Args, "-o", buildO+"/Versions/A/"+strings.Title(name))
+	cmd.Args = append(cmd.Args, "-o", buildO+"/Versions/A/"+title)
 	if err := runCmd(cmd); err != nil {
 		return err
 	}
 
 	// Copy header file next to output archive.
 	err = copyFile(
-		headers+"/"+strings.Title(name)+".h",
-		tmpdir+"/objc/Go"+strings.Title(name)+".h",
+		headers+"/"+title+".h",
+		tmpdir+"/objc/Go"+title+".h",
 	)
 	if err != nil {
 		return err
@@ -101,8 +102,8 @@ func goIOSBind(pkg *build.Package) error {
 		Module string
 		Header string
 	}{
-		Module: name,
-		Header: strings.Title(name) + ".h",
+		Module: title,
+		Header: title + ".h",
 	}
 	err = writeFile(buildO+"/Versions/A/Modules/module.modulemap", func(w io.Writer) error {
 		return iosModuleMapTmpl.Execute(w, mmVals)
