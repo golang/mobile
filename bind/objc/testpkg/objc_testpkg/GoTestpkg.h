@@ -56,6 +56,18 @@ FOUNDATION_EXPORT const int64_t GoTestpkgMinInt64;
 FOUNDATION_EXPORT const float GoTestpkgSmallestNonzeroFloat32;
 FOUNDATION_EXPORT const double GoTestpkgSmallestNonzeroFloat64;
 
+FOUNDATION_EXPORT void GoTestpkg_setIntVar(int v);
+FOUNDATION_EXPORT int GoTestpkgIntVar();
+
+FOUNDATION_EXPORT void GoTestpkg_setInterfaceVar(id<GoTestpkgI> v);
+FOUNDATION_EXPORT id<GoTestpkgI> GoTestpkgInterfaceVar();
+
+FOUNDATION_EXPORT void GoTestpkg_setStringVar(NSString* v);
+FOUNDATION_EXPORT NSString* GoTestpkgStringVar();
+
+FOUNDATION_EXPORT void GoTestpkg_setStructVar(GoTestpkgNode* v);
+FOUNDATION_EXPORT GoTestpkgNode* GoTestpkgStructVar();
+
 FOUNDATION_EXPORT NSData* GoTestpkgBytesAppend(NSData* a, NSData* b);
 
 FOUNDATION_EXPORT BOOL GoTestpkgCallIError(id<GoTestpkgI> i, BOOL triggerError, NSError** error);

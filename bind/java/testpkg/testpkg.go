@@ -39,6 +39,13 @@ const (
 	Log2E                          = math.Log2E
 )
 
+var (
+	StringVar    = "a string var"
+	IntVar       = 77
+	StructVar    = &S{name: "a struct var"}
+	InterfaceVar I
+)
+
 type I interface {
 	F()
 
@@ -104,8 +111,10 @@ func finalizeInner(a *int) {
 	numSCollected++
 }
 
+var seq = 0
+
 func New() *S {
-	s := &S{innerObj: new(int), name: "new"}
+	s := &S{innerObj: new(int), name: fmt.Sprintf("new%d", seq)}
 	runtime.SetFinalizer(s.innerObj, finalizeInner)
 	return s
 }

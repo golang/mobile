@@ -459,6 +459,35 @@ func (g *javaGen) funcSignature(o *types.Func, static bool) error {
 	return nil
 }
 
+func (g *javaGen) genVar(o *types.Var) {
+	jType := g.javaType(o.Type())
+	varDesc := fmt.Sprintf("%s.%s", g.pkg.Name(), o.Name())
+
+	// setter
+	g.Printf("public static void set%s(%s v) {\n", o.Name(), jType)
+	g.Indent()
+	g.Printf("Seq in = new Seq();\n")
+	g.Printf("Seq out = new Seq();\n")
+	g.Printf("in.write%s;\n", seqWrite(o.Type(), "v"))
+	g.Printf("Seq.send(%q, 1, in, out);\n", varDesc)
+	g.Outdent()
+	g.Printf("}\n")
+	g.Printf("\n")
+
+	// getter
+	g.Printf("public static %s get%s() {\n", jType, o.Name())
+	g.Indent()
+	g.Printf("Seq in = new Seq();\n")
+	g.Printf("Seq out = new Seq();\n")
+	g.Printf("Seq.send(%q, 2, in, out);\n", varDesc)
+	g.Printf("%s ", jType)
+	g.genRead("v", "out", o.Type())
+	g.Printf("return v;\n")
+	g.Outdent()
+	g.Printf("}\n")
+	g.Printf("\n")
+}
+
 func (g *javaGen) genFunc(o *types.Func, method bool) {
 	if err := g.funcSignature(o, !method); err != nil {
 		g.errorf("%v", err)
@@ -634,9 +663,11 @@ func (g *javaGen) gen() error {
 	g.Printf("public abstract class %s {\n", g.className())
 	g.Indent()
 	g.Printf("private %s() {} // uninstantiable\n\n", g.className())
+
+	var funcs []string
+
 	scope := g.pkg.Scope()
 	names := scope.Names()
-	var funcs []string
 	for _, name := range names {
 		obj := scope.Lookup(name)
 		if !obj.Exported() {
@@ -663,6 +694,8 @@ func (g *javaGen) gen() error {
 			}
 		case *types.Const:
 			g.genConst(o)
+		case *types.Var:
+			g.genVar(o)
 		default:
 			g.errorf("unsupported exported type: %T", obj)
 		}

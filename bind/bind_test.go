@@ -32,6 +32,7 @@ var tests = []string{
 	"testdata/issue12328.go",
 	"testdata/issue12403.go",
 	"testdata/try.go",
+	"testdata/vars.go",
 }
 
 var fset = token.NewFileSet()
