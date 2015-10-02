@@ -33,6 +33,34 @@ public class SeqTest extends AndroidTestCase {
     assertEquals("const MaxFloat32", 3.40282346638528859811704183484516925440e+38, Testpkg.MaxFloat32, 0.0001);
     assertEquals("const Log2E", 1/0.693147180559945309417232121458176568075500134360255254120680009, Testpkg.Log2E, 0.0001);
   }
+
+  public void testVar() {
+    assertEquals("var StringVar", "a string var", Testpkg.getStringVar());
+
+    String newStringVar = "a new string var";
+    Testpkg.setStringVar(newStringVar);
+    assertEquals("var StringVar", newStringVar, Testpkg.getStringVar());
+
+    assertEquals("var IntVar", 77, Testpkg.getIntVar());
+
+    long newIntVar = 777;
+    Testpkg.setIntVar(newIntVar);
+    assertEquals("var IntVar", newIntVar, Testpkg.getIntVar());
+
+    Testpkg.S s0 = Testpkg.getStructVar();
+    assertEquals("var StructVar", "a struct var", s0.String());
+    Testpkg.S s1 = Testpkg.New();
+    Testpkg.setStructVar(s1);
+    assertEquals("var StructVar", s1.String(), Testpkg.getStructVar().String());
+
+    // TODO(hyangah): handle nil return value (translate to null)
+
+    AnI obj = new AnI();
+    obj.name = "this is an I";
+    Testpkg.setInterfaceVar(obj);
+    assertEquals("var InterfaceVar", obj.String(), Testpkg.getInterfaceVar().String());
+  }
+
   public void testAssets() {
     String want = "Hello, Assets.\n";
     String got = Testpkg.ReadAsset();

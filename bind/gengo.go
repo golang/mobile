@@ -192,6 +192,29 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 	g.Printf("}\n\n")
 }
 
+func (g *goGen) genVar(o *types.Var) {
+	// TODO(hyangah): non-struct pointer types (*int), struct type.
+
+	v := fmt.Sprintf("%s.%s", g.pkg.Name(), o.Name())
+
+	// var I int
+	//
+	// func var_setI(out, in *seq.Buffer)
+	g.Printf("func var_set%s(out, in *seq.Buffer) {\n", o.Name())
+	g.Indent()
+	g.genRead("v", "in", o.Type())
+	g.Printf("%s = v\n", v)
+	g.Outdent()
+	g.Printf("}\n")
+
+	// func var_getI(out, in *seq.Buffer)
+	g.Printf("func var_get%s(out, in *seq.Buffer) {\n", o.Name())
+	g.Indent()
+	g.genWrite(v, "out", o.Type())
+	g.Outdent()
+	g.Printf("}\n")
+}
+
 func (g *goGen) genInterface(obj *types.TypeName) {
 	iface := obj.Type().(*types.Named).Underlying().(*types.Interface)
 	ifaceDesc := fmt.Sprintf("go.%s.%s", g.pkg.Name(), obj.Name())
@@ -374,7 +397,7 @@ func (g *goGen) typeString(typ types.Type) string {
 func (g *goGen) gen() error {
 	g.genPreamble()
 
-	var funcs []string
+	var funcs, vars []string
 
 	scope := g.pkg.Scope()
 	names := scope.Names()
@@ -401,6 +424,9 @@ func (g *goGen) gen() error {
 			case *types.Interface:
 				g.genInterface(obj)
 			}
+		case *types.Var:
+			g.genVar(obj)
+			vars = append(vars, obj.Name())
 		case *types.Const:
 		default:
 			g.errorf("not yet supported, name for %v / %T", obj, obj)
@@ -413,6 +439,18 @@ func (g *goGen) gen() error {
 		g.Indent()
 		for i, name := range funcs {
 			g.Printf("seq.Register(%q, %d, proxy_%s)\n", g.pkg.Name(), i+1, name)
+		}
+		g.Outdent()
+		g.Printf("}\n")
+	}
+
+	if len(vars) > 0 {
+		g.Printf("func init() {\n")
+		g.Indent()
+		for _, name := range vars {
+			varDesc := fmt.Sprintf("%s.%s", g.pkg.Name(), name)
+			g.Printf("seq.Register(%q, %d, var_set%s)\n", varDesc, 1, name)
+			g.Printf("seq.Register(%q, %d, var_get%s)\n", varDesc, 2, name)
 		}
 		g.Outdent()
 		g.Printf("}\n")

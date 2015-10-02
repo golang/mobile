@@ -312,6 +312,101 @@ const int64_t GoTestpkgMinInt64 = -9223372036854775807LL-1;
 const float GoTestpkgSmallestNonzeroFloat32 = 0;
 const double GoTestpkgSmallestNonzeroFloat64 = 5e-324;
 
+void GoTestpkg_setIntVar(int v) {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	go_seq_writeInt(&in_, v);
+	go_seq_send("testpkg.IntVar", 1, &in_, &out_);
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+}
+
+int GoTestpkgIntVar() {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	go_seq_send("testpkg.IntVar", 2, &in_, &out_);
+	int ret = go_seq_readInt(&out_);
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+	return ret;
+}
+
+void GoTestpkg_setInterfaceVar(id<GoTestpkgI> v) {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	if ([(id<NSObject>)(v) isKindOfClass:[GoTestpkgI class]]) {
+		id<goSeqRefInterface> v_proxy = (id<goSeqRefInterface>)(v);
+		go_seq_writeRef(&in_, v_proxy.ref);
+	} else {
+		go_seq_writeObjcRef(&in_, v);
+	}
+	go_seq_send("testpkg.InterfaceVar", 1, &in_, &out_);
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+}
+
+id<GoTestpkgI> GoTestpkgInterfaceVar() {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	go_seq_send("testpkg.InterfaceVar", 2, &in_, &out_);
+	GoSeqRef* ret_ref = go_seq_readRef(&out_);
+	id<GoTestpkgI> ret = ret_ref.obj;
+	if (ret == NULL) {
+		ret = [[GoTestpkgI alloc] initWithRef:ret_ref];
+	}
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+	return ret;
+}
+
+void GoTestpkg_setStringVar(NSString* v) {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	go_seq_writeUTF8(&in_, v);
+	go_seq_send("testpkg.StringVar", 1, &in_, &out_);
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+}
+
+NSString* GoTestpkgStringVar() {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	go_seq_send("testpkg.StringVar", 2, &in_, &out_);
+	NSString* ret = go_seq_readUTF8(&out_);
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+	return ret;
+}
+
+void GoTestpkg_setStructVar(GoTestpkgNode* v) {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	if ([(id<NSObject>)(v) isKindOfClass:[GoTestpkgNode class]]) {
+		id<goSeqRefInterface> v_proxy = (id<goSeqRefInterface>)(v);
+		go_seq_writeRef(&in_, v_proxy.ref);
+	} else {
+		go_seq_writeObjcRef(&in_, v);
+	}
+	go_seq_send("testpkg.StructVar", 1, &in_, &out_);
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+}
+
+GoTestpkgNode* GoTestpkgStructVar() {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	go_seq_send("testpkg.StructVar", 2, &in_, &out_);
+	GoSeqRef* ret_ref = go_seq_readRef(&out_);
+	GoTestpkgNode* ret = ret_ref.obj;
+	if (ret == NULL) {
+		ret = [[GoTestpkgNode alloc] initWithRef:ret_ref];
+	}
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+	return ret;
+}
+
+
 NSData* GoTestpkgBytesAppend(NSData* a, NSData* b) {
 	GoSeq in_ = {};
 	GoSeq out_ = {};

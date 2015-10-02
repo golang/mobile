@@ -32,6 +32,13 @@ const (
 	Log2E                          = math.Log2E
 )
 
+var (
+	StringVar    = "a string var"
+	IntVar       = 77
+	StructVar    = &Node{V: "a struct var"}
+	InterfaceVar I
+)
+
 type I interface {
 	Times(v int32) int64
 	Error(triggerError bool) error

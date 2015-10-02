@@ -271,6 +271,50 @@ void testIssue12403() {
   }
 }
 
+void testVar() {
+  NSString *s = GoTestpkgStringVar();
+  if (![s isEqualToString:@"a string var"]) {
+    ERROR(@"GoTestpkgStringVar = %@, want 'a string var'", s);
+  }
+  s = @"a new string var";
+  GoTestpkg_setStringVar(s);
+  NSString *s2 = GoTestpkgStringVar();
+  if (![s2 isEqualToString:s]) {
+    ERROR(@"GoTestpkgStringVar = %@, want %@", s2, s);
+  }
+
+  int64_t i = GoTestpkgIntVar();
+  if (i != 77) {
+    ERROR(@"GoTestpkgIntVar = %lld, want 77", i);
+  }
+  GoTestpkg_setIntVar(777);
+  i = GoTestpkgIntVar();
+  if (i != 777) {
+    ERROR(@"GoTestpkgIntVar = %lld, want 777", i);
+  }
+
+  GoTestpkgNode *n0 = GoTestpkgStructVar();
+  if (![n0.V isEqualToString:@"a struct var"]) {
+    ERROR(@"GoTestpkgStructVar = %@, want 'a struct var'", n0.V);
+  }
+  GoTestpkgNode *n1 = GoTestpkgNewNode(@"a new struct var");
+  GoTestpkg_setStructVar(n1);
+  GoTestpkgNode *n2 = GoTestpkgStructVar();
+  if (![n2.V isEqualToString:@"a new struct var"]) {
+    ERROR(@"GoTestpkgStructVar = %@, want 'a new struct var'", n2.V);
+  }
+
+  Number *num = [[Number alloc] init];
+  num.value = 12345;
+  GoTestpkg_setInterfaceVar(num);
+  id<GoTestpkgI> iface = GoTestpkgInterfaceVar();
+  int64_t x = [iface Times:10];
+  int64_t y = [num Times:10];
+  if (x != y) {
+    ERROR(@"GoTestpkgInterfaceVar Times 10 = %lld, want %lld", x, y);
+  }
+}
+
 // Invokes functions and object methods defined in Testpkg.h.
 //
 // TODO(hyangah): apply testing framework (e.g. XCTestCase)
@@ -285,8 +329,6 @@ int main(void) {
     if (sum != 52) {
       ERROR(@"GoTestpkgSum(31, 21) = %lld, want 52\n", sum);
     }
-
-    testConst();
 
     testHello(@"세계"); // korean, utf-8, world.
 
@@ -315,7 +357,11 @@ int main(void) {
             numI);
     }
 
+    testConst();
+
     testIssue12307();
+
+    testVar();
   }
 
   fprintf(stderr, "%s\n", err ? "FAIL" : "PASS");

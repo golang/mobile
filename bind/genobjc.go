@@ -29,6 +29,7 @@ type objcGen struct {
 	funcs      []*types.Func
 	names      []*types.TypeName
 	constants  []*types.Const
+	vars       []*types.Var
 }
 
 func (g *objcGen) init() {
@@ -56,9 +57,10 @@ func (g *objcGen) init() {
 				continue
 			}
 			g.constants = append(g.constants, obj)
+		case *types.Var:
+			g.vars = append(g.vars, obj)
 		default:
 			g.errorf("unsupported exported type for %s: %T", obj.Name(), obj)
-			// TODO(hyangah): *types.Var
 		}
 	}
 }
@@ -116,6 +118,14 @@ func (g *objcGen) genH() error {
 		}
 	}
 	if len(g.constants) > 0 {
+		g.Printf("\n")
+	}
+
+	// var
+	for _, obj := range g.vars {
+		objcType := g.objcType(obj.Type())
+		g.Printf("FOUNDATION_EXPORT void %s_set%s(%s v);\n", g.namePrefix, obj.Name(), objcType)
+		g.Printf("FOUNDATION_EXPORT %s %s%s();\n", objcType, g.namePrefix, obj.Name())
 		g.Printf("\n")
 	}
 
@@ -186,6 +196,15 @@ func (g *objcGen) genM() error {
 	if len(g.constants) > 0 {
 		g.Printf("\n")
 	}
+
+	// vars
+	for _, o := range g.vars {
+		g.genVarM(o)
+	}
+	if len(g.vars) > 0 {
+		g.Printf("\n")
+	}
+
 	// global functions.
 	for _, obj := range g.funcs {
 		g.genFuncM(obj)
@@ -208,6 +227,35 @@ func (g *objcGen) genM() error {
 	}
 
 	return nil
+}
+
+func (g *objcGen) genVarM(o *types.Var) {
+	varDesc := fmt.Sprintf("%q", g.pkg.Name()+"."+o.Name())
+	objcType := g.objcType(o.Type())
+
+	// setter
+	s1 := &funcSummary{
+		name:   g.namePrefix + "_set" + o.Name(),
+		ret:    "void",
+		params: []paramInfo{{typ: o.Type(), name: "v"}},
+	}
+	g.Printf("void %s(%s v) {\n", s1.name, objcType)
+	g.Indent()
+	g.genFunc(varDesc, "1", s1, false)
+	g.Outdent()
+	g.Printf("}\n\n")
+
+	// getter
+	s2 := &funcSummary{
+		name:      g.namePrefix + o.Name(),
+		ret:       objcType,
+		retParams: []paramInfo{{typ: o.Type(), name: "ret"}},
+	}
+	g.Printf("%s %s() {\n", s2.ret, s2.name)
+	g.Indent()
+	g.genFunc(varDesc, "2", s2, false)
+	g.Outdent()
+	g.Printf("}\n\n")
 }
 
 func (g *objcGen) genConstM(o *types.Const) {

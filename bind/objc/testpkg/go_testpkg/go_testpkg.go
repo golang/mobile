@@ -158,6 +158,26 @@ func proxy_Int(out, in *seq.Buffer) {
 	testpkg.Int(param_x)
 }
 
+func var_setIntVar(out, in *seq.Buffer) {
+	v := in.ReadInt()
+	testpkg.IntVar = v
+}
+func var_getIntVar(out, in *seq.Buffer) {
+	out.WriteInt(testpkg.IntVar)
+}
+func var_setInterfaceVar(out, in *seq.Buffer) {
+	var v testpkg.I
+	v_ref := in.ReadRef()
+	if v_ref.Num < 0 { // go object
+		v = v_ref.Get().(testpkg.I)
+	} else { // foreign object
+		v = (*proxyI)(v_ref)
+	}
+	testpkg.InterfaceVar = v
+}
+func var_getInterfaceVar(out, in *seq.Buffer) {
+	out.WriteGoRef(testpkg.InterfaceVar)
+}
 func proxy_Multiply(out, in *seq.Buffer) {
 	param_idx := in.ReadInt32()
 	param_val := in.ReadInt32()
@@ -312,6 +332,22 @@ func init() {
 	seq.Register(proxyS_Descriptor, proxyS_TryTwoStrings_Code, proxyS_TryTwoStrings)
 }
 
+func var_setStringVar(out, in *seq.Buffer) {
+	v := in.ReadString()
+	testpkg.StringVar = v
+}
+func var_getStringVar(out, in *seq.Buffer) {
+	out.WriteString(testpkg.StringVar)
+}
+func var_setStructVar(out, in *seq.Buffer) {
+	// Must be a Go object
+	v_ref := in.ReadRef()
+	v := v_ref.Get().(*testpkg.Node)
+	testpkg.StructVar = v
+}
+func var_getStructVar(out, in *seq.Buffer) {
+	out.WriteGoRef(testpkg.StructVar)
+}
 func proxy_Sum(out, in *seq.Buffer) {
 	param_x := in.ReadInt64()
 	param_y := in.ReadInt64()
@@ -342,4 +378,14 @@ func init() {
 	seq.Register("testpkg", 15, proxy_ReturnsError)
 	seq.Register("testpkg", 16, proxy_Sum)
 	seq.Register("testpkg", 17, proxy_UnregisterI)
+}
+func init() {
+	seq.Register("testpkg.IntVar", 1, var_setIntVar)
+	seq.Register("testpkg.IntVar", 2, var_getIntVar)
+	seq.Register("testpkg.InterfaceVar", 1, var_setInterfaceVar)
+	seq.Register("testpkg.InterfaceVar", 2, var_getInterfaceVar)
+	seq.Register("testpkg.StringVar", 1, var_setStringVar)
+	seq.Register("testpkg.StringVar", 2, var_getStringVar)
+	seq.Register("testpkg.StructVar", 1, var_setStructVar)
+	seq.Register("testpkg.StructVar", 2, var_getStructVar)
 }
