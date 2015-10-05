@@ -24,7 +24,7 @@ and the [bind](https://golang.org/x/mobile/example/bind) example apps.
 
 Contributions to Go are appreciated. See https://golang.org/doc/contribute.html.
 
-* Bugs can be filed at the [Go issue tracker](https://golang.org/issue/new).
+* Bugs can be filed at the [Go issue tracker](https://golang.org/issue/new?title=x/mobile:+).
 * Feature requests should preliminary be discussed on
 [golang-nuts](https://groups.google.com/forum/#!forum/golang-nuts)
 mailing list.
