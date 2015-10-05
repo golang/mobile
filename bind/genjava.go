@@ -668,11 +668,13 @@ func (g *javaGen) gen() error {
 
 	scope := g.pkg.Scope()
 	names := scope.Names()
+	hasExported := false
 	for _, name := range names {
 		obj := scope.Lookup(name)
 		if !obj.Exported() {
 			continue
 		}
+		hasExported = true
 
 		switch o := obj.(type) {
 		// TODO(crawshaw): case *types.Var:
@@ -699,6 +701,9 @@ func (g *javaGen) gen() error {
 		default:
 			g.errorf("unsupported exported type: %T", obj)
 		}
+	}
+	if !hasExported {
+		g.errorf("no exported names in the package %q", g.pkg.Path())
 	}
 
 	for i, name := range funcs {

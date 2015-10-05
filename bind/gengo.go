@@ -401,11 +401,14 @@ func (g *goGen) gen() error {
 
 	scope := g.pkg.Scope()
 	names := scope.Names()
+
+	hasExported := false
 	for _, name := range names {
 		obj := scope.Lookup(name)
 		if !obj.Exported() {
 			continue
 		}
+		hasExported = true
 
 		switch obj := obj.(type) {
 		// TODO(crawshaw): case *types.Var:
@@ -432,6 +435,9 @@ func (g *goGen) gen() error {
 			g.errorf("not yet supported, name for %v / %T", obj, obj)
 			continue
 		}
+	}
+	if !hasExported {
+		g.errorf("no exported names in the package %q", g.pkg.Path())
 	}
 
 	if len(funcs) > 0 {
