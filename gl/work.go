@@ -99,7 +99,7 @@ func (ctx *context) enqueue(c call) C.uintptr_t {
 }
 
 func (ctx *context) DoWork() {
-	queue := make([]call, 0, len(ctx.work)) // len(ctx.work) == workbufLen
+	queue := make([]call, 0, workbufLen)
 	for {
 		// Wait until at least one piece of work is ready.
 		// Accumulate work until a piece is marked as blocking.
