@@ -39,11 +39,13 @@ func (g *objcGen) init() {
 	g.names = nil
 
 	scope := g.pkg.Scope()
+	hasExported := false
 	for _, name := range scope.Names() {
 		obj := scope.Lookup(name)
 		if !obj.Exported() {
 			continue
 		}
+		hasExported = true
 		switch obj := obj.(type) {
 		case *types.Func:
 			if isCallable(obj) {
@@ -62,6 +64,9 @@ func (g *objcGen) init() {
 		default:
 			g.errorf("unsupported exported type for %s: %T", obj.Name(), obj)
 		}
+	}
+	if !hasExported {
+		g.errorf("no exported names in the package %q", g.pkg.Path())
 	}
 }
 
