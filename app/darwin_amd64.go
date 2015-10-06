@@ -12,7 +12,7 @@ package app
 
 /*
 #cgo CFLAGS: -x objective-c
-#cgo LDFLAGS: -framework Cocoa -framework OpenGL -framework QuartzCore
+#cgo LDFLAGS: -framework Cocoa -framework OpenGL
 #import <Carbon/Carbon.h> // for HIToolbox/Events.h
 #import <Cocoa/Cocoa.h>
 #include <pthread.h>
@@ -70,45 +70,52 @@ func main(f func(App)) {
 // events in runApp, it starts loop on another goroutine. It is locked
 // to an OS thread for its OpenGL context.
 //
-// Two Cocoa threads deliver draw signals to loop. The primary source of
-// draw events is the CVDisplayLink timer, which is tied to the display
-// vsync. Secondary draw events come from [NSView drawRect:] when the
-// window is resized.
+// The loop processes GL calls until a publish event appears.
+// Then it runs any remaining GL calls and flushes the screen.
+//
+// As NSOpenGLCPSwapInterval is set to 1, the call to CGLFlushDrawable
+// blocks until the screen refresh.
 func (a *app) loop(ctx C.GLintptr) {
 	runtime.LockOSThread()
 	C.makeCurrentContext(ctx)
 
 	workAvailable := a.worker.WorkAvailable()
+
 	for {
 		select {
 		case <-workAvailable:
 			a.worker.DoWork()
-		case <-draw:
+		case <-theApp.publish:
 		loop1:
 			for {
 				select {
 				case <-workAvailable:
 					a.worker.DoWork()
-				case <-theApp.publish:
-					C.CGLFlushDrawable(C.CGLGetCurrentContext())
-					theApp.publishResult <- PublishResult{}
+				default:
 					break loop1
 				}
 			}
-			drawDone <- struct{}{}
+			C.CGLFlushDrawable(C.CGLGetCurrentContext())
+			theApp.publishResult <- PublishResult{}
+			select {
+			case drawDone <- struct{}{}:
+			default:
+			}
 		}
 	}
 }
 
-var (
-	draw     = make(chan struct{})
-	drawDone = make(chan struct{})
-)
+var drawDone = make(chan struct{})
 
+// drawgl is used by Cocoa to occasionally request screen updates.
+//
 //export drawgl
 func drawgl() {
-	draw <- struct{}{}
-	<-drawDone
+	switch theApp.lifecycleStage {
+	case lifecycle.StageFocused, lifecycle.StageVisible:
+		theApp.Send(paint.Event{})
+		<-drawDone
+	}
 }
 
 //export startloop
