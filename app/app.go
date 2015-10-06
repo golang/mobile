@@ -67,10 +67,9 @@ var theApp = &app{
 	publishResult:  make(chan PublishResult),
 }
 
-var glctx gl.Context // TODO: move into theApp
-
 func init() {
 	theApp.eventsIn = pump(theApp.eventsOut)
+	theApp.glctx, theApp.worker = gl.NewContext()
 }
 
 func (a *app) sendLifecycle(to lifecycle.Stage) {
@@ -80,7 +79,7 @@ func (a *app) sendLifecycle(to lifecycle.Stage) {
 	a.eventsIn <- lifecycle.Event{
 		From:        a.lifecycleStage,
 		To:          to,
-		DrawContext: glctx,
+		DrawContext: a.glctx,
 	}
 	a.lifecycleStage = to
 }
@@ -93,6 +92,9 @@ type app struct {
 	lifecycleStage lifecycle.Stage
 	publish        chan struct{}
 	publishResult  chan PublishResult
+
+	glctx  gl.Context
+	worker gl.Worker
 }
 
 func (a *app) Events() <-chan interface{} {
@@ -111,7 +113,7 @@ func (a *app) Publish() PublishResult {
 	//
 	// This enforces that the final receive (for this paint cycle) on
 	// gl.WorkAvailable happens before the send on endPaint.
-	glctx.Flush()
+	a.glctx.Flush()
 	a.publish <- struct{}{}
 	return <-a.publishResult
 }
@@ -199,7 +201,7 @@ func pump(dst chan interface{}) (src chan interface{}) {
 func (a *app) registerGLViewportFilter() {
 	a.RegisterFilter(func(e interface{}) interface{} {
 		if e, ok := e.(size.Event); ok {
-			glctx.Viewport(0, 0, e.WidthPx, e.HeightPx)
+			a.glctx.Viewport(0, 0, e.WidthPx, e.HeightPx)
 		}
 		return e
 	})
