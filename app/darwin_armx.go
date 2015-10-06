@@ -34,7 +34,6 @@ import (
 	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/event/touch"
 	"golang.org/x/mobile/geom"
-	"golang.org/x/mobile/gl"
 )
 
 var initThreadID uint64
@@ -166,19 +165,13 @@ func sendTouch(cTouch, cTouchType uintptr, x, y float32) {
 	}
 }
 
-var (
-	worker        gl.Worker
-	workAvailable <-chan struct{}
-)
+var workAvailable <-chan struct{}
 
 //export drawgl
 func drawgl(ctx uintptr) {
-	if glctx == nil {
+	if workAvailable == nil {
 		C.setContext(unsafe.Pointer(ctx))
-
-		glctx, worker = gl.NewContext()
-		workAvailable = worker.WorkAvailable()
-
+		workAvailable = theApp.worker.WorkAvailable()
 		// TODO(crawshaw): not just on process start.
 		theApp.sendLifecycle(lifecycle.StageFocused)
 	}
@@ -190,7 +183,7 @@ func drawgl(ctx uintptr) {
 	for {
 		select {
 		case <-workAvailable:
-			worker.DoWork()
+			theApp.worker.DoWork()
 		case <-theApp.publish:
 			theApp.publishResult <- PublishResult{}
 			return

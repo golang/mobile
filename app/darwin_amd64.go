@@ -34,7 +34,6 @@ import (
 	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/event/touch"
 	"golang.org/x/mobile/geom"
-	"golang.org/x/mobile/gl"
 )
 
 var initThreadID uint64
@@ -75,23 +74,21 @@ func main(f func(App)) {
 // draw events is the CVDisplayLink timer, which is tied to the display
 // vsync. Secondary draw events come from [NSView drawRect:] when the
 // window is resized.
-func loop(ctx C.GLintptr) {
+func (a *app) loop(ctx C.GLintptr) {
 	runtime.LockOSThread()
 	C.makeCurrentContext(ctx)
-	var worker gl.Worker
-	glctx, worker = gl.NewContext()
 
-	workAvailable := worker.WorkAvailable()
+	workAvailable := a.worker.WorkAvailable()
 	for {
 		select {
 		case <-workAvailable:
-			worker.DoWork()
+			a.worker.DoWork()
 		case <-draw:
 		loop1:
 			for {
 				select {
 				case <-workAvailable:
-					worker.DoWork()
+					a.worker.DoWork()
 				case <-theApp.publish:
 					C.CGLFlushDrawable(C.CGLGetCurrentContext())
 					theApp.publishResult <- PublishResult{}
@@ -116,7 +113,7 @@ func drawgl() {
 
 //export startloop
 func startloop(ctx C.GLintptr) {
-	go loop(ctx)
+	go theApp.loop(ctx)
 }
 
 var windowHeightPx float32
