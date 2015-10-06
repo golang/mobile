@@ -35,9 +35,6 @@ var (
 	collecting bool
 )
 
-// initSignal initializes an underlying looper and event queue.
-type initSignal struct{}
-
 // closeSignal destroys the underlying looper and event queue.
 type closeSignal struct{}
 
@@ -79,11 +76,12 @@ var inout = make(chan inOut)
 func init() {
 	go func() {
 		runtime.LockOSThread()
+		C.GoAndroid_createManager()
+
 		for {
 			v := <-inout
 			switch s := v.in.(type) {
-			case initSignal:
-				C.GoAndroid_createManager()
+
 			case enableSignal:
 				usecsDelay := s.delay.Nanoseconds() / 1000
 				code := int(C.GoAndroid_enableSensor(typeToInt(s.t), C.int32_t(usecsDelay)))
@@ -104,13 +102,6 @@ func init() {
 			close(v.out)
 		}
 	}()
-
-	done := make(chan struct{})
-	inout <- inOut{
-		in:  initSignal{},
-		out: done,
-	}
-	<-done
 }
 
 func enable(s Sender, t Type, delay time.Duration) error {
