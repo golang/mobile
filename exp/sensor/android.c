@@ -69,5 +69,6 @@ int GoAndroid_readQueue(int n, int32_t* types, int64_t* timestamps, float* vecto
 void GoAndroid_destroyManager() {
   ASensorManager* manager = ASensorManager_getInstance();
   ASensorManager_destroyEventQueue(manager, queue);
-  ALooper_release(looper);
+  queue = NULL;
+  looper = NULL;
 }
