@@ -113,7 +113,9 @@ var drawDone = make(chan struct{})
 func drawgl() {
 	switch theApp.lifecycleStage {
 	case lifecycle.StageFocused, lifecycle.StageVisible:
-		theApp.Send(paint.Event{})
+		theApp.Send(paint.Event{
+			External: true,
+		})
 		<-drawDone
 	}
 }
@@ -218,7 +220,6 @@ func lifecycleAlive() { theApp.sendLifecycle(lifecycle.StageAlive) }
 //export lifecycleVisible
 func lifecycleVisible() {
 	theApp.sendLifecycle(lifecycle.StageVisible)
-	theApp.eventsIn <- paint.Event{}
 }
 
 //export lifecycleFocused

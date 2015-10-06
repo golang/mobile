@@ -46,8 +46,6 @@ import (
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/paint"
 	"golang.org/x/mobile/event/size"
-	"golang.org/x/mobile/exp/app/debug"
-	"golang.org/x/mobile/exp/gl/glutil"
 	"golang.org/x/mobile/gl"
 )
 
@@ -68,14 +66,12 @@ func main() {
 				switch e := a.Filter(e).(type) {
 				case lifecycle.Event:
 					glctx, _ = e.DrawContext.(gl.Context)
-					if glctx != nil {
-						glctx = e.DrawContext.(gl.Context)
-						images = glutil.NewImages(glctx)
-						fps = debug.NewFPS(images)
-					}
 				case size.Event:
 					sz = e
 				case paint.Event:
+					if glctx == nil {
+						continue
+					}
 					onDraw(glctx, sz)
 					a.Publish()
 				}
@@ -85,8 +81,6 @@ func main() {
 }
 
 var (
-	images     *glutil.Images
-	fps        *debug.FPS
 	determined = make(chan struct{})
 	ok         = false
 )
@@ -113,6 +107,4 @@ func onDraw(glctx gl.Context, sz size.Event) {
 		glctx.ClearColor(0, 0, 0, 1)
 	}
 	glctx.Clear(gl.COLOR_BUFFER_BIT)
-
-	fps.Draw(sz)
 }

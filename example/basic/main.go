@@ -60,35 +60,36 @@ var (
 func main() {
 	app.Main(func(a app.App) {
 		var glctx gl.Context
-		visible, sz := false, size.Event{}
+		var sz size.Event
 		for e := range a.Events() {
 			switch e := a.Filter(e).(type) {
 			case lifecycle.Event:
 				switch e.Crosses(lifecycle.StageVisible) {
 				case lifecycle.CrossOn:
-					visible = true
 					glctx, _ = e.DrawContext.(gl.Context)
 					onStart(glctx)
+					a.Send(paint.Event{})
 				case lifecycle.CrossOff:
-					visible = false
 					onStop(glctx)
+					glctx = nil
 				}
 			case size.Event:
 				sz = e
 				touchX = float32(sz.WidthPx / 2)
 				touchY = float32(sz.HeightPx / 2)
 			case paint.Event:
+				if glctx == nil || e.External {
+					// As we are actively painting as fast as
+					// we can (usually 60 FPS), skip any paint
+					// events sent by the system.
+					continue
+				}
+
 				onPaint(glctx, sz)
 				a.Publish()
-				if visible {
-					// Drive the animation by preparing to paint the next frame
-					// after this one is shown.
-					//
-					// TODO: is paint.Event the right thing to send? Should we
-					// have a dedicated publish.Event type? Should App.Publish
-					// take an optional event sender and send a publish.Event?
-					a.Send(paint.Event{})
-				}
+				// Drive the animation by preparing to paint the next frame
+				// after this one is shown.
+				a.Send(paint.Event{})
 			case touch.Event:
 				touchX = e.X
 				touchY = e.Y

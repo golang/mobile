@@ -61,28 +61,28 @@ var (
 func main() {
 	app.Main(func(a app.App) {
 		var glctx gl.Context
-		visible, sz := false, size.Event{}
+		var sz size.Event
 		for e := range a.Events() {
 			switch e := a.Filter(e).(type) {
 			case lifecycle.Event:
 				switch e.Crosses(lifecycle.StageVisible) {
 				case lifecycle.CrossOn:
-					visible = true
 					glctx, _ = e.DrawContext.(gl.Context)
 					onStart(glctx)
+					a.Send(paint.Event{})
 				case lifecycle.CrossOff:
-					visible = false
 					onStop()
+					glctx = nil
 				}
 			case size.Event:
 				sz = e
 			case paint.Event:
-				if visible {
-					onPaint(glctx, sz)
-					a.Publish()
-					// Keep animating.
-					a.Send(paint.Event{})
+				if glctx == nil || e.External {
+					continue
 				}
+				onPaint(glctx, sz)
+				a.Publish()
+				a.Send(paint.Event{}) // keep animating
 			}
 		}
 	})

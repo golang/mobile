@@ -278,21 +278,6 @@ func mainUI(vm, jniEnv, ctx uintptr) error {
 	var pixelsPerPt float32
 	var orientation size.Orientation
 
-	// Android can send a windowRedrawNeeded event any time, including
-	// in the middle of a paint cycle. The redraw event may have changed
-	// the size of the screen, so any partial painting is now invalidated.
-	// We must also not return to Android (via sending on windowRedrawDone)
-	// until a complete paint with the new configuration is complete.
-	//
-	// When a windowRedrawNeeded request comes in, we increment redrawGen
-	// (Gen is short for generation number), and do not make a paint cycle
-	// visible on <-endPaint unless Generation agrees. If possible,
-	// windowRedrawDone is signalled, allowing onNativeWindowRedrawNeeded
-	// to return.
-	//
-	// TODO: is this still needed?
-	var redrawGen uint32
-
 	for {
 		select {
 		case <-donec:
@@ -317,8 +302,7 @@ func mainUI(vm, jniEnv, ctx uintptr) error {
 				PixelsPerPt: pixelsPerPt,
 				Orientation: orientation,
 			}
-			redrawGen++
-			theApp.eventsIn <- paint.Event{redrawGen}
+			theApp.eventsIn <- paint.Event{External: true}
 		case <-windowDestroyed:
 			if C.surface != nil {
 				if errStr := C.destroyEGLSurface(); errStr != nil {
