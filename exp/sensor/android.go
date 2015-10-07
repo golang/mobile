@@ -39,12 +39,10 @@ var (
 type closeSignal struct{}
 
 // readSignal reads up to len(dst) events and mutates n with
-// the number of returned events. If error occurs during the read,
-// it mutates err.
+// the number of returned events.
 type readSignal struct {
 	dst []Event
 	n   *int
-	err *error
 }
 
 // enableSignal enables the sensors events on the underlying
@@ -91,9 +89,8 @@ func init() {
 			case disableSignal:
 				C.GoAndroid_disableSensor(typeToInt(s.t))
 			case readSignal:
-				n, err := readEvents(s.dst)
+				n := readEvents(s.dst)
 				*s.n = n
-				*s.err = err
 			case closeSignal:
 				C.GoAndroid_destroyManager()
 				close(v.out)
@@ -130,11 +127,10 @@ func startCollecting(s Sender) {
 	go func() {
 		ev := make([]Event, 8)
 		var n int
-		var err error // TODO(jbd): How to handle the errors? error channel?
 		for {
 			done := make(chan struct{})
 			inout <- inOut{
-				in:  readSignal{dst: ev, n: &n, err: &err},
+				in:  readSignal{dst: ev, n: &n},
 				out: done,
 			}
 			<-done
@@ -155,7 +151,7 @@ func disable(t Type) error {
 	return nil
 }
 
-func readEvents(e []Event) (n int, err error) {
+func readEvents(e []Event) (n int) {
 	num := len(e)
 	types := make([]C.int32_t, num)
 	timestamps := make([]C.int64_t, num)
