@@ -127,18 +127,11 @@ func startCollecting(s Sender) {
 	}
 	collecting = true
 
-	// TODO(jbd): Disable the goroutine if all sensors are disabled?
-	// Read will block until there are new events, a goroutine will be
-	// parked forever until a sensor is enabled. There must be no
-	// performance cost other than allocating blocking an OS thread
-	// forever to keep the goroutine running.
 	go func() {
 		ev := make([]Event, 8)
 		var n int
 		var err error // TODO(jbd): How to handle the errors? error channel?
 		for {
-			// TODO(jbd): readSignal is not required anymore. Use the proxying
-			// goroutine to continously poll the queue and send the events to s.
 			done := make(chan struct{})
 			inout <- inOut{
 				in:  readSignal{dst: ev, n: &n, err: &err},
