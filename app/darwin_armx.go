@@ -14,11 +14,13 @@ package app
 #include <stdint.h>
 #include <pthread.h>
 #include <UIKit/UIDevice.h>
+#import <GLKit/GLKit.h>
 
 extern struct utsname sysInfo;
 
 void runApp(void);
-void setContext(void* context);
+void makeCurrentContext(GLintptr ctx);
+void swapBuffers(GLintptr ctx);
 uint64_t threadID();
 */
 import "C"
@@ -27,7 +29,6 @@ import (
 	"runtime"
 	"strings"
 	"sync"
-	"unsafe"
 
 	"golang.org/x/mobile/event/lifecycle"
 	"golang.org/x/mobile/event/paint"
@@ -116,6 +117,7 @@ func updateConfig(width, height, orientation int32) {
 		PixelsPerPt: pixelsPerPt,
 		Orientation: o,
 	}
+	theApp.eventsIn <- paint.Event{External: true}
 }
 
 // touchIDs is the current active touches. The position in the array
@@ -165,28 +167,50 @@ func sendTouch(cTouch, cTouchType uintptr, x, y float32) {
 	}
 }
 
-var workAvailable <-chan struct{}
+//export lifecycleDead
+func lifecycleDead() { theApp.sendLifecycle(lifecycle.StageDead) }
 
-//export drawgl
-func drawgl(ctx uintptr) {
-	if workAvailable == nil {
-		C.setContext(unsafe.Pointer(ctx))
-		workAvailable = theApp.worker.WorkAvailable()
-		// TODO(crawshaw): not just on process start.
-		theApp.sendLifecycle(lifecycle.StageFocused)
-	}
+//export lifecycleAlive
+func lifecycleAlive() { theApp.sendLifecycle(lifecycle.StageAlive) }
 
-	// TODO(crawshaw): don't send a paint.Event unconditionally. Only send one
-	// if the window actually needs redrawing.
-	theApp.eventsIn <- paint.Event{}
+//export lifecycleVisible
+func lifecycleVisible() { theApp.sendLifecycle(lifecycle.StageVisible) }
+
+//export lifecycleFocused
+func lifecycleFocused() { theApp.sendLifecycle(lifecycle.StageFocused) }
+
+//export startloop
+func startloop(ctx C.GLintptr) {
+	go theApp.loop(ctx)
+}
+
+// loop is the primary drawing loop.
+//
+// After UIKit has captured the initial OS thread for processing UIKit
+// events in runApp, it starts loop on another goroutine. It is locked
+// to an OS thread for its OpenGL context.
+func (a *app) loop(ctx C.GLintptr) {
+	runtime.LockOSThread()
+	C.makeCurrentContext(ctx)
+
+	workAvailable := a.worker.WorkAvailable()
 
 	for {
 		select {
 		case <-workAvailable:
-			theApp.worker.DoWork()
+			a.worker.DoWork()
 		case <-theApp.publish:
+		loop1:
+			for {
+				select {
+				case <-workAvailable:
+					a.worker.DoWork()
+				default:
+					break loop1
+				}
+			}
+			C.swapBuffers(ctx)
 			theApp.publishResult <- PublishResult{}
-			return
 		}
 	}
 }
