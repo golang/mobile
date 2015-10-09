@@ -43,7 +43,7 @@ func main(f func(App)) {
 	runtime.LockOSThread()
 
 	var worker gl.Worker
-	glctx, worker = gl.NewContext()
+	_, worker = gl.NewContext()
 	workAvailable := worker.WorkAvailable()
 
 	C.createWindow()
