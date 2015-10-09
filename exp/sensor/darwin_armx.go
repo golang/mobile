@@ -60,7 +60,9 @@ func init() {
 
 const minDelay = 10 * time.Millisecond
 
-func enable(s Sender, t Type, delay time.Duration) error {
+// enable enables the sensor t on sender. A non-nil sender is
+// required before calling enable.
+func enable(t Type, delay time.Duration) error {
 	channels.Lock()
 	defer channels.Unlock()
 
@@ -82,7 +84,7 @@ func enable(s Sender, t Type, delay time.Duration) error {
 	case Magnetometer:
 		C.GoIOS_startMagneto(interval)
 	}
-	go pollSensor(s, t, delay, channels.done[t])
+	go pollSensor(t, delay, channels.done[t])
 	return nil
 }
 
@@ -107,7 +109,7 @@ func disable(t Type) error {
 	return nil
 }
 
-func pollSensor(s Sender, t Type, d time.Duration, done chan struct{}) {
+func pollSensor(t Type, d time.Duration, done chan struct{}) {
 	var lastTimestamp int64
 
 	var timestamp C.int64_t
@@ -133,7 +135,7 @@ func pollSensor(s Sender, t Type, d time.Duration, done chan struct{}) {
 			if ts > lastTimestamp {
 				// TODO(jbd): Do we need to convert the values to another unit?
 				// How does iOS units compare to the Android units.
-				s.Send(Event{
+				sender.Send(Event{
 					Sensor:    t,
 					Timestamp: ts,
 					Data:      []float64{float64(ev[0]), float64(ev[1]), float64(ev[2])},
