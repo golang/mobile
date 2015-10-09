@@ -101,8 +101,10 @@ func init() {
 	}()
 }
 
-func enable(s Sender, t Type, delay time.Duration) error {
-	startCollecting(s)
+// enable enables the sensor t on sender. A non-nil sender is
+// required before calling enable.
+func enable(t Type, delay time.Duration) error {
+	startCollecting()
 
 	var err error
 	done := make(chan struct{})
@@ -114,7 +116,7 @@ func enable(s Sender, t Type, delay time.Duration) error {
 	return err
 }
 
-func startCollecting(s Sender) {
+func startCollecting() {
 	collectingMu.Lock()
 	defer collectingMu.Unlock()
 
@@ -135,7 +137,7 @@ func startCollecting(s Sender) {
 			}
 			<-done
 			for i := 0; i < n; i++ {
-				s.Send(ev[i])
+				sender.Send(ev[i])
 			}
 		}
 	}()

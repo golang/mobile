@@ -7,6 +7,7 @@ package sensor // import "golang.org/x/mobile/exp/sensor"
 
 import (
 	"errors"
+	"sync"
 	"time"
 )
 
@@ -66,20 +67,47 @@ type Event struct {
 
 // TODO(jbd): Move Sender interface definition to a top-level package.
 
+var (
+	// senderMu protects sender.
+	senderMu sync.Mutex
+
+	// sender is notified with the sensor data each time a new event is available.
+	sender Sender
+)
+
 // Sender sends an event.
 type Sender interface {
 	Send(event interface{})
 }
 
+// Notify registers a Sender and sensor events will be sent to s.
+// A typical example of Sender implementations is app.App.
+// Once you call Notify, you are not allowed to call it again.
+// You cannot call Notify with a nil Sender.
+func Notify(s Sender) {
+	senderMu.Lock()
+	defer senderMu.Unlock()
+
+	if s == nil {
+		panic("sensor: cannot set a nil sender")
+	}
+	if sender != nil {
+		panic("sensor: another sender is being notified, cannot set s as the sender")
+	}
+	sender = s
+}
+
 // Enable enables the specified sensor type with the given delay rate.
-// Sensor events will be sent to s, a typical example of Sender
-// implementations is app.App.
-// Enable is not safe for concurrent use.
-func Enable(s Sender, t Type, delay time.Duration) error {
+// Users must set a non-nil Sender via Notify before enabling a sensor,
+// otherwise an error will be returned.
+func Enable(t Type, delay time.Duration) error {
 	if t < 0 || int(t) >= len(sensorNames) {
 		return errors.New("sensor: unknown sensor type")
 	}
-	return enable(s, t, delay)
+	if err := validSender(); err != nil {
+		return err
+	}
+	return enable(t, delay)
 }
 
 // Disable disables to feed the manager with the specified sensor.
@@ -89,4 +117,14 @@ func Disable(t Type) error {
 		return errors.New("sensor: unknown sensor type")
 	}
 	return disable(t)
+}
+
+func validSender() error {
+	senderMu.Lock()
+	defer senderMu.Unlock()
+
+	if sender == nil {
+		return errors.New("sensor: no senders to be notified; cannot enable the sensor")
+	}
+	return nil
 }

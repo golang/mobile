@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func enable(s Sender, t Type, delay time.Duration) error {
+func enable(t Type, delay time.Duration) error {
 	return errors.New("sensor: no sensors available")
 }
 
