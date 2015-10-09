@@ -151,13 +151,13 @@ func disable(t Type) error {
 	return nil
 }
 
-func readEvents(e []Event) (n int) {
+func readEvents(e []Event) int {
 	num := len(e)
 	types := make([]C.int32_t, num)
 	timestamps := make([]C.int64_t, num)
 	vectors := make([]C.float, 3*num)
 
-	n = int(C.GoAndroid_readQueue(
+	n := int(C.GoAndroid_readQueue(
 		C.int(num),
 		(*C.int32_t)(unsafe.Pointer(&types[0])),
 		(*C.int64_t)(unsafe.Pointer(&timestamps[0])),
@@ -174,7 +174,7 @@ func readEvents(e []Event) (n int) {
 			},
 		}
 	}
-	return
+	return n
 }
 
 // TODO(jbd): Remove destroy?
