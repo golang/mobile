@@ -114,6 +114,7 @@ func (g *objcGen) genH() error {
 	}
 
 	// const
+	// TODO: prefix with k?, or use a class method?
 	for _, obj := range g.constants {
 		switch b := obj.Type().(*types.Basic); b.Kind() {
 		case types.String, types.UntypedString:
@@ -127,11 +128,14 @@ func (g *objcGen) genH() error {
 	}
 
 	// var
-	for _, obj := range g.vars {
-		objcType := g.objcType(obj.Type())
-		g.Printf("FOUNDATION_EXPORT void %s_set%s(%s v);\n", g.namePrefix, obj.Name(), objcType)
-		g.Printf("FOUNDATION_EXPORT %s %s%s();\n", objcType, g.namePrefix, obj.Name())
-		g.Printf("\n")
+	if len(g.vars) > 0 {
+		g.Printf("@interface %s : NSObject \n", g.namePrefix)
+		for _, obj := range g.vars {
+			objcType := g.objcType(obj.Type())
+			g.Printf("+ (%s) %s;\n", objcType, obj.Name())
+			g.Printf("+ (void) set%s:(%s)v;\n", obj.Name(), objcType)
+		}
+		g.Printf("@end\n")
 	}
 
 	// static functions.
@@ -203,11 +207,12 @@ func (g *objcGen) genM() error {
 	}
 
 	// vars
-	for _, o := range g.vars {
-		g.genVarM(o)
-	}
 	if len(g.vars) > 0 {
-		g.Printf("\n")
+		g.Printf("@implementation %s\n", g.namePrefix)
+		for _, o := range g.vars {
+			g.genVarM(o)
+		}
+		g.Printf("@end\n\n")
 	}
 
 	// global functions.
@@ -240,23 +245,23 @@ func (g *objcGen) genVarM(o *types.Var) {
 
 	// setter
 	s1 := &funcSummary{
-		name:   g.namePrefix + "_set" + o.Name(),
+		name:   "set" + o.Name(),
 		ret:    "void",
 		params: []paramInfo{{typ: o.Type(), name: "v"}},
 	}
-	g.Printf("void %s(%s v) {\n", s1.name, objcType)
+	g.Printf("+ (void) %s:(%s)v {\n", s1.name, objcType)
 	g.Indent()
-	g.genFunc(varDesc, "1", s1, false)
+	g.genFunc(varDesc, "1", s1, false) // false: not instance method.
 	g.Outdent()
 	g.Printf("}\n\n")
 
 	// getter
 	s2 := &funcSummary{
-		name:      g.namePrefix + o.Name(),
+		name:      o.Name(),
 		ret:       objcType,
 		retParams: []paramInfo{{typ: o.Type(), name: "ret"}},
 	}
-	g.Printf("%s %s() {\n", s2.ret, s2.name)
+	g.Printf("+ (%s) %s {\n", s2.ret, s2.name)
 	g.Indent()
 	g.genFunc(varDesc, "2", s2, false)
 	g.Outdent()

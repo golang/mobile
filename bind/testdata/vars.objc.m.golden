@@ -56,7 +56,8 @@ static void proxyGoVarsI(id obj, int code, GoSeq* in, GoSeq* out) {
 
 @end
 
-void GoVars_setABool(BOOL v) {
+@implementation GoVars
++ (void) setABool:(BOOL)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_writeBool(&in_, v);
@@ -65,7 +66,7 @@ void GoVars_setABool(BOOL v) {
 	go_seq_free(&out_);
 }
 
-BOOL GoVarsABool() {
++ (BOOL) ABool {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send("vars.ABool", 2, &in_, &out_);
@@ -75,7 +76,7 @@ BOOL GoVarsABool() {
 	return ret;
 }
 
-void GoVars_setAFloat(double v) {
++ (void) setAFloat:(double)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_writeFloat64(&in_, v);
@@ -84,7 +85,7 @@ void GoVars_setAFloat(double v) {
 	go_seq_free(&out_);
 }
 
-double GoVarsAFloat() {
++ (double) AFloat {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send("vars.AFloat", 2, &in_, &out_);
@@ -94,7 +95,7 @@ double GoVarsAFloat() {
 	return ret;
 }
 
-void GoVars_setAFloat32(float v) {
++ (void) setAFloat32:(float)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_writeFloat32(&in_, v);
@@ -103,7 +104,7 @@ void GoVars_setAFloat32(float v) {
 	go_seq_free(&out_);
 }
 
-float GoVarsAFloat32() {
++ (float) AFloat32 {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send("vars.AFloat32", 2, &in_, &out_);
@@ -113,7 +114,7 @@ float GoVarsAFloat32() {
 	return ret;
 }
 
-void GoVars_setAFloat64(double v) {
++ (void) setAFloat64:(double)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_writeFloat64(&in_, v);
@@ -122,7 +123,7 @@ void GoVars_setAFloat64(double v) {
 	go_seq_free(&out_);
 }
 
-double GoVarsAFloat64() {
++ (double) AFloat64 {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send("vars.AFloat64", 2, &in_, &out_);
@@ -132,7 +133,7 @@ double GoVarsAFloat64() {
 	return ret;
 }
 
-void GoVars_setAString(NSString* v) {
++ (void) setAString:(NSString*)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_writeUTF8(&in_, v);
@@ -141,7 +142,7 @@ void GoVars_setAString(NSString* v) {
 	go_seq_free(&out_);
 }
 
-NSString* GoVarsAString() {
++ (NSString*) AString {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send("vars.AString", 2, &in_, &out_);
@@ -151,7 +152,7 @@ NSString* GoVarsAString() {
 	return ret;
 }
 
-void GoVars_setAStructPtr(GoVarsS* v) {
++ (void) setAStructPtr:(GoVarsS*)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	if ([(id<NSObject>)(v) isKindOfClass:[GoVarsS class]]) {
@@ -165,7 +166,7 @@ void GoVars_setAStructPtr(GoVarsS* v) {
 	go_seq_free(&out_);
 }
 
-GoVarsS* GoVarsAStructPtr() {
++ (GoVarsS*) AStructPtr {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send("vars.AStructPtr", 2, &in_, &out_);
@@ -179,7 +180,7 @@ GoVarsS* GoVarsAStructPtr() {
 	return ret;
 }
 
-void GoVars_setAnInt(int v) {
++ (void) setAnInt:(int)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_writeInt(&in_, v);
@@ -188,7 +189,7 @@ void GoVars_setAnInt(int v) {
 	go_seq_free(&out_);
 }
 
-int GoVarsAnInt() {
++ (int) AnInt {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send("vars.AnInt", 2, &in_, &out_);
@@ -198,7 +199,7 @@ int GoVarsAnInt() {
 	return ret;
 }
 
-void GoVars_setAnInt16(int16_t v) {
++ (void) setAnInt16:(int16_t)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_writeInt16(&in_, v);
@@ -207,7 +208,7 @@ void GoVars_setAnInt16(int16_t v) {
 	go_seq_free(&out_);
 }
 
-int16_t GoVarsAnInt16() {
++ (int16_t) AnInt16 {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send("vars.AnInt16", 2, &in_, &out_);
@@ -217,7 +218,7 @@ int16_t GoVarsAnInt16() {
 	return ret;
 }
 
-void GoVars_setAnInt32(int32_t v) {
++ (void) setAnInt32:(int32_t)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_writeInt32(&in_, v);
@@ -226,7 +227,7 @@ void GoVars_setAnInt32(int32_t v) {
 	go_seq_free(&out_);
 }
 
-int32_t GoVarsAnInt32() {
++ (int32_t) AnInt32 {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send("vars.AnInt32", 2, &in_, &out_);
@@ -236,7 +237,7 @@ int32_t GoVarsAnInt32() {
 	return ret;
 }
 
-void GoVars_setAnInt64(int64_t v) {
++ (void) setAnInt64:(int64_t)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_writeInt64(&in_, v);
@@ -245,7 +246,7 @@ void GoVars_setAnInt64(int64_t v) {
 	go_seq_free(&out_);
 }
 
-int64_t GoVarsAnInt64() {
++ (int64_t) AnInt64 {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send("vars.AnInt64", 2, &in_, &out_);
@@ -255,7 +256,7 @@ int64_t GoVarsAnInt64() {
 	return ret;
 }
 
-void GoVars_setAnInt8(int8_t v) {
++ (void) setAnInt8:(int8_t)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_writeInt8(&in_, v);
@@ -264,7 +265,7 @@ void GoVars_setAnInt8(int8_t v) {
 	go_seq_free(&out_);
 }
 
-int8_t GoVarsAnInt8() {
++ (int8_t) AnInt8 {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send("vars.AnInt8", 2, &in_, &out_);
@@ -274,7 +275,7 @@ int8_t GoVarsAnInt8() {
 	return ret;
 }
 
-void GoVars_setAnInterface(id<GoVarsI> v) {
++ (void) setAnInterface:(id<GoVarsI>)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	if ([(id<NSObject>)(v) isKindOfClass:[GoVarsI class]]) {
@@ -288,7 +289,7 @@ void GoVars_setAnInterface(id<GoVarsI> v) {
 	go_seq_free(&out_);
 }
 
-id<GoVarsI> GoVarsAnInterface() {
++ (id<GoVarsI>) AnInterface {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send("vars.AnInterface", 2, &in_, &out_);
@@ -302,6 +303,7 @@ id<GoVarsI> GoVarsAnInterface() {
 	return ret;
 }
 
+@end
 
 __attribute__((constructor)) static void init() {
 	go_seq_register_proxy("go.vars.I", proxyGoVarsI);
