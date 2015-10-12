@@ -113,9 +113,9 @@ void testStruct() {
     ERROR(@"GoTestpkgNewS returned NULL");
   }
 
-  double x = [s X];
-  double y = [s Y];
-  double sum = [s Sum];
+  double x = [s x];
+  double y = [s y];
+  double sum = [s sum];
   if (x != 10.0 || y != 100.0 || sum != 110.0) {
     ERROR(@"GoTestpkgS(10.0, 100.0).X=%f Y=%f SUM=%f; want 10, 100, 110", x, y,
           sum);
@@ -128,16 +128,16 @@ void testStruct() {
 
   [s setX:7];
   [s setY:70];
-  x = [s X];
-  y = [s Y];
-  sum = [s Sum];
+  x = [s x];
+  y = [s y];
+  sum = [s sum];
   if (x != 7 || y != 70 || sum != 77) {
     ERROR(@"GoTestpkgS(7, 70).X=%f Y=%f SUM=%f; want 7, 70, 77", x, y, sum);
   }
 
   NSString *first = @"trytwotested";
   NSString *second = @"test";
-  NSString *got = [s TryTwoStrings:first second:second];
+  NSString *got = [s tryTwoStrings:first second:second];
   NSString *want = [first stringByAppendingString:second];
   if (![got isEqualToString:want]) {
     ERROR(@"GoTestpkgS_TryTwoStrings(%@, %@)= %@; want %@", first, second, got,
@@ -152,8 +152,9 @@ void testStruct() {
 }
 @property int32_t value;
 
-- (BOOL)Error:(BOOL)e error:(NSError **)error;
-- (int64_t)Times:(int32_t)v;
+// TODO(hyangah): error:error is not good.
+- (BOOL)error:(BOOL)e error:(NSError **)error;
+- (int64_t)times:(int32_t)v;
 @end
 
 // numI is incremented when the first numI objective-C implementation is
@@ -164,7 +165,7 @@ static int numI = 0;
 }
 @synthesize value;
 
-- (BOOL)StringError:(NSString *)s
+- (BOOL)stringError:(NSString *)s
               ret0_:(NSString **)ret0_
               error:(NSError **)error {
   if ([s isEqualTo:@"number"]) {
@@ -176,7 +177,7 @@ static int numI = 0;
   return false;
 }
 
-- (BOOL)Error:(BOOL)triggerError error:(NSError **)error {
+- (BOOL)error:(BOOL)triggerError error:(NSError **)error {
   if (!triggerError) {
     return YES;
   }
@@ -186,7 +187,7 @@ static int numI = 0;
   return NO;
 }
 
-- (int64_t)Times:(int32_t)v {
+- (int64_t)times:(int32_t)v {
   return v * value;
 }
 
@@ -200,9 +201,9 @@ static int numI = 0;
 void testInterface() {
   // Test Go object implementing testpkg.I is handled correctly.
   id<GoTestpkgI> goObj = GoTestpkgNewI();
-  int64_t got = [goObj Times:10];
+  int64_t got = [goObj times:10];
   if (got != 100) {
-    ERROR(@"GoTestpkgNewI().Times(10) = %lld; want %d", got, 100);
+    ERROR(@"GoTestpkgNewI().times(10) = %lld; want %d", got, 100);
   }
   int32_t key = -1;
   GoTestpkgRegisterI(key, goObj);
@@ -272,49 +273,49 @@ void testIssue12403() {
 }
 
 void testVar() {
-  NSString *s = GoTestpkg.StringVar;
+  NSString *s = GoTestpkg.stringVar;
   if (![s isEqualToString:@"a string var"]) {
     ERROR(@"GoTestpkg.StringVar = %@, want 'a string var'", s);
   }
   s = @"a new string var";
-  GoTestpkg.StringVar = s;
-  NSString *s2 = GoTestpkg.StringVar;
+  GoTestpkg.stringVar = s;
+  NSString *s2 = GoTestpkg.stringVar;
   if (![s2 isEqualToString:s]) {
-    ERROR(@"GoTestpkg.StringVar = %@, want %@", s2, s);
+    ERROR(@"GoTestpkg.stringVar = %@, want %@", s2, s);
   }
 
-  int64_t i = GoTestpkg.IntVar;
+  int64_t i = GoTestpkg.intVar;
   if (i != 77) {
-    ERROR(@"GoTestpkg.IntVar = %lld, want 77", i);
+    ERROR(@"GoTestpkg.intVar = %lld, want 77", i);
   }
-  GoTestpkg.IntVar = 777;
-  i = GoTestpkg.IntVar;
+  GoTestpkg.intVar = 777;
+  i = GoTestpkg.intVar;
   if (i != 777) {
-    ERROR(@"GoTestpkg.IntVar = %lld, want 777", i);
+    ERROR(@"GoTestpkg.intVar = %lld, want 777", i);
   }
   [GoTestpkg setIntVar:7777];
-  i = [GoTestpkg IntVar];
+  i = [GoTestpkg intVar];
   if (i != 7777) {
-    ERROR(@"GoTestpkg.IntVar = %lld, want 7777", i);
+    ERROR(@"GoTestpkg.intVar = %lld, want 7777", i);
   }
 
-  GoTestpkgNode *n0 = GoTestpkg.StructVar;
-  if (![n0.V isEqualToString:@"a struct var"]) {
-    ERROR(@"GoTestpkg.StructVar = %@, want 'a struct var'", n0.V);
+  GoTestpkgNode *n0 = GoTestpkg.structVar;
+  if (![n0.v isEqualToString:@"a struct var"]) {
+    ERROR(@"GoTestpkg.structVar = %@, want 'a struct var'", n0.v);
   }
   GoTestpkgNode *n1 = GoTestpkgNewNode(@"a new struct var");
-  GoTestpkg.StructVar = n1;
-  GoTestpkgNode *n2 = GoTestpkg.StructVar;
-  if (![n2.V isEqualToString:@"a new struct var"]) {
-    ERROR(@"GoTestpkg.StructVar = %@, want 'a new struct var'", n2.V);
+  GoTestpkg.structVar = n1;
+  GoTestpkgNode *n2 = GoTestpkg.structVar;
+  if (![n2.v isEqualToString:@"a new struct var"]) {
+    ERROR(@"GoTestpkg.StructVar = %@, want 'a new struct var'", n2.v);
   }
 
   Number *num = [[Number alloc] init];
   num.value = 12345;
-  GoTestpkg.InterfaceVar = num;
-  id<GoTestpkgI> iface = GoTestpkg.InterfaceVar;
-  int64_t x = [iface Times:10];
-  int64_t y = [num Times:10];
+  GoTestpkg.interfaceVar = num;
+  id<GoTestpkgI> iface = GoTestpkg.interfaceVar;
+  int64_t x = [iface times:10];
+  int64_t y = [num times:10];
   if (x != y) {
     ERROR(@"GoTestpkg.InterfaceVar Times 10 = %lld, want %lld", x, y);
   }

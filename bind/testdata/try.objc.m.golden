@@ -10,7 +10,7 @@
 static NSString* errDomain = @"go.try";
 
 @protocol goSeqRefInterface
--(GoSeqRef*) ref;
+-(GoSeqRef*) _ref;
 @end
 
 #define _DESCRIPTOR_ "try"

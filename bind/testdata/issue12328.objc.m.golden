@@ -10,7 +10,7 @@
 static NSString* errDomain = @"go.issue12328";
 
 @protocol goSeqRefInterface
--(GoSeqRef*) ref;
+-(GoSeqRef*) _ref;
 @end
 
 #define _DESCRIPTOR_ "issue12328"
@@ -25,14 +25,14 @@ static NSString* errDomain = @"go.issue12328";
 
 - (id)initWithRef:(id)ref {
 	self = [super init];
-	if (self) { _ref = ref; }
+	if (self) { __ref = ref; }
 	return self;
 }
 
-- (NSString*)Err {
+- (NSString*)err {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
-	go_seq_writeRef(&in_, self.ref);
+	go_seq_writeRef(&in_, self._ref);
 	go_seq_send(_GO_issue12328_T_DESCRIPTOR_, _GO_issue12328_T_FIELD_Err_GET_, &in_, &out_);
 	NSString* ret_ = go_seq_readUTF8(&out_);
 	go_seq_free(&in_);
@@ -43,7 +43,7 @@ static NSString* errDomain = @"go.issue12328";
 - (void)setErr:(NSString*)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
-	go_seq_writeRef(&in_, self.ref);
+	go_seq_writeRef(&in_, self._ref);
 	go_seq_writeUTF8(&in_, v);
 	go_seq_send(_GO_issue12328_T_DESCRIPTOR_, _GO_issue12328_T_FIELD_Err_SET_, &in_, &out_);
 	go_seq_free(&in_);
