@@ -312,7 +312,8 @@ const int64_t GoTestpkgMinInt64 = -9223372036854775807LL-1;
 const float GoTestpkgSmallestNonzeroFloat32 = 0;
 const double GoTestpkgSmallestNonzeroFloat64 = 5e-324;
 
-void GoTestpkg_setIntVar(int v) {
+@implementation GoTestpkg
++ (void) setIntVar:(int)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_writeInt(&in_, v);
@@ -321,7 +322,7 @@ void GoTestpkg_setIntVar(int v) {
 	go_seq_free(&out_);
 }
 
-int GoTestpkgIntVar() {
++ (int) IntVar {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send("testpkg.IntVar", 2, &in_, &out_);
@@ -331,7 +332,7 @@ int GoTestpkgIntVar() {
 	return ret;
 }
 
-void GoTestpkg_setInterfaceVar(id<GoTestpkgI> v) {
++ (void) setInterfaceVar:(id<GoTestpkgI>)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	if ([(id<NSObject>)(v) isKindOfClass:[GoTestpkgI class]]) {
@@ -345,7 +346,7 @@ void GoTestpkg_setInterfaceVar(id<GoTestpkgI> v) {
 	go_seq_free(&out_);
 }
 
-id<GoTestpkgI> GoTestpkgInterfaceVar() {
++ (id<GoTestpkgI>) InterfaceVar {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send("testpkg.InterfaceVar", 2, &in_, &out_);
@@ -359,7 +360,7 @@ id<GoTestpkgI> GoTestpkgInterfaceVar() {
 	return ret;
 }
 
-void GoTestpkg_setStringVar(NSString* v) {
++ (void) setStringVar:(NSString*)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_writeUTF8(&in_, v);
@@ -368,7 +369,7 @@ void GoTestpkg_setStringVar(NSString* v) {
 	go_seq_free(&out_);
 }
 
-NSString* GoTestpkgStringVar() {
++ (NSString*) StringVar {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send("testpkg.StringVar", 2, &in_, &out_);
@@ -378,7 +379,7 @@ NSString* GoTestpkgStringVar() {
 	return ret;
 }
 
-void GoTestpkg_setStructVar(GoTestpkgNode* v) {
++ (void) setStructVar:(GoTestpkgNode*)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	if ([(id<NSObject>)(v) isKindOfClass:[GoTestpkgNode class]]) {
@@ -392,7 +393,7 @@ void GoTestpkg_setStructVar(GoTestpkgNode* v) {
 	go_seq_free(&out_);
 }
 
-GoTestpkgNode* GoTestpkgStructVar() {
++ (GoTestpkgNode*) StructVar {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send("testpkg.StructVar", 2, &in_, &out_);
@@ -406,6 +407,7 @@ GoTestpkgNode* GoTestpkgStructVar() {
 	return ret;
 }
 
+@end
 
 NSData* GoTestpkgBytesAppend(NSData* a, NSData* b) {
 	GoSeq in_ = {};

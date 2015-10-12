@@ -272,46 +272,51 @@ void testIssue12403() {
 }
 
 void testVar() {
-  NSString *s = GoTestpkgStringVar();
+  NSString *s = GoTestpkg.StringVar;
   if (![s isEqualToString:@"a string var"]) {
-    ERROR(@"GoTestpkgStringVar = %@, want 'a string var'", s);
+    ERROR(@"GoTestpkg.StringVar = %@, want 'a string var'", s);
   }
   s = @"a new string var";
-  GoTestpkg_setStringVar(s);
-  NSString *s2 = GoTestpkgStringVar();
+  GoTestpkg.StringVar = s;
+  NSString *s2 = GoTestpkg.StringVar;
   if (![s2 isEqualToString:s]) {
-    ERROR(@"GoTestpkgStringVar = %@, want %@", s2, s);
+    ERROR(@"GoTestpkg.StringVar = %@, want %@", s2, s);
   }
 
-  int64_t i = GoTestpkgIntVar();
+  int64_t i = GoTestpkg.IntVar;
   if (i != 77) {
-    ERROR(@"GoTestpkgIntVar = %lld, want 77", i);
+    ERROR(@"GoTestpkg.IntVar = %lld, want 77", i);
   }
-  GoTestpkg_setIntVar(777);
-  i = GoTestpkgIntVar();
+  GoTestpkg.IntVar = 777;
+  i = GoTestpkg.IntVar;
   if (i != 777) {
-    ERROR(@"GoTestpkgIntVar = %lld, want 777", i);
+    ERROR(@"GoTestpkg.IntVar = %lld, want 777", i);
+  }
+  [GoTestpkg setIntVar:7777];
+  i = [GoTestpkg IntVar];
+  if (i != 7777) {
+    ERROR(@"GoTestpkg.IntVar = %lld, want 7777", i);
   }
 
-  GoTestpkgNode *n0 = GoTestpkgStructVar();
+  GoTestpkgNode *n0 = GoTestpkg.StructVar;
   if (![n0.V isEqualToString:@"a struct var"]) {
-    ERROR(@"GoTestpkgStructVar = %@, want 'a struct var'", n0.V);
+    ERROR(@"GoTestpkg.StructVar = %@, want 'a struct var'", n0.V);
   }
   GoTestpkgNode *n1 = GoTestpkgNewNode(@"a new struct var");
-  GoTestpkg_setStructVar(n1);
-  GoTestpkgNode *n2 = GoTestpkgStructVar();
+  GoTestpkg.StructVar = n1;
+  GoTestpkgNode *n2 = GoTestpkg.StructVar;
   if (![n2.V isEqualToString:@"a new struct var"]) {
-    ERROR(@"GoTestpkgStructVar = %@, want 'a new struct var'", n2.V);
+    ERROR(@"GoTestpkg.StructVar = %@, want 'a new struct var'", n2.V);
   }
 
   Number *num = [[Number alloc] init];
   num.value = 12345;
-  GoTestpkg_setInterfaceVar(num);
-  id<GoTestpkgI> iface = GoTestpkgInterfaceVar();
+  GoTestpkg.InterfaceVar = num;
+  id<GoTestpkgI> iface = GoTestpkg.InterfaceVar;
   int64_t x = [iface Times:10];
   int64_t y = [num Times:10];
   if (x != y) {
-    ERROR(@"GoTestpkgInterfaceVar Times 10 = %lld, want %lld", x, y);
+    ERROR(@"GoTestpkg.InterfaceVar Times 10 = %lld, want %lld", x, y);
   }
 }
 

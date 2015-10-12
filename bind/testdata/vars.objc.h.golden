@@ -20,40 +20,30 @@
 - (id)initWithRef:(id)ref;
 @end
 
-FOUNDATION_EXPORT void GoVars_setABool(BOOL v);
-FOUNDATION_EXPORT BOOL GoVarsABool();
-
-FOUNDATION_EXPORT void GoVars_setAFloat(double v);
-FOUNDATION_EXPORT double GoVarsAFloat();
-
-FOUNDATION_EXPORT void GoVars_setAFloat32(float v);
-FOUNDATION_EXPORT float GoVarsAFloat32();
-
-FOUNDATION_EXPORT void GoVars_setAFloat64(double v);
-FOUNDATION_EXPORT double GoVarsAFloat64();
-
-FOUNDATION_EXPORT void GoVars_setAString(NSString* v);
-FOUNDATION_EXPORT NSString* GoVarsAString();
-
-FOUNDATION_EXPORT void GoVars_setAStructPtr(GoVarsS* v);
-FOUNDATION_EXPORT GoVarsS* GoVarsAStructPtr();
-
-FOUNDATION_EXPORT void GoVars_setAnInt(int v);
-FOUNDATION_EXPORT int GoVarsAnInt();
-
-FOUNDATION_EXPORT void GoVars_setAnInt16(int16_t v);
-FOUNDATION_EXPORT int16_t GoVarsAnInt16();
-
-FOUNDATION_EXPORT void GoVars_setAnInt32(int32_t v);
-FOUNDATION_EXPORT int32_t GoVarsAnInt32();
-
-FOUNDATION_EXPORT void GoVars_setAnInt64(int64_t v);
-FOUNDATION_EXPORT int64_t GoVarsAnInt64();
-
-FOUNDATION_EXPORT void GoVars_setAnInt8(int8_t v);
-FOUNDATION_EXPORT int8_t GoVarsAnInt8();
-
-FOUNDATION_EXPORT void GoVars_setAnInterface(id<GoVarsI> v);
-FOUNDATION_EXPORT id<GoVarsI> GoVarsAnInterface();
-
+@interface GoVars : NSObject 
++ (BOOL) ABool;
++ (void) setABool:(BOOL)v;
++ (double) AFloat;
++ (void) setAFloat:(double)v;
++ (float) AFloat32;
++ (void) setAFloat32:(float)v;
++ (double) AFloat64;
++ (void) setAFloat64:(double)v;
++ (NSString*) AString;
++ (void) setAString:(NSString*)v;
++ (GoVarsS*) AStructPtr;
++ (void) setAStructPtr:(GoVarsS*)v;
++ (int) AnInt;
++ (void) setAnInt:(int)v;
++ (int16_t) AnInt16;
++ (void) setAnInt16:(int16_t)v;
++ (int32_t) AnInt32;
++ (void) setAnInt32:(int32_t)v;
++ (int64_t) AnInt64;
++ (void) setAnInt64:(int64_t)v;
++ (int8_t) AnInt8;
++ (void) setAnInt8:(int8_t)v;
++ (id<GoVarsI>) AnInterface;
++ (void) setAnInterface:(id<GoVarsI>)v;
+@end
 #endif
