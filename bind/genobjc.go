@@ -11,7 +11,14 @@ import (
 	"go/types"
 	"math"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
+
+// TODO(hyangah): handle method name conflicts.
+//   - struct with SetF method and exported F field.
+//   - method names conflicting with NSObject methods. e.g. Init
+//   - interface type with InitWithRef.
 
 // TODO(hyangah): error code/domain propagation
 
@@ -132,10 +139,11 @@ func (g *objcGen) genH() error {
 		g.Printf("@interface %s : NSObject \n", g.namePrefix)
 		for _, obj := range g.vars {
 			objcType := g.objcType(obj.Type())
-			g.Printf("+ (%s) %s;\n", objcType, obj.Name())
+			g.Printf("+ (%s) %s;\n", objcType, lowerFirst(obj.Name()))
 			g.Printf("+ (void) set%s:(%s)v;\n", obj.Name(), objcType)
+			g.Printf("\n")
 		}
-		g.Printf("@end\n")
+		g.Printf("@end\n\n")
 	}
 
 	// static functions.
@@ -173,7 +181,7 @@ func (g *objcGen) genM() error {
 	g.Printf("\n")
 
 	g.Printf("@protocol goSeqRefInterface\n")
-	g.Printf("-(GoSeqRef*) ref;\n")
+	g.Printf("-(GoSeqRef*) _ref;\n")
 	g.Printf("@end\n")
 	g.Printf("\n")
 
@@ -257,7 +265,7 @@ func (g *objcGen) genVarM(o *types.Var) {
 
 	// getter
 	s2 := &funcSummary{
-		name:      o.Name(),
+		name:      lowerFirst(o.Name()),
 		ret:       objcType,
 		retParams: []paramInfo{{typ: o.Type(), name: "ret"}},
 	}
@@ -418,7 +426,7 @@ func (s *funcSummary) asMethod(g *objcGen) string {
 			params = append(params, fmt.Sprintf("%s:(%s)%s", key, g.objcType(p.typ)+"*", p.name))
 		}
 	}
-	return fmt.Sprintf("(%s)%s%s", s.ret, s.name, strings.Join(params, " "))
+	return fmt.Sprintf("(%s)%s%s", s.ret, lowerFirst(s.name), strings.Join(params, " "))
 }
 
 func (s *funcSummary) callMethod(g *objcGen) string {
@@ -439,7 +447,7 @@ func (s *funcSummary) callMethod(g *objcGen) string {
 			params = append(params, fmt.Sprintf("%s:&%s", key, p.name))
 		}
 	}
-	return fmt.Sprintf("%s%s", s.name, strings.Join(params, " "))
+	return fmt.Sprintf("%s%s", lowerFirst(s.name), strings.Join(params, " "))
 }
 
 func (s *funcSummary) returnsVal() bool {
@@ -479,7 +487,7 @@ func (g *objcGen) genGetter(desc string, f *types.Var) {
 		t = types.Typ[types.String]
 	}
 	s := &funcSummary{
-		name:      f.Name(),
+		name:      lowerFirst(f.Name()),
 		ret:       g.objcType(t),
 		retParams: []paramInfo{{typ: t, name: "ret_"}},
 	}
@@ -513,7 +521,7 @@ func (g *objcGen) genFunc(pkgDesc, callDesc string, s *funcSummary, isMethod boo
 	g.Printf("GoSeq in_ = {};\n")
 	g.Printf("GoSeq out_ = {};\n")
 	if isMethod {
-		g.Printf("go_seq_writeRef(&in_, self.ref);\n")
+		g.Printf("go_seq_writeRef(&in_, self._ref);\n")
 	}
 	for _, p := range s.params {
 		st := g.seqType(p.typ)
@@ -521,7 +529,7 @@ func (g *objcGen) genFunc(pkgDesc, callDesc string, s *funcSummary, isMethod boo
 			g.Printf("if ([(id<NSObject>)(%s) isKindOfClass:[%s class]]) {\n", p.name, g.refTypeBase(p.typ))
 			g.Indent()
 			g.Printf("id<goSeqRefInterface> %[1]s_proxy = (id<goSeqRefInterface>)(%[1]s);\n", p.name)
-			g.Printf("go_seq_writeRef(&in_, %s_proxy.ref);\n", p.name)
+			g.Printf("go_seq_writeRef(&in_, %s_proxy._ref);\n", p.name)
 			g.Outdent()
 			g.Printf("} else {\n")
 			g.Indent()
@@ -600,7 +608,7 @@ func (g *objcGen) genInterfaceInterface(obj *types.TypeName, summary ifaceSummar
 		g.Printf(" <%[1]s%[2]s>", g.namePrefix, obj.Name())
 	}
 	g.Printf(" {\n}\n")
-	g.Printf("@property(strong, readonly) id ref;\n")
+	g.Printf("@property(strong, readonly) id _ref;\n")
 	g.Printf("\n")
 	g.Printf("- (id)initWithRef:(id)ref;\n")
 	for _, m := range summary.callable {
@@ -647,7 +655,7 @@ func (g *objcGen) genInterfaceM(obj *types.TypeName, t *types.Interface) bool {
 	g.Printf("- (id)initWithRef:(id)ref {\n")
 	g.Indent()
 	g.Printf("self = [super init];\n")
-	g.Printf("if (self) { _ref = ref; }\n")
+	g.Printf("if (self) { __ref = ref; }\n")
 	g.Printf("return self;\n")
 	g.Outdent()
 	g.Printf("}\n")
@@ -734,7 +742,7 @@ func (g *objcGen) genInterfaceMethodProxy(obj *types.TypeName, s *funcSummary) {
 			g.Printf("if ([(id<NSObject>)(returnVal) isKindOfClass:[%s class]]) {\n", g.refTypeBase(p.typ))
 			g.Indent()
 			g.Printf("id<goSeqRefInterface>retVal_proxy = (id<goSeqRefInterface>)(returnVal);\n")
-			g.Printf("go_seq_writeRef(out, retVal_proxy.ref);\n")
+			g.Printf("go_seq_writeRef(out, retVal_proxy._ref);\n")
 			g.Outdent()
 			g.Printf("} else {\n")
 			g.Indent()
@@ -772,7 +780,7 @@ func (g *objcGen) genInterfaceMethodProxy(obj *types.TypeName, s *funcSummary) {
 			g.Printf("if ([(id<NSObject>)(%s) isKindOfClass:[%s class]]) {\n", p.name, g.refTypeBase(p.typ))
 			g.Indent()
 			g.Printf("id<goSeqRefInterface>%[1]s_proxy = (id<goSeqRefInterface>)(%[1]s);\n", p.name)
-			g.Printf("go_seq_writeRef(out, %s_proxy.ref);\n", p.name)
+			g.Printf("go_seq_writeRef(out, %s_proxy._ref);\n", p.name)
 			g.Outdent()
 			g.Printf("} else {\n")
 			g.Indent()
@@ -788,21 +796,21 @@ func (g *objcGen) genInterfaceMethodProxy(obj *types.TypeName, s *funcSummary) {
 func (g *objcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 	g.Printf("@interface %s%s : NSObject {\n", g.namePrefix, obj.Name())
 	g.Printf("}\n")
-	g.Printf("@property(strong, readonly) id ref;\n")
+	g.Printf("@property(strong, readonly) id _ref;\n")
 	g.Printf("\n")
 	g.Printf("- (id)initWithRef:(id)ref;\n")
 
 	// accessors to exported fields.
 	for _, f := range exportedFields(t) {
 		name, typ := f.Name(), g.objcFieldType(f.Type())
-		g.Printf("- (%s)%s;\n", typ, name)
+		g.Printf("- (%s)%s;\n", typ, lowerFirst(name))
 		g.Printf("- (void)set%s:(%s)v;\n", name, typ)
 	}
 
 	// exported methods
 	for _, m := range exportedMethodSet(types.NewPointer(obj.Type())) {
 		s := g.funcSummary(m)
-		g.Printf("- %s;\n", s.asMethod(g))
+		g.Printf("- %s;\n", lowerFirst(s.asMethod(g)))
 	}
 	g.Printf("@end\n")
 }
@@ -827,7 +835,7 @@ func (g *objcGen) genStructM(obj *types.TypeName, t *types.Struct) {
 	g.Printf("- (id)initWithRef:(id)ref {\n")
 	g.Indent()
 	g.Printf("self = [super init];\n")
-	g.Printf("if (self) { _ref = ref; }\n")
+	g.Printf("if (self) { __ref = ref; }\n")
 	g.Printf("return self;\n")
 	g.Outdent()
 	g.Printf("}\n\n")
@@ -957,4 +965,12 @@ func (g *objcGen) objcType(typ types.Type) string {
 		g.errorf("unsupported type: %#+v, %s", typ, typ)
 		return "TODO"
 	}
+}
+
+func lowerFirst(s string) string {
+	if s == "" {
+		return ""
+	}
+	r, n := utf8.DecodeRuneInString(s)
+	return string(unicode.ToLower(r)) + s[n:]
 }

@@ -10,7 +10,7 @@
 static NSString* errDomain = @"go.basictypes";
 
 @protocol goSeqRefInterface
--(GoSeqRef*) ref;
+-(GoSeqRef*) _ref;
 @end
 
 #define _DESCRIPTOR_ "basictypes"

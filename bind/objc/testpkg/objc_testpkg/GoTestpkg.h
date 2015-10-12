@@ -13,33 +13,33 @@
 @class GoTestpkgS;
 
 @protocol GoTestpkgI
-- (BOOL)Error:(BOOL)triggerError error:(NSError**)error;
-- (BOOL)StringError:(NSString*)s ret0_:(NSString**)ret0_ error:(NSError**)error;
-- (int64_t)Times:(int32_t)v;
+- (BOOL)error:(BOOL)triggerError error:(NSError**)error;
+- (BOOL)stringError:(NSString*)s ret0_:(NSString**)ret0_ error:(NSError**)error;
+- (int64_t)times:(int32_t)v;
 @end
 
 @interface GoTestpkgNode : NSObject {
 }
-@property(strong, readonly) id ref;
+@property(strong, readonly) id _ref;
 
 - (id)initWithRef:(id)ref;
-- (NSString*)V;
+- (NSString*)v;
 - (void)setV:(NSString*)v;
-- (NSString*)Err;
+- (NSString*)err;
 - (void)setErr:(NSString*)v;
 @end
 
 @interface GoTestpkgS : NSObject {
 }
-@property(strong, readonly) id ref;
+@property(strong, readonly) id _ref;
 
 - (id)initWithRef:(id)ref;
-- (double)X;
+- (double)x;
 - (void)setX:(double)v;
-- (double)Y;
+- (double)y;
 - (void)setY:(double)v;
-- (double)Sum;
-- (NSString*)TryTwoStrings:(NSString*)first second:(NSString*)second;
+- (double)sum;
+- (NSString*)tryTwoStrings:(NSString*)first second:(NSString*)second;
 @end
 
 FOUNDATION_EXPORT const BOOL GoTestpkgABool;
@@ -57,16 +57,16 @@ FOUNDATION_EXPORT const float GoTestpkgSmallestNonzeroFloat32;
 FOUNDATION_EXPORT const double GoTestpkgSmallestNonzeroFloat64;
 
 @interface GoTestpkg : NSObject 
-+ (int) IntVar;
++ (int) intVar;
 + (void) setIntVar:(int)v;
 
-+ (id<GoTestpkgI>) InterfaceVar;
++ (id<GoTestpkgI>) interfaceVar;
 + (void) setInterfaceVar:(id<GoTestpkgI>)v;
 
-+ (NSString*) StringVar;
++ (NSString*) stringVar;
 + (void) setStringVar:(NSString*)v;
 
-+ (GoTestpkgNode*) StructVar;
++ (GoTestpkgNode*) structVar;
 + (void) setStructVar:(GoTestpkgNode*)v;
 
 @end

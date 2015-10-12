@@ -10,7 +10,7 @@
 static NSString* errDomain = @"go.golang.org/x/mobile/bind/objc/testpkg";
 
 @protocol goSeqRefInterface
--(GoSeqRef*) ref;
+-(GoSeqRef*) _ref;
 @end
 
 #define _DESCRIPTOR_ "testpkg"
@@ -40,12 +40,12 @@ static NSString* errDomain = @"go.golang.org/x/mobile/bind/objc/testpkg";
 
 @interface GoTestpkgI : NSObject <GoTestpkgI> {
 }
-@property(strong, readonly) id ref;
+@property(strong, readonly) id _ref;
 
 - (id)initWithRef:(id)ref;
-- (BOOL)Error:(BOOL)triggerError error:(NSError**)error;
-- (BOOL)StringError:(NSString*)s ret0_:(NSString**)ret0_ error:(NSError**)error;
-- (int64_t)Times:(int32_t)v;
+- (BOOL)error:(BOOL)triggerError error:(NSError**)error;
+- (BOOL)stringError:(NSString*)s ret0_:(NSString**)ret0_ error:(NSError**)error;
+- (int64_t)times:(int32_t)v;
 @end
 
 @implementation GoTestpkgI {
@@ -53,14 +53,14 @@ static NSString* errDomain = @"go.golang.org/x/mobile/bind/objc/testpkg";
 
 - (id)initWithRef:(id)ref {
 	self = [super init];
-	if (self) { _ref = ref; }
+	if (self) { __ref = ref; }
 	return self;
 }
 
-- (BOOL)Error:(BOOL)triggerError error:(NSError**)error {
+- (BOOL)error:(BOOL)triggerError error:(NSError**)error {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
-	go_seq_writeRef(&in_, self.ref);
+	go_seq_writeRef(&in_, self._ref);
 	go_seq_writeBool(&in_, triggerError);
 	go_seq_send(_GO_testpkg_I_DESCRIPTOR_, _GO_testpkg_I_Error_, &in_, &out_);
 	NSString* _error = go_seq_readUTF8(&out_);
@@ -74,10 +74,10 @@ static NSString* errDomain = @"go.golang.org/x/mobile/bind/objc/testpkg";
 	return ([_error length] == 0);
 }
 
-- (BOOL)StringError:(NSString*)s ret0_:(NSString**)ret0_ error:(NSError**)error {
+- (BOOL)stringError:(NSString*)s ret0_:(NSString**)ret0_ error:(NSError**)error {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
-	go_seq_writeRef(&in_, self.ref);
+	go_seq_writeRef(&in_, self._ref);
 	go_seq_writeUTF8(&in_, s);
 	go_seq_send(_GO_testpkg_I_DESCRIPTOR_, _GO_testpkg_I_StringError_, &in_, &out_);
 	NSString* ret0__val = go_seq_readUTF8(&out_);
@@ -95,10 +95,10 @@ static NSString* errDomain = @"go.golang.org/x/mobile/bind/objc/testpkg";
 	return ([_error length] == 0);
 }
 
-- (int64_t)Times:(int32_t)v {
+- (int64_t)times:(int32_t)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
-	go_seq_writeRef(&in_, self.ref);
+	go_seq_writeRef(&in_, self._ref);
 	go_seq_writeInt32(&in_, v);
 	go_seq_send(_GO_testpkg_I_DESCRIPTOR_, _GO_testpkg_I_Times_, &in_, &out_);
 	int64_t ret0_ = go_seq_readInt64(&out_);
@@ -115,7 +115,7 @@ static void proxyGoTestpkgI(id obj, int code, GoSeq* in, GoSeq* out) {
 		id<GoTestpkgI> o = (id<GoTestpkgI>)(obj);
 		BOOL triggerError = go_seq_readBool(in);
 		NSError* error = NULL;
-		BOOL returnVal = [o Error:triggerError error:&error];
+		BOOL returnVal = [o error:triggerError error:&error];
 		if (returnVal) {
 			go_seq_writeUTF8(out, NULL);
 		} else {
@@ -131,7 +131,7 @@ static void proxyGoTestpkgI(id obj, int code, GoSeq* in, GoSeq* out) {
 		NSString* s = go_seq_readUTF8(in);
 		NSString* ret0_;
 		NSError* error = NULL;
-		BOOL returnVal = [o StringError:s ret0_:&ret0_ error:&error];
+		BOOL returnVal = [o stringError:s ret0_:&ret0_ error:&error];
 		go_seq_writeUTF8(out, ret0_);
 		if (returnVal) {
 			go_seq_writeUTF8(out, NULL);
@@ -146,7 +146,7 @@ static void proxyGoTestpkgI(id obj, int code, GoSeq* in, GoSeq* out) {
 	case _GO_testpkg_I_Times_: {
 		id<GoTestpkgI> o = (id<GoTestpkgI>)(obj);
 		int32_t v = go_seq_readInt32(in);
-		int64_t returnVal = [o Times:v];
+		int64_t returnVal = [o times:v];
 		go_seq_writeInt64(out, returnVal);
 	} break;
 	default:
@@ -165,14 +165,14 @@ static void proxyGoTestpkgI(id obj, int code, GoSeq* in, GoSeq* out) {
 
 - (id)initWithRef:(id)ref {
 	self = [super init];
-	if (self) { _ref = ref; }
+	if (self) { __ref = ref; }
 	return self;
 }
 
-- (NSString*)V {
+- (NSString*)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
-	go_seq_writeRef(&in_, self.ref);
+	go_seq_writeRef(&in_, self._ref);
 	go_seq_send(_GO_testpkg_Node_DESCRIPTOR_, _GO_testpkg_Node_FIELD_V_GET_, &in_, &out_);
 	NSString* ret_ = go_seq_readUTF8(&out_);
 	go_seq_free(&in_);
@@ -183,17 +183,17 @@ static void proxyGoTestpkgI(id obj, int code, GoSeq* in, GoSeq* out) {
 - (void)setV:(NSString*)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
-	go_seq_writeRef(&in_, self.ref);
+	go_seq_writeRef(&in_, self._ref);
 	go_seq_writeUTF8(&in_, v);
 	go_seq_send(_GO_testpkg_Node_DESCRIPTOR_, _GO_testpkg_Node_FIELD_V_SET_, &in_, &out_);
 	go_seq_free(&in_);
 	go_seq_free(&out_);
 }
 
-- (NSString*)Err {
+- (NSString*)err {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
-	go_seq_writeRef(&in_, self.ref);
+	go_seq_writeRef(&in_, self._ref);
 	go_seq_send(_GO_testpkg_Node_DESCRIPTOR_, _GO_testpkg_Node_FIELD_Err_GET_, &in_, &out_);
 	NSString* ret_ = go_seq_readUTF8(&out_);
 	go_seq_free(&in_);
@@ -204,7 +204,7 @@ static void proxyGoTestpkgI(id obj, int code, GoSeq* in, GoSeq* out) {
 - (void)setErr:(NSString*)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
-	go_seq_writeRef(&in_, self.ref);
+	go_seq_writeRef(&in_, self._ref);
 	go_seq_writeUTF8(&in_, v);
 	go_seq_send(_GO_testpkg_Node_DESCRIPTOR_, _GO_testpkg_Node_FIELD_Err_SET_, &in_, &out_);
 	go_seq_free(&in_);
@@ -226,14 +226,14 @@ static void proxyGoTestpkgI(id obj, int code, GoSeq* in, GoSeq* out) {
 
 - (id)initWithRef:(id)ref {
 	self = [super init];
-	if (self) { _ref = ref; }
+	if (self) { __ref = ref; }
 	return self;
 }
 
-- (double)X {
+- (double)x {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
-	go_seq_writeRef(&in_, self.ref);
+	go_seq_writeRef(&in_, self._ref);
 	go_seq_send(_GO_testpkg_S_DESCRIPTOR_, _GO_testpkg_S_FIELD_X_GET_, &in_, &out_);
 	double ret_ = go_seq_readFloat64(&out_);
 	go_seq_free(&in_);
@@ -244,17 +244,17 @@ static void proxyGoTestpkgI(id obj, int code, GoSeq* in, GoSeq* out) {
 - (void)setX:(double)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
-	go_seq_writeRef(&in_, self.ref);
+	go_seq_writeRef(&in_, self._ref);
 	go_seq_writeFloat64(&in_, v);
 	go_seq_send(_GO_testpkg_S_DESCRIPTOR_, _GO_testpkg_S_FIELD_X_SET_, &in_, &out_);
 	go_seq_free(&in_);
 	go_seq_free(&out_);
 }
 
-- (double)Y {
+- (double)y {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
-	go_seq_writeRef(&in_, self.ref);
+	go_seq_writeRef(&in_, self._ref);
 	go_seq_send(_GO_testpkg_S_DESCRIPTOR_, _GO_testpkg_S_FIELD_Y_GET_, &in_, &out_);
 	double ret_ = go_seq_readFloat64(&out_);
 	go_seq_free(&in_);
@@ -265,17 +265,17 @@ static void proxyGoTestpkgI(id obj, int code, GoSeq* in, GoSeq* out) {
 - (void)setY:(double)v {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
-	go_seq_writeRef(&in_, self.ref);
+	go_seq_writeRef(&in_, self._ref);
 	go_seq_writeFloat64(&in_, v);
 	go_seq_send(_GO_testpkg_S_DESCRIPTOR_, _GO_testpkg_S_FIELD_Y_SET_, &in_, &out_);
 	go_seq_free(&in_);
 	go_seq_free(&out_);
 }
 
-- (double)Sum {
+- (double)sum {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
-	go_seq_writeRef(&in_, self.ref);
+	go_seq_writeRef(&in_, self._ref);
 	go_seq_send(_GO_testpkg_S_DESCRIPTOR_, _GO_testpkg_S_Sum_, &in_, &out_);
 	double ret0_ = go_seq_readFloat64(&out_);
 	go_seq_free(&in_);
@@ -283,10 +283,10 @@ static void proxyGoTestpkgI(id obj, int code, GoSeq* in, GoSeq* out) {
 	return ret0_;
 }
 
-- (NSString*)TryTwoStrings:(NSString*)first second:(NSString*)second {
+- (NSString*)tryTwoStrings:(NSString*)first second:(NSString*)second {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
-	go_seq_writeRef(&in_, self.ref);
+	go_seq_writeRef(&in_, self._ref);
 	go_seq_writeUTF8(&in_, first);
 	go_seq_writeUTF8(&in_, second);
 	go_seq_send(_GO_testpkg_S_DESCRIPTOR_, _GO_testpkg_S_TryTwoStrings_, &in_, &out_);
@@ -322,7 +322,7 @@ const double GoTestpkgSmallestNonzeroFloat64 = 5e-324;
 	go_seq_free(&out_);
 }
 
-+ (int) IntVar {
++ (int) intVar {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send("testpkg.IntVar", 2, &in_, &out_);
@@ -337,7 +337,7 @@ const double GoTestpkgSmallestNonzeroFloat64 = 5e-324;
 	GoSeq out_ = {};
 	if ([(id<NSObject>)(v) isKindOfClass:[GoTestpkgI class]]) {
 		id<goSeqRefInterface> v_proxy = (id<goSeqRefInterface>)(v);
-		go_seq_writeRef(&in_, v_proxy.ref);
+		go_seq_writeRef(&in_, v_proxy._ref);
 	} else {
 		go_seq_writeObjcRef(&in_, v);
 	}
@@ -346,7 +346,7 @@ const double GoTestpkgSmallestNonzeroFloat64 = 5e-324;
 	go_seq_free(&out_);
 }
 
-+ (id<GoTestpkgI>) InterfaceVar {
++ (id<GoTestpkgI>) interfaceVar {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send("testpkg.InterfaceVar", 2, &in_, &out_);
@@ -369,7 +369,7 @@ const double GoTestpkgSmallestNonzeroFloat64 = 5e-324;
 	go_seq_free(&out_);
 }
 
-+ (NSString*) StringVar {
++ (NSString*) stringVar {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send("testpkg.StringVar", 2, &in_, &out_);
@@ -384,7 +384,7 @@ const double GoTestpkgSmallestNonzeroFloat64 = 5e-324;
 	GoSeq out_ = {};
 	if ([(id<NSObject>)(v) isKindOfClass:[GoTestpkgNode class]]) {
 		id<goSeqRefInterface> v_proxy = (id<goSeqRefInterface>)(v);
-		go_seq_writeRef(&in_, v_proxy.ref);
+		go_seq_writeRef(&in_, v_proxy._ref);
 	} else {
 		go_seq_writeObjcRef(&in_, v);
 	}
@@ -393,7 +393,7 @@ const double GoTestpkgSmallestNonzeroFloat64 = 5e-324;
 	go_seq_free(&out_);
 }
 
-+ (GoTestpkgNode*) StructVar {
++ (GoTestpkgNode*) structVar {
 	GoSeq in_ = {};
 	GoSeq out_ = {};
 	go_seq_send("testpkg.StructVar", 2, &in_, &out_);
@@ -426,7 +426,7 @@ BOOL GoTestpkgCallIError(id<GoTestpkgI> i, BOOL triggerError, NSError** error) {
 	GoSeq out_ = {};
 	if ([(id<NSObject>)(i) isKindOfClass:[GoTestpkgI class]]) {
 		id<goSeqRefInterface> i_proxy = (id<goSeqRefInterface>)(i);
-		go_seq_writeRef(&in_, i_proxy.ref);
+		go_seq_writeRef(&in_, i_proxy._ref);
 	} else {
 		go_seq_writeObjcRef(&in_, i);
 	}
@@ -448,7 +448,7 @@ BOOL GoTestpkgCallIStringError(id<GoTestpkgI> i, NSString* s, NSString** ret0_, 
 	GoSeq out_ = {};
 	if ([(id<NSObject>)(i) isKindOfClass:[GoTestpkgI class]]) {
 		id<goSeqRefInterface> i_proxy = (id<goSeqRefInterface>)(i);
-		go_seq_writeRef(&in_, i_proxy.ref);
+		go_seq_writeRef(&in_, i_proxy._ref);
 	} else {
 		go_seq_writeObjcRef(&in_, i);
 	}
@@ -474,7 +474,7 @@ double GoTestpkgCallSSum(GoTestpkgS* s) {
 	GoSeq out_ = {};
 	if ([(id<NSObject>)(s) isKindOfClass:[GoTestpkgS class]]) {
 		id<goSeqRefInterface> s_proxy = (id<goSeqRefInterface>)(s);
-		go_seq_writeRef(&in_, s_proxy.ref);
+		go_seq_writeRef(&in_, s_proxy._ref);
 	} else {
 		go_seq_writeObjcRef(&in_, s);
 	}
@@ -596,7 +596,7 @@ void GoTestpkgRegisterI(int32_t idx, id<GoTestpkgI> i) {
 	go_seq_writeInt32(&in_, idx);
 	if ([(id<NSObject>)(i) isKindOfClass:[GoTestpkgI class]]) {
 		id<goSeqRefInterface> i_proxy = (id<goSeqRefInterface>)(i);
-		go_seq_writeRef(&in_, i_proxy.ref);
+		go_seq_writeRef(&in_, i_proxy._ref);
 	} else {
 		go_seq_writeObjcRef(&in_, i);
 	}

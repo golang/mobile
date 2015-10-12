@@ -9,8 +9,8 @@
 #include <Foundation/Foundation.h>
 
 @protocol GoIssue12403Parsable
-- (NSString*)FromJSON:(NSString*)jstr;
-- (BOOL)ToJSON:(NSString**)ret0_ error:(NSError**)error;
+- (NSString*)fromJSON:(NSString*)jstr;
+- (BOOL)toJSON:(NSString**)ret0_ error:(NSError**)error;
 @end
 
 #endif
