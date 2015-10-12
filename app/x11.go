@@ -32,7 +32,6 @@ import (
 	"golang.org/x/mobile/event/size"
 	"golang.org/x/mobile/event/touch"
 	"golang.org/x/mobile/geom"
-	"golang.org/x/mobile/gl"
 )
 
 func init() {
@@ -42,9 +41,7 @@ func init() {
 func main(f func(App)) {
 	runtime.LockOSThread()
 
-	var worker gl.Worker
-	glctx, worker = gl.NewContext()
-	workAvailable := worker.WorkAvailable()
+	workAvailable := theApp.worker.WorkAvailable()
 
 	C.createWindow()
 
@@ -71,7 +68,7 @@ func main(f func(App)) {
 		case <-donec:
 			return
 		case <-workAvailable:
-			worker.DoWork()
+			theApp.worker.DoWork()
 		case <-theApp.publish:
 			C.swapBuffers()
 			tc = ticker.C
