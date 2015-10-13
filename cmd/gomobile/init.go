@@ -145,7 +145,7 @@ func runInit(cmd *command) error {
 
 	// Install standard libraries for cross compilers.
 	start := time.Now()
-	if err := installStd(androidArmEnv); err != nil {
+	if err := installStd(androidArmEnv, "-buildmode=c-shared"); err != nil {
 		return err
 	}
 	if err := installDarwin(); err != nil {
