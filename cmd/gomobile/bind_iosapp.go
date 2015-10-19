@@ -81,7 +81,7 @@ func goIOSBind(pkg *build.Package) error {
 	// Copy header file next to output archive.
 	err = copyFile(
 		headers+"/"+title+".h",
-		tmpdir+"/objc/Go"+title+".h",
+		tmpdir+"/objc/"+bindPrefix+title+".h",
 	)
 	if err != nil {
 		return err
@@ -142,7 +142,7 @@ func goIOSBindArchive(name, path string, env []string) (string, error) {
 		"-g", "-O2",
 		"-o", obj,
 		"-fobjc-arc", // enable ARC
-		"-c", "Go"+strings.Title(name)+".m",
+		"-c", bindPrefix+strings.Title(name)+".m",
 	)
 	cmd.Args = append(cmd.Args, strings.Split(getenv(env, "CGO_CFLAGS"), " ")...)
 	cmd.Dir = filepath.Join(tmpdir, "objc")
