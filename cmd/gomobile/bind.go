@@ -133,28 +133,30 @@ type binder struct {
 }
 
 func (b *binder) GenObjc(outdir string) error {
+	const bindPrefixDefault = "Go"
+	if bindPrefix == "" {
+		bindPrefix = bindPrefixDefault
+	}
 	name := strings.Title(b.pkg.Name())
 	bindOption := "-lang=objc"
-	prefix := "Go"
-	if bindPrefix != "" {
-		prefix = bindPrefix
+	if bindPrefix != bindPrefixDefault {
 		bindOption += " -prefix=" + bindPrefix
 	}
 
-	mfile := filepath.Join(outdir, prefix+name+".m")
-	hfile := filepath.Join(outdir, prefix+name+".h")
+	mfile := filepath.Join(outdir, bindPrefix+name+".m")
+	hfile := filepath.Join(outdir, bindPrefix+name+".h")
 
 	generate := func(w io.Writer) error {
 		if buildX {
 			printcmd("gobind %s -outdir=%s %s", bindOption, outdir, b.pkg.Path())
 		}
-		return bind.GenObjc(w, b.fset, b.pkg, prefix, false)
+		return bind.GenObjc(w, b.fset, b.pkg, bindPrefix, false)
 	}
 	if err := writeFile(mfile, generate); err != nil {
 		return err
 	}
 	generate = func(w io.Writer) error {
-		return bind.GenObjc(w, b.fset, b.pkg, prefix, true)
+		return bind.GenObjc(w, b.fset, b.pkg, bindPrefix, true)
 	}
 	if err := writeFile(hfile, generate); err != nil {
 		return err
