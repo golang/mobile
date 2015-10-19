@@ -88,8 +88,8 @@ func (g *objcGen) genH() error {
 	g.init()
 
 	g.Printf(objcPreamble, g.pkg.Path(), g.gobindOpts(), g.pkg.Path())
-	g.Printf("#ifndef __Go%s_H__\n", strings.Title(g.pkgName))
-	g.Printf("#define __Go%s_H__\n", strings.Title(g.pkgName))
+	g.Printf("#ifndef __%s%s_H__\n", g.prefix, strings.Title(g.pkgName))
+	g.Printf("#define __%s%s_H__\n", g.prefix, strings.Title(g.pkgName))
 	g.Printf("\n")
 	g.Printf("#include <Foundation/Foundation.h>")
 	g.Printf("\n\n")
