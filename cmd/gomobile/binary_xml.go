@@ -237,16 +237,17 @@ func appendHeader(b []byte, typ headerType, size int) []byte {
 //
 // http://developer.android.com/reference/android/R.attr.html
 var resourceCodes = map[string]uint32{
-	"versionCode":      0x0101021b,
-	"versionName":      0x0101021c,
-	"minSdkVersion":    0x0101020c,
-	"windowFullscreen": 0x0101020d,
-	"label":            0x01010001,
-	"hasCode":          0x0101000c,
-	"debuggable":       0x0101000f,
-	"name":             0x01010003,
-	"configChanges":    0x0101001f,
-	"value":            0x01010024,
+	"versionCode":       0x0101021b,
+	"versionName":       0x0101021c,
+	"minSdkVersion":     0x0101020c,
+	"windowFullscreen":  0x0101020d,
+	"label":             0x01010001,
+	"hasCode":           0x0101000c,
+	"debuggable":        0x0101000f,
+	"name":              0x01010003,
+	"screenOrientation": 0x0101001e,
+	"configChanges":     0x0101001f,
+	"value":             0x01010024,
 }
 
 // http://developer.android.com/reference/android/R.attr.html#configChanges
@@ -265,6 +266,26 @@ var configChanges = map[string]uint32{
 	"smallestScreenSize": 0x0800,
 	"layoutDirection":    0x2000,
 	"fontScale":          0x40000000,
+}
+
+// http://developer.android.com/reference/android/R.attr.html#screenOrientation
+var screenOrientation = map[string]int{
+	"unspecified":      -1,
+	"landscape":        0,
+	"portrait":         1,
+	"user":             2,
+	"behind":           3,
+	"sensor":           4,
+	"nosensor":         5,
+	"sensorLandscape":  6,
+	"sensorPortrait":   7,
+	"reverseLandscape": 8,
+	"reversePortrait":  9,
+	"fullSensor":       10,
+	"userLandscape":    11,
+	"userPortrait":     12,
+	"fullUser":         13,
+	"locked":           14,
 }
 
 type lineReader struct {
@@ -398,6 +419,12 @@ func (p *binStringPool) getAttr(attr xml.Attr) (*binAttr, error) {
 		v := uint32(0)
 		for _, c := range strings.Split(attr.Value, "|") {
 			v |= configChanges[c]
+		}
+		a.data = v
+	case "screenOrientation":
+		v := 0
+		for _, c := range strings.Split(attr.Value, "|") {
+			v |= screenOrientation[c]
 		}
 		a.data = v
 	default:
