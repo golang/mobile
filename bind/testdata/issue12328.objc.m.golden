@@ -15,7 +15,6 @@ static NSString* errDomain = @"go.issue12328";
 
 #define _DESCRIPTOR_ "issue12328"
 
-
 #define _GO_issue12328_T_DESCRIPTOR_ "go.issue12328.T"
 #define _GO_issue12328_T_FIELD_Err_GET_ (0x00f)
 #define _GO_issue12328_T_FIELD_Err_SET_ (0x01f)
@@ -51,4 +50,5 @@ static NSString* errDomain = @"go.issue12328";
 }
 
 @end
+
 

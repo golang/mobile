@@ -8,9 +8,16 @@
 
 #include <Foundation/Foundation.h>
 
-@class GoInterfacesI1;
-
-@class GoInterfacesI2;
+@protocol GoInterfacesError;
+@class GoInterfacesError;
+@protocol GoInterfacesI;
+@class GoInterfacesI;
+@protocol GoInterfacesI1;
+@protocol GoInterfacesI2;
+@protocol GoInterfacesI3;
+@class GoInterfacesI3;
+@protocol GoInterfacesWithParam;
+@class GoInterfacesWithParam;
 
 @protocol GoInterfacesError
 - (BOOL)err:(NSError**)error;
@@ -28,7 +35,6 @@
 - (void)j;
 @end
 
-
 @interface GoInterfacesI2 : NSObject {
 }
 @property(strong, readonly) id _ref;
@@ -36,7 +42,6 @@
 - (id)initWithRef:(id)ref;
 - (void)g;
 @end
-
 
 @protocol GoInterfacesI3
 - (GoInterfacesI1*)f;

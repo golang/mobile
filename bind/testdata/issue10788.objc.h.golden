@@ -9,11 +9,8 @@
 #include <Foundation/Foundation.h>
 
 @class GoIssue10788TestStruct;
-
-@protocol GoIssue10788TestInterface
-- (void)doSomeWork:(GoIssue10788TestStruct*)s;
-- (void)multipleUnnamedParams:(int)p0 p1:(NSString*)p1 p2:(int64_t)p2;
-@end
+@protocol GoIssue10788TestInterface;
+@class GoIssue10788TestInterface;
 
 @interface GoIssue10788TestStruct : NSObject {
 }
@@ -22,6 +19,11 @@
 - (id)initWithRef:(id)ref;
 - (NSString*)value;
 - (void)setValue:(NSString*)v;
+@end
+
+@protocol GoIssue10788TestInterface
+- (void)doSomeWork:(GoIssue10788TestStruct*)s;
+- (void)multipleUnnamedParams:(int)p0 p1:(NSString*)p1 p2:(int64_t)p2;
 @end
 
 #endif

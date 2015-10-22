@@ -15,9 +15,6 @@ static NSString* errDomain = @"go.structs";
 
 #define _DESCRIPTOR_ "structs"
 
-#define _CALL_Identity_ 1
-#define _CALL_IdentityWithError_ 2
-
 #define _GO_structs_S_DESCRIPTOR_ "go.structs.S"
 #define _GO_structs_S_FIELD_X_GET_ (0x00f)
 #define _GO_structs_S_FIELD_X_SET_ (0x01f)
@@ -112,6 +109,9 @@ static NSString* errDomain = @"go.structs";
 }
 
 @end
+
+#define _CALL_Identity_ 1
+#define _CALL_IdentityWithError_ 2
 
 GoStructsS* GoStructsIdentity(GoStructsS* s) {
 	GoSeq in_ = {};

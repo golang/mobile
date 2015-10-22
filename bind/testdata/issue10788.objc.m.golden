@@ -15,10 +15,7 @@ static NSString* errDomain = @"go.issue10788";
 
 #define _DESCRIPTOR_ "issue10788"
 
-
-#define _GO_issue10788_TestInterface_DESCRIPTOR_ "go.issue10788.TestInterface"
-#define _GO_issue10788_TestInterface_DoSomeWork_ (0x10a)
-#define _GO_issue10788_TestInterface_MultipleUnnamedParams_ (0x20a)
+@class GoIssue10788TestInterface;
 
 @interface GoIssue10788TestInterface : NSObject <GoIssue10788TestInterface> {
 }
@@ -28,6 +25,46 @@ static NSString* errDomain = @"go.issue10788";
 - (void)doSomeWork:(GoIssue10788TestStruct*)s;
 - (void)multipleUnnamedParams:(int)p0 p1:(NSString*)p1 p2:(int64_t)p2;
 @end
+
+#define _GO_issue10788_TestStruct_DESCRIPTOR_ "go.issue10788.TestStruct"
+#define _GO_issue10788_TestStruct_FIELD_Value_GET_ (0x00f)
+#define _GO_issue10788_TestStruct_FIELD_Value_SET_ (0x01f)
+
+@implementation GoIssue10788TestStruct {
+}
+
+- (id)initWithRef:(id)ref {
+	self = [super init];
+	if (self) { __ref = ref; }
+	return self;
+}
+
+- (NSString*)value {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	go_seq_writeRef(&in_, self._ref);
+	go_seq_send(_GO_issue10788_TestStruct_DESCRIPTOR_, _GO_issue10788_TestStruct_FIELD_Value_GET_, &in_, &out_);
+	NSString* ret_ = go_seq_readUTF8(&out_);
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+	return ret_;
+}
+
+- (void)setValue:(NSString*)v {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	go_seq_writeRef(&in_, self._ref);
+	go_seq_writeUTF8(&in_, v);
+	go_seq_send(_GO_issue10788_TestStruct_DESCRIPTOR_, _GO_issue10788_TestStruct_FIELD_Value_SET_, &in_, &out_);
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+}
+
+@end
+
+#define _GO_issue10788_TestInterface_DESCRIPTOR_ "go.issue10788.TestInterface"
+#define _GO_issue10788_TestInterface_DoSomeWork_ (0x10a)
+#define _GO_issue10788_TestInterface_MultipleUnnamedParams_ (0x20a)
 
 @implementation GoIssue10788TestInterface {
 }
@@ -90,41 +127,6 @@ static void proxyGoIssue10788TestInterface(id obj, int code, GoSeq* in, GoSeq* o
 	}
 }
 
-#define _GO_issue10788_TestStruct_DESCRIPTOR_ "go.issue10788.TestStruct"
-#define _GO_issue10788_TestStruct_FIELD_Value_GET_ (0x00f)
-#define _GO_issue10788_TestStruct_FIELD_Value_SET_ (0x01f)
-
-@implementation GoIssue10788TestStruct {
-}
-
-- (id)initWithRef:(id)ref {
-	self = [super init];
-	if (self) { __ref = ref; }
-	return self;
-}
-
-- (NSString*)value {
-	GoSeq in_ = {};
-	GoSeq out_ = {};
-	go_seq_writeRef(&in_, self._ref);
-	go_seq_send(_GO_issue10788_TestStruct_DESCRIPTOR_, _GO_issue10788_TestStruct_FIELD_Value_GET_, &in_, &out_);
-	NSString* ret_ = go_seq_readUTF8(&out_);
-	go_seq_free(&in_);
-	go_seq_free(&out_);
-	return ret_;
-}
-
-- (void)setValue:(NSString*)v {
-	GoSeq in_ = {};
-	GoSeq out_ = {};
-	go_seq_writeRef(&in_, self._ref);
-	go_seq_writeUTF8(&in_, v);
-	go_seq_send(_GO_issue10788_TestStruct_DESCRIPTOR_, _GO_issue10788_TestStruct_FIELD_Value_SET_, &in_, &out_);
-	go_seq_free(&in_);
-	go_seq_free(&out_);
-}
-
-@end
 
 __attribute__((constructor)) static void init() {
 	go_seq_register_proxy("go.issue10788.TestInterface", proxyGoIssue10788TestInterface);

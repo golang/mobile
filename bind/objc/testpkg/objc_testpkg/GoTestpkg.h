@@ -9,14 +9,12 @@
 #include <Foundation/Foundation.h>
 
 @class GoTestpkgNode;
-
 @class GoTestpkgS;
-
-@protocol GoTestpkgI
-- (BOOL)error:(BOOL)triggerError error:(NSError**)error;
-- (BOOL)stringError:(NSString*)s ret0_:(NSString**)ret0_ error:(NSError**)error;
-- (int64_t)times:(int32_t)v;
-@end
+@class GoTestpkgStructThatStartsWithLetterBeforeZ;
+@protocol GoTestpkgI;
+@class GoTestpkgI;
+@protocol GoTestpkgZ;
+@class GoTestpkgZ;
 
 @interface GoTestpkgNode : NSObject {
 }
@@ -40,6 +38,24 @@
 - (void)setY:(double)v;
 - (double)sum;
 - (NSString*)tryTwoStrings:(NSString*)first second:(NSString*)second;
+@end
+
+@interface GoTestpkgStructThatStartsWithLetterBeforeZ : NSObject {
+}
+@property(strong, readonly) id _ref;
+
+- (id)initWithRef:(id)ref;
+- (id<GoTestpkgZ>)value;
+- (void)setValue:(id<GoTestpkgZ>)v;
+@end
+
+@protocol GoTestpkgI
+- (BOOL)error:(BOOL)triggerError error:(NSError**)error;
+- (BOOL)stringError:(NSString*)s ret0_:(NSString**)ret0_ error:(NSError**)error;
+- (int64_t)times:(int32_t)v;
+@end
+
+@protocol GoTestpkgZ
 @end
 
 FOUNDATION_EXPORT const BOOL GoTestpkgABool;

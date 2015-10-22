@@ -339,6 +339,38 @@ func var_setStringVar(out, in *seq.Buffer) {
 func var_getStringVar(out, in *seq.Buffer) {
 	out.WriteString(testpkg.StringVar)
 }
+
+const (
+	proxyStructThatStartsWithLetterBeforeZ_Descriptor     = "go.testpkg.StructThatStartsWithLetterBeforeZ"
+	proxyStructThatStartsWithLetterBeforeZ_Value_Get_Code = 0x00f
+	proxyStructThatStartsWithLetterBeforeZ_Value_Set_Code = 0x01f
+)
+
+type proxyStructThatStartsWithLetterBeforeZ seq.Ref
+
+func proxyStructThatStartsWithLetterBeforeZ_Value_Set(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	var v testpkg.Z
+	v_ref := in.ReadRef()
+	if v_ref.Num < 0 { // go object
+		v = v_ref.Get().(testpkg.Z)
+	} else { // foreign object
+		v = (*proxyZ)(v_ref)
+	}
+	ref.Get().(*testpkg.StructThatStartsWithLetterBeforeZ).Value = v
+}
+
+func proxyStructThatStartsWithLetterBeforeZ_Value_Get(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := ref.Get().(*testpkg.StructThatStartsWithLetterBeforeZ).Value
+	out.WriteGoRef(v)
+}
+
+func init() {
+	seq.Register(proxyStructThatStartsWithLetterBeforeZ_Descriptor, proxyStructThatStartsWithLetterBeforeZ_Value_Set_Code, proxyStructThatStartsWithLetterBeforeZ_Value_Set)
+	seq.Register(proxyStructThatStartsWithLetterBeforeZ_Descriptor, proxyStructThatStartsWithLetterBeforeZ_Value_Get_Code, proxyStructThatStartsWithLetterBeforeZ_Value_Get)
+}
+
 func var_setStructVar(out, in *seq.Buffer) {
 	// Must be a Go object
 	v_ref := in.ReadRef()
@@ -359,6 +391,12 @@ func proxy_UnregisterI(out, in *seq.Buffer) {
 	param_idx := in.ReadInt32()
 	testpkg.UnregisterI(param_idx)
 }
+
+const (
+	proxyZ_Descriptor = "go.testpkg.Z"
+)
+
+type proxyZ seq.Ref
 
 func init() {
 	seq.Register("testpkg", 1, proxy_BytesAppend)
