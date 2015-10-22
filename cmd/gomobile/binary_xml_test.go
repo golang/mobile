@@ -90,6 +90,15 @@ func TestBinaryXML(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	if *dump {
+		b, err := ioutil.ReadFile(sdkapk)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := ioutil.WriteFile("junk.sdk.apk", b, 0755); err != nil {
+			t.Fatal(err)
+		}
+	}
 
 	// manifests contain platformBuildVersionCode and platformBuildVersionName
 	// which are not present in gomobile output.
@@ -103,7 +112,7 @@ func TestBinaryXML(t *testing.T) {
 	want := bytes.Join(fo, []byte{'\n'})
 
 	if !bytes.Equal(want, got) {
-		t.Fatalf("output does not match\n\n%s\n\n%s\n", want, got)
+		t.Fatalf("output does not match\nWANT\n%s\nGOT\n%s\n", want, got)
 	}
 }
 
@@ -114,6 +123,7 @@ func sortToMatchTest(p *binStringPool) {
 		"versionCode",
 		"versionName",
 		"minSdkVersion",
+		"theme",
 		"label",
 		"hasCode",
 		"debuggable",
@@ -175,6 +185,7 @@ func sortAttrToMatchTest(e *binStartElement, p *binStringPool) {
 		"versionName",
 		"versionPackage",
 
+		"theme",
 		"label",
 		"name",
 		"screenOrientation",
@@ -799,6 +810,7 @@ license that can be found in the LICENSE file.
 	<uses-sdk android:minSdkVersion="9" />
 	<application android:label="Balloon世界" android:hasCode="false" android:debuggable="true">
 	<activity android:name="android.app.NativeActivity"
+		android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
 		android:label="Balloon"
 		android:screenOrientation="portrait"
 		android:configChanges="orientation|keyboardHidden">
