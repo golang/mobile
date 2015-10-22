@@ -130,6 +130,8 @@ type Player struct {
 // If zero values are provided for format and sample rate values, the player
 // determines them from the source's WAV header.
 // An error is returned if the format and sample rate can't be determined.
+//
+// The audio package is only designed for small audio sources.
 func NewPlayer(src ReadSeekCloser, format Format, samplesPerSecond int64) (*Player, error) {
 	if err := al.OpenDevice(); err != nil {
 		return nil, err
