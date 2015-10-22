@@ -15,10 +15,7 @@ static NSString* errDomain = @"go.issue12403";
 
 #define _DESCRIPTOR_ "issue12403"
 
-
-#define _GO_issue12403_Parsable_DESCRIPTOR_ "go.issue12403.Parsable"
-#define _GO_issue12403_Parsable_FromJSON_ (0x10a)
-#define _GO_issue12403_Parsable_ToJSON_ (0x20a)
+@class GoIssue12403Parsable;
 
 @interface GoIssue12403Parsable : NSObject <GoIssue12403Parsable> {
 }
@@ -28,6 +25,10 @@ static NSString* errDomain = @"go.issue12403";
 - (NSString*)fromJSON:(NSString*)jstr;
 - (BOOL)toJSON:(NSString**)ret0_ error:(NSError**)error;
 @end
+
+#define _GO_issue12403_Parsable_DESCRIPTOR_ "go.issue12403.Parsable"
+#define _GO_issue12403_Parsable_FromJSON_ (0x10a)
+#define _GO_issue12403_Parsable_ToJSON_ (0x20a)
 
 @implementation GoIssue12403Parsable {
 }
@@ -100,6 +101,7 @@ static void proxyGoIssue12403Parsable(id obj, int code, GoSeq* in, GoSeq* out) {
 		NSLog(@"unknown code %x for _GO_issue12403_Parsable_DESCRIPTOR_", code);
 	}
 }
+
 
 __attribute__((constructor)) static void init() {
 	go_seq_register_proxy("go.issue12403.Parsable", proxyGoIssue12403Parsable);

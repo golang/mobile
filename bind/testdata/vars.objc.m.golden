@@ -15,8 +15,7 @@ static NSString* errDomain = @"go.vars";
 
 #define _DESCRIPTOR_ "vars"
 
-
-#define _GO_vars_I_DESCRIPTOR_ "go.vars.I"
+@class GoVarsI;
 
 @interface GoVarsI : NSObject <GoVarsI> {
 }
@@ -24,6 +23,21 @@ static NSString* errDomain = @"go.vars";
 
 - (id)initWithRef:(id)ref;
 @end
+
+#define _GO_vars_S_DESCRIPTOR_ "go.vars.S"
+
+@implementation GoVarsS {
+}
+
+- (id)initWithRef:(id)ref {
+	self = [super init];
+	if (self) { __ref = ref; }
+	return self;
+}
+
+@end
+
+#define _GO_vars_I_DESCRIPTOR_ "go.vars.I"
 
 @implementation GoVarsI {
 }
@@ -42,19 +56,6 @@ static void proxyGoVarsI(id obj, int code, GoSeq* in, GoSeq* out) {
 		NSLog(@"unknown code %x for _GO_vars_I_DESCRIPTOR_", code);
 	}
 }
-
-#define _GO_vars_S_DESCRIPTOR_ "go.vars.S"
-
-@implementation GoVarsS {
-}
-
-- (id)initWithRef:(id)ref {
-	self = [super init];
-	if (self) { __ref = ref; }
-	return self;
-}
-
-@end
 
 @implementation GoVars
 + (void) setABool:(BOOL)v {
@@ -304,6 +305,7 @@ static void proxyGoVarsI(id obj, int code, GoSeq* in, GoSeq* out) {
 }
 
 @end
+
 
 __attribute__((constructor)) static void init() {
 	go_seq_register_proxy("go.vars.I", proxyGoVarsI);

@@ -178,3 +178,11 @@ type Node struct {
 func NewNode(name string) *Node {
 	return &Node{V: name}
 }
+
+// issue 13004
+type StructThatStartsWithLetterBeforeZ struct {
+	Value Z
+}
+
+type Z interface {
+}

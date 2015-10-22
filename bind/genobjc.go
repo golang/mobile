@@ -34,16 +34,34 @@ type objcGen struct {
 	pkgName    string
 	namePrefix string
 	funcs      []*types.Func
-	names      []*types.TypeName
 	constants  []*types.Const
 	vars       []*types.Var
+
+	interfaces []interfaceInfo
+	structs    []structInfo
+	otherNames []*types.TypeName
+}
+
+type interfaceInfo struct {
+	obj     *types.TypeName
+	t       *types.Interface
+	summary ifaceSummary
+}
+
+type structInfo struct {
+	obj *types.TypeName
+	t   *types.Struct
 }
 
 func (g *objcGen) init() {
 	g.pkgName = g.pkg.Name()
 	g.namePrefix = g.prefix + strings.Title(g.pkgName)
 	g.funcs = nil
-	g.names = nil
+	g.constants = nil
+	g.vars = nil
+	g.interfaces = nil
+	g.structs = nil
+	g.otherNames = nil
 
 	scope := g.pkg.Scope()
 	hasExported := false
@@ -59,7 +77,15 @@ func (g *objcGen) init() {
 				g.funcs = append(g.funcs, obj)
 			}
 		case *types.TypeName:
-			g.names = append(g.names, obj)
+			named := obj.Type().(*types.Named)
+			switch t := named.Underlying().(type) {
+			case *types.Struct:
+				g.structs = append(g.structs, structInfo{obj, t})
+			case *types.Interface:
+				g.interfaces = append(g.interfaces, interfaceInfo{obj, t, makeIfaceSummary(t)})
+			default:
+				g.otherNames = append(g.otherNames, obj)
+			}
 		case *types.Const:
 			if _, ok := obj.Type().(*types.Basic); !ok {
 				g.errorf("unsupported exported const for %s: %T", obj.Name(), obj)
@@ -91,33 +117,32 @@ func (g *objcGen) genH() error {
 	g.Printf("#ifndef __%s%s_H__\n", g.prefix, strings.Title(g.pkgName))
 	g.Printf("#define __%s%s_H__\n", g.prefix, strings.Title(g.pkgName))
 	g.Printf("\n")
-	g.Printf("#include <Foundation/Foundation.h>")
-	g.Printf("\n\n")
+	g.Printf("#include <Foundation/Foundation.h>\n")
+	g.Printf("\n")
 
-	// @class names
-	for _, obj := range g.names {
-		named := obj.Type().(*types.Named)
-		switch t := named.Underlying().(type) {
-		case *types.Struct:
-			g.Printf("@class %s%s;\n\n", g.namePrefix, obj.Name())
-		case *types.Interface:
-			if !makeIfaceSummary(t).implementable {
-				g.Printf("@class %s%s;\n\n", g.namePrefix, obj.Name())
-			}
+	// Forward declaration of @class and @protocol
+	for _, s := range g.structs {
+		g.Printf("@class %s%s;\n", g.namePrefix, s.obj.Name())
+	}
+	for _, i := range g.interfaces {
+		g.Printf("@protocol %s%s;\n", g.namePrefix, i.obj.Name())
+		if i.summary.implementable {
+			g.Printf("@class %s%s;\n", g.namePrefix, i.obj.Name())
+			// Forward declaration for other cases will be handled at the beginning of genM.
 		}
+	}
+	if len(g.structs) > 0 || len(g.interfaces) > 0 {
+		g.Printf("\n")
 	}
 
 	// @interfaces
-	for _, obj := range g.names {
-		named := obj.Type().(*types.Named)
-		switch t := named.Underlying().(type) {
-		case *types.Struct:
-			g.genStructH(obj, t)
-			g.Printf("\n")
-		case *types.Interface:
-			g.genInterfaceH(obj, t)
-			g.Printf("\n")
-		}
+	for _, s := range g.structs {
+		g.genStructH(s.obj, s.t)
+		g.Printf("\n")
+	}
+	for _, i := range g.interfaces {
+		g.genInterfaceH(i.obj, i.t)
+		g.Printf("\n")
 	}
 
 	// const
@@ -186,22 +211,32 @@ func (g *objcGen) genM() error {
 	g.Printf("\n")
 
 	g.Printf("#define _DESCRIPTOR_ %q\n\n", g.pkgName)
-	for i, obj := range g.funcs {
-		g.Printf("#define _CALL_%s_ %d\n", obj.Name(), i+1)
-	}
-	g.Printf("\n")
 
-	// struct, interface.
-	var interfaces []*types.TypeName
-	for _, obj := range g.names {
-		named := obj.Type().(*types.Named)
-		switch t := named.Underlying().(type) {
-		case *types.Struct:
-			g.genStructM(obj, t)
-		case *types.Interface:
-			if g.genInterfaceM(obj, t) {
-				interfaces = append(interfaces, obj)
-			}
+	// forward declarations skipped from genH
+	for _, i := range g.interfaces {
+		if i.summary.implementable {
+			g.Printf("@class %s%s;\n\n", g.namePrefix, i.obj.Name())
+		}
+	}
+	for _, i := range g.interfaces {
+		if i.summary.implementable {
+			// @interface Interface -- similar to what genStructH does.
+			g.genInterfaceInterface(i.obj, i.summary, true)
+			g.Printf("\n")
+		}
+	}
+
+	// struct
+	for _, s := range g.structs {
+		g.genStructM(s.obj, s.t)
+		g.Printf("\n")
+	}
+
+	// interface
+	var needProxy []*types.TypeName
+	for _, i := range g.interfaces {
+		if g.genInterfaceM(i.obj, i.t) {
+			needProxy = append(needProxy, i.obj)
 		}
 		g.Printf("\n")
 	}
@@ -224,16 +259,22 @@ func (g *objcGen) genM() error {
 	}
 
 	// global functions.
+	for i, obj := range g.funcs {
+		g.Printf("#define _CALL_%s_ %d\n", obj.Name(), i+1)
+	}
+
+	g.Printf("\n")
+
 	for _, obj := range g.funcs {
 		g.genFuncM(obj)
 		g.Printf("\n")
 	}
 
 	// register proxy functions.
-	if len(interfaces) > 0 {
+	if len(needProxy) > 0 {
 		g.Printf("__attribute__((constructor)) static void init() {\n")
 		g.Indent()
-		for _, obj := range interfaces {
+		for _, obj := range needProxy {
 			g.Printf("go_seq_register_proxy(\"go.%s.%s\", proxy%s%s);\n", g.pkgName, obj.Name(), g.namePrefix, obj.Name())
 		}
 		g.Outdent()
@@ -616,7 +657,6 @@ func (g *objcGen) genInterfaceInterface(obj *types.TypeName, summary ifaceSummar
 		g.Printf("- %s;\n", s.asMethod(g))
 	}
 	g.Printf("@end\n")
-	g.Printf("\n")
 }
 
 func (g *objcGen) genInterfaceH(obj *types.TypeName, t *types.Interface) {
@@ -642,11 +682,6 @@ func (g *objcGen) genInterfaceM(obj *types.TypeName, t *types.Interface) bool {
 		g.Printf("#define %s_%s_ (0x%x0a)\n", desc, m.Name(), i+1)
 	}
 	g.Printf("\n")
-
-	if summary.implementable {
-		// @interface Interface -- similar to what genStructH does.
-		g.genInterfaceInterface(obj, summary, true)
-	}
 
 	// @implementation Interface -- similar to what genStructM does.
 	g.Printf("@implementation %s%s {\n", g.namePrefix, obj.Name())

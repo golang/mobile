@@ -9,15 +9,17 @@
 #include <Foundation/Foundation.h>
 
 @class GoVarsS;
-
-@protocol GoVarsI
-@end
+@protocol GoVarsI;
+@class GoVarsI;
 
 @interface GoVarsS : NSObject {
 }
 @property(strong, readonly) id _ref;
 
 - (id)initWithRef:(id)ref;
+@end
+
+@protocol GoVarsI
 @end
 
 @interface GoVars : NSObject 
