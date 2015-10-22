@@ -241,6 +241,7 @@ var resourceCodes = map[string]uint32{
 	"versionName":       0x0101021c,
 	"minSdkVersion":     0x0101020c,
 	"windowFullscreen":  0x0101020d,
+	"theme":             0x01010000,
 	"label":             0x01010001,
 	"hasCode":           0x0101000c,
 	"debuggable":        0x0101000f,
@@ -286,6 +287,25 @@ var screenOrientation = map[string]int{
 	"userPortrait":     12,
 	"fullUser":         13,
 	"locked":           14,
+}
+
+// reference is an alias used to write out correct type in bin.
+type reference uint32
+
+// http://developer.android.com/reference/android/R.style.html
+var theme = map[string]reference{
+	"Theme":                                   0x01030005,
+	"Theme_NoTitleBar":                        0x01030006,
+	"Theme_NoTitleBar_Fullscreen":             0x01030007,
+	"Theme_Black":                             0x01030008,
+	"Theme_Black_NoTitleBar":                  0x01030009,
+	"Theme_Black_NoTitleBar_Fullscreen":       0x0103000a,
+	"Theme_Light":                             0x0103000c,
+	"Theme_Light_NoTitleBar":                  0x0103000d,
+	"Theme_Light_NoTitleBar_Fullscreen":       0x0103000e,
+	"Theme_Translucent":                       0x0103000f,
+	"Theme_Translucent_NoTitleBar":            0x01030010,
+	"Theme_Translucent_NoTitleBar_Fullscreen": 0x01030011,
 }
 
 type lineReader struct {
@@ -427,6 +447,14 @@ func (p *binStringPool) getAttr(attr xml.Attr) (*binAttr, error) {
 			v |= screenOrientation[c]
 		}
 		a.data = v
+	case "theme":
+		v := attr.Value
+		// strip prefix if present as only platform themes are supported
+		if idx := strings.Index(attr.Value, "/"); idx != -1 {
+			v = v[idx+1:]
+		}
+		v = strings.Replace(v, ".", "_", -1)
+		a.data = theme[v]
 	default:
 		a.data = p.get(attr.Value)
 	}
@@ -596,6 +624,12 @@ func (a *binAttr) append(b []byte) []byte {
 		b = appendU16(b, 8)          // size
 		b = append(b, 0)             // unused padding
 		b = append(b, 0x11)          // INT_HEX
+		b = appendU32(b, uint32(v))
+	case reference:
+		b = appendU32(b, 0xffffffff) // raw value
+		b = appendU16(b, 8)          // size
+		b = append(b, 0)             // unused padding
+		b = append(b, 0x01)          // REFERENCE
 		b = appendU32(b, uint32(v))
 	case *bstring:
 		b = appendU32(b, v.ind) // raw value
