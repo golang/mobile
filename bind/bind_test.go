@@ -212,3 +212,23 @@ func TestCustomPrefix(t *testing.T) {
 		}
 	}
 }
+
+func TestLowerFirst(t *testing.T) {
+	testCases := []struct {
+		in, want string
+	}{
+		{"", ""},
+		{"Hello", "hello"},
+		{"HelloGopher", "helloGopher"},
+		{"hello", "hello"},
+		{"ID", "id"},
+		{"IDOrName", "idOrName"},
+		{"ΓειαΣας", "γειαΣας"},
+	}
+
+	for _, tc := range testCases {
+		if got := lowerFirst(tc.in); got != tc.want {
+			t.Errorf("lowerFirst(%q) = %q; want %q", tc.in, got, tc.want)
+		}
+	}
+}
