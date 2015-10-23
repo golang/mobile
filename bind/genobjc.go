@@ -1006,6 +1006,18 @@ func lowerFirst(s string) string {
 	if s == "" {
 		return ""
 	}
-	r, n := utf8.DecodeRuneInString(s)
-	return string(unicode.ToLower(r)) + s[n:]
+
+	var conv []rune
+	for len(s) > 0 {
+		r, n := utf8.DecodeRuneInString(s)
+		if !unicode.IsUpper(r) {
+			if l := len(conv); l > 1 {
+				conv[l-1] = unicode.ToUpper(conv[l-1])
+			}
+			return string(conv) + s
+		}
+		conv = append(conv, unicode.ToLower(r))
+		s = s[n:]
+	}
+	return string(conv)
 }
