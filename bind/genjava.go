@@ -551,7 +551,7 @@ func (g *javaGen) genRead(resName, seqName string, T types.Type) {
 		case *types.Named:
 			o := T.Obj()
 			if o.Pkg() != g.pkg {
-				g.errorf("type %s not defined in package %s", T, g.pkg)
+				g.errorf("type %s not defined in %s", T, g.pkg)
 				return
 			}
 			g.Printf("%s = new %s(%s.readRef());\n", resName, o.Name(), seqName)
@@ -563,7 +563,7 @@ func (g *javaGen) genRead(resName, seqName string, T types.Type) {
 		case *types.Interface, *types.Pointer:
 			o := T.Obj()
 			if o.Pkg() != g.pkg {
-				g.errorf("type %s not defined in package %s", T, g.pkg)
+				g.errorf("type %s not defined in %s", T, g.pkg)
 				return
 			}
 			g.Printf("%s = new %s.Proxy(%s.readRef());\n", resName, o.Name(), seqName)
