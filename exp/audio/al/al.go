@@ -298,13 +298,13 @@ func setSourcefv(s Source, param int, v []float32) {
 }
 
 // QueueBuffers adds the buffers to the buffer queue.
-func (s Source) QueueBuffers(buffers []Buffer) {
-	alSourceQueueBuffers(s, buffers)
+func (s Source) QueueBuffers(buffer ...Buffer) {
+	alSourceQueueBuffers(s, buffer)
 }
 
 // UnqueueBuffers removes the specified buffers from the buffer queue.
-func (s Source) UnqueueBuffers(buffers []Buffer) {
-	alSourceUnqueueBuffers(s, buffers)
+func (s Source) UnqueueBuffers(buffer ...Buffer) {
+	alSourceUnqueueBuffers(s, buffer)
 }
 
 // ListenerGain returns the total gain applied to the final mix.
@@ -380,8 +380,8 @@ func GenBuffers(n int) []Buffer {
 }
 
 // DeleteBuffers deletes the buffers.
-func DeleteBuffers(buffers []Buffer) {
-	alDeleteBuffers(buffers)
+func DeleteBuffers(buffer ...Buffer) {
+	alDeleteBuffers(buffer)
 }
 
 func getBufferi(b Buffer, param int) int32 {
