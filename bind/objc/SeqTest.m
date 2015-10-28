@@ -84,6 +84,20 @@ void testHello(NSString *input) {
   }
 }
 
+void testString() {
+  NSString *input = @"";
+  NSString *got = GoTestpkgEcho(input);
+  if (!got || ![got isEqualToString:input]) {
+    ERROR(@"want %@\nGoTestpkgEcho(%@)= %@", input, input, got);
+  }
+
+  input = @"FOO";
+  got = GoTestpkgEcho(input);
+  if (!got || ![got isEqualToString:input]) {
+    ERROR(@"want %@\nGoTestpkgEcho(%@)= %@", input, input, got);
+  }
+}
+
 void testBytesAppend(NSString *a, NSString *b) {
   NSData *data_a = [a dataUsingEncoding:NSUTF8StringEncoding];
   NSData *data_b = [b dataUsingEncoding:NSUTF8StringEncoding];
@@ -337,6 +351,8 @@ int main(void) {
     }
 
     testHello(@"세계"); // korean, utf-8, world.
+
+    testString();
 
     unichar t[] = {
         0xD83D, 0xDCA9,

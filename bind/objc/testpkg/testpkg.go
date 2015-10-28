@@ -186,3 +186,7 @@ type StructThatStartsWithLetterBeforeZ struct {
 
 type Z interface {
 }
+
+func Echo(s string) string {
+	return s
+}

@@ -97,6 +97,8 @@ FOUNDATION_EXPORT double GoTestpkgCallSSum(GoTestpkgS* s);
 
 FOUNDATION_EXPORT int GoTestpkgCollectS(int want, int timeoutSec);
 
+FOUNDATION_EXPORT NSString* GoTestpkgEcho(NSString* s);
+
 FOUNDATION_EXPORT void GoTestpkgGC();
 
 FOUNDATION_EXPORT NSString* GoTestpkgHello(NSString* s);

@@ -66,6 +66,12 @@ func proxy_CollectS(out, in *seq.Buffer) {
 	out.WriteInt(res)
 }
 
+func proxy_Echo(out, in *seq.Buffer) {
+	param_s := in.ReadString()
+	res := testpkg.Echo(param_s)
+	out.WriteString(res)
+}
+
 func proxy_GC(out, in *seq.Buffer) {
 	testpkg.GC()
 }
@@ -404,18 +410,19 @@ func init() {
 	seq.Register("testpkg", 3, proxy_CallIStringError)
 	seq.Register("testpkg", 4, proxy_CallSSum)
 	seq.Register("testpkg", 5, proxy_CollectS)
-	seq.Register("testpkg", 6, proxy_GC)
-	seq.Register("testpkg", 7, proxy_Hello)
-	seq.Register("testpkg", 8, proxy_Hi)
-	seq.Register("testpkg", 9, proxy_Int)
-	seq.Register("testpkg", 10, proxy_Multiply)
-	seq.Register("testpkg", 11, proxy_NewI)
-	seq.Register("testpkg", 12, proxy_NewNode)
-	seq.Register("testpkg", 13, proxy_NewS)
-	seq.Register("testpkg", 14, proxy_RegisterI)
-	seq.Register("testpkg", 15, proxy_ReturnsError)
-	seq.Register("testpkg", 16, proxy_Sum)
-	seq.Register("testpkg", 17, proxy_UnregisterI)
+	seq.Register("testpkg", 6, proxy_Echo)
+	seq.Register("testpkg", 7, proxy_GC)
+	seq.Register("testpkg", 8, proxy_Hello)
+	seq.Register("testpkg", 9, proxy_Hi)
+	seq.Register("testpkg", 10, proxy_Int)
+	seq.Register("testpkg", 11, proxy_Multiply)
+	seq.Register("testpkg", 12, proxy_NewI)
+	seq.Register("testpkg", 13, proxy_NewNode)
+	seq.Register("testpkg", 14, proxy_NewS)
+	seq.Register("testpkg", 15, proxy_RegisterI)
+	seq.Register("testpkg", 16, proxy_ReturnsError)
+	seq.Register("testpkg", 17, proxy_Sum)
+	seq.Register("testpkg", 18, proxy_UnregisterI)
 }
 func init() {
 	seq.Register("testpkg.IntVar", 1, var_setIntVar)

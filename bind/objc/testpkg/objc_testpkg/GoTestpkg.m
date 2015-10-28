@@ -472,18 +472,19 @@ const double GoTestpkgSmallestNonzeroFloat64 = 5e-324;
 #define _CALL_CallIStringError_ 3
 #define _CALL_CallSSum_ 4
 #define _CALL_CollectS_ 5
-#define _CALL_GC_ 6
-#define _CALL_Hello_ 7
-#define _CALL_Hi_ 8
-#define _CALL_Int_ 9
-#define _CALL_Multiply_ 10
-#define _CALL_NewI_ 11
-#define _CALL_NewNode_ 12
-#define _CALL_NewS_ 13
-#define _CALL_RegisterI_ 14
-#define _CALL_ReturnsError_ 15
-#define _CALL_Sum_ 16
-#define _CALL_UnregisterI_ 17
+#define _CALL_Echo_ 6
+#define _CALL_GC_ 7
+#define _CALL_Hello_ 8
+#define _CALL_Hi_ 9
+#define _CALL_Int_ 10
+#define _CALL_Multiply_ 11
+#define _CALL_NewI_ 12
+#define _CALL_NewNode_ 13
+#define _CALL_NewS_ 14
+#define _CALL_RegisterI_ 15
+#define _CALL_ReturnsError_ 16
+#define _CALL_Sum_ 17
+#define _CALL_UnregisterI_ 18
 
 NSData* GoTestpkgBytesAppend(NSData* a, NSData* b) {
 	GoSeq in_ = {};
@@ -568,6 +569,17 @@ int GoTestpkgCollectS(int want, int timeoutSec) {
 	go_seq_writeInt(&in_, timeoutSec);
 	go_seq_send(_DESCRIPTOR_, _CALL_CollectS_, &in_, &out_);
 	int ret0_ = go_seq_readInt(&out_);
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+	return ret0_;
+}
+
+NSString* GoTestpkgEcho(NSString* s) {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	go_seq_writeUTF8(&in_, s);
+	go_seq_send(_DESCRIPTOR_, _CALL_Echo_, &in_, &out_);
+	NSString* ret0_ = go_seq_readUTF8(&out_);
 	go_seq_free(&in_);
 	go_seq_free(&out_);
 	return ret0_;
