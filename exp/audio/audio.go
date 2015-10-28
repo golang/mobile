@@ -241,14 +241,14 @@ func (p *Player) prepare(offset int64, force bool) error {
 
 	p.mu.Lock()
 	if len(p.bufs) > 0 {
-		p.source.UnqueueBuffers(p.bufs)
-		al.DeleteBuffers(p.bufs)
+		p.source.UnqueueBuffers(p.bufs...)
+		al.DeleteBuffers(p.bufs...)
 	}
 	p.sizeBytes = size
 	p.bufs = bufs
 	p.prep = true
 	if len(bufs) > 0 {
-		p.source.QueueBuffers(bufs)
+		p.source.QueueBuffers(bufs...)
 	}
 	p.mu.Unlock()
 	return nil
@@ -361,7 +361,7 @@ func (p *Player) Close() error {
 	}
 	p.mu.Lock()
 	if len(p.bufs) > 0 {
-		al.DeleteBuffers(p.bufs)
+		al.DeleteBuffers(p.bufs...)
 	}
 	p.mu.Unlock()
 	p.t.src.Close()
