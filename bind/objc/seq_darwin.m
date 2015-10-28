@@ -247,8 +247,8 @@ void go_seq_writeFloat64(GoSeq *seq, double v) { MEM_WRITE(seq, double) = v; }
 
 NSString *go_seq_readUTF8(GoSeq *seq) {
   int32_t len = *MEM_READ(seq, int32_t);
-  if (len == 0) {
-    return NULL;
+  if (len == 0) {  // empty string.
+    return @"";
   }
   const void *buf = (const void *)mem_read(seq, len, 1);
   return [[NSString alloc] initWithBytes:buf
