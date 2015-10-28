@@ -60,8 +60,10 @@ func goIOSBuild(pkg *build.Package) (map[string]bool, error) {
 		}
 	}
 
+	ctx.BuildTags = append(ctx.BuildTags, "ios")
+
 	armPath := filepath.Join(tmpdir, "arm")
-	if err := goBuild(src, darwinArmEnv, "-tags=ios", "-o="+armPath); err != nil {
+	if err := goBuild(src, darwinArmEnv, "-o="+armPath); err != nil {
 		return nil, err
 	}
 	nmpkgs, err := extractPkgs(darwinArmNM, armPath)
@@ -70,7 +72,7 @@ func goIOSBuild(pkg *build.Package) (map[string]bool, error) {
 	}
 
 	arm64Path := filepath.Join(tmpdir, "arm64")
-	if err := goBuild(src, darwinArm64Env, "-tags=ios", "-o="+arm64Path); err != nil {
+	if err := goBuild(src, darwinArm64Env, "-o="+arm64Path); err != nil {
 		return nil, err
 	}
 
