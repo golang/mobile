@@ -54,10 +54,12 @@ the module import wizard (File > New > New Module > Import .JAR or
 (File > Project Structure > Dependencies).  This requires 'javac'
 (version 1.7+) and Android SDK (API level 9 or newer) to build the
 library for Android. The environment variable ANDROID_HOME must be set
-to the path to Android SDK.
+to the path to Android SDK. The generated Java class is in the java
+package 'go.<package_name>' unless -javapkg flag is specified.
 
 For -target ios, gomobile must be run on an OS X machine with Xcode
-installed. Support is not complete.
+installed. Support is not complete. The generated Objective-C types
+are prefixed with 'Go' unless the -prefix flag is provided.
 
 The -v flag provides verbose output, including the list of packages built.
 
@@ -137,4 +139,4 @@ Usage:
 
 Version prints versions of the gomobile binary and tools
 */
-package main
+package main // import "golang.org/x/mobile/cmd/gomobile"
