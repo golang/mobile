@@ -333,7 +333,7 @@ func (g *goGen) genRead(valName, seqName string, typ types.Type) {
 			g.Printf("%s_ref := %s.ReadRef()\n", valName, seqName)
 			g.Printf("%s := %s_ref.Get().(*%s.%s)\n", valName, valName, g.pkg.Name(), o.Name())
 		default:
-			g.errorf("unsupported type %s", t)
+			g.errorf("unsupported pointer type %s", t)
 		}
 	case *types.Named:
 		switch t.Underlying().(type) {
@@ -356,6 +356,8 @@ func (g *goGen) genRead(valName, seqName string, typ types.Type) {
 				g.Printf("   %s = (*proxy%s)(%s_ref)\n", valName, o.Name(), valName)
 			}
 			g.Printf("}\n")
+		default:
+			g.errorf("unsupported named type %s", t)
 		}
 	default:
 		g.Printf("%s := %s.Read%s()\n", valName, seqName, seqType(t))
