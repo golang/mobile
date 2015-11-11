@@ -912,7 +912,6 @@ func (g *objcGen) refTypeBase(typ types.Type) string {
 	}
 
 	// fallback to whatever objcType returns. This must not happen.
-	panic(fmt.Sprintf("wtf: %+T", typ))
 	return g.objcType(typ)
 }
 

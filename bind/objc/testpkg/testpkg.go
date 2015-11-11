@@ -88,7 +88,7 @@ func UnregisterI(idx int32) {
 func Multiply(idx int32, val int32) int64 {
 	i, ok := pinnedI[idx]
 	if !ok {
-		panic(fmt.Sprintf("unknown I with index %d", i))
+		panic(fmt.Sprintf("unknown I with index %d", idx))
 	}
 	return i.Times(val)
 }
