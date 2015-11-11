@@ -703,7 +703,7 @@ func (imp *importer) loadAll(fromPath string, paths map[string]bool) []*importIn
 				// (Also it would complicate the
 				// invariants of importPath completion.)
 				if trace {
-					fmt.Fprintln(os.Stderr, "import cycle: %q", cycle)
+					fmt.Fprintf(os.Stderr, "import cycle: %q\n", cycle)
 				}
 				continue
 			}
