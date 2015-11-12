@@ -141,7 +141,7 @@ apply plugin: 'com.android.library'
 android {
     compileSdkVersion 'android-19'
     buildToolsVersion '21.1.2'
-    defaultConfig { minSdkVersion 14 }
+    defaultConfig { minSdkVersion 15 }
 }
 
 repositories {

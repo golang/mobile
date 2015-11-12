@@ -86,6 +86,35 @@ func binaryXML(r io.Reader) ([]byte, error) {
 		}
 		switch tok := tok.(type) {
 		case xml.StartElement:
+			// uses-sdk is synthesized by the writer, disallow declaration in manifest.
+			if tok.Name.Local == "uses-sdk" {
+				return nil, fmt.Errorf("unsupported manifest tag <uses-sdk .../>")
+			} else if tok.Name.Local == "application" {
+				// synthesize <uses-sdk/> before handling <application> token
+				attr := xml.Attr{
+					Name: xml.Name{
+						Space: "http://schemas.android.com/apk/res/android",
+						Local: "minSdkVersion",
+					},
+					Value: "15",
+				}
+				ba, err := pool.getAttr(attr)
+				if err != nil {
+					return nil, fmt.Errorf("failed to synthesize attr minSdkVersion=\"15\"")
+				}
+				elements = append(elements,
+					&binStartElement{
+						line: line - 1, // current testing strategy is not friendly to synthesized tags, -1 for would-be location
+						ns:   pool.getNS(""),
+						name: pool.get("uses-sdk"),
+						attr: []*binAttr{ba},
+					},
+					&binEndElement{
+						line: line - 1,
+						ns:   pool.getNS(""),
+						name: pool.get("uses-sdk"),
+					})
+			}
 			// Intercept namespace definitions.
 			var attr []*binAttr
 			for _, a := range tok.Attr {

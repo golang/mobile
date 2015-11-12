@@ -241,7 +241,7 @@ func buildAAR(androidDir string, pkg *build.Package) (err error) {
 
 const (
 	javacTargetVer = "1.7"
-	minAndroidAPI  = 9
+	minAndroidAPI  = 15
 )
 
 func buildJar(w io.Writer, srcDir string) error {
