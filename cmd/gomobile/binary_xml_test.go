@@ -8,6 +8,7 @@ import (
 	"archive/zip"
 	"bytes"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -27,7 +28,7 @@ func TestBinaryXML(t *testing.T) {
 	sortPool, sortAttr = sortToMatchTest, sortAttrToMatchTest
 	defer func() { sortPool, sortAttr = origSortPool, origSortAttr }()
 
-	bin, err := binaryXML(bytes.NewBufferString(input))
+	bin, err := binaryXML(bytes.NewBufferString(fmt.Sprintf(input, "")))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,7 +78,8 @@ func TestBinaryXML(t *testing.T) {
 	}
 
 	manifest := filepath.Join(tmpdir, "AndroidManifest.xml")
-	if err := ioutil.WriteFile(manifest, []byte(input), 0755); err != nil {
+	inp := fmt.Sprintf(input, "<uses-sdk android:minSdkVersion=\"15\" />")
+	if err := ioutil.WriteFile(manifest, []byte(inp), 0755); err != nil {
 		t.Fatal(err)
 	}
 
@@ -807,7 +809,7 @@ license that can be found in the LICENSE file.
 	android:versionCode="1"
 	android:versionName="1.0">
 
-	<uses-sdk android:minSdkVersion="9" />
+	%s
 	<application android:label="Balloon世界" android:hasCode="false" android:debuggable="true">
 	<activity android:name="android.app.NativeActivity"
 		android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
