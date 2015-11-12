@@ -22,7 +22,8 @@ import (
 )
 
 func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
-	libName := path.Base(pkg.ImportPath)
+	appName := path.Base(pkg.ImportPath)
+	libName := androidPkgName(appName)
 	manifestPath := filepath.Join(pkg.Dir, "AndroidManifest.xml")
 	manifestData, err := ioutil.ReadFile(manifestPath)
 	if err != nil {
@@ -30,17 +31,12 @@ func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
 			return nil, err
 		}
 
-		productName := rfc1034Label(libName)
-		if productName == "" {
-			productName = "ProductName" // like xcode.
-		}
-
 		buf := new(bytes.Buffer)
 		buf.WriteString(`<?xml version="1.0" encoding="utf-8"?>`)
 		err := manifestTmpl.Execute(buf, manifestTmplData{
 			// TODO(crawshaw): a better package path.
-			JavaPkgPath: "org.golang.todo." + productName,
-			Name:        strings.Title(libName),
+			JavaPkgPath: "org.golang.todo." + libName,
+			Name:        strings.Title(appName),
 			LibName:     libName,
 		})
 		if err != nil {
@@ -83,7 +79,7 @@ func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
 	}
 
 	if buildO == "" {
-		buildO = filepath.Base(pkg.Dir) + ".apk"
+		buildO = androidPkgName(filepath.Base(pkg.Dir)) + ".apk"
 	}
 	if !strings.HasSuffix(buildO, ".apk") {
 		return nil, fmt.Errorf("output file name %q does not end in '.apk'", buildO)
@@ -212,6 +208,51 @@ func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
 	}
 
 	return nmpkgs, nil
+}
+
+// androidPkgName sanitizes the go package name to be acceptable as a android
+// package name part. The android package name convention is similar to the
+// java package name convention described in
+// https://docs.oracle.com/javase/specs/jls/se8/html/jls-6.html#jls-6.5.3.1
+// but not exactly same.
+func androidPkgName(name string) string {
+	var res []rune
+	for i, r := range name {
+		switch {
+		case 'a' <= r && r <= 'z', 'A' <= r && r <= 'Z':
+			res = append(res, r)
+		case '0' <= r && r <= '9':
+			if i == 0 {
+				panic(fmt.Sprintf("package name %q is not a valid go package name", name))
+			}
+			res = append(res, r)
+		default:
+			res = append(res, '_')
+		}
+	}
+	if len(res) == 0 || res[0] == '_' {
+		// Android does not seem to allow the package part starting with _.
+		res = append([]rune{'g', 'o'}, res...)
+	}
+	s := string(res)
+	// Look for Java keywords that are not Go keywords, and avoid using
+	// them as a package name.
+	//
+	// This is not a problem for normal Go identifiers as we only expose
+	// exported symbols. The upper case first letter saves everything
+	// from accidentally matching except for the package name.
+	//
+	// Note that basic type names (like int) are not keywords in Go.
+	switch s {
+	case "abstract", "assert", "boolean", "byte", "catch", "char", "class",
+		"do", "double", "enum", "extends", "final", "finally", "float",
+		"implements", "instanceof", "int", "long", "native", "private",
+		"protected", "public", "short", "static", "strictfp", "super",
+		"synchronized", "this", "throw", "throws", "transient", "try",
+		"void", "volatile", "while":
+		s += "_"
+	}
+	return s
 }
 
 // A random uninteresting private key.

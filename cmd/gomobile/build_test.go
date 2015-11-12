@@ -36,6 +36,33 @@ func TestRFC1034Label(t *testing.T) {
 	}
 }
 
+func TestAndroidPkgName(t *testing.T) {
+	tests := []struct {
+		in, want string
+	}{
+		{"a", "a"},
+		{"a123", "a123"},
+		{"a.b.c", "a_b_c"},
+		{"a-b", "a_b"},
+		{"a:b", "a_b"},
+		{"a?b", "a_b"},
+		{"αβγ", "go___"},
+		{"💩", "go_"},
+		{"My App", "My_App"},
+		{"...", "go___"},
+		{".-.", "go___"},
+		{"abstract", "abstract_"},
+		{"Abstract", "Abstract"},
+	}
+
+	for _, tc := range tests {
+		if got := androidPkgName(tc.in); got != tc.want {
+			t.Errorf("len %d", len(tc.in))
+			t.Errorf("androidPkgName(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
+}
+
 func TestAndroidBuild(t *testing.T) {
 	buf := new(bytes.Buffer)
 	defer func() {
