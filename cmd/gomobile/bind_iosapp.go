@@ -16,7 +16,12 @@ import (
 )
 
 func goIOSBind(pkg *build.Package) error {
-	binder, err := newBinder(pkg)
+	typesPkg, err := loadExportData(pkg.ImportPath, darwinArmEnv)
+	if err != nil {
+		return err
+	}
+
+	binder, err := newBinder(typesPkg)
 	if err != nil {
 		return err
 	}
