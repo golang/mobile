@@ -5,12 +5,10 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"go/ast"
 	"go/build"
-	"go/parser"
-	"go/scanner"
+	"go/importer"
 	"go/token"
 	"go/types"
 	"io"
@@ -20,7 +18,6 @@ import (
 	"strings"
 
 	"golang.org/x/mobile/bind"
-	"golang.org/x/mobile/internal/loader"
 )
 
 // ctx, pkg, tmpdir in build.go
@@ -254,59 +251,50 @@ func writeFile(filename string, generate func(io.Writer) error) error {
 	return generate(f)
 }
 
-func newBinder(bindPkg *build.Package) (*binder, error) {
-	if bindPkg.Name == "main" {
-		return nil, fmt.Errorf("package %q: can only bind a library package", bindPkg.Name)
-	}
-
-	fset := token.NewFileSet()
-
-	hasErr := false
-	var files []*ast.File
-	for _, filename := range bindPkg.GoFiles {
-		p := filepath.Join(bindPkg.Dir, filename)
-		file, err := parser.ParseFile(fset, p, nil, parser.AllErrors)
-		if err != nil {
-			hasErr = true
-			if list, _ := err.(scanner.ErrorList); len(list) > 0 {
-				for _, err := range list {
-					fmt.Fprintln(os.Stderr, err)
-				}
-			} else {
-				fmt.Fprintln(os.Stderr, err)
-			}
-		}
-		files = append(files, file)
-	}
-
-	if hasErr {
-		return nil, errors.New("package parsing failed.")
-	}
-
-	conf := loader.Config{
-		Fset:        fset,
-		AllowErrors: true,
-	}
-	conf.TypeChecker.IgnoreFuncBodies = true
-	conf.TypeChecker.FakeImportC = true
-	conf.TypeChecker.DisableUnusedImportCheck = true
-	var tcErrs []error
-	conf.TypeChecker.Error = func(err error) {
-		tcErrs = append(tcErrs, err)
-	}
-
-	conf.CreateFromFiles(bindPkg.ImportPath, files...)
-	program, err := conf.Load()
-	if err != nil {
-		for _, err := range tcErrs {
-			fmt.Fprintln(os.Stderr, err)
-		}
+func loadExportData(importPath string, env []string, args ...string) (*types.Package, error) {
+	// Compile the package. This will produce good errors if the package
+	// doesn't typecheck for some reason, and is a necessary step to
+	// building the final output anyway.
+	if err := goInstall(importPath, env, args...); err != nil {
 		return nil, err
 	}
+
+	// Assemble a fake GOPATH and trick go/importer into using it.
+	// Ideally the importer package would let us provide this to
+	// it somehow, but this works with what's in Go 1.5 today and
+	// gives us access to the gcimporter package without us having
+	// to make a copy of it.
+	fakegopath := filepath.Join(tmpdir, "fakegopath")
+	if err := removeAll(fakegopath); err != nil {
+		return nil, err
+	}
+	if err := mkdir(filepath.Join(fakegopath, "pkg")); err != nil {
+		return nil, err
+	}
+	src := filepath.Join(pkgdir(env), importPath+".a")
+	dst := filepath.Join(fakegopath, "pkg/"+getenv(env, "GOOS")+"_"+getenv(env, "GOARCH")+"/"+importPath+".a")
+	if err := copyFile(dst, src); err != nil {
+		return nil, err
+	}
+	oldDefault := build.Default
+	build.Default = ctx // copy
+	build.Default.GOPATH = fakegopath
+	p, err := importer.Default().Import(importPath)
+	build.Default = oldDefault
+	if err != nil {
+		return nil, err
+	}
+
+	return p, nil
+}
+
+func newBinder(p *types.Package) (*binder, error) {
+	if p.Name() == "main" {
+		return nil, fmt.Errorf("package %q: can only bind a library package", p.Name())
+	}
 	b := &binder{
-		files: files,
-		fset:  fset,
-		pkg:   program.Created[0].Pkg,
+		fset: token.NewFileSet(),
+		pkg:  p,
 	}
 	return b, nil
 }
