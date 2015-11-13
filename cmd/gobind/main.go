@@ -7,9 +7,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"go/build"
+	"go/importer"
 	"log"
 	"os"
+	"os/exec"
+	"strings"
 )
 
 var (
@@ -32,14 +34,22 @@ func main() {
 		log.Fatalf("Invalid option -prefix for gobind -lang=%s", *lang)
 	}
 
-	cwd, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
+	// Make sure the export data for the packages being compiled is up to
+	// date. Also use the go tool to provide good error messages for any
+	// type checking errors in the provided packages.
+	cmd := exec.Command("go", "install")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Args = append(cmd.Args, flag.Args()...)
+	if err := cmd.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "%s failed: %v", strings.Join(cmd.Args, " "), err)
+		os.Exit(1)
 	}
+
 	for _, arg := range flag.Args() {
-		pkg, err := build.Import(arg, cwd, 0)
+		pkg, err := importer.Default().Import(arg)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%s: %v\n", arg, err)
+			fmt.Fprintf(os.Stderr, "could not import package %s: %v", arg, err)
 			os.Exit(1)
 		}
 		genPkg(pkg)
