@@ -6,7 +6,6 @@ package main
 
 import (
 	"go/ast"
-	"go/build"
 	"go/parser"
 	"go/scanner"
 	"go/token"
@@ -18,37 +17,9 @@ import (
 	"unicode/utf8"
 
 	"golang.org/x/mobile/bind"
-	"golang.org/x/mobile/internal/loader"
 )
 
-func genPkg(pkg *build.Package) {
-	files := parseFiles(pkg.Dir, pkg.GoFiles)
-	if len(files) == 0 {
-		return // some error has been reported
-	}
-
-	conf := loader.Config{
-		Fset:        fset,
-		AllowErrors: true,
-	}
-	conf.TypeChecker.IgnoreFuncBodies = true
-	conf.TypeChecker.FakeImportC = true
-	conf.TypeChecker.DisableUnusedImportCheck = true
-	var tcErrs []error
-	conf.TypeChecker.Error = func(err error) {
-		tcErrs = append(tcErrs, err)
-	}
-	conf.CreateFromFiles(pkg.ImportPath, files...)
-	program, err := conf.Load()
-	if err != nil {
-		for _, err := range tcErrs {
-			errorf("%v", err)
-		}
-		errorf("%v", err)
-		return
-	}
-	p := program.Created[0].Pkg
-
+func genPkg(p *types.Package) {
 	fname := defaultFileName(*lang, p)
 	switch *lang {
 	case "java":
