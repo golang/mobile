@@ -38,6 +38,7 @@ const openALVersion = "openal-soft-1.16.0.1"
 var (
 	goos    = runtime.GOOS
 	goarch  = runtime.GOARCH
+	goTool  = go1_6
 	ndkarch string
 )
 
@@ -79,6 +80,9 @@ func runInit(cmd *command) error {
 	version, err := goVersion()
 	if err != nil {
 		return fmt.Errorf("%v: %s", err, version)
+	}
+	if bytes.HasPrefix(version, []byte("go version go1.5")) {
+		goTool = go1_5
 	}
 
 	gopaths := filepath.SplitList(goEnv("GOPATH"))
@@ -145,7 +149,13 @@ func runInit(cmd *command) error {
 
 	// Install standard libraries for cross compilers.
 	start := time.Now()
-	if err := installStd(androidArmEnv, "-buildmode=c-shared"); err != nil {
+	var androidArgs []string
+	if goTool == go1_6 {
+		// Ideally this would be -buildmode=c-shared.
+		// https://golang.org/issue/13234.
+		androidArgs = []string{"-gcflags=-shared", "-ldflags=-shared"}
+	}
+	if err := installStd(androidArmEnv, androidArgs...); err != nil {
 		return err
 	}
 	if err := installDarwin(); err != nil {
@@ -299,16 +309,7 @@ func rm(name string) error {
 func goVersion() ([]byte, error) {
 	gobin, err := exec.LookPath("go")
 	if err != nil {
-		return nil, fmt.Errorf(`no Go tool on $PATH`)
-	}
-	buildHelp, err := exec.Command(gobin, "help", "build").CombinedOutput()
-	if err != nil {
-		return nil, fmt.Errorf("bad Go tool: %v (%s)", err, buildHelp)
-	}
-	// TODO(crawshaw): this is a crude test for Go 1.5. After release,
-	// remove this and check it is not an old release version.
-	if !bytes.Contains(buildHelp, []byte("-pkgdir")) {
-		return nil, fmt.Errorf("installed Go tool does not support -pkgdir")
+		return nil, fmt.Errorf("go not found")
 	}
 	return exec.Command(gobin, "version").CombinedOutput()
 }
@@ -675,3 +676,10 @@ func runCmd(cmd *exec.Cmd) error {
 	}
 	return nil
 }
+
+type goToolVersion int
+
+const (
+	go1_5 goToolVersion = iota
+	go1_6
+)
