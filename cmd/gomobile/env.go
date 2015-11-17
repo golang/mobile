@@ -48,14 +48,9 @@ func buildEnvInit() (cleanup func(), err error) {
 
 	// Check the toolchain is in a good state.
 	// Pick a temporary directory for assembling an apk/app.
-	version, err := goVersion()
-	if err != nil {
-		return nil, err
-	}
 	if gomobilepath == "" {
 		return nil, errors.New("toolchain not installed, run `gomobile init`")
 	}
-
 	cleanupFn := func() {
 		if buildWork {
 			fmt.Printf("WORK=%s\n", tmpdir)
@@ -72,7 +67,7 @@ func buildEnvInit() (cleanup func(), err error) {
 		if err != nil {
 			return nil, errors.New("toolchain partially installed, run `gomobile init`")
 		}
-		if !bytes.Equal(installedVersion, version) {
+		if !bytes.Equal(installedVersion, goVersionOut) {
 			return nil, errors.New("toolchain out of date, run `gomobile init`")
 		}
 
