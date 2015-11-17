@@ -38,7 +38,6 @@ const openALVersion = "openal-soft-1.16.0.1"
 var (
 	goos    = runtime.GOOS
 	goarch  = runtime.GOARCH
-	goTool  = go1_6
 	ndkarch string
 )
 
@@ -77,14 +76,6 @@ func init() {
 }
 
 func runInit(cmd *command) error {
-	version, err := goVersion()
-	if err != nil {
-		return fmt.Errorf("%v: %s", err, version)
-	}
-	if bytes.HasPrefix(version, []byte("go version go1.5")) {
-		goTool = go1_5
-	}
-
 	gopaths := filepath.SplitList(goEnv("GOPATH"))
 	if len(gopaths) == 0 {
 		return fmt.Errorf("GOPATH is not set")
@@ -150,7 +141,7 @@ func runInit(cmd *command) error {
 	// Install standard libraries for cross compilers.
 	start := time.Now()
 	var androidArgs []string
-	if goTool == go1_6 {
+	if goVersion == go1_6 {
 		// Ideally this would be -buildmode=c-shared.
 		// https://golang.org/issue/13234.
 		androidArgs = []string{"-gcflags=-shared", "-ldflags=-shared"}
@@ -166,7 +157,7 @@ func runInit(cmd *command) error {
 		printcmd("go version > %s", verpath)
 	}
 	if !buildN {
-		if err := ioutil.WriteFile(verpath, version, 0644); err != nil {
+		if err := ioutil.WriteFile(verpath, goVersionOut, 0644); err != nil {
 			return err
 		}
 	}
@@ -304,14 +295,6 @@ func rm(name string) error {
 		return nil
 	}
 	return os.Remove(name)
-}
-
-func goVersion() ([]byte, error) {
-	gobin, err := exec.LookPath("go")
-	if err != nil {
-		return nil, fmt.Errorf("go not found")
-	}
-	return exec.Command(gobin, "version").CombinedOutput()
 }
 
 func fetchOpenAL() error {
@@ -676,10 +659,3 @@ func runCmd(cmd *exec.Cmd) error {
 	}
 	return nil
 }
-
-type goToolVersion int
-
-const (
-	go1_5 goToolVersion = iota
-	go1_6
-)
