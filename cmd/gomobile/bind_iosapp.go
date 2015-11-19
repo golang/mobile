@@ -15,17 +15,17 @@ import (
 	"text/template"
 )
 
-func goIOSBind(pkg *build.Package) error {
-	typesPkg, err := loadExportData(pkg.ImportPath, darwinArmEnv)
+func goIOSBind(pkgs []*build.Package) error {
+	typesPkgs, err := loadExportData(pkgs, darwinArmEnv)
 	if err != nil {
 		return err
 	}
 
-	binder, err := newBinder(typesPkg)
+	binder, err := newBinder(typesPkgs)
 	if err != nil {
 		return err
 	}
-	name := binder.pkg.Name()
+	name := binder.pkgs[0].Name()
 	title := strings.Title(name)
 
 	if buildO != "" && !strings.HasSuffix(buildO, ".framework") {
@@ -35,7 +35,7 @@ func goIOSBind(pkg *build.Package) error {
 		buildO = title + ".framework"
 	}
 
-	if err := binder.GenGo(filepath.Join(tmpdir, "src")); err != nil {
+	if err := binder.GenGo(binder.pkgs[0], filepath.Join(tmpdir, "src")); err != nil {
 		return err
 	}
 	mainFile := filepath.Join(tmpdir, "src/iosbin/main.go")

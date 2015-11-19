@@ -87,15 +87,13 @@ func runBind(cmd *command) error {
 		return fmt.Errorf("-prefix is supported only for ios target")
 	}
 
-	var pkg *build.Package
+	var pkgs []*build.Package
 	switch len(args) {
 	case 0:
-		pkg, err = ctx.ImportDir(cwd, build.ImportComment)
-	case 1:
-		pkg, err = ctx.Import(args[0], cwd, build.ImportComment)
+		pkgs = make([]*build.Package, 1)
+		pkgs[0], err = ctx.ImportDir(cwd, build.ImportComment)
 	default:
-		cmd.usage()
-		os.Exit(1)
+		pkgs, err = importPackages(args)
 	}
 	if err != nil {
 		return err
@@ -103,12 +101,26 @@ func runBind(cmd *command) error {
 
 	switch buildTarget {
 	case "android":
-		return goAndroidBind(pkg)
+		return goAndroidBind(pkgs)
 	case "ios":
-		return goIOSBind(pkg)
+		if len(pkgs) > 1 {
+			return fmt.Errorf("binding multiple packages not supported for ios")
+		}
+		return goIOSBind(pkgs)
 	default:
 		return fmt.Errorf(`unknown -target, %q.`, buildTarget)
 	}
+}
+
+func importPackages(args []string) ([]*build.Package, error) {
+	pkgs := make([]*build.Package, len(args))
+	for i, path := range args {
+		var err error
+		if pkgs[i], err = ctx.Import(path, cwd, build.ImportComment); err != nil {
+			return nil, fmt.Errorf("package %q: %v", path, err)
+		}
+	}
+	return pkgs, nil
 }
 
 var (
@@ -127,7 +139,7 @@ func init() {
 type binder struct {
 	files []*ast.File
 	fset  *token.FileSet
-	pkg   *types.Package
+	pkgs  []*types.Package
 }
 
 func (b *binder) GenObjc(outdir string) error {
@@ -135,7 +147,7 @@ func (b *binder) GenObjc(outdir string) error {
 	if bindPrefix == "" {
 		bindPrefix = bindPrefixDefault
 	}
-	name := strings.Title(b.pkg.Name())
+	name := strings.Title(b.pkgs[0].Name())
 	bindOption := "-lang=objc"
 	if bindPrefix != bindPrefixDefault {
 		bindOption += " -prefix=" + bindPrefix
@@ -146,12 +158,12 @@ func (b *binder) GenObjc(outdir string) error {
 
 	generate := func(w io.Writer) error {
 		if buildX {
-			printcmd("gobind %s -outdir=%s %s", bindOption, outdir, b.pkg.Path())
+			printcmd("gobind %s -outdir=%s %s", bindOption, outdir, b.pkgs[0].Path())
 		}
 		if buildN {
 			return nil
 		}
-		return bind.GenObjc(w, b.fset, b.pkg, bindPrefix, false)
+		return bind.GenObjc(w, b.fset, b.pkgs[0], bindPrefix, false)
 	}
 	if err := writeFile(mfile, generate); err != nil {
 		return err
@@ -160,7 +172,7 @@ func (b *binder) GenObjc(outdir string) error {
 		if buildN {
 			return nil
 		}
-		return bind.GenObjc(w, b.fset, b.pkg, bindPrefix, true)
+		return bind.GenObjc(w, b.fset, b.pkgs[0], bindPrefix, true)
 	}
 	if err := writeFile(hfile, generate); err != nil {
 		return err
@@ -173,8 +185,8 @@ func (b *binder) GenObjc(outdir string) error {
 	return copyFile(filepath.Join(outdir, "seq.h"), filepath.Join(objcPkg.Dir, "seq.h"))
 }
 
-func (b *binder) GenJava(outdir string) error {
-	className := strings.Title(b.pkg.Name())
+func (b *binder) GenJava(pkg *types.Package, outdir string) error {
+	className := strings.Title(pkg.Name())
 	javaFile := filepath.Join(outdir, className+".java")
 	bindOption := "-lang=java"
 	if bindJavaPkg != "" {
@@ -183,12 +195,12 @@ func (b *binder) GenJava(outdir string) error {
 
 	generate := func(w io.Writer) error {
 		if buildX {
-			printcmd("gobind %s -outdir=%s %s", bindOption, outdir, b.pkg.Path())
+			printcmd("gobind %s -outdir=%s %s", bindOption, outdir, pkg.Path())
 		}
 		if buildN {
 			return nil
 		}
-		return bind.GenJava(w, b.fset, b.pkg, bindJavaPkg)
+		return bind.GenJava(w, b.fset, pkg, bindJavaPkg)
 	}
 	if err := writeFile(javaFile, generate); err != nil {
 		return err
@@ -196,19 +208,19 @@ func (b *binder) GenJava(outdir string) error {
 	return nil
 }
 
-func (b *binder) GenGo(outdir string) error {
-	pkgName := "go_" + b.pkg.Name()
+func (b *binder) GenGo(pkg *types.Package, outdir string) error {
+	pkgName := "go_" + pkg.Name()
 	outdir = filepath.Join(outdir, pkgName)
 	goFile := filepath.Join(outdir, pkgName+"main.go")
 
 	generate := func(w io.Writer) error {
 		if buildX {
-			printcmd("gobind -lang=go -outdir=%s %s", outdir, b.pkg.Path())
+			printcmd("gobind -lang=go -outdir=%s %s", outdir, pkg.Path())
 		}
 		if buildN {
 			return nil
 		}
-		return bind.GenGo(w, b.fset, b.pkg)
+		return bind.GenGo(w, b.fset, pkg)
 	}
 	if err := writeFile(goFile, generate); err != nil {
 		return err
@@ -264,11 +276,15 @@ func writeFile(filename string, generate func(io.Writer) error) error {
 	return generate(f)
 }
 
-func loadExportData(importPath string, env []string, args ...string) (*types.Package, error) {
+func loadExportData(pkgs []*build.Package, env []string, args ...string) ([]*types.Package, error) {
 	// Compile the package. This will produce good errors if the package
 	// doesn't typecheck for some reason, and is a necessary step to
 	// building the final output anyway.
-	if err := goInstall(importPath, env, args...); err != nil {
+	paths := make([]string, len(pkgs))
+	for i, p := range pkgs {
+		paths[i] = p.ImportPath
+	}
+	if err := goInstall(paths, env, args...); err != nil {
 		return nil, err
 	}
 
@@ -284,33 +300,40 @@ func loadExportData(importPath string, env []string, args ...string) (*types.Pac
 	if err := mkdir(filepath.Join(fakegopath, "pkg")); err != nil {
 		return nil, err
 	}
-	src := filepath.Join(pkgdir(env), importPath+".a")
-	dst := filepath.Join(fakegopath, "pkg/"+getenv(env, "GOOS")+"_"+getenv(env, "GOARCH")+"/"+importPath+".a")
-	if err := copyFile(dst, src); err != nil {
-		return nil, err
+	typePkgs := make([]*types.Package, len(pkgs))
+	for i, p := range pkgs {
+		importPath := p.ImportPath
+		src := filepath.Join(pkgdir(env), importPath+".a")
+		dst := filepath.Join(fakegopath, "pkg/"+getenv(env, "GOOS")+"_"+getenv(env, "GOARCH")+"/"+importPath+".a")
+		if err := copyFile(dst, src); err != nil {
+			return nil, err
+		}
+		if buildN {
+			typePkgs[i] = types.NewPackage(importPath, path.Base(importPath))
+			continue
+		}
+		oldDefault := build.Default
+		build.Default = ctx // copy
+		build.Default.GOPATH = fakegopath
+		p, err := importer.Default().Import(importPath)
+		build.Default = oldDefault
+		if err != nil {
+			return nil, err
+		}
+		typePkgs[i] = p
 	}
-	if buildN {
-		return types.NewPackage(importPath, path.Base(importPath)), nil
-	}
-	oldDefault := build.Default
-	build.Default = ctx // copy
-	build.Default.GOPATH = fakegopath
-	p, err := importer.Default().Import(importPath)
-	build.Default = oldDefault
-	if err != nil {
-		return nil, err
-	}
-
-	return p, nil
+	return typePkgs, nil
 }
 
-func newBinder(p *types.Package) (*binder, error) {
-	if p.Name() == "main" {
-		return nil, fmt.Errorf("package %q: can only bind a library package", p.Name())
+func newBinder(pkgs []*types.Package) (*binder, error) {
+	for _, pkg := range pkgs {
+		if pkg.Name() == "main" {
+			return nil, fmt.Errorf("package %q (%q): can only bind a library package", pkg.Name(), pkg.Path())
+		}
 	}
 	b := &binder{
 		fset: token.NewFileSet(),
-		pkg:  p,
+		pkgs: pkgs,
 	}
 	return b, nil
 }
