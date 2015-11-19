@@ -248,14 +248,14 @@ func init() {
 }
 
 func goBuild(src string, env []string, args ...string) error {
-	return goCmd("build", src, env, args...)
+	return goCmd("build", []string{src}, env, args...)
 }
 
-func goInstall(src string, env []string, args ...string) error {
-	return goCmd("install", src, env, args...)
+func goInstall(srcs []string, env []string, args ...string) error {
+	return goCmd("install", srcs, env, args...)
 }
 
-func goCmd(subcmd, src string, env []string, args ...string) error {
+func goCmd(subcmd string, srcs []string, env []string, args ...string) error {
 	// The -p flag is to speed up darwin/arm builds.
 	// Remove when golang.org/issue/10477 is resolved.
 	cmd := exec.Command(
@@ -284,7 +284,7 @@ func goCmd(subcmd, src string, env []string, args ...string) error {
 		cmd.Args = append(cmd.Args, "-work")
 	}
 	cmd.Args = append(cmd.Args, args...)
-	cmd.Args = append(cmd.Args, src)
+	cmd.Args = append(cmd.Args, srcs...)
 	cmd.Env = append([]string{}, env...)
 	return runCmd(cmd)
 }
