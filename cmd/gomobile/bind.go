@@ -14,6 +14,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -147,12 +148,18 @@ func (b *binder) GenObjc(outdir string) error {
 		if buildX {
 			printcmd("gobind %s -outdir=%s %s", bindOption, outdir, b.pkg.Path())
 		}
+		if buildN {
+			return nil
+		}
 		return bind.GenObjc(w, b.fset, b.pkg, bindPrefix, false)
 	}
 	if err := writeFile(mfile, generate); err != nil {
 		return err
 	}
 	generate = func(w io.Writer) error {
+		if buildN {
+			return nil
+		}
 		return bind.GenObjc(w, b.fset, b.pkg, bindPrefix, true)
 	}
 	if err := writeFile(hfile, generate); err != nil {
@@ -178,6 +185,9 @@ func (b *binder) GenJava(outdir string) error {
 		if buildX {
 			printcmd("gobind %s -outdir=%s %s", bindOption, outdir, b.pkg.Path())
 		}
+		if buildN {
+			return nil
+		}
 		return bind.GenJava(w, b.fset, b.pkg, bindJavaPkg)
 	}
 	if err := writeFile(javaFile, generate); err != nil {
@@ -194,6 +204,9 @@ func (b *binder) GenGo(outdir string) error {
 	generate := func(w io.Writer) error {
 		if buildX {
 			printcmd("gobind -lang=go -outdir=%s %s", outdir, b.pkg.Path())
+		}
+		if buildN {
+			return nil
 		}
 		return bind.GenGo(w, b.fset, b.pkg)
 	}
@@ -275,6 +288,9 @@ func loadExportData(importPath string, env []string, args ...string) (*types.Pac
 	dst := filepath.Join(fakegopath, "pkg/"+getenv(env, "GOOS")+"_"+getenv(env, "GOARCH")+"/"+importPath+".a")
 	if err := copyFile(dst, src); err != nil {
 		return nil, err
+	}
+	if buildN {
+		return types.NewPackage(importPath, path.Base(importPath)), nil
 	}
 	oldDefault := build.Default
 	build.Default = ctx // copy
