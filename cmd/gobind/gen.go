@@ -5,9 +5,6 @@
 package main
 
 import (
-	"go/ast"
-	"go/parser"
-	"go/scanner"
 	"go/token"
 	"go/types"
 	"io"
@@ -61,30 +58,6 @@ func processErr(err error) {
 }
 
 var fset = token.NewFileSet()
-
-func parseFiles(dir string, filenames []string) []*ast.File {
-	var files []*ast.File
-	hasErr := false
-	for _, filename := range filenames {
-		path := filepath.Join(dir, filename)
-		file, err := parser.ParseFile(fset, path, nil, parser.AllErrors)
-		if err != nil {
-			hasErr = true
-			if list, _ := err.(scanner.ErrorList); len(list) > 0 {
-				for _, err := range list {
-					errorf("%v", err)
-				}
-			} else {
-				errorf("%v", err)
-			}
-		}
-		files = append(files, file)
-	}
-	if hasErr {
-		return nil
-	}
-	return files
-}
 
 func writer(fname string, pkg *types.Package) (w io.Writer, closer func()) {
 	if fname == "" {
