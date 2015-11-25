@@ -4,9 +4,7 @@
 
 package go;
 
-import android.util.SparseArray;
-import android.util.SparseIntArray;
-
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
@@ -226,7 +224,7 @@ public class Seq {
 		// The Ref obj field is non-null.
 		// This map pins Java objects so they don't get GCed while the
 		// only reference to them is held by Go code.
-		private SparseArray<Ref> javaObjs = new SparseArray<Ref>();
+		private RefMap javaObjs = new RefMap();
 
 		// inc increments the reference count of a Java object when it
 		// is sent to Go.
@@ -312,6 +310,109 @@ public class Seq {
 				// Go object.
 				return new Ref(refnum, null);
 			}
+		}
+	}
+
+	// RefMap is a mapping of integers to Ref objects.
+	//
+	// The integers can be sparse. In Go this would be a map[int]*Ref.
+	private static final class RefMap {
+		private int next = 0;
+		private int live = 0;
+		private int[] keys = new int[16];
+		private Ref[] objs = new Ref[16];
+
+		RefMap() {}
+
+		Ref get(int key) {
+			int i = Arrays.binarySearch(keys, 0, next, key);
+			if (i >= 0) {
+				return objs[i];
+			}
+			return null;
+		}
+
+		void remove(int key) {
+			int i = Arrays.binarySearch(keys, 0, next, key);
+			if (i >= 0) {
+				if (objs[i] != null) {
+					objs[i] = null;
+					live--;
+				}
+			}
+		}
+
+		void put(int key, Ref obj) {
+			if (obj == null) {
+				throw new RuntimeException("put a null ref (with key "+key+")");
+			}
+			int i = Arrays.binarySearch(keys, 0, next, key);
+			if (i >= 0) {
+				if (objs[i] == null) {
+					objs[i] = obj;
+				}
+				if (objs[i] != obj) {
+					throw new RuntimeException("replacing an existing ref (with key "+key+")");
+				}
+				return;
+			}
+			if (next >= keys.length) {
+				grow();
+				i = Arrays.binarySearch(keys, 0, next, key);
+			}
+			i = ~i;
+			if (i < next) {
+				// Insert, shift everything afterwards down.
+				System.arraycopy(keys, i, keys, i+1, next-i);
+				System.arraycopy(objs, i, objs, i+1, next-i);
+			}
+			keys[i] = key;
+			objs[i] = obj;
+			live++;
+			next++;
+		}
+
+                private void grow() {
+			// Compact and (if necessary) grow backing store.
+			int[] newKeys;
+			Ref[] newObjs;
+			int len = 2*roundPow2(live);
+			if (len > keys.length) {
+				newKeys = new int[keys.length*2];
+				newObjs = new Ref[objs.length*2];
+			} else {
+				newKeys = keys;
+				newObjs = objs;
+			}
+
+			int j = 0;
+			for (int i = 0; i < keys.length; i++) {
+				if (objs[i] != null) {
+					newKeys[j] = keys[i];
+					newObjs[j] = objs[i];
+					j++;
+				}
+			}
+			for (int i = j; i < newKeys.length; i++) {
+				newKeys[i] = 0;
+				newObjs[i] = null;
+			}
+
+			keys = newKeys;
+			objs = newObjs;
+			next = j;
+
+			if (live != next) {
+				throw new RuntimeException("bad state: live="+live+", next="+next);
+			}
+                }
+
+		private static int roundPow2(int x) {
+			int p = 1;
+			while (p < x) {
+				p *= 2;
+			}
+			return p;
 		}
 	}
 }
