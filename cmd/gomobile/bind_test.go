@@ -101,6 +101,11 @@ func TestBindAndroid(t *testing.T) {
 
 var bindAndroidTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
 WORK=$WORK
+GOOS=android GOARCH=arm GOARM=7 CC=$GOMOBILE/android-ndk-r10e/arm/bin/arm-linux-androideabi-gcc CXX=$GOMOBILE/android-ndk-r10e/arm/bin/arm-linux-androideabi-g++ CGO_ENABLED=1 go install -p={{.NumCPU}} -pkgdir=$GOMOBILE/pkg_android_arm -tags="" -x golang.org/x/mobile/asset
+rm -r -f "$WORK/fakegopath"
+mkdir -p $WORK/fakegopath/pkg
+cp $GOMOBILE/pkg_android_arm/golang.org/x/mobile/asset.a $WORK/fakegopath/pkg/android_arm/golang.org/x/mobile/asset.a
+mkdir -p $WORK/fakegopath/pkg/android_arm/golang.org/x/mobile
 mkdir -p $WORK/go_asset
 gobind -lang=go -outdir=$WORK/go_asset golang.org/x/mobile/asset
 mkdir -p $WORK/androidlib

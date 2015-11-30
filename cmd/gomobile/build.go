@@ -268,7 +268,7 @@ func goCmd(subcmd string, srcs []string, env []string, args ...string) error {
 	if buildV {
 		cmd.Args = append(cmd.Args, "-v")
 	}
-	if buildI {
+	if subcmd != "install" && buildI {
 		cmd.Args = append(cmd.Args, "-i")
 	}
 	if buildX {
