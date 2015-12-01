@@ -103,9 +103,6 @@ func runBind(cmd *command) error {
 	case "android":
 		return goAndroidBind(pkgs)
 	case "ios":
-		if len(pkgs) > 1 {
-			return fmt.Errorf("binding multiple packages not supported for ios")
-		}
 		return goIOSBind(pkgs)
 	default:
 		return fmt.Errorf(`unknown -target, %q.`, buildTarget)
@@ -142,47 +139,51 @@ type binder struct {
 	pkgs  []*types.Package
 }
 
-func (b *binder) GenObjc(outdir string) error {
+func (b *binder) GenObjc(pkg *types.Package, outdir string) (string, error) {
 	const bindPrefixDefault = "Go"
 	if bindPrefix == "" {
 		bindPrefix = bindPrefixDefault
 	}
-	name := strings.Title(b.pkgs[0].Name())
+	name := strings.Title(pkg.Name())
 	bindOption := "-lang=objc"
 	if bindPrefix != bindPrefixDefault {
 		bindOption += " -prefix=" + bindPrefix
 	}
 
-	mfile := filepath.Join(outdir, bindPrefix+name+".m")
-	hfile := filepath.Join(outdir, bindPrefix+name+".h")
+	fileBase := bindPrefix + name
+	mfile := filepath.Join(outdir, fileBase+".m")
+	hfile := filepath.Join(outdir, fileBase+".h")
 
 	generate := func(w io.Writer) error {
 		if buildX {
-			printcmd("gobind %s -outdir=%s %s", bindOption, outdir, b.pkgs[0].Path())
+			printcmd("gobind %s -outdir=%s %s", bindOption, outdir, pkg.Path())
 		}
 		if buildN {
 			return nil
 		}
-		return bind.GenObjc(w, b.fset, b.pkgs[0], bindPrefix, false)
+		return bind.GenObjc(w, b.fset, pkg, bindPrefix, false)
 	}
 	if err := writeFile(mfile, generate); err != nil {
-		return err
+		return "", err
 	}
 	generate = func(w io.Writer) error {
 		if buildN {
 			return nil
 		}
-		return bind.GenObjc(w, b.fset, b.pkgs[0], bindPrefix, true)
+		return bind.GenObjc(w, b.fset, pkg, bindPrefix, true)
 	}
 	if err := writeFile(hfile, generate); err != nil {
-		return err
+		return "", err
 	}
 
 	objcPkg, err := ctx.Import("golang.org/x/mobile/bind/objc", "", build.FindOnly)
 	if err != nil {
-		return err
+		return "", err
 	}
-	return copyFile(filepath.Join(outdir, "seq.h"), filepath.Join(objcPkg.Dir, "seq.h"))
+	if err := copyFile(filepath.Join(outdir, "seq.h"), filepath.Join(objcPkg.Dir, "seq.h")); err != nil {
+		return "", err
+	}
+	return fileBase, nil
 }
 
 func (b *binder) GenJava(pkg *types.Package, outdir string) error {
