@@ -83,7 +83,7 @@ public abstract class Issue12403 {
                 Seq.send(DESCRIPTOR, CALL_ToJSON, _in, _out);
                 _result = _out.readString();
                 String _err = _out.readString();
-                if (_err != null) {
+                if (_err != null && !_err.isEmpty()) {
                     throw new Exception(_err);
                 }
                 return _result;

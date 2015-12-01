@@ -81,6 +81,13 @@ public class SeqTest extends AndroidTestCase {
     String want = "a short string";
     String got = Testpkg.StrDup(want);
     assertEquals("Strings should match", want, got);
+
+    want = "";
+    got = Testpkg.StrDup(want);
+    assertEquals("Strings should match (empty string)", want, got);
+
+    got = Testpkg.StrDup(null);
+    assertEquals("Strings should match (null string)", want, got);
   }
 
   public void testLongString() {
