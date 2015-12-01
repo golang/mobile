@@ -169,6 +169,9 @@ func (img *Image) Draw(sz size.Event, topLeft, topRight, bottomLeft geom.Point, 
 	glimage := img.images
 	glctx := img.images.glctx
 
+	glctx.BlendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
+	glctx.Enable(gl.BLEND)
+
 	// TODO(crawshaw): Adjust viewport for the top bar on android?
 	glctx.UseProgram(glimage.program)
 	{
@@ -288,6 +291,8 @@ func (img *Image) Draw(sz size.Event, topLeft, topRight, bottomLeft geom.Point, 
 
 	glctx.DisableVertexAttribArray(glimage.pos)
 	glctx.DisableVertexAttribArray(glimage.inUV)
+
+	glctx.Disable(gl.BLEND)
 }
 
 var quadXYCoords = f32.Bytes(binary.LittleEndian,
