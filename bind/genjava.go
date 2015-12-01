@@ -530,7 +530,7 @@ func (g *javaGen) genFunc(o *types.Func, method bool) {
 	}
 	if returnsError {
 		g.Printf(`String _err = _out.readString();
-if (_err != null) {
+if (_err != null && !_err.isEmpty()) {
     throw new Exception(_err);
 }
 `)

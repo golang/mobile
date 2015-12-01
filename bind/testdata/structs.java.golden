@@ -27,7 +27,7 @@ public abstract class Structs {
         Seq.send(DESCRIPTOR, CALL_IdentityWithError, _in, _out);
         _result = new S(_out.readRef());
         String _err = _out.readString();
-        if (_err != null) {
+        if (_err != null && !_err.isEmpty()) {
             throw new Exception(_err);
         }
         return _result;
@@ -92,7 +92,7 @@ public abstract class Structs {
             Seq.send(DESCRIPTOR, CALL_Identity, _in, _out);
             _result = new S(_out.readRef());
             String _err = _out.readString();
-            if (_err != null) {
+            if (_err != null && !_err.isEmpty()) {
                 throw new Exception(_err);
             }
             return _result;

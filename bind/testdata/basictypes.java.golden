@@ -40,7 +40,7 @@ public abstract class Basictypes {
         go.Seq _out = new go.Seq();
         Seq.send(DESCRIPTOR, CALL_Error, _in, _out);
         String _err = _out.readString();
-        if (_err != null) {
+        if (_err != null && !_err.isEmpty()) {
             throw new Exception(_err);
         }
     }
@@ -52,7 +52,7 @@ public abstract class Basictypes {
         Seq.send(DESCRIPTOR, CALL_ErrorPair, _in, _out);
         _result = _out.readInt();
         String _err = _out.readString();
-        if (_err != null) {
+        if (_err != null && !_err.isEmpty()) {
             throw new Exception(_err);
         }
         return _result;

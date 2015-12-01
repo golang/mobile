@@ -25,7 +25,7 @@ public abstract class Interfaces {
         _in.writeRef(e.ref());
         Seq.send(DESCRIPTOR, CALL_CallErr, _in, _out);
         String _err = _out.readString();
-        if (_err != null) {
+        if (_err != null && !_err.isEmpty()) {
             throw new Exception(_err);
         }
     }
@@ -79,7 +79,7 @@ public abstract class Interfaces {
                 _in.writeRef(ref);
                 Seq.send(DESCRIPTOR, CALL_Err, _in, _out);
                 String _err = _out.readString();
-                if (_err != null) {
+                if (_err != null && !_err.isEmpty()) {
                     throw new Exception(_err);
                 }
             }
