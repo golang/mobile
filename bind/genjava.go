@@ -87,10 +87,9 @@ public void call(int code, go.Seq in, go.Seq out) {
 		g.Printf("public void set%s(%s v) {\n", f.Name(), g.javaType(f.Type()))
 		g.Indent()
 		g.Printf("Seq in = new Seq();\n")
-		g.Printf("Seq out = new Seq();\n")
 		g.Printf("in.writeRef(ref);\n")
 		g.Printf("in.write%s;\n", seqWrite(f.Type(), "v"))
-		g.Printf("Seq.send(DESCRIPTOR, FIELD_%s_SET, in, out);\n", f.Name())
+		g.Printf("Seq.send(DESCRIPTOR, FIELD_%s_SET, in, null);\n", f.Name())
 		g.Outdent()
 		g.Printf("}\n\n")
 	}
@@ -467,9 +466,8 @@ func (g *javaGen) genVar(o *types.Var) {
 	g.Printf("public static void set%s(%s v) {\n", o.Name(), jType)
 	g.Indent()
 	g.Printf("Seq in = new Seq();\n")
-	g.Printf("Seq out = new Seq();\n")
 	g.Printf("in.write%s;\n", seqWrite(o.Type(), "v"))
-	g.Printf("Seq.send(%q, 1, in, out);\n", varDesc)
+	g.Printf("Seq.send(%q, 1, in, null);\n", varDesc)
 	g.Outdent()
 	g.Printf("}\n")
 	g.Printf("\n")
@@ -477,9 +475,8 @@ func (g *javaGen) genVar(o *types.Var) {
 	// getter
 	g.Printf("public static %s get%s() {\n", jType, o.Name())
 	g.Indent()
-	g.Printf("Seq in = new Seq();\n")
 	g.Printf("Seq out = new Seq();\n")
-	g.Printf("Seq.send(%q, 2, in, out);\n", varDesc)
+	g.Printf("Seq.send(%q, 2, null, out);\n", varDesc)
 	g.Printf("%s ", jType)
 	g.genRead("v", "out", o.Type())
 	g.Printf("return v;\n")
@@ -498,8 +495,8 @@ func (g *javaGen) genFunc(o *types.Func, method bool) {
 
 	g.Printf(" {\n")
 	g.Indent()
-	g.Printf("go.Seq _in = new go.Seq();\n")
-	g.Printf("go.Seq _out = new go.Seq();\n")
+	g.Printf("go.Seq _in = null;\n")
+	g.Printf("go.Seq _out = null;\n")
 
 	returnsError := false
 	var resultType types.Type
@@ -511,15 +508,21 @@ func (g *javaGen) genFunc(o *types.Func, method bool) {
 			returnsError = true
 		}
 	}
+	if resultType != nil || returnsError {
+		g.Printf("_out = new go.Seq();\n")
+	}
 	if resultType != nil {
 		t := g.javaType(resultType)
 		g.Printf("%s _result;\n", t)
 	}
 
+	params := sig.Params()
+	if method || params.Len() > 0 {
+		g.Printf("_in = new go.Seq();\n")
+	}
 	if method {
 		g.Printf("_in.writeRef(ref);\n")
 	}
-	params := sig.Params()
 	for i := 0; i < params.Len(); i++ {
 		p := params.At(i)
 		g.Printf("_in.write%s;\n", seqWrite(p.Type(), paramName(params, i)))
