@@ -44,26 +44,37 @@ var hosts = []version{
 	{"windows", "x86_64"},
 }
 
+type target struct {
+	arch       string
+	platform   string
+	gcc        string
+	toolPrefix string
+}
+
+var targets = []target{
+	{"arm", "android-15", "arm-linux-androideabi-4.8", "arm-linux-androideabi"},
+	{"x86", "android-15", "x86-4.8", "i686-linux-android"},
+	{"x86_64", "android-21", "x86_64-4.9", "x86_64-linux-android"},
+}
+
 var tmpdir string
 
 func main() {
 	var err error
 	tmpdir, err = ioutil.TempDir("", "gomobile-release-")
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 	defer os.RemoveAll(tmpdir)
 
 	fmt.Println("var fetchHashes = map[string]string{")
-
 	for _, host := range hosts {
 		if err := mkpkg(host); err != nil {
-			log.Fatal(err)
+			log.Panic(err)
 		}
 	}
-
 	if err := mkALPkg(); err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 
 	fmt.Println("}")
@@ -72,12 +83,23 @@ func main() {
 func run(dir, path string, args ...string) error {
 	cmd := exec.Command(path, args...)
 	cmd.Dir = dir
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	buf, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Printf("%s\n", buf)
+	}
+	return err
 }
 
 func mkALPkg() (err error) {
+	ndkPath, _, err := fetchNDK(version{os: hostOS, arch: hostArch})
+	if err != nil {
+		return err
+	}
+	ndkRoot := tmpdir + "/android-" + ndkVersion
+	if err := inflate(tmpdir, ndkPath); err != nil {
+		return err
+	}
+
 	alTmpDir, err := ioutil.TempDir("", "openal-release-")
 	if err != nil {
 		return err
@@ -87,14 +109,51 @@ func mkALPkg() (err error) {
 	if err := run(alTmpDir, "git", "clone", "-v", "git://repo.or.cz/openal-soft.git", alTmpDir); err != nil {
 		return err
 	}
+	// TODO: use more recent revision?
 	if err := run(alTmpDir, "git", "checkout", "19f79be57b8e768f44710b6d26017bc1f8c8fbda"); err != nil {
 		return err
 	}
-	if err := run(filepath.Join(alTmpDir, "cmake"), "cmake", "..", "-DCMAKE_TOOLCHAIN_FILE=../XCompile-Android.txt", "-DHOST=arm-linux-androideabi"); err != nil {
-		return err
+
+	files := map[string]string{
+		"include/AL/al.h":  "include/AL/al.h",
+		"include/AL/alc.h": "include/AL/alc.h",
+		"COPYING":          "include/AL/COPYING",
 	}
-	if err := run(filepath.Join(alTmpDir, "cmake"), "make"); err != nil {
-		return err
+
+	for _, t := range targets {
+		abi := t.arch
+		if abi == "arm" {
+			abi = "armeabi"
+		}
+		buildDir := alTmpDir + "/build/" + abi
+		toolchain := buildDir + "/toolchain"
+		if err := os.MkdirAll(toolchain, 0755); err != nil {
+			return err
+		}
+		// standalone ndk toolchains make openal-soft's build config easier.
+		if err := run(ndkRoot, "env",
+			"build/tools/make-standalone-toolchain.sh",
+			"--arch="+t.arch,
+			"--platform="+t.platform,
+			"--install-dir="+toolchain); err != nil {
+			return fmt.Errorf("make-standalone-toolchain.sh failed: %v", err)
+		}
+
+		orgPath := os.Getenv("PATH")
+		os.Setenv("PATH", toolchain+"/bin"+string(os.PathListSeparator)+orgPath)
+		if err := run(buildDir, "cmake",
+			"../../",
+			"-DCMAKE_TOOLCHAIN_FILE=../../XCompile-Android.txt",
+			"-DHOST="+t.toolPrefix); err != nil {
+			return fmt.Errorf("cmake failed: %v", err)
+		}
+		os.Setenv("PATH", orgPath)
+
+		if err := run(buildDir, "make"); err != nil {
+			return fmt.Errorf("make failed: %v", err)
+		}
+
+		files["build/"+abi+"/libopenal.so"] = "lib/" + abi + "/libopenal.so"
 	}
 
 	// Build the tarball.
@@ -106,12 +165,6 @@ func mkALPkg() (err error) {
 		}
 	}()
 
-	files := map[string]string{
-		"cmake/libopenal.so": "lib/armeabi/libopenal.so",
-		"include/AL/al.h":    "include/AL/al.h",
-		"include/AL/alc.h":   "include/AL/alc.h",
-		"COPYING":            "include/AL/COPYING",
-	}
 	for src, dst := range files {
 		f, err := os.Open(filepath.Join(alTmpDir, src))
 		if err != nil {
@@ -132,28 +185,47 @@ func mkALPkg() (err error) {
 	return nil
 }
 
-func mkpkg(host version) (err error) {
+func fetchNDK(host version) (binPath, url string, err error) {
 	ndkName := "android-" + ndkVersion + "-" + host.os + "-" + host.arch + "."
 	if host.os == "windows" {
 		ndkName += "exe"
 	} else {
 		ndkName += "bin"
 	}
-	url := "http://dl.google.com/android/ndk/" + ndkName
+
+	url = "http://dl.google.com/android/ndk/" + ndkName
+	binPath = tmpdir + "/" + ndkName
+
+	if _, err := os.Stat(binPath); err == nil {
+		log.Printf("\t%q: using cached NDK\n", ndkName)
+		return binPath, url, nil
+	}
+
 	log.Printf("%s\n", url)
-	binPath := tmpdir + "/" + ndkName
 	binHash, err := fetch(binPath, url)
 	if err != nil {
-		log.Fatal(err)
+		return "", "", err
 	}
 
 	fmt.Printf("\t%q: %q,\n", ndkName, binHash)
+	return binPath, url, nil
+}
+
+func mkpkg(host version) error {
+	binPath, url, err := fetchNDK(host)
+	if err != nil {
+		return err
+	}
 
 	src := tmpdir + "/" + host.os + "-" + host.arch + "-src"
 	dst := tmpdir + "/" + host.os + "-" + host.arch + "-dst"
+	defer os.RemoveAll(src)
+	defer os.RemoveAll(dst)
+
 	if err := os.Mkdir(src, 0755); err != nil {
 		return err
 	}
+
 	if err := inflate(src, binPath); err != nil {
 		return err
 	}
@@ -162,25 +234,35 @@ func mkpkg(host version) (err error) {
 	// Move the files we want into tmpdir/linux-x86_64-dst/android-{{ndkVersion}}.
 	// We preserve the same file layout to make the full NDK interchangable
 	// with the cut down file.
-	usr := "android-" + ndkVersion + "/platforms/android-15/arch-arm/usr"
-	gcc := "android-" + ndkVersion + "/toolchains/arm-linux-androideabi-4.8/prebuilt/"
-	if host.os == "windows" && host.arch == "x86" {
-		gcc += "windows"
-	} else {
-		gcc += host.os + "-" + host.arch
-	}
+	for _, t := range targets {
+		usr := fmt.Sprintf("android-%s/platforms/%s/arch-%s/usr/", ndkVersion, t.platform, t.arch)
+		gcc := fmt.Sprintf("android-%s/toolchains/%s/prebuilt/", ndkVersion, t.gcc)
 
-	if err := os.MkdirAll(dst+"/"+usr, 0755); err != nil {
-		return err
-	}
-	if err := os.MkdirAll(dst+"/"+gcc, 0755); err != nil {
-		return err
-	}
-	if err := move(dst+"/"+usr, src+"/"+usr, "include", "lib"); err != nil {
-		return err
-	}
-	if err := move(dst+"/"+gcc, src+"/"+gcc, "bin", "lib", "libexec", "COPYING", "COPYING.LIB"); err != nil {
-		return err
+		if host.os == "windows" && host.arch == "x86" {
+			gcc += "windows"
+		} else {
+			gcc += host.os + "-" + host.arch
+		}
+
+		if err := os.MkdirAll(dst+"/"+usr, 0755); err != nil {
+			return err
+		}
+		if err := os.MkdirAll(dst+"/"+gcc, 0755); err != nil {
+			return err
+		}
+
+		subdirs := []string{"include", "lib"}
+		switch t.arch {
+		case "x86_64":
+			subdirs = append(subdirs, "lib64", "libx32")
+		}
+		if err := move(dst+"/"+usr, src+"/"+usr, subdirs...); err != nil {
+			return err
+		}
+
+		if err := move(dst+"/"+gcc, src+"/"+gcc, "bin", "lib", "libexec", "COPYING", "COPYING.LIB"); err != nil {
+			return err
+		}
 	}
 
 	// Build the tarball.
@@ -359,4 +441,22 @@ func newArchiveWriter(name string) *archiveWriter {
 	}
 	aw.tw = tar.NewWriter(aw.zw)
 	return aw
+}
+
+var hostOS, hostArch string
+
+func init() {
+	switch runtime.GOOS {
+	case "linux", "darwin":
+		hostOS = runtime.GOOS
+	}
+	switch runtime.GOARCH {
+	case "386":
+		hostArch = "x86"
+	case "amd64":
+		hostArch = "x86_64"
+	}
+	if hostOS == "" || hostArch == "" {
+		panic(fmt.Sprintf("cannot run release from OS/Arch: %s/%s", hostOS, hostArch))
+	}
 }
