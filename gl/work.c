@@ -22,7 +22,6 @@ uintptr_t processFn(struct fnargs* args, char* parg) {
 		break;
 	case glfnBindAttribLocation:
 		glBindAttribLocation((GLint)args->a0, (GLint)args->a1, (GLchar*)args->a2);
-		free((void*)args->a2);
 		break;
 	case glfnBindBuffer:
 		glBindBuffer((GLenum)args->a0, (GLuint)args->a1);
@@ -183,9 +182,9 @@ uintptr_t processFn(struct fnargs* args, char* parg) {
 			(GLuint)args->a1,
 			(GLsizei)args->a2,
 			NULL,
-			(GLint*)args->a4,
-			(GLenum*)args->a5,
-			(GLchar*)args->a6);
+			(GLint*)&ret,
+			(GLenum*)args->a3,
+			(GLchar*)parg);
 		break;
 	case glfnGetActiveUniform:
 		glGetActiveUniform(
@@ -193,19 +192,18 @@ uintptr_t processFn(struct fnargs* args, char* parg) {
 			(GLuint)args->a1,
 			(GLsizei)args->a2,
 			NULL,
-			(GLint*)args->a4,
-			(GLenum*)args->a5,
-			(GLchar*)args->a6);
+			(GLint*)&ret,
+			(GLenum*)args->a3,
+			(GLchar*)parg);
 		break;
 	case glfnGetAttachedShaders:
-		glGetAttachedShaders((GLuint)args->a0, (GLsizei)args->a1, (GLsizei*)args->a2, (GLuint*)args->a3);
+		glGetAttachedShaders((GLuint)args->a0, (GLsizei)args->a1, (GLsizei*)&ret, (GLuint*)parg);
 		break;
 	case glfnGetAttribLocation:
 		ret = glGetAttribLocation((GLint)args->a0, (GLchar*)args->a1);
-		free((void*)args->a1);
 		break;
 	case glfnGetBooleanv:
-		glGetBooleanv((GLenum)args->a0, (GLboolean*)args->a1);
+		glGetBooleanv((GLenum)args->a0, (GLboolean*)parg);
 		break;
 	case glfnGetBufferParameteri:
 		glGetBufferParameteriv((GLenum)args->a0, (GLenum)args->a1, (GLint*)&ret);
@@ -226,7 +224,7 @@ uintptr_t processFn(struct fnargs* args, char* parg) {
 		glGetProgramiv((GLint)args->a0, (GLenum)args->a1, (GLint*)&ret);
 		break;
 	case glfnGetProgramInfoLog:
-		glGetProgramInfoLog((GLuint)args->a0, (GLsizei)args->a1, (GLsizei*)args->a2, (GLchar*)args->a3);
+		glGetProgramInfoLog((GLuint)args->a0, (GLsizei)args->a1, 0, (GLchar*)parg);
 		break;
 	case glfnGetRenderbufferParameteriv:
 		glGetRenderbufferParameteriv((GLenum)args->a0, (GLenum)args->a1, (GLint*)&ret);
@@ -235,13 +233,13 @@ uintptr_t processFn(struct fnargs* args, char* parg) {
 		glGetShaderiv((GLint)args->a0, (GLenum)args->a1, (GLint*)&ret);
 		break;
 	case glfnGetShaderInfoLog:
-		glGetShaderInfoLog((GLuint)args->a0, (GLsizei)args->a1, (GLsizei*)args->a2, (GLchar*)args->a3);
+		glGetShaderInfoLog((GLuint)args->a0, (GLsizei)args->a1, 0, (GLchar*)parg);
 		break;
 	case glfnGetShaderPrecisionFormat:
-		glGetShaderPrecisionFormat((GLenum)args->a0, (GLenum)args->a1, (GLint*)args->a2, (GLint*)args->a3);
+		glGetShaderPrecisionFormat((GLenum)args->a0, (GLenum)args->a1, (GLint*)parg, &((GLint*)parg)[2]);
 		break;
 	case glfnGetShaderSource:
-		glGetShaderSource((GLuint)args->a0, (GLsizei)args->a1, (GLsizei*)args->a2, (GLchar*)args->a3);
+		glGetShaderSource((GLuint)args->a0, (GLsizei)args->a1, 0, (GLchar*)parg);
 		break;
 	case glfnGetString:
 		ret = (uintptr_t)glGetString((GLenum)args->a0);
@@ -259,8 +257,7 @@ uintptr_t processFn(struct fnargs* args, char* parg) {
 		glGetUniformiv((GLuint)args->a0, (GLint)args->a1, (GLint*)parg);
 		break;
 	case glfnGetUniformLocation:
-		ret = glGetUniformLocation((GLint)args->a0, (GLchar*)parg);
-		free((void*)args->a1);
+		ret = glGetUniformLocation((GLint)args->a0, (GLchar*)args->a1);
 		break;
 	case glfnGetVertexAttribfv:
 		glGetVertexAttribfv((GLuint)args->a0, (GLenum)args->a1, (GLfloat*)parg);
@@ -325,8 +322,6 @@ uintptr_t processFn(struct fnargs* args, char* parg) {
 #else
 		glShaderSource((GLuint)args->a0, (GLsizei)args->a1, (const GLchar **)args->a2, NULL);
 #endif
-		free(*(void**)args->a2);
-		free((void*)args->a2);
 		break;
 	case glfnStencilFunc:
 		glStencilFunc((GLenum)args->a0, (GLint)args->a1, (GLuint)args->a2);
