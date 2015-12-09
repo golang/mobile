@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build darwin linux cgo
+// +build darwin linux
 
 package gl
 
@@ -78,13 +78,7 @@ func NewContext() (Context, Worker) {
 	return glctx, glctx
 }
 
-type call struct {
-	args     C.struct_fnargs
-	parg     unsafe.Pointer
-	blocking bool
-}
-
-func (ctx *context) enqueue(c call) C.uintptr_t {
+func (ctx *context) enqueue(c call) uintptr {
 	ctx.work <- c
 
 	select {
@@ -93,7 +87,7 @@ func (ctx *context) enqueue(c call) C.uintptr_t {
 	}
 
 	if c.blocking {
-		return <-ctx.retvalue
+		return uintptr(<-ctx.retvalue)
 	}
 	return 0
 }
@@ -123,7 +117,7 @@ func (ctx *context) DoWork() {
 
 		// Process the queued GL functions.
 		for i, q := range queue {
-			ctx.cargs[i] = q.args
+			ctx.cargs[i] = *(*C.struct_fnargs)(unsafe.Pointer(&q.args))
 			ctx.parg[i] = (*C.char)(q.parg)
 		}
 		ret := C.process(&ctx.cargs[0], ctx.parg[0], ctx.parg[1], ctx.parg[2], C.int(len(queue)))
@@ -136,9 +130,27 @@ func (ctx *context) DoWork() {
 	}
 }
 
-func glBoolean(b bool) C.uintptr_t {
-	if b {
-		return TRUE
+func init() {
+	if unsafe.Sizeof(C.GLint(0)) != unsafe.Sizeof(int32(0)) {
+		panic("GLint is not an int32")
 	}
-	return FALSE
+}
+
+// cString creates C string off the Go heap.
+// ret is a *char.
+func cString(str string) (uintptr, func()) {
+	ptr := unsafe.Pointer(C.CString(str))
+	return uintptr(ptr), func() { C.free(ptr) }
+}
+
+// cString creates a pointer to a C string off the Go heap.
+// ret is a **char.
+func cStringPtr(str string) (uintptr, func()) {
+	s, free := cString(str)
+	ptr := C.malloc(C.size_t(unsafe.Sizeof((*int)(nil))))
+	*(*uintptr)(ptr) = s
+	return uintptr(ptr), func() {
+		free()
+		C.free(ptr)
+	}
 }

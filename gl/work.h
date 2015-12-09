@@ -15,6 +15,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+// TODO: generate this enum from fn.go.
 typedef enum {
 	glfnUNDEFINED,
 
@@ -160,6 +161,7 @@ typedef enum {
 	glfnViewport,
 } glfn;
 
+// TODO: generate this type from fn.go.
 struct fnargs {
 	glfn fn;
 
@@ -172,7 +174,5 @@ struct fnargs {
 	uintptr_t a6;
 	uintptr_t a7;
 };
-
-extern uintptr_t ret;
 
 extern uintptr_t processFn(struct fnargs* args, char* parg);

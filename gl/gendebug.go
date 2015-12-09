@@ -269,13 +269,10 @@ const preamble = `// Copyright 2014 The Go Authors.  All rights reserved.
 // Generated from gl.go using go generate. DO NOT EDIT.
 // See doc.go for details.
 
-// +build linux darwin
+// +build linux darwin windows
 // +build gldebug
 
 package gl
-
-// #include "work.h"
-import "C"
 
 import (
 	"fmt"
@@ -300,7 +297,7 @@ func (ctx *context) errDrain() string {
 	return ""
 }
 
-func (ctx *context) enqueueDebug(c call) C.uintptr_t {
+func (ctx *context) enqueueDebug(c call) uintptr {
 	numCalls := atomic.AddInt32(&ctx.debug, 1)
 	if numCalls > 1 {
 		panic("concurrent calls made to the same GL context")
