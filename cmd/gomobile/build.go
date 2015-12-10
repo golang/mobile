@@ -96,7 +96,7 @@ func runBuild(cmd *command) (err error) {
 	switch buildTarget {
 	case "android":
 		if pkg.Name != "main" {
-			return goBuild(pkg.ImportPath, androidArmEnv)
+			return goBuild(pkg.ImportPath, androidEnv["arm"])
 		}
 		nmpkgs, err = goAndroidBuild(pkg)
 		if err != nil {

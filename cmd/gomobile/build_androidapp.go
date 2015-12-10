@@ -52,11 +52,13 @@ func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
 			return nil, fmt.Errorf("error parsing %s: %v", manifestPath, err)
 		}
 	}
-	libPath := filepath.Join(tmpdir, "lib"+libName+".so")
 
+	toolchain := ndk.Toolchain("arm")
+
+	libPath := filepath.Join(tmpdir, "lib"+libName+".so")
 	err = goBuild(
 		pkg.ImportPath,
-		androidArmEnv,
+		androidEnv["arm"],
 		"-buildmode=c-shared",
 		"-o", libPath,
 	)
@@ -64,7 +66,7 @@ func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
 		return nil, err
 	}
 
-	nmpkgs, err := extractPkgs(androidArmNM, libPath)
+	nmpkgs, err := extractPkgs(toolchain.Path("nm"), libPath)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +157,7 @@ func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
 
 	if nmpkgs["golang.org/x/mobile/exp/audio/al"] {
 		dst := "lib/armeabi/libopenal.so"
-		src := filepath.Join(ndkccpath, "openal/"+dst)
+		src := filepath.Join(ndk.Root(), "openal/"+dst)
 		if err := apkwWriteFile(dst, src); err != nil {
 			return nil, err
 		}
