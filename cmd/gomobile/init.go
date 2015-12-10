@@ -81,14 +81,14 @@ func runInit(cmd *command) error {
 		return fmt.Errorf("GOPATH is not set")
 	}
 	gomobilepath = filepath.Join(gopaths[0], "pkg/gomobile")
-	ndkccpath = filepath.Join(gopaths[0], "pkg/gomobile/android-"+ndkVersion)
-	verpath := filepath.Join(gopaths[0], "pkg/gomobile/version")
+
+	verpath := filepath.Join(gomobilepath, "version")
 	if buildX || buildN {
 		fmt.Fprintln(xout, "GOMOBILE="+gomobilepath)
 	}
 	removeGomobilepkg()
 
-	if err := mkdir(ndkccpath); err != nil {
+	if err := mkdir(ndk.Root()); err != nil {
 		return err
 	}
 
@@ -146,7 +146,7 @@ func runInit(cmd *command) error {
 		// https://golang.org/issue/13234.
 		androidArgs = []string{"-gcflags=-shared", "-ldflags=-shared"}
 	}
-	if err := installStd(androidArmEnv, androidArgs...); err != nil {
+	if err := installStd(androidEnv["arm"], androidArgs...); err != nil {
 		return err
 	}
 	if err := installDarwin(); err != nil {
@@ -309,12 +309,13 @@ func fetchOpenAL() error {
 	if goos == "windows" {
 		resetReadOnlyFlagAll(filepath.Join(tmpdir, "openal"))
 	}
-	dst := filepath.Join(ndkccpath, "arm", "sysroot", "usr", "include")
+	ndkroot := ndk.Root()
+	dst := filepath.Join(ndkroot, "arm", "sysroot", "usr", "include")
 	src := filepath.Join(tmpdir, "openal", "include")
 	if err := move(dst, src, "AL"); err != nil {
 		return err
 	}
-	libDst := filepath.Join(ndkccpath, "openal")
+	libDst := filepath.Join(ndkroot, "openal")
 	libSrc := filepath.Join(tmpdir, "openal")
 	if err := mkdir(libDst); err != nil {
 		return nil
@@ -388,7 +389,7 @@ func fetchNDK() error {
 		resetReadOnlyFlagAll(filepath.Join(tmpdir, "android-"+ndkVersion))
 	}
 
-	dst := filepath.Join(ndkccpath, "arm")
+	dst := filepath.Join(ndk.Root(), "arm")
 	dstSysroot := filepath.Join(dst, "sysroot/usr")
 	if err := mkdir(dstSysroot); err != nil {
 		return err

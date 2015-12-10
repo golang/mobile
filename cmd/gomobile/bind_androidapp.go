@@ -28,7 +28,7 @@ func goAndroidBind(pkgs []*build.Package) error {
 		// https://golang.org/issue/13234.
 		androidArgs = []string{"-gcflags=-shared", "-ldflags=-shared"}
 	}
-	typesPkgs, err := loadExportData(pkgs, androidArmEnv, androidArgs...)
+	typesPkgs, err := loadExportData(pkgs, androidEnv["arm"], androidArgs...)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func goAndroidBind(pkgs []*build.Package) error {
 
 	err = goBuild(
 		mainFile,
-		androidArmEnv,
+		androidEnv["arm"],
 		"-buildmode=c-shared",
 		"-o="+filepath.Join(androidDir, "src/main/jniLibs/armeabi-v7a/libgojni.so"),
 	)
