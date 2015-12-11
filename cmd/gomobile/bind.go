@@ -101,7 +101,8 @@ func runBind(cmd *command) error {
 
 	switch buildTarget {
 	case "android":
-		return goAndroidBind(pkgs)
+		androidArchs := []string{"arm"}
+		return goAndroidBind(pkgs, androidArchs)
 	case "ios":
 		return goIOSBind(pkgs)
 	default:
@@ -289,6 +290,8 @@ func loadExportData(pkgs []*build.Package, env []string, args ...string) ([]*typ
 		return nil, err
 	}
 
+	goos, goarch := getenv(env, "GOOS"), getenv(env, "GOARCH")
+
 	// Assemble a fake GOPATH and trick go/importer into using it.
 	// Ideally the importer package would let us provide this to
 	// it somehow, but this works with what's in Go 1.5 today and
@@ -305,7 +308,7 @@ func loadExportData(pkgs []*build.Package, env []string, args ...string) ([]*typ
 	for i, p := range pkgs {
 		importPath := p.ImportPath
 		src := filepath.Join(pkgdir(env), importPath+".a")
-		dst := filepath.Join(fakegopath, "pkg/"+getenv(env, "GOOS")+"_"+getenv(env, "GOARCH")+"/"+importPath+".a")
+		dst := filepath.Join(fakegopath, "pkg/"+goos+"_"+goarch+"/"+importPath+".a")
 		if err := copyFile(dst, src); err != nil {
 			return nil, err
 		}
@@ -315,6 +318,7 @@ func loadExportData(pkgs []*build.Package, env []string, args ...string) ([]*typ
 		}
 		oldDefault := build.Default
 		build.Default = ctx // copy
+		build.Default.GOARCH = goarch
 		build.Default.GOPATH = fakegopath
 		p, err := importer.Default().Import(importPath)
 		build.Default = oldDefault

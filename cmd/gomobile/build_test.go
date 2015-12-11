@@ -98,5 +98,6 @@ func TestAndroidBuild(t *testing.T) {
 
 var androidBuildTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
 WORK=$WORK
-GOOS=android GOARCH=arm CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-gcc{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-g++{{.EXE}} CGO_ENABLED=1 GOARM=7 go build -p={{.NumCPU}} -pkgdir=$GOMOBILE/pkg_android_arm -tags="tag1" -x -buildmode=c-shared -o $WORK/libbasic.so golang.org/x/mobile/example/basic
+mkdir -p $WORK/lib/armeabi-v7a
+GOOS=android GOARCH=arm CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-gcc{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-g++{{.EXE}} CGO_ENABLED=1 GOARM=7 go build -p={{.NumCPU}} -pkgdir=$GOMOBILE/pkg_android_arm -tags="tag1" -x -buildmode=c-shared -o $WORK/lib/armeabi-v7a/libbasic.so golang.org/x/mobile/example/basic
 `))
