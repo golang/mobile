@@ -21,7 +21,7 @@ import (
 	"strings"
 )
 
-func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
+func goAndroidBuild(pkg *build.Package, androidArchs []string) (map[string]bool, error) {
 	appName := path.Base(pkg.ImportPath)
 	libName := androidPkgName(appName)
 	manifestPath := filepath.Join(pkg.Dir, "AndroidManifest.xml")
@@ -53,22 +53,31 @@ func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
 		}
 	}
 
-	toolchain := ndk.Toolchain("arm")
+	libFiles := []string{}
+	nmpkgs := make(map[string]map[string]bool) // map: goarch -> extractPkgs' output
 
-	libPath := filepath.Join(tmpdir, "lib"+libName+".so")
-	err = goBuild(
-		pkg.ImportPath,
-		androidEnv["arm"],
-		"-buildmode=c-shared",
-		"-o", libPath,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	nmpkgs, err := extractPkgs(toolchain.Path("nm"), libPath)
-	if err != nil {
-		return nil, err
+	for _, arch := range androidArchs {
+		env := androidEnv[arch]
+		toolchain := ndk.Toolchain(arch)
+		libPath := "lib/" + toolchain.abi + "/lib" + libName + ".so"
+		libAbsPath := filepath.Join(tmpdir, libPath)
+		if err := mkdir(filepath.Dir(libAbsPath)); err != nil {
+			return nil, err
+		}
+		err = goBuild(
+			pkg.ImportPath,
+			env,
+			"-buildmode=c-shared",
+			"-o", libAbsPath,
+		)
+		if err != nil {
+			return nil, err
+		}
+		nmpkgs[arch], err = extractPkgs(toolchain.Path("nm"), libAbsPath)
+		if err != nil {
+			return nil, err
+		}
+		libFiles = append(libFiles, libPath)
 	}
 
 	block, _ := pem.Decode([]byte(debugCert))
@@ -151,15 +160,23 @@ func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
 		return nil, err
 	}
 
-	if err := apkwWriteFile("lib/armeabi/lib"+libName+".so", libPath); err != nil {
-		return nil, err
+	for _, libFile := range libFiles {
+		if err := apkwWriteFile(libFile, filepath.Join(tmpdir, libFile)); err != nil {
+			return nil, err
+		}
 	}
 
-	if nmpkgs["golang.org/x/mobile/exp/audio/al"] {
-		dst := "lib/armeabi/libopenal.so"
-		src := filepath.Join(ndk.Root(), "openal/"+dst)
-		if err := apkwWriteFile(dst, src); err != nil {
-			return nil, err
+	for _, arch := range androidArchs {
+		toolchain := ndk.Toolchain(arch)
+		if nmpkgs[goarch]["golang.org/x/mobile/exp/audio/al"] {
+			dst := "lib/" + toolchain.arch + "/libopenal.so"
+			if arch == "arm" {
+				dst = "lib/armeabi/libopenal.so"
+			}
+			src := filepath.Join(ndk.Root(), "openal/"+dst)
+			if err := apkwWriteFile(dst, src); err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -209,7 +226,11 @@ func goAndroidBuild(pkg *build.Package) (map[string]bool, error) {
 		}
 	}
 
-	return nmpkgs, nil
+	// TODO: return nmpkgs
+	for _, v := range nmpkgs {
+		return v, nil // first value
+	}
+	return nil, nil
 }
 
 // androidPkgName sanitizes the go package name to be acceptable as a android

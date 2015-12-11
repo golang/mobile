@@ -95,10 +95,17 @@ func runBuild(cmd *command) (err error) {
 	var nmpkgs map[string]bool
 	switch buildTarget {
 	case "android":
+		androidArchs := []string{"arm"}
 		if pkg.Name != "main" {
-			return goBuild(pkg.ImportPath, androidEnv["arm"])
+			for _, arch := range androidArchs {
+				env := androidEnv[arch]
+				if err := goBuild(pkg.ImportPath, env); err != nil {
+					return err
+				}
+			}
+			return nil
 		}
-		nmpkgs, err = goAndroidBuild(pkg)
+		nmpkgs, err = goAndroidBuild(pkg, androidArchs)
 		if err != nil {
 			return err
 		}

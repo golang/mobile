@@ -45,6 +45,7 @@ func TestInit(t *testing.T) {
 		os.Setenv("HOMEDRIVE", "C:")
 	}
 
+	// TODO(hyangah): test with go1_6.
 	err := runInit(cmdInit)
 	if err != nil {
 		t.Log(buf.String())
@@ -112,9 +113,8 @@ WORK={{.GOPATH}}/pkg/gomobile/work
 mkdir -p $GOMOBILE/dl
 curl -o$GOMOBILE/dl/gomobile-{{.NDK}}-{{.GOOS}}-{{.NDKARCH}}.tar.gz https://dl.google.com/go/mobile/gomobile-{{.NDK}}-{{.GOOS}}-{{.NDKARCH}}.tar.gz
 tar xfz $GOMOBILE/dl/gomobile-{{.NDK}}-{{.GOOS}}-{{.NDKARCH}}.tar.gz
-mkdir -p $GOMOBILE/android-{{.NDK}}/arm/sysroot/usr
-mv $WORK/android-{{.NDK}}/platforms/android-15/arch-arm/usr/include $GOMOBILE/android-{{.NDK}}/arm/sysroot/usr/include
-mv $WORK/android-{{.NDK}}/platforms/android-15/arch-arm/usr/lib $GOMOBILE/android-{{.NDK}}/arm/sysroot/usr/lib
+mkdir -p $GOMOBILE/android-{{.NDK}}/arm/sysroot
+mv $WORK/android-{{.NDK}}/platforms/android-15/arch-arm/usr $GOMOBILE/android-{{.NDK}}/arm/sysroot/usr
 mv $WORK/android-{{.NDK}}/toolchains/arm-linux-androideabi-4.8/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin $GOMOBILE/android-{{.NDK}}/arm/bin
 mv $WORK/android-{{.NDK}}/toolchains/arm-linux-androideabi-4.8/prebuilt/{{.GOOS}}-{{.NDKARCH}}/lib $GOMOBILE/android-{{.NDK}}/arm/lib
 mv $WORK/android-{{.NDK}}/toolchains/arm-linux-androideabi-4.8/prebuilt/{{.GOOS}}-{{.NDKARCH}}/libexec $GOMOBILE/android-{{.NDK}}/arm/libexec
@@ -126,7 +126,7 @@ ln -s $GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-g++{{.EXE}} $GOMO
 mkdir -p $GOMOBILE/dl
 curl -o$GOMOBILE/dl/gomobile-openal-soft-1.16.0.1.tar.gz https://dl.google.com/go/mobile/gomobile-openal-soft-1.16.0.1.tar.gz
 tar xfz $GOMOBILE/dl/gomobile-openal-soft-1.16.0.1.tar.gz
-mv $WORK/openal/include/AL $GOMOBILE/android-{{.NDK}}/arm/sysroot/usr/include/AL
+cp -r $WORK/openal/include/AL $GOMOBILE/android-{{.NDK}}/arm/sysroot/usr/include/AL
 mkdir -p $GOMOBILE/android-{{.NDK}}/openal
 mv $WORK/openal/lib $GOMOBILE/android-{{.NDK}}/openal/lib{{if eq .GOOS "darwin"}}
 go install -p={{.NumCPU}} -x golang.org/x/mobile/gl
