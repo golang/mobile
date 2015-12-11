@@ -70,15 +70,13 @@ func runBind(cmd *command) error {
 
 	args := cmd.flag.Args()
 
-	ctx.GOARCH = "arm"
-	switch buildTarget {
-	case "android":
-		ctx.GOOS = "android"
-	case "ios":
-		ctx.GOOS = "darwin"
-	default:
-		return fmt.Errorf(`unknown -target, %q.`, buildTarget)
+	targetOS, targetArchs, err := parseBuildTarget(buildTarget)
+	if err != nil {
+		return fmt.Errorf(`invalid -target=%q: %v`, buildTarget, err)
 	}
+
+	ctx.GOARCH = "arm"
+	ctx.GOOS = targetOS
 
 	if bindJavaPkg != "" && ctx.GOOS != "android" {
 		return fmt.Errorf("-javapkg is supported only for android target")
@@ -101,12 +99,12 @@ func runBind(cmd *command) error {
 
 	switch buildTarget {
 	case "android":
-		androidArchs := []string{"arm"}
-		return goAndroidBind(pkgs, androidArchs)
+		return goAndroidBind(pkgs, targetArchs)
 	case "ios":
+		// TODO: use targetArchs?
 		return goIOSBind(pkgs)
 	default:
-		return fmt.Errorf(`unknown -target, %q.`, buildTarget)
+		return fmt.Errorf(`invalid -target=%q`, buildTarget)
 	}
 }
 

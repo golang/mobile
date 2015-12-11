@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"text/template"
 )
@@ -101,3 +102,46 @@ WORK=$WORK
 mkdir -p $WORK/lib/armeabi-v7a
 GOOS=android GOARCH=arm CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-gcc{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-g++{{.EXE}} CGO_ENABLED=1 GOARM=7 go build -p={{.NumCPU}} -pkgdir=$GOMOBILE/pkg_android_arm -tags="tag1" -x -buildmode=c-shared -o $WORK/lib/armeabi-v7a/libbasic.so golang.org/x/mobile/example/basic
 `))
+
+func TestParseBuildTargetFlag(t *testing.T) {
+	androidArchs := "arm"
+	iosArchs := "arm,arm64,amd64"
+
+	tests := []struct {
+		in        string
+		wantErr   bool
+		wantOS    string
+		wantArchs string
+	}{
+		{"android", false, "android", androidArchs},
+		{"android,android/arm", false, "android", androidArchs},
+		{"android/arm", false, "android", "arm"},
+
+		{"ios", false, "ios", iosArchs},
+		{"ios,ios/arm", false, "ios", iosArchs},
+		{"ios/arm", false, "ios", "arm"},
+		{"ios/amd64", false, "ios", "amd64"},
+
+		{"", true, "", ""},
+		{"linux", true, "", ""},
+		{"android/x86", true, "", ""},
+		{"android/arm5", true, "", ""},
+		{"ios/mips", true, "", ""},
+		{"android,ios", true, "", ""},
+		{"ios,android", true, "", ""},
+	}
+
+	for _, tc := range tests {
+		gotOS, gotArchs, err := parseBuildTarget(tc.in)
+		if tc.wantErr {
+			if err == nil {
+				t.Errorf("-target=%q; want error, got (%q, %q, nil)", tc.in, gotOS, gotArchs)
+			}
+			continue
+		}
+		if err != nil || gotOS != tc.wantOS || strings.Join(gotArchs, ",") != tc.wantArchs {
+			t.Errorf("-target=%q; want (%v, [%v], nil), got (%q, %q, %v)",
+				tc.in, tc.wantOS, tc.wantArchs, gotOS, gotArchs, err)
+		}
+	}
+}

@@ -65,15 +65,13 @@ func runBuild(cmd *command) (err error) {
 
 	args := cmd.flag.Args()
 
-	ctx.GOARCH = "arm"
-	switch buildTarget {
-	case "android":
-		ctx.GOOS = "android"
-	case "ios":
-		ctx.GOOS = "darwin"
-	default:
-		return fmt.Errorf(`unknown -target, %q.`, buildTarget)
+	targetOS, targetArchs, err := parseBuildTarget(buildTarget)
+	if err != nil {
+		return fmt.Errorf(`invalid -target=%q: %v`, buildTarget, err)
 	}
+
+	ctx.GOARCH = targetArchs[0]
+	ctx.GOOS = targetOS
 
 	switch len(args) {
 	case 0:
@@ -93,11 +91,10 @@ func runBuild(cmd *command) (err error) {
 	}
 
 	var nmpkgs map[string]bool
-	switch buildTarget {
+	switch targetOS {
 	case "android":
-		androidArchs := []string{"arm"}
 		if pkg.Name != "main" {
-			for _, arch := range androidArchs {
+			for _, arch := range targetArchs {
 				env := androidEnv[arch]
 				if err := goBuild(pkg.ImportPath, env); err != nil {
 					return err
@@ -105,11 +102,12 @@ func runBuild(cmd *command) (err error) {
 			}
 			return nil
 		}
-		nmpkgs, err = goAndroidBuild(pkg, androidArchs)
+		nmpkgs, err = goAndroidBuild(pkg, targetArchs)
 		if err != nil {
 			return err
 		}
 	case "ios":
+		// TODO: use targetArchs?
 		if runtime.GOOS != "darwin" {
 			return fmt.Errorf("-target=ios requires darwin host")
 		}
@@ -294,4 +292,73 @@ func goCmd(subcmd string, srcs []string, env []string, args ...string) error {
 	cmd.Args = append(cmd.Args, srcs...)
 	cmd.Env = append([]string{}, env...)
 	return runCmd(cmd)
+}
+
+func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
+	if buildTarget == "" {
+		return "", nil, fmt.Errorf(`invalid target ""`)
+	}
+
+	all := false
+	archNames := []string{}
+	for i, p := range strings.Split(buildTarget, ",") {
+		osarch := strings.SplitN(p, "/", 2) // len(osarch) > 0
+		if osarch[0] != "android" && osarch[0] != "ios" {
+			return "", nil, fmt.Errorf(`unsupported os`)
+		}
+
+		if i == 0 {
+			os = osarch[0]
+		}
+
+		if os != osarch[0] {
+			return "", nil, fmt.Errorf(`cannot target different OSes`)
+		}
+
+		if len(osarch) == 1 {
+			all = true
+		} else {
+			archNames = append(archNames, osarch[1])
+		}
+	}
+
+	// verify all archs are supported one while deduping.
+	var supported []string
+	switch os {
+	case "ios":
+		supported = []string{"arm", "arm64", "amd64"}
+	case "android":
+		for arch, tc := range ndk {
+			if tc.minGoVer <= goVersion {
+				supported = append(supported, arch)
+			}
+		}
+	}
+
+	isSupported := func(arch string) bool {
+		for _, a := range supported {
+			if a == arch {
+				return true
+			}
+		}
+		return false
+	}
+
+	seen := map[string]bool{}
+	for _, arch := range archNames {
+		if _, ok := seen[arch]; ok {
+			continue
+		}
+		if !isSupported(arch) {
+			return "", nil, fmt.Errorf(`unsupported arch: %q`, arch)
+		}
+
+		seen[arch] = true
+		archs = append(archs, arch)
+	}
+
+	if all {
+		return os, supported, nil
+	}
+	return os, archs, nil
 }
