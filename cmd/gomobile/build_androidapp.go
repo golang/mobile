@@ -227,10 +227,7 @@ func goAndroidBuild(pkg *build.Package, androidArchs []string) (map[string]bool,
 	}
 
 	// TODO: return nmpkgs
-	for _, v := range nmpkgs {
-		return v, nil // first value
-	}
-	return nil, nil
+	return nmpkgs[androidArchs[0]], nil
 }
 
 // androidPkgName sanitizes the go package name to be acceptable as a android
