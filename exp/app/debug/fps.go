@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build darwin linux
+// +build darwin linux windows
 
 // Package debug provides GL-based debugging tools for apps.
 package debug // import "golang.org/x/mobile/exp/app/debug"
