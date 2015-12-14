@@ -138,14 +138,14 @@ func init() {
 
 // cString creates C string off the Go heap.
 // ret is a *char.
-func cString(str string) (uintptr, func()) {
+func (ctx *context) cString(str string) (uintptr, func()) {
 	ptr := unsafe.Pointer(C.CString(str))
 	return uintptr(ptr), func() { C.free(ptr) }
 }
 
 // cString creates a pointer to a C string off the Go heap.
 // ret is a **char.
-func cStringPtr(str string) (uintptr, func()) {
+func (ctx *context) cStringPtr(str string) (uintptr, func()) {
 	s, free := cString(str)
 	ptr := C.malloc(C.size_t(unsafe.Sizeof((*int)(nil))))
 	*(*uintptr)(ptr) = s
