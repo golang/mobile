@@ -24,6 +24,9 @@ type context struct {
 func (ctx *context) WorkAvailable() <-chan struct{} { return ctx.workAvailable }
 
 func NewContext() (Context, Worker) {
+	if err := findDLLs(); err != nil {
+		panic(err)
+	}
 	glctx := &context{
 		workAvailable: make(chan struct{}, 1),
 		work:          make(chan call, 3),
@@ -393,10 +396,17 @@ func (ctx *context) doWork(c call) (ret uintptr) {
 	return ret
 }
 
-// TODO: export LibGLESv2/LibEGL lazy DLLs, and come up with a loading scheme.
+// Exported libraries for a Windows GUI driver.
+//
+// LibEGL is not used directly by the gl package, but is needed by any
+// driver hoping to use OpenGL ES.
+var (
+	LibGLESv2 = syscall.NewLazyDLL("libglesv2.dll")
+	LibEGL    = syscall.NewLazyDLL("libegl.dll")
+)
 
 var (
-	libGLESv2                             = syscall.NewLazyDLL("libGLESv2.dll")
+	libGLESv2                             = LibGLESv2
 	glActiveTexture                       = libGLESv2.NewProc("glActiveTexture")
 	glAttachShader                        = libGLESv2.NewProc("glAttachShader")
 	glBindAttribLocation                  = libGLESv2.NewProc("glBindAttribLocation")
