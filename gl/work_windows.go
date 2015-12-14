@@ -15,6 +15,10 @@ type context struct {
 	workAvailable chan struct{}
 	work          chan call
 	retvalue      chan uintptr
+
+	// TODO(crawshaw): will not work with a moving collector
+	cStringCounter int
+	cStrings       map[int]unsafe.Pointer
 }
 
 func (ctx *context) WorkAvailable() <-chan struct{} { return ctx.workAvailable }
@@ -24,6 +28,7 @@ func NewContext() (Context, Worker) {
 		workAvailable: make(chan struct{}, 1),
 		work:          make(chan call, 3),
 		retvalue:      make(chan uintptr),
+		cStrings:      make(map[int]unsafe.Pointer),
 	}
 	return glctx, glctx
 }
@@ -57,31 +62,26 @@ func (ctx *context) DoWork() {
 	}
 }
 
-// TODO(crawshaw): will not work with a moving collector
-// TODO(crawshaw): not safe for multiple GL contexts
-var cStringCounter = 0
-var cStrings = make(map[int]unsafe.Pointer)
-
-func cString(s string) (uintptr, func()) {
+func (ctx *context) cString(s string) (uintptr, func()) {
 	buf := make([]byte, len(s)+1)
 	for i := 0; i < len(s); i++ {
 		buf[i] = s[i]
 	}
 	ret := unsafe.Pointer(&buf[0])
-	id := cStringCounter
-	cStringCounter++
-	cStrings[id] = ret
-	return uintptr(ret), func() { delete(cStrings, id) }
+	id := ctx.cStringCounter
+	ctx.cStringCounter++
+	ctx.cStrings[id] = ret
+	return uintptr(ret), func() { delete(ctx.cStrings, id) }
 }
 
-func cStringPtr(str string) (uintptr, func()) {
-	s, sfree := cString(str)
+func (ctx *context) cStringPtr(str string) (uintptr, func()) {
+	s, sfree := ctx.cString(str)
 	sptr := [2]uintptr{s, 0}
 	ret := unsafe.Pointer(&sptr[0])
-	id := cStringCounter
-	cStringCounter++
-	cStrings[id] = ret
-	return uintptr(ret), func() { sfree(); delete(cStrings, id) }
+	id := ctx.cStringCounter
+	ctx.cStringCounter++
+	ctx.cStrings[id] = ret
+	return uintptr(ret), func() { sfree(); delete(ctx.cStrings, id) }
 }
 
 // fixFloat copies the first four arguments into the XMM registers.

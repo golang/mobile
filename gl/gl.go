@@ -37,7 +37,7 @@ func (ctx *context) AttachShader(p Program, s Shader) {
 }
 
 func (ctx *context) BindAttribLocation(p Program, a Attrib, name string) {
-	s, free := cString(name)
+	s, free := ctx.cString(name)
 	defer free()
 	ctx.enqueue(call{
 		args: fnargs{
@@ -667,7 +667,7 @@ func (ctx *context) GetAttachedShaders(p Program) []Shader {
 }
 
 func (ctx *context) GetAttribLocation(p Program, name string) Attrib {
-	s, free := cString(name)
+	s, free := ctx.cString(name)
 	defer free()
 	return Attrib{Value: uint(ctx.enqueue(call{
 		args: fnargs{
@@ -926,7 +926,7 @@ func (ctx *context) GetUniformiv(dst []int32, src Uniform, p Program) {
 }
 
 func (ctx *context) GetUniformLocation(p Program, name string) Uniform {
-	s, free := cString(name)
+	s, free := ctx.cString(name)
 	defer free()
 	return Uniform{Value: int32(ctx.enqueue(call{
 		args: fnargs{
@@ -1152,7 +1152,7 @@ func (ctx *context) Scissor(x, y, width, height int32) {
 }
 
 func (ctx *context) ShaderSource(s Shader, src string) {
-	strp, free := cStringPtr(src)
+	strp, free := ctx.cStringPtr(src)
 	defer free()
 	ctx.enqueue(call{
 		args: fnargs{
