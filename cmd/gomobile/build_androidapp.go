@@ -54,7 +54,7 @@ func goAndroidBuild(pkg *build.Package, androidArchs []string) (map[string]bool,
 	}
 
 	libFiles := []string{}
-	nmpkgs := make(map[string]map[string]bool) // map: goarch -> extractPkgs' output
+	nmpkgs := make(map[string]map[string]bool) // map: arch -> extractPkgs' output
 
 	for _, arch := range androidArchs {
 		env := androidEnv[arch]
@@ -168,13 +168,13 @@ func goAndroidBuild(pkg *build.Package, androidArchs []string) (map[string]bool,
 
 	for _, arch := range androidArchs {
 		toolchain := ndk.Toolchain(arch)
-		if nmpkgs[goarch]["golang.org/x/mobile/exp/audio/al"] {
+		if nmpkgs[arch]["golang.org/x/mobile/exp/audio/al"] {
 			dst := "lib/" + toolchain.arch + "/libopenal.so"
+			src := dst
 			if arch == "arm" {
-				dst = "lib/armeabi/libopenal.so"
+				src = "lib/armeabi/libopenal.so"
 			}
-			src := filepath.Join(ndk.Root(), "openal/"+dst)
-			if err := apkwWriteFile(dst, src); err != nil {
+			if err := apkwWriteFile(dst, filepath.Join(ndk.Root(), "openal/"+src)); err != nil {
 				return nil, err
 			}
 		}
