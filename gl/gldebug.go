@@ -674,7 +674,7 @@ func (ctx *context) BindAttribLocation(p Program, a Attrib, name string) {
 		errstr := ctx.errDrain()
 		log.Printf("gl.BindAttribLocation(%v, %v, %v) %v", p, a, name, errstr)
 	}()
-	s, free := cString(name)
+	s, free := ctx.cString(name)
 	defer free()
 	ctx.enqueueDebug(call{
 		args: fnargs{
@@ -1453,16 +1453,14 @@ func (ctx *context) GetActiveAttrib(p Program, index uint32) (name string, size 
 	}()
 	bufSize := ctx.GetProgrami(p, ACTIVE_ATTRIBUTE_MAX_LENGTH)
 	buf := make([]byte, bufSize)
-	var cSize, cType int
-	ctx.enqueueDebug(call{
+	var cType int
+	cSize := ctx.enqueue(call{
 		args: fnargs{
 			fn: glfnGetActiveAttrib,
 			a0: p.c(),
 			a1: uintptr(index),
 			a2: uintptr(bufSize),
-			a3: 0,
-			a4: uintptr(unsafe.Pointer(&cSize)),
-			a5: uintptr(unsafe.Pointer(&cType)),
+			a3: uintptr(unsafe.Pointer(&cType)),
 		},
 		parg:     unsafe.Pointer(&buf[0]),
 		blocking: true,
@@ -1476,17 +1474,15 @@ func (ctx *context) GetActiveUniform(p Program, index uint32) (name string, size
 		log.Printf("gl.GetActiveUniform(%v, %v) (%v, %v, %v) %v", p, index, name, size, ty, errstr)
 	}()
 	bufSize := ctx.GetProgrami(p, ACTIVE_UNIFORM_MAX_LENGTH)
-	buf := make([]byte, bufSize)
-	var cSize, cType int
-	ctx.enqueueDebug(call{
+	buf := make([]byte, bufSize+8)
+	var cType int
+	cSize := ctx.enqueue(call{
 		args: fnargs{
 			fn: glfnGetActiveUniform,
 			a0: p.c(),
 			a1: uintptr(index),
 			a2: uintptr(bufSize),
-			a3: 0,
-			a4: uintptr(unsafe.Pointer(&cSize)),
-			a5: uintptr(unsafe.Pointer(&cType)),
+			a3: uintptr(unsafe.Pointer(&cType)),
 		},
 		parg:     unsafe.Pointer(&buf[0]),
 		blocking: true,
@@ -1503,18 +1499,16 @@ func (ctx *context) GetAttachedShaders(p Program) (r0 []Shader) {
 	if shadersLen == 0 {
 		return nil
 	}
-	var n int
 	buf := make([]uint32, shadersLen)
-	ctx.enqueueDebug(call{
+	n := int(ctx.enqueue(call{
 		args: fnargs{
 			fn: glfnGetAttachedShaders,
 			a0: p.c(),
 			a1: uintptr(shadersLen),
-			a2: uintptr(unsafe.Pointer(&n)),
-			a3: uintptr(unsafe.Pointer(&buf[0])),
 		},
+		parg:     unsafe.Pointer(&buf[0]),
 		blocking: true,
-	})
+	}))
 	buf = buf[:int(n)]
 	shaders := make([]Shader, len(buf))
 	for i, s := range buf {
@@ -1529,7 +1523,7 @@ func (ctx *context) GetAttribLocation(p Program, name string) (r0 Attrib) {
 		r0.name = name
 		log.Printf("gl.GetAttribLocation(%v, %v) %v%v", p, name, r0, errstr)
 	}()
-	s, free := cString(name)
+	s, free := ctx.cString(name)
 	defer free()
 	return Attrib{Value: uint(ctx.enqueue(call{
 		args: fnargs{
@@ -1855,7 +1849,7 @@ func (ctx *context) GetUniformLocation(p Program, name string) (r0 Uniform) {
 		r0.name = name
 		log.Printf("gl.GetUniformLocation(%v, %v) %v%v", p, name, r0, errstr)
 	}()
-	s, free := cString(name)
+	s, free := ctx.cString(name)
 	defer free()
 	return Uniform{Value: int32(ctx.enqueue(call{
 		args: fnargs{
@@ -2169,7 +2163,7 @@ func (ctx *context) ShaderSource(s Shader, src string) {
 		errstr := ctx.errDrain()
 		log.Printf("gl.ShaderSource(%v, %v) %v", s, src, errstr)
 	}()
-	strp, free := cStringPtr(src)
+	strp, free := ctx.cStringPtr(src)
 	defer free()
 	ctx.enqueueDebug(call{
 		args: fnargs{
