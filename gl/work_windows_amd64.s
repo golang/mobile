@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+#include "textflag.h"
+
 TEXT ·fixFloat(SB),NOSPLIT,$0-32
 	MOVQ 	x0+0(FP), X0
 	MOVQ	x1+8(FP), X1
