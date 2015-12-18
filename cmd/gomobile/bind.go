@@ -97,10 +97,10 @@ func runBind(cmd *command) error {
 		return err
 	}
 
-	switch buildTarget {
+	switch targetOS {
 	case "android":
 		return goAndroidBind(pkgs, targetArchs)
-	case "ios":
+	case "darwin":
 		// TODO: use targetArchs?
 		return goIOSBind(pkgs)
 	default:

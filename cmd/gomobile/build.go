@@ -106,7 +106,7 @@ func runBuild(cmd *command) (err error) {
 		if err != nil {
 			return err
 		}
-	case "ios":
+	case "darwin":
 		// TODO: use targetArchs?
 		if runtime.GOOS != "darwin" {
 			return fmt.Errorf("-target=ios requires darwin host")
@@ -357,8 +357,12 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 		archs = append(archs, arch)
 	}
 
-	if all {
-		return os, supported, nil
+	targetOS := os
+	if os == "ios" {
+		targetOS = "darwin"
 	}
-	return os, archs, nil
+	if all {
+		return targetOS, supported, nil
+	}
+	return targetOS, archs, nil
 }
