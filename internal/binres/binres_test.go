@@ -5,7 +5,6 @@
 package binres
 
 import (
-	"archive/zip"
 	"bytes"
 	"encoding"
 	"encoding/xml"
@@ -15,6 +14,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"path"
 	"sort"
 	"strings"
 	"testing"
@@ -146,11 +146,11 @@ func retset(xs []string) []string {
 	return fo
 }
 
-type ByNamespace []xml.Attr
+type byNamespace []xml.Attr
 
-func (a ByNamespace) Len() int      { return len(a) }
-func (a ByNamespace) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a ByNamespace) Less(i, j int) bool {
+func (a byNamespace) Len() int      { return len(a) }
+func (a byNamespace) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a byNamespace) Less(i, j int) bool {
 	if a[j].Name.Space == "" {
 		return a[i].Name.Space != ""
 	}
@@ -191,18 +191,18 @@ func TestEncode(t *testing.T) {
 			Space: "",
 			Local: "platformBuildVersionCode",
 		},
-		Value: "10",
+		Value: "15",
 	}
 	bvn := xml.Attr{
 		Name: xml.Name{
 			Space: "",
 			Local: "platformBuildVersionName",
 		},
-		Value: "2.3.3",
+		Value: "4.0.3",
 	}
 	attrs = append(attrs, bvc, bvn)
 
-	sort.Sort(ByNamespace(attrs))
+	sort.Sort(byNamespace(attrs))
 	var names, vals []string
 	for _, attr := range attrs {
 		if strings.HasSuffix(attr.Name.Space, "tools") {
@@ -228,44 +228,41 @@ func TestEncode(t *testing.T) {
 	}
 }
 
-func TestAndroidJar(t *testing.T) {
-	zr, err := zip.OpenReader("/home/daniel/local/android-sdk/platforms/android-10/android.jar")
+func TestOpenTable(t *testing.T) {
+	sdkdir := os.Getenv("ANDROID_HOME")
+	if sdkdir == "" {
+		t.Fatal("ANDROID_HOME env var not set")
+	}
+	tbl, err := OpenTable(path.Join(sdkdir, "platforms/android-15/android.jar"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer zr.Close()
+	if len(tbl.pkgs) == 0 {
+		t.Fatal("failed to decode any resource packages")
+	}
 
-	buf := new(bytes.Buffer)
-	for _, f := range zr.File {
-		if f.Name == "resources.arsc" {
-			rc, err := f.Open()
-			if err != nil {
-				t.Fatal(err)
+	pkg := tbl.pkgs[0]
+
+	t.Log("package name:", pkg.name)
+
+	for i, x := range pkg.typePool.strings {
+		t.Logf("typePool[i=%v]: %s\n", i, x)
+	}
+
+	for i, spec := range pkg.specs {
+		t.Logf("spec[i=%v]: %v %q\n", i, spec.id, pkg.typePool.strings[spec.id-1])
+		for j, typ := range spec.types {
+			t.Logf("\ttype[i=%v]: %v\n", j, typ.id)
+			for k, nt := range typ.entries {
+				if nt == nil { // NoEntry
+					continue
+				}
+				t.Logf("\t\tentry[i=%v]: %v %q\n", k, nt.key, pkg.keyPool.strings[nt.key])
+				if k > 5 {
+					t.Logf("\t\t... truncating output")
+					break
+				}
 			}
-			_, err = io.Copy(buf, rc)
-			if err != nil {
-				t.Fatal(err)
-			}
-			rc.Close()
-			break
 		}
 	}
-	if buf.Len() == 0 {
-		t.Fatal("failed to read resources.arsc")
-	}
-
-	bin := buf.Bytes()
-
-	tbl := &Table{}
-	if err := tbl.UnmarshalBinary(bin); err != nil {
-		t.Fatal(err)
-	}
-
-	t.Logf("%+v\n", tbl.TableHeader)
-	t.Logf("%+v\n", tbl.pool.chunkHeader)
-	for i, x := range tbl.pool.strings[:10] {
-		t.Logf("pool(%v) %s\n", i, x)
-	}
-
-	t.Logf("%+v\n", tbl.pkg)
 }
