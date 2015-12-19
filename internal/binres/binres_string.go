@@ -8,14 +8,14 @@ const (
 	_ResType_name_0 = "ResNullResStringPoolResTableResXML"
 	_ResType_name_1 = "ResXMLStartNamespaceResXMLEndNamespaceResXMLStartElementResXMLEndElementResXMLCharData"
 	_ResType_name_2 = "ResXMLResourceMap"
-	_ResType_name_3 = "ResTablePackageResTableTypeResTableTypeSpec"
+	_ResType_name_3 = "ResTablePackageResTableTypeResTableTypeSpecResTableLibrary"
 )
 
 var (
 	_ResType_index_0 = [...]uint8{7, 20, 28, 34}
 	_ResType_index_1 = [...]uint8{20, 38, 56, 72, 86}
 	_ResType_index_2 = [...]uint8{17}
-	_ResType_index_3 = [...]uint8{15, 27, 43}
+	_ResType_index_3 = [...]uint8{15, 27, 43, 58}
 )
 
 func (i ResType) String() string {
@@ -35,7 +35,7 @@ func (i ResType) String() string {
 		return _ResType_name_1[lo:_ResType_index_1[i]]
 	case i == 384:
 		return _ResType_name_2
-	case 512 <= i && i <= 514:
+	case 512 <= i && i <= 515:
 		i -= 512
 		lo := uint8(0)
 		if i > 0 {

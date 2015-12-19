@@ -50,6 +50,19 @@ import (
 	"fmt"
 )
 
+type ErrWrongType struct {
+	have ResType
+	want []ResType
+}
+
+func errWrongType(have ResType, want ...ResType) ErrWrongType {
+	return ErrWrongType{have, want}
+}
+
+func (err ErrWrongType) Error() string {
+	return fmt.Sprintf("wrong resource type %s, want one of %v", err.have, err.want)
+}
+
 type ResType uint16
 
 func (t ResType) IsSupported() bool {
@@ -59,7 +72,8 @@ func (t ResType) IsSupported() bool {
 		t == ResXMLStartElement || t == ResXMLEndElement ||
 		t == ResXMLCharData ||
 		t == ResXMLResourceMap ||
-		t == ResTable || t == ResTablePackage
+		t == ResTable || t == ResTablePackage ||
+		t == ResTableTypeSpec || t == ResTableType
 }
 
 // explicitly defined for clarity and resolvability with apt source
@@ -80,6 +94,7 @@ const (
 	ResTablePackage  ResType = 0x0200
 	ResTableType     ResType = 0x0201
 	ResTableTypeSpec ResType = 0x0202
+	ResTableLibrary  ResType = 0x0203
 )
 
 var (
@@ -133,6 +148,7 @@ func (hdr chunkHeader) MarshalBinary() ([]byte, error) {
 	if !hdr.typ.IsSupported() {
 		return nil, fmt.Errorf("%s not supported", hdr.typ)
 	}
+
 	bin := make([]byte, 8)
 	putu16(bin, uint16(hdr.typ))
 	putu16(bin[2:], hdr.headerByteSize)
