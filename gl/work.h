@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 #ifdef os_linux
-#include <GLES2/gl2.h>
+#include <GLES2/gl2.h> // install on Ubuntu with: sudo apt-get install libegl1-mesa-dev libgles2-mesa-dev libx11-dev
 #endif
 #ifdef os_ios
 #include <OpenGLES/ES2/glext.h>
