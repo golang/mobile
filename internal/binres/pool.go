@@ -53,101 +53,78 @@ func (pl *Pool) UnmarshalBinary(bin []byte) error {
 		return fmt.Errorf("have type %s, want %s", pl.typ, ResStringPool)
 	}
 
-	nstrings := btou32(bin[8:])
-	pl.strings = make([]string, nstrings)
-
-	nstyles := btou32(bin[12:])
-	pl.styles = make([]*Span, nstyles)
-
+	pl.strings = make([]string, btou32(bin[8:]))
+	pl.styles = make([]*Span, btou32(bin[12:]))
 	pl.flags = btou32(bin[16:])
 
 	offstrings := btou32(bin[20:])
 	offstyle := btou32(bin[24:])
+	hdrlen := 28
 
-	hdrlen := 28 // header size is always 28
 	if pl.IsUTF8() {
 		for i := range pl.strings {
-			ii := btou32(bin[hdrlen+i*4:]) // index of string index
-			r := int(offstrings + ii)      // read index of string
+			offset := int(offstrings + btou32(bin[hdrlen+i*4:]))
 
-			// for char and byte sizes below, if leading bit set,
-			// treat first as 7-bit high word and the next byte as low word.
-
-			// get char size of string
-			cn := uint8(bin[r])
-			rcn := int(cn)
-			r++
-			if cn&(1<<7) != 0 {
-				cn0 := int(cn ^ (1 << 7)) // high word
-				cn1 := int(bin[r])        // low word
-				rcn = cn0*256 + cn1
-				r++
+			// if leading bit set for nchars and nbytes,
+			// treat first byte as 7-bit high word and next as low word.
+			nchars := int(bin[offset])
+			offset++
+			if nchars&(1<<7) != 0 {
+				n0 := nchars ^ (1 << 7) // high word
+				n1 := int(bin[offset])  // low word
+				nchars = n0*(1<<8) + n1
+				offset++
 			}
 
-			// get byte size of string
-			// TODO(d) i've seen at least one case in android.jar resource table that has only
-			// highbit set, effectively making 7-bit highword zero. The reason for this is currently
-			// unknown but would make tests that unmarshal-marshal to match bytes impossible to pass.
+			// TODO(d) At least one case in android.jar (api-10) resource table has only
+			// highbit set, making 7-bit highword zero. The reason for this is currently
+			// unknown but would make tests that unmarshal-marshal to match bytes impossible.
 			// The values noted were high-word: 0 (after highbit unset), low-word: 141
-			// I don't recall character count but was around ?78?
-			// The case here may very well be that the size is treated like int8 triggering the use of
-			// two bytes to store size even though the implementation uses uint8.
-			n := uint8(bin[r])
-			r++
-			rn := int(n)
-			if n&(1<<7) != 0 {
-				n0 := int(n ^ (1 << 7)) // high word
-				n1 := int(bin[r])       // low word
-				rn = n0*(1<<8) + n1
-				r++
+			// The size may be treated as an int8 triggering the use of two bytes to store size
+			// even though the implementation uses uint8.
+			nbytes := int(bin[offset])
+			offset++
+			if nbytes&(1<<7) != 0 {
+				n0 := nbytes ^ (1 << 7) // high word
+				n1 := int(bin[offset])  // low word
+				nbytes = n0*(1<<8) + n1
+				offset++
 			}
 
-			//
-			data := bin[r : r+rn]
-			if x := uint8(bin[r+rn]); x != 0 {
-				return fmt.Errorf("expected zero terminator, got %v for byte size %v char len %v", x, rn, rcn)
+			data := bin[offset : offset+nbytes]
+			if x := uint8(bin[offset+nbytes]); x != 0 {
+				return fmt.Errorf("expected zero terminator, got 0x%02X for nchars=%v nbytes=%v data=%q", x, nchars, nbytes, data)
 			}
 			pl.strings[i] = string(data)
 		}
 	} else {
 		for i := range pl.strings {
-			ii := btou32(bin[hdrlen+i*4:]) // index of string index
-			r := int(offstrings + ii)      // read index of string
-			n := btou16(bin[r:])           // string length
-			rn := int(n)
-			r += 2
+			offset := int(offstrings + btou32(bin[hdrlen+i*4:])) // read index of string
 
-			if n&(1<<15) != 0 { // TODO this is untested
-				n0 := int(n ^ (1 << 15)) // high word
-				n1 := int(btou16(bin[r:]))
-				rn = n0*(1<<16) + n1
-				r += 2
+			// if leading bit set for nchars, treat first byte as 7-bit high word and next as low word.
+			nchars := int(btou16(bin[offset:]))
+			offset += 2
+			if nchars&(1<<15) != 0 { // TODO(d) this is untested
+				n0 := nchars ^ (1 << 15)        // high word
+				n1 := int(btou16(bin[offset:])) // low word
+				nchars = n0*(1<<16) + n1
+				offset += 2
 			}
 
-			data := make([]uint16, int(rn))
+			data := make([]uint16, nchars)
 			for i := range data {
-				data[i] = btou16(bin[r+(2*i):])
+				data[i] = btou16(bin[offset+2*i:])
 			}
 
-			r += int(n * 2)
-			if x := btou16(bin[r:]); x != 0 {
-				return fmt.Errorf("expected zero terminator, got 0x%04X\n%s", x)
+			if x := btou16(bin[offset+nchars*2:]); x != 0 {
+				return fmt.Errorf("expected zero terminator, got 0x%04X for nchars=%v data=%q", x, nchars, data)
 			}
-
 			pl.strings[i] = string(utf16.Decode(data))
 		}
 	}
 
-	// TODO
+	// TODO decode styles
 	_ = offstyle
-	// styii := hdrlen + int(nstrings*4)
-	// for i := range pl.styles {
-	// ii := btou32(bin[styii+i*4:])
-	// r := int(offstyle + ii)
-	// spn := new(binSpan)
-	// spn.UnmarshalBinary(bin[r:])
-	// pl.styles[i] = spn
-	// }
 
 	return nil
 }
