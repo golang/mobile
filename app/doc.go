@@ -15,7 +15,7 @@ on language bindings, see https://golang.org/x/mobile/cmd/gobind.
 The second way is to write an app entirely in Go. The APIs are limited
 to those that are portable between both Android and iOS, in particular
 OpenGL, audio, and other Android NDK-like APIs. An all-Go app should
-use this app package to initialze the app, manage its lifecycle, and
+use this app package to initialize the app, manage its lifecycle, and
 receive events.
 
 Building apps
