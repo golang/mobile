@@ -94,6 +94,10 @@ static void sendTouches(int change, NSSet* touches) {
 - (void)touchesEnded:(NSSet*)touches withEvent:(UIEvent*)event {
 	sendTouches(TOUCH_TYPE_END, touches);
 }
+
+- (void)touchesCanceled:(NSSet*)touches withEvent:(UIEvent*)event {
+    sendTouches(TOUCH_TYPE_END, touches);
+}
 @end
 
 void runApp(void) {
