@@ -38,7 +38,7 @@ type Event struct {
 
 // Size returns the window's size in pixels, at the time this size event was
 // sent.
-func (e *Event) Size() image.Point {
+func (e Event) Size() image.Point {
 	return image.Point{e.WidthPx, e.HeightPx}
 }
 
@@ -47,7 +47,7 @@ func (e *Event) Size() image.Point {
 //
 // The top-left pixel is always (0, 0). The bottom-right pixel is given by the
 // width and height.
-func (e *Event) Bounds() image.Rectangle {
+func (e Event) Bounds() image.Rectangle {
 	return image.Rectangle{Max: image.Point{e.WidthPx, e.HeightPx}}
 }
 
