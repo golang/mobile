@@ -199,14 +199,16 @@ func loadTextures(eng sprite.Engine) []sprite.SubTex {
 	}
 
 	const n = 128
-	// TODO(adg,nigeltao): remove +1's and -1's below once texture bleed issue is fixed
+	// The +1's and -1's in the rectangles below are to prevent colors from
+	// adjacent textures leaking into a given texture.
+	// See: http://stackoverflow.com/questions/19611745/opengl-black-lines-in-between-tiles
 	return []sprite.SubTex{
-		texGopherRun1:  sprite.SubTex{t, image.Rect(n*0, 0, n*1, n)},
-		texGopherRun2:  sprite.SubTex{t, image.Rect(n*1, 0, n*2, n)},
-		texGopherFlap1: sprite.SubTex{t, image.Rect(n*2, 0, n*3, n)},
-		texGopherFlap2: sprite.SubTex{t, image.Rect(n*3, 0, n*4, n)},
-		texGopherDead1: sprite.SubTex{t, image.Rect(n*4, 0, n*5, n)},
-		texGopherDead2: sprite.SubTex{t, image.Rect(n*5, 0, n*6-1, n)},
+		texGopherRun1:  sprite.SubTex{t, image.Rect(n*0+1, 0, n*1-1, n)},
+		texGopherRun2:  sprite.SubTex{t, image.Rect(n*1+1, 0, n*2-1, n)},
+		texGopherFlap1: sprite.SubTex{t, image.Rect(n*2+1, 0, n*3-1, n)},
+		texGopherFlap2: sprite.SubTex{t, image.Rect(n*3+1, 0, n*4-1, n)},
+		texGopherDead1: sprite.SubTex{t, image.Rect(n*4+1, 0, n*5-1, n)},
+		texGopherDead2: sprite.SubTex{t, image.Rect(n*5+1, 0, n*6-1, n)},
 		texGround1:     sprite.SubTex{t, image.Rect(n*6+1, 0, n*7-1, n)},
 		texGround2:     sprite.SubTex{t, image.Rect(n*7+1, 0, n*8-1, n)},
 		texGround3:     sprite.SubTex{t, image.Rect(n*8+1, 0, n*9-1, n)},
@@ -242,7 +244,7 @@ func (g *Game) Press(down bool) {
 func (g *Game) Update(now clock.Time) {
 	if g.gopher.dead && now-g.gopher.deadTime > deadTimeBeforeReset {
 		// Restart if the gopher has been dead for a while.
-		//g.reset()
+		g.reset()
 	}
 
 	// Compute game states up to now.
