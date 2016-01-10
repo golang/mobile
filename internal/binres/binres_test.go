@@ -266,3 +266,26 @@ func TestOpenTable(t *testing.T) {
 		}
 	}
 }
+
+func TestTableRefByName(t *testing.T) {
+	sdkdir := os.Getenv("ANDROID_HOME")
+	if sdkdir == "" {
+		t.Fatal("ANDROID_HOME env var not set")
+	}
+	tbl, err := OpenTable(path.Join(sdkdir, "platforms/android-15/android.jar"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(tbl.pkgs) == 0 {
+		t.Fatal("failed to decode any resource packages")
+	}
+
+	ref, err := tbl.RefByName("@android:style/Theme.NoTitleBar.Fullscreen")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if want := uint32(0x01030007); uint32(ref) != want {
+		t.Fatalf("RefByName does not match expected result, have %0#8x, want %0#8x", ref, want)
+	}
+}
