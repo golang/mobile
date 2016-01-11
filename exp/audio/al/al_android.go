@@ -45,6 +45,10 @@ ALint call_alGetInteger(LPALGETINTEGER fn, ALenum p) {
   return fn(p);
 }
 
+void call_alGetFloatv(LPALGETFLOATV fn, ALenum p, const ALfloat* v) {
+  fn(p, v);
+}
+
 ALfloat call_alGetFloat(LPALGETFLOAT fn, ALenum p) {
   return fn(p);
 }
@@ -181,6 +185,7 @@ var (
 	alIsEnabledFunc            C.LPALISENABLED
 	alGetIntegerFunc           C.LPALGETINTEGER
 	alGetFloatFunc             C.LPALGETFLOAT
+	alGetFloatvFunc            C.LPALGETFLOATV
 	alGetStringFunc            C.LPALGETSTRING
 	alDistanceModelFunc        C.LPALDISTANCEMODEL
 	alDopplerFactorFunc        C.LPALDOPPLERFACTOR
@@ -236,6 +241,7 @@ func initAL() {
 	alIsEnabledFunc = C.LPALISENABLED(fn("alIsEnabled"))
 	alGetIntegerFunc = C.LPALGETINTEGER(fn("alGetInteger"))
 	alGetFloatFunc = C.LPALGETFLOAT(fn("alGetFloat"))
+	alGetFloatvFunc = C.LPALGETFLOATV(fn("alGetFloatv"))
 	alGetStringFunc = C.LPALGETSTRING(fn("alGetString"))
 	alDistanceModelFunc = C.LPALDISTANCEMODEL(fn("alDistanceModel"))
 	alDopplerFactorFunc = C.LPALDOPPLERFACTOR(fn("alDopplerFactor"))
@@ -303,6 +309,10 @@ func alGetInteger(k int) int32 {
 
 func alGetFloat(k int) float32 {
 	return float32(C.call_alGetFloat(alGetFloatFunc, C.ALenum(k)))
+}
+
+func alGetFloatv(k int, v []float32) {
+	C.call_alGetFloatv(alGetFloatvFunc, C.ALenum(k), (*C.ALfloat)(unsafe.Pointer(&v[0])))
 }
 
 func alGetString(v int) string {

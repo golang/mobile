@@ -45,6 +45,10 @@ func alGetFloat(k int) float32 {
 	return float32(C.alGetFloat(C.ALenum(k)))
 }
 
+func alGetFloatv(k int, v []float32) {
+	C.alGetFloatv(C.ALenum(k), (*C.ALfloat)(unsafe.Pointer(&v[0])))
+}
+
 func alGetString(v int) string {
 	value := C.alGetString(C.ALenum(v))
 	return C.GoString((*C.char)(value))
