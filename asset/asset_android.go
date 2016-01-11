@@ -14,7 +14,7 @@ package asset
 // asset_manager is the asset manager of the app.
 AAssetManager* asset_manager;
 
-void asset_manager_init(uintptr_t java_vm, uintptr_t jni_env, uintptr_t ctx) {
+void asset_manager_init(uintptr_t java_vm, uintptr_t jni_env, jobject ctx) {
 	JavaVM* vm = (JavaVM*)java_vm;
 	JNIEnv* env = (JNIEnv*)jni_env;
 
@@ -48,7 +48,7 @@ var assetOnce sync.Once
 
 func assetInit() {
 	err := mobileinit.RunOnJVM(func(vm, env, ctx uintptr) error {
-		C.asset_manager_init(C.uintptr_t(vm), C.uintptr_t(env), C.uintptr_t(ctx))
+		C.asset_manager_init(C.uintptr_t(vm), C.uintptr_t(env), C.jobject(ctx))
 		return nil
 	})
 	if err != nil {
