@@ -13,7 +13,7 @@ package al
 #include <AL/al.h>
 #include <AL/alc.h>
 
-void al_init(uintptr_t java_vm, uintptr_t jni_env, uintptr_t context, void** handle) {
+void al_init(uintptr_t java_vm, uintptr_t jni_env, jobject context, void** handle) {
   JavaVM* vm = (JavaVM*)java_vm;
   JNIEnv* env = (JNIEnv*)jni_env;
 
@@ -221,7 +221,7 @@ var (
 
 func initAL() {
 	err := mobileinit.RunOnJVM(func(vm, env, ctx uintptr) error {
-		C.al_init(C.uintptr_t(vm), C.uintptr_t(env), C.uintptr_t(ctx), &alHandle)
+		C.al_init(C.uintptr_t(vm), C.uintptr_t(env), C.jobject(ctx), &alHandle)
 		if alHandle == nil {
 			return errors.New("al: cannot load libopenal.so")
 		}
