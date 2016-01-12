@@ -7,15 +7,12 @@ package binres
 import (
 	"bytes"
 	"encoding"
-	"encoding/xml"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"math"
 	"os"
 	"path"
-	"sort"
 	"strings"
 	"testing"
 )
@@ -131,32 +128,6 @@ func TestBootstrap(t *testing.T) {
 	checkMarshal(bxml, bxml.size())
 }
 
-func retset(xs []string) []string {
-	m := make(map[string]struct{})
-	fo := xs[:0]
-	for _, x := range xs {
-		if x == "" {
-			continue
-		}
-		if _, ok := m[x]; !ok {
-			m[x] = struct{}{}
-			fo = append(fo, x)
-		}
-	}
-	return fo
-}
-
-type byNamespace []xml.Attr
-
-func (a byNamespace) Len() int      { return len(a) }
-func (a byNamespace) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a byNamespace) Less(i, j int) bool {
-	if a[j].Name.Space == "" {
-		return a[i].Name.Space != ""
-	}
-	return false
-}
-
 // WIP approximation of first steps to be taken to encode manifest
 func TestEncode(t *testing.T) {
 	f, err := os.Open("testdata/bootstrap.xml")
@@ -164,68 +135,83 @@ func TestEncode(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var attrs []xml.Attr
+	bx, err := UnmarshalXML(f)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	dec := xml.NewDecoder(f)
-	for {
-		tkn, err := dec.Token()
-		if err != nil {
-			if err == io.EOF {
+	//
+	bin, err := ioutil.ReadFile("testdata/bootstrap.bin")
+	if err != nil {
+		log.Fatal(err)
+	}
+	bxml := new(XML)
+	if err := bxml.UnmarshalBinary(bin); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := compareStrings(t, bxml.Pool.strings, bx.Pool.strings); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func compareStrings(t *testing.T, a, b []string) error {
+	var err error
+	if len(a) != len(b) {
+		err = fmt.Errorf("lengths do not match")
+	}
+
+	for i, x := range a {
+		v := "__"
+		for j, y := range b {
+			if x == y {
+				v = fmt.Sprintf("%2v", j)
 				break
 			}
-			return
-			// t.Fatal(err)
 		}
-		tkn = xml.CopyToken(tkn)
+		if err == nil && v == "__" {
+			if !strings.HasPrefix(x, "4.0.") {
+				// as of the time of this writing, the current version of build tools being targetted
+				// reports 4.0.4-1406430. Previously, this was 4.0.3. This number is likely still due
+				// to change so only report error if 4.x incremented.
+				//
+				// TODO this check has the potential to hide real errors but can be fixed once more
+				// of the xml document is unmarshalled and XML can be queried to assure this is related
+				// to platformBuildVersionName.
+				err = fmt.Errorf("has missing/incorrect values")
+			}
+		}
+		t.Logf("Pool(%2v, %s) %q", i, v, x)
+	}
 
-		switch tkn := tkn.(type) {
-		case xml.StartElement:
-			attrs = append(attrs, tkn.Attr...)
-		default:
-			// t.Error("unhandled token type", tkn)
+	contains := func(xs []string, a string) bool {
+		for _, x := range xs {
+			if x == a {
+				return true
+			}
+		}
+		return false
+	}
+
+	if err != nil {
+		t.Log()
+		t.Logf("## only in var a")
+		for i, x := range a {
+			if !contains(b, x) {
+				t.Logf("Pool(%2v) %q", i, x)
+			}
+		}
+
+		t.Log()
+		t.Logf("## only in var b")
+		for i, x := range b {
+			if !contains(a, x) {
+				t.Logf("Pool(%2v) %q", i, x)
+			}
 		}
 	}
 
-	bvc := xml.Attr{
-		Name: xml.Name{
-			Space: "",
-			Local: "platformBuildVersionCode",
-		},
-		Value: "15",
-	}
-	bvn := xml.Attr{
-		Name: xml.Name{
-			Space: "",
-			Local: "platformBuildVersionName",
-		},
-		Value: "4.0.3",
-	}
-	attrs = append(attrs, bvc, bvn)
-
-	sort.Sort(byNamespace(attrs))
-	var names, vals []string
-	for _, attr := range attrs {
-		if strings.HasSuffix(attr.Name.Space, "tools") {
-			continue
-		}
-		names = append(names, attr.Name.Local)
-		vals = append(vals, attr.Value)
-	}
-
-	var all []string
-	all = append(all, names...)
-	all = append(all, vals...)
-
-	// do not eliminate duplicates until the entire slice has been composed.
-	// consider <activity android:label="label" .../>
-	// all attribute names come first followed by values; in such a case, the value "label"
-	// would be a reference to the same "android:label" in the string pool which will occur
-	// within the beginning of the pool where other attr names are located.
-	pl := new(Pool)
-	for _, x := range retset(all) {
-		pl.strings = append(pl.strings, x)
-		// t.Logf("Pool(%v) %q\n", i, x)
-	}
+	return err
 }
 
 func TestOpenTable(t *testing.T) {
@@ -287,5 +273,25 @@ func TestTableRefByName(t *testing.T) {
 
 	if want := uint32(0x01030007); uint32(ref) != want {
 		t.Fatalf("RefByName does not match expected result, have %0#8x, want %0#8x", ref, want)
+	}
+}
+
+func BenchmarkTableRefByName(b *testing.B) {
+	sdkdir := os.Getenv("ANDROID_HOME")
+	if sdkdir == "" {
+		b.Fatal("ANDROID_HOME env var not set")
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		tbl, err := OpenTable(path.Join(sdkdir, "platforms/android-15/android.jar"))
+		if err != nil {
+			b.Fatal(err)
+		}
+		_, err = tbl.RefByName("@android:style/Theme.NoTitleBar.Fullscreen")
+		if err != nil {
+			b.Fatal(err)
+		}
 	}
 }
