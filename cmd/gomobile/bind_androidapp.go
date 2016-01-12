@@ -110,54 +110,18 @@ func goAndroidBind(pkgs []*build.Package, androidArchs []string) error {
 			}
 		}
 
-		dst := filepath.Join(androidDir, "src/main/java/go/LoadJNI.java")
-		genLoadJNI := func(w io.Writer) error {
-			_, err := io.WriteString(w, loadSrc)
-			return err
-		}
-		if err := writeFile(dst, genLoadJNI); err != nil {
-			return err
-		}
-
-		src := filepath.Join(repo, "bind/java/Seq.java")
-		dst = filepath.Join(androidDir, "src/main/java/go/Seq.java")
-		rm(dst)
-		if err := symlink(src, dst); err != nil {
-			return err
+		for _, javaFile := range []string{"Seq.java", "LoadJNI.java"} {
+			src := filepath.Join(repo, "bind/java/"+javaFile)
+			dst := filepath.Join(androidDir, "src/main/java/go/"+javaFile)
+			rm(dst)
+			if err := symlink(src, dst); err != nil {
+				return err
+			}
 		}
 	}
 
 	return buildAAR(androidDir, pkgs, androidArchs)
 }
-
-var loadSrc = `package go;
-
-import android.app.Application;
-import android.content.Context;
-
-import java.util.logging.Logger;
-
-public class LoadJNI {
-	private static Logger log = Logger.getLogger("GoLoadJNI");
-
-	public static final Object ctx;
-
-	static {
-		System.loadLibrary("gojni");
-
-		Object androidCtx = null;
-		try {
-			// TODO(hyangah): check proguard rule.
-			Application appl = (Application)Class.forName("android.app.AppGlobals").getMethod("getInitialApplication").invoke(null);
-			androidCtx = appl.getApplicationContext();
-		} catch (Exception e) {
-                        log.warning("Global context not found: " + e);
-		} finally {
-			ctx = androidCtx;
-		}
-	}
-}
-`
 
 var androidMainTmpl = template.Must(template.New("android.go").Parse(`
 package main
