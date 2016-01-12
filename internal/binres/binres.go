@@ -47,20 +47,16 @@ package binres
 import (
 	"encoding"
 	"encoding/binary"
+	"encoding/xml"
 	"fmt"
+	"io"
+	"os"
+	"path"
+	"unicode"
 )
 
-type ErrWrongType struct {
-	have ResType
-	want []ResType
-}
-
-func errWrongType(have ResType, want ...ResType) ErrWrongType {
-	return ErrWrongType{have, want}
-}
-
-func (err ErrWrongType) Error() string {
-	return fmt.Sprintf("wrong resource type %s, want one of %v", err.have, err.want)
+func errWrongType(have ResType, want ...ResType) error {
+	return fmt.Errorf("wrong resource type %s, want one of %v", have, want)
 }
 
 type ResType uint16
@@ -114,9 +110,6 @@ type unmarshaler interface {
 }
 
 // chunkHeader appears at the front of every data chunk in a resource.
-// TODO look into removing this, it's not necessary for marshalling and
-// the information provided may possibly be given more simply. For unmarshal,
-// a simple function would do.
 type chunkHeader struct {
 	// Type of data that follows this header.
 	typ ResType
@@ -141,6 +134,9 @@ func (hdr *chunkHeader) UnmarshalBinary(bin []byte) error {
 	}
 	hdr.headerByteSize = btou16(bin[2:])
 	hdr.byteSize = btou32(bin[4:])
+	if len(bin) < int(hdr.byteSize) {
+		return fmt.Errorf("too few bytes to unmarshal chunk body, have %v, need at-least %v", len(bin), hdr.byteSize)
+	}
 	return nil
 }
 
@@ -165,7 +161,7 @@ type XML struct {
 	Namespace *Namespace
 	Children  []*Element
 
-	// tmp field used when unmarshalling
+	// tmp field used when unmarshalling binary
 	stack []*Element
 }
 
@@ -173,6 +169,218 @@ type XML struct {
 // current XML.UnmarshalBinary implementation. Look into moving directly
 // into tests.
 var debugIndices = make(map[encoding.BinaryMarshaler]int)
+
+const (
+	androidSchema = "http://schemas.android.com/apk/res/android"
+	toolsSchema   = "http://schemas.android.com/tools"
+)
+
+type xattr struct {
+	xml.Attr
+	bool
+}
+
+type xnode struct {
+	name  xml.Name
+	attrs []xattr
+	cdata []string
+}
+
+func UnmarshalXML(r io.Reader) (*XML, error) {
+	sdkdir := os.Getenv("ANDROID_HOME")
+	if sdkdir == "" {
+		return nil, fmt.Errorf("ANDROID_HOME env var not set")
+	}
+	tbl, err := OpenTable(path.Join(sdkdir, "platforms/android-15/android.jar"))
+	if err != nil {
+		return nil, err
+	}
+
+	var nodes []xnode
+
+	dec := xml.NewDecoder(r)
+	bx := new(XML)
+
+	for {
+		tkn, err := dec.Token()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, err
+		}
+		tkn = xml.CopyToken(tkn)
+
+		switch tkn := tkn.(type) {
+		case xml.StartElement:
+			nodes = append(nodes, xnode{name: tkn.Name})
+
+			for _, attr := range tkn.Attr {
+				if attr.Name.Space == toolsSchema || (attr.Name.Space == "xmlns" && attr.Name.Local == "tools") {
+					continue // TODO can tbl be queried for schemas to determine validity instead?
+				}
+
+				att := xattr{attr, false}
+				if attr.Name.Space == "" || attr.Name.Space == "xmlns" {
+					att.bool = true
+				} else if attr.Name.Space == androidSchema {
+					// get type spec and value data type
+					ref, err := tbl.RefByName("attr/" + attr.Name.Local)
+					if err != nil {
+						return nil, err
+					}
+					nt, err := ref.Resolve(tbl)
+					if err != nil {
+						return nil, err
+					}
+					if len(nt.values) == 0 {
+						// TODO don't know if this can happen
+						panic("TODO don't know how to handle empty values slice")
+					}
+
+					if len(nt.values) == 1 {
+						val := nt.values[0]
+						if val.data.Type != DataIntDec {
+							panic("TODO only know how to handle DataIntDec type here")
+						}
+						t := DataType(val.data.Value)
+						switch t {
+						case DataString, DataAttribute, DataType(0x3e):
+							// TODO identify 0x3e, in bootstrap.xml this is the native lib name
+							// TODO why DataAttribute? confirm details of usage
+							att.bool = true
+						default:
+							// TODO resolve other data types
+							// fmt.Printf("unhandled data type %0#4x: %s\n", uint32(t), t)
+						}
+					} else { // attribute value must resolve to one of the values here
+						// TODO resolve reference values and assure they match list of values here
+					}
+				}
+				nodes[len(nodes)-1].attrs = append(nodes[len(nodes)-1].attrs, att)
+			}
+		case xml.CharData:
+			if s := poolTrim(string(tkn)); s != "" {
+				nodes[len(nodes)-1].cdata = append(nodes[len(nodes)-1].cdata, s)
+			}
+		case xml.EndElement, xml.Comment, xml.ProcInst:
+			// discard
+		default:
+			panic(fmt.Errorf("unhandled token type: %T %+v", tkn, tkn))
+		}
+	}
+
+	bvc := xml.Attr{
+		Name: xml.Name{
+			Space: "",
+			Local: "platformBuildVersionCode",
+		},
+		Value: "15",
+	}
+	bvn := xml.Attr{
+		Name: xml.Name{
+			Space: "",
+			Local: "platformBuildVersionName",
+		},
+		Value: "4.0.3",
+	}
+	nodes[0].attrs = append(nodes[0].attrs, xattr{bvc, true}, xattr{bvn, true})
+
+	// pools appear to be sorted as follows:
+	// * attribute names prefixed with android:
+	// * "android", [schema-url], [empty-string]
+	// * for each node:
+	//   * attribute names with no prefix
+	//   * node name
+	//   * attribute value if data type of name is DataString, DataAttribute, or 0x3e (an unknown)
+	bx.Pool = new(Pool)
+
+	for _, node := range nodes {
+		for _, attr := range node.attrs {
+			if attr.Name.Space == androidSchema {
+				bx.Pool.strings = append(bx.Pool.strings, attr.Name.Local)
+			}
+		}
+	}
+
+	// TODO encoding/xml does not enforce namespace prefix and manifest encoding in aapt
+	// appears to ignore all other prefixes. Inserting this manually is not strictly correct
+	// for the general case, but the effort to do otherwise currently offers nothing.
+	bx.Pool.strings = append(bx.Pool.strings, "android", androidSchema)
+
+	// there always appears to be an empty string located after schema, even if one is
+	// not present in manifest.
+	bx.Pool.strings = append(bx.Pool.strings, "")
+
+	for _, node := range nodes {
+		for _, attr := range node.attrs {
+			if attr.Name.Space == "" {
+				bx.Pool.strings = append(bx.Pool.strings, attr.Name.Local)
+			}
+		}
+		bx.Pool.strings = append(bx.Pool.strings, node.name.Local)
+		for _, attr := range node.attrs {
+			if attr.bool {
+				bx.Pool.strings = append(bx.Pool.strings, attr.Value)
+			}
+		}
+		for _, x := range node.cdata {
+			bx.Pool.strings = append(bx.Pool.strings, x)
+		}
+	}
+
+	// do not eliminate duplicates until the entire slice has been composed.
+	// consider <activity android:label="label" .../>
+	// all attribute names come first followed by values; in such a case, the value "label"
+	// would be a reference to the same "android:label" in the string pool which will occur
+	// within the beginning of the pool where other attr names are located.
+	bx.Pool.strings = asSet(bx.Pool.strings)
+
+	return bx, nil
+}
+
+// asSet returns a set from a slice of strings.
+func asSet(xs []string) []string {
+	m := make(map[string]bool)
+	fo := xs[:0]
+	for _, x := range xs {
+		if !m[x] {
+			m[x] = true
+			fo = append(fo, x)
+		}
+	}
+	return fo
+}
+
+// poolTrim trims all but immediately surrounding space.
+// \n\t\tfoobar\n\t\t becomes \tfoobar\n
+func poolTrim(s string) string {
+	var start, end int
+	for i, r := range s {
+		if !unicode.IsSpace(r) {
+			if i != 0 {
+				start = i - 1 // preserve preceding space
+			}
+			break
+		}
+	}
+
+	for i := len(s) - 1; i >= 0; i-- {
+		r := rune(s[i])
+		if !unicode.IsSpace(r) {
+			if i != len(s)-1 {
+				end = i + 2
+			}
+			break
+		}
+	}
+
+	if start == 0 && end == 0 {
+		return "" // every char was a space
+	}
+
+	return s[start:end]
+}
 
 func (bx *XML) UnmarshalBinary(bin []byte) error {
 	buf := bin
@@ -249,7 +457,7 @@ func (bx *XML) kind(t ResType) (unmarshaler, error) {
 		}
 		el.end = new(ElementEnd)
 		return el.end, nil
-	case ResXMLCharData: // TODO
+	case ResXMLCharData: // TODO assure correctness
 		cdt := new(CharData)
 		el := bx.stack[len(bx.stack)-1]
 		if el.head == nil {
