@@ -17,26 +17,33 @@ const (
 // PoolRef is the i'th string in a pool.
 type PoolRef uint32
 
+// Pool is a container for string and style span collections.
+//
 // Pool has the following structure marshalled:
+// 	chunkHeader
+//  uint32 number of strings in this pool
+//  uint32 number of style spans in pool
+//  uint32 SortedFlag, UTF8Flag
+//  uint32 index of string data from header
+//  uint32 index of style data from header
+//  []uint32 string indices starting at zero
+//  []uint16 or []uint8 concatenation of string entries
 //
-// 	binChunkHeader
-//  StringCount  uint32 // Number of strings in this pool
-//  StyleCount   uint32 // Number of style spans in pool
-//  Flags        uint32 // SortedFlag, UTF8Flag
-//  StringsStart uint32 // Index of string data from header
-//  StylesStart  uint32 // Index of style data from header
+// UTF-16 entries are as follows:
+//  uint16 string length, exclusive
+//  uint16 [optional] low word if high bit of length set
+//  [n]byte data
+//  uint16 0x0000 terminator
 //
-//  StringIndices []uint32 // starting at zero
-//
-//  // UTF16 entries are concatenations of the following:
-//  // [2]byte uint16 string length, exclusive
-//  // [2]byte [optional] low word if high bit of length was set
-//  // [n]byte data
-//  // [2]byte 0x0000 terminator
-//  Strings []uint16
+// UTF-8 entries are as follows:
+//  uint8 character length, exclusive
+//  uint8 [optional] low word if high bit of character length set
+//  uint8 byte length, exclusive
+//  uint8 [optional] low word if high bit of byte length set
+//  [n]byte data
+//  uint8 0x00 terminator
 type Pool struct {
 	chunkHeader
-
 	strings []string
 	styles  []*Span
 	flags   uint32 // SortedFlag, UTF8Flag

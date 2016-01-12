@@ -81,11 +81,11 @@ type Element struct {
 	head, tail *CharData
 }
 
-func (el *Element) UnmarshalBinary(bin []byte) error {
-	if err := (&el.NodeHeader).UnmarshalBinary(bin); err != nil {
+func (el *Element) UnmarshalBinary(buf []byte) error {
+	if err := (&el.NodeHeader).UnmarshalBinary(buf); err != nil {
 		return err
 	}
-	buf := bin[el.headerByteSize:] // 16
+	buf = buf[el.headerByteSize:]
 	el.NS = PoolRef(btou32(buf))
 	el.Name = PoolRef(btou32(buf[4:]))
 	el.AttributeStart = btou16(buf[8:])
