@@ -10,8 +10,9 @@ public abstract class Try {
     private Try() {} // uninstantiable
     
     public static String This() {
-        go.Seq _in = new go.Seq();
-        go.Seq _out = new go.Seq();
+        go.Seq _in = null;
+        go.Seq _out = null;
+        _out = new go.Seq();
         String _result;
         Seq.send(DESCRIPTOR, CALL_This, _in, _out);
         _result = _out.readString();
