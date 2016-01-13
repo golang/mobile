@@ -231,7 +231,7 @@ func TestEncode(t *testing.T) {
 func TestOpenTable(t *testing.T) {
 	sdkdir := os.Getenv("ANDROID_HOME")
 	if sdkdir == "" {
-		t.Fatal("ANDROID_HOME env var not set")
+		t.Skip("ANDROID_HOME env var not set")
 	}
 	tbl, err := OpenTable(path.Join(sdkdir, "platforms/android-15/android.jar"))
 	if err != nil {
@@ -270,7 +270,7 @@ func TestOpenTable(t *testing.T) {
 func TestTableRefByName(t *testing.T) {
 	sdkdir := os.Getenv("ANDROID_HOME")
 	if sdkdir == "" {
-		t.Fatal("ANDROID_HOME env var not set")
+		t.Skip("ANDROID_HOME env var not set")
 	}
 	tbl, err := OpenTable(path.Join(sdkdir, "platforms/android-15/android.jar"))
 	if err != nil {
