@@ -11,180 +11,156 @@ public abstract class Vars {
     
     public static void setABool(boolean v) {
         Seq in = new Seq();
-        Seq out = new Seq();
         in.writeBool(v);
-        Seq.send("vars.ABool", 1, in, out);
+        Seq.send("vars.ABool", 1, in, null);
     }
     
     public static boolean getABool() {
-        Seq in = new Seq();
         Seq out = new Seq();
-        Seq.send("vars.ABool", 2, in, out);
+        Seq.send("vars.ABool", 2, null, out);
         boolean v = out.readBool();
         return v;
     }
     
     public static void setAFloat(double v) {
         Seq in = new Seq();
-        Seq out = new Seq();
         in.writeFloat64(v);
-        Seq.send("vars.AFloat", 1, in, out);
+        Seq.send("vars.AFloat", 1, in, null);
     }
     
     public static double getAFloat() {
-        Seq in = new Seq();
         Seq out = new Seq();
-        Seq.send("vars.AFloat", 2, in, out);
+        Seq.send("vars.AFloat", 2, null, out);
         double v = out.readFloat64();
         return v;
     }
     
     public static void setAFloat32(float v) {
         Seq in = new Seq();
-        Seq out = new Seq();
         in.writeFloat32(v);
-        Seq.send("vars.AFloat32", 1, in, out);
+        Seq.send("vars.AFloat32", 1, in, null);
     }
     
     public static float getAFloat32() {
-        Seq in = new Seq();
         Seq out = new Seq();
-        Seq.send("vars.AFloat32", 2, in, out);
+        Seq.send("vars.AFloat32", 2, null, out);
         float v = out.readFloat32();
         return v;
     }
     
     public static void setAFloat64(double v) {
         Seq in = new Seq();
-        Seq out = new Seq();
         in.writeFloat64(v);
-        Seq.send("vars.AFloat64", 1, in, out);
+        Seq.send("vars.AFloat64", 1, in, null);
     }
     
     public static double getAFloat64() {
-        Seq in = new Seq();
         Seq out = new Seq();
-        Seq.send("vars.AFloat64", 2, in, out);
+        Seq.send("vars.AFloat64", 2, null, out);
         double v = out.readFloat64();
         return v;
     }
     
     public static void setAString(String v) {
         Seq in = new Seq();
-        Seq out = new Seq();
         in.writeString(v);
-        Seq.send("vars.AString", 1, in, out);
+        Seq.send("vars.AString", 1, in, null);
     }
     
     public static String getAString() {
-        Seq in = new Seq();
         Seq out = new Seq();
-        Seq.send("vars.AString", 2, in, out);
+        Seq.send("vars.AString", 2, null, out);
         String v = out.readString();
         return v;
     }
     
     public static void setAStructPtr(S v) {
         Seq in = new Seq();
-        Seq out = new Seq();
         in.writeRef(v.ref());
-        Seq.send("vars.AStructPtr", 1, in, out);
+        Seq.send("vars.AStructPtr", 1, in, null);
     }
     
     public static S getAStructPtr() {
-        Seq in = new Seq();
         Seq out = new Seq();
-        Seq.send("vars.AStructPtr", 2, in, out);
+        Seq.send("vars.AStructPtr", 2, null, out);
         S v = new S(out.readRef());
         return v;
     }
     
     public static void setAnInt(long v) {
         Seq in = new Seq();
-        Seq out = new Seq();
         in.writeInt(v);
-        Seq.send("vars.AnInt", 1, in, out);
+        Seq.send("vars.AnInt", 1, in, null);
     }
     
     public static long getAnInt() {
-        Seq in = new Seq();
         Seq out = new Seq();
-        Seq.send("vars.AnInt", 2, in, out);
+        Seq.send("vars.AnInt", 2, null, out);
         long v = out.readInt();
         return v;
     }
     
     public static void setAnInt16(short v) {
         Seq in = new Seq();
-        Seq out = new Seq();
         in.writeInt16(v);
-        Seq.send("vars.AnInt16", 1, in, out);
+        Seq.send("vars.AnInt16", 1, in, null);
     }
     
     public static short getAnInt16() {
-        Seq in = new Seq();
         Seq out = new Seq();
-        Seq.send("vars.AnInt16", 2, in, out);
+        Seq.send("vars.AnInt16", 2, null, out);
         short v = out.readInt16();
         return v;
     }
     
     public static void setAnInt32(int v) {
         Seq in = new Seq();
-        Seq out = new Seq();
         in.writeInt32(v);
-        Seq.send("vars.AnInt32", 1, in, out);
+        Seq.send("vars.AnInt32", 1, in, null);
     }
     
     public static int getAnInt32() {
-        Seq in = new Seq();
         Seq out = new Seq();
-        Seq.send("vars.AnInt32", 2, in, out);
+        Seq.send("vars.AnInt32", 2, null, out);
         int v = out.readInt32();
         return v;
     }
     
     public static void setAnInt64(long v) {
         Seq in = new Seq();
-        Seq out = new Seq();
         in.writeInt64(v);
-        Seq.send("vars.AnInt64", 1, in, out);
+        Seq.send("vars.AnInt64", 1, in, null);
     }
     
     public static long getAnInt64() {
-        Seq in = new Seq();
         Seq out = new Seq();
-        Seq.send("vars.AnInt64", 2, in, out);
+        Seq.send("vars.AnInt64", 2, null, out);
         long v = out.readInt64();
         return v;
     }
     
     public static void setAnInt8(byte v) {
         Seq in = new Seq();
-        Seq out = new Seq();
         in.writeInt8(v);
-        Seq.send("vars.AnInt8", 1, in, out);
+        Seq.send("vars.AnInt8", 1, in, null);
     }
     
     public static byte getAnInt8() {
-        Seq in = new Seq();
         Seq out = new Seq();
-        Seq.send("vars.AnInt8", 2, in, out);
+        Seq.send("vars.AnInt8", 2, null, out);
         byte v = out.readInt8();
         return v;
     }
     
     public static void setAnInterface(I v) {
         Seq in = new Seq();
-        Seq out = new Seq();
         in.writeRef(v.ref());
-        Seq.send("vars.AnInterface", 1, in, out);
+        Seq.send("vars.AnInterface", 1, in, null);
     }
     
     public static I getAnInterface() {
-        Seq in = new Seq();
         Seq out = new Seq();
-        Seq.send("vars.AnInterface", 2, in, out);
+        Seq.send("vars.AnInterface", 2, null, out);
         I v = new I.Proxy(out.readRef());
         return v;
     }

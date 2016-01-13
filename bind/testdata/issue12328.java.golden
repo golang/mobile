@@ -34,10 +34,9 @@ public abstract class Issue12328 {
         
         public void setErr(String v) {
             Seq in = new Seq();
-            Seq out = new Seq();
             in.writeRef(ref);
             in.writeString(v);
-            Seq.send(DESCRIPTOR, FIELD_Err_SET, in, out);
+            Seq.send(DESCRIPTOR, FIELD_Err_SET, in, null);
         }
         
         @Override public boolean equals(Object o) {

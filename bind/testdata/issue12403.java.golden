@@ -65,9 +65,11 @@ public abstract class Issue12403 {
             }
         
             public String FromJSON(String jstr) {
-                go.Seq _in = new go.Seq();
-                go.Seq _out = new go.Seq();
+                go.Seq _in = null;
+                go.Seq _out = null;
+                _out = new go.Seq();
                 String _result;
+                _in = new go.Seq();
                 _in.writeRef(ref);
                 _in.writeString(jstr);
                 Seq.send(DESCRIPTOR, CALL_FromJSON, _in, _out);
@@ -76,9 +78,11 @@ public abstract class Issue12403 {
             }
             
             public String ToJSON() throws Exception {
-                go.Seq _in = new go.Seq();
-                go.Seq _out = new go.Seq();
+                go.Seq _in = null;
+                go.Seq _out = null;
+                _out = new go.Seq();
                 String _result;
+                _in = new go.Seq();
                 _in.writeRef(ref);
                 Seq.send(DESCRIPTOR, CALL_ToJSON, _in, _out);
                 _result = _out.readString();

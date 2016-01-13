@@ -10,9 +10,11 @@ public abstract class Interfaces {
     private Interfaces() {} // uninstantiable
     
     public static int Add3(I r) {
-        go.Seq _in = new go.Seq();
-        go.Seq _out = new go.Seq();
+        go.Seq _in = null;
+        go.Seq _out = null;
+        _out = new go.Seq();
         int _result;
+        _in = new go.Seq();
         _in.writeRef(r.ref());
         Seq.send(DESCRIPTOR, CALL_Add3, _in, _out);
         _result = _out.readInt32();
@@ -20,8 +22,10 @@ public abstract class Interfaces {
     }
     
     public static void CallErr(Error e) throws Exception {
-        go.Seq _in = new go.Seq();
-        go.Seq _out = new go.Seq();
+        go.Seq _in = null;
+        go.Seq _out = null;
+        _out = new go.Seq();
+        _in = new go.Seq();
         _in.writeRef(e.ref());
         Seq.send(DESCRIPTOR, CALL_CallErr, _in, _out);
         String _err = _out.readString();
@@ -74,8 +78,10 @@ public abstract class Interfaces {
             }
         
             public void Err() throws Exception {
-                go.Seq _in = new go.Seq();
-                go.Seq _out = new go.Seq();
+                go.Seq _in = null;
+                go.Seq _out = null;
+                _out = new go.Seq();
+                _in = new go.Seq();
                 _in.writeRef(ref);
                 Seq.send(DESCRIPTOR, CALL_Err, _in, _out);
                 String _err = _out.readString();
@@ -128,9 +134,11 @@ public abstract class Interfaces {
             }
         
             public int Rand() {
-                go.Seq _in = new go.Seq();
-                go.Seq _out = new go.Seq();
+                go.Seq _in = null;
+                go.Seq _out = null;
+                _out = new go.Seq();
                 int _result;
+                _in = new go.Seq();
                 _in.writeRef(ref);
                 Seq.send(DESCRIPTOR, CALL_Rand, _in, _out);
                 _result = _out.readInt32();
@@ -158,8 +166,9 @@ public abstract class Interfaces {
             }
         
             public void J() {
-                go.Seq _in = new go.Seq();
-                go.Seq _out = new go.Seq();
+                go.Seq _in = null;
+                go.Seq _out = null;
+                _in = new go.Seq();
                 _in.writeRef(ref);
                 Seq.send(DESCRIPTOR, CALL_J, _in, _out);
             }
@@ -185,8 +194,9 @@ public abstract class Interfaces {
             }
         
             public void G() {
-                go.Seq _in = new go.Seq();
-                go.Seq _out = new go.Seq();
+                go.Seq _in = null;
+                go.Seq _out = null;
+                _in = new go.Seq();
                 _in.writeRef(ref);
                 Seq.send(DESCRIPTOR, CALL_G, _in, _out);
             }
@@ -235,9 +245,11 @@ public abstract class Interfaces {
             }
         
             public I1 F() {
-                go.Seq _in = new go.Seq();
-                go.Seq _out = new go.Seq();
+                go.Seq _in = null;
+                go.Seq _out = null;
+                _out = new go.Seq();
                 I1 _result;
+                _in = new go.Seq();
                 _in.writeRef(ref);
                 Seq.send(DESCRIPTOR, CALL_F, _in, _out);
                 _result = new I1.Proxy(_out.readRef());
@@ -249,8 +261,9 @@ public abstract class Interfaces {
     }
     
     public static I Seven() {
-        go.Seq _in = new go.Seq();
-        go.Seq _out = new go.Seq();
+        go.Seq _in = null;
+        go.Seq _out = null;
+        _out = new go.Seq();
         I _result;
         Seq.send(DESCRIPTOR, CALL_Seven, _in, _out);
         _result = new I.Proxy(_out.readRef());
@@ -298,8 +311,9 @@ public abstract class Interfaces {
             }
         
             public void HasParam(boolean p0) {
-                go.Seq _in = new go.Seq();
-                go.Seq _out = new go.Seq();
+                go.Seq _in = null;
+                go.Seq _out = null;
+                _in = new go.Seq();
                 _in.writeRef(ref);
                 _in.writeBool(p0);
                 Seq.send(DESCRIPTOR, CALL_HasParam, _in, _out);
