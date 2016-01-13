@@ -233,15 +233,15 @@ func (spn *Span) UnmarshalBinary(bin []byte) error {
 // is also the same i'th element of the string pool.
 type Map struct {
 	chunkHeader
-	rs []uint32
+	rs []TableRef
 }
 
 func (m *Map) UnmarshalBinary(bin []byte) error {
 	(&m.chunkHeader).UnmarshalBinary(bin)
 	buf := bin[m.headerByteSize:m.byteSize]
-	m.rs = make([]uint32, len(buf)/4)
+	m.rs = make([]TableRef, len(buf)/4)
 	for i := range m.rs {
-		m.rs[i] = btou32(buf[i*4:])
+		m.rs[i] = TableRef(btou32(buf[i*4:]))
 	}
 	return nil
 }
@@ -254,7 +254,7 @@ func (m *Map) MarshalBinary() ([]byte, error) {
 	}
 	copy(bin, b)
 	for i, r := range m.rs {
-		putu32(bin[8+i*4:], r)
+		putu32(bin[8+i*4:], uint32(r))
 	}
 	return bin, nil
 }

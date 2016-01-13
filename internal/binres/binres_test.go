@@ -128,7 +128,6 @@ func TestBootstrap(t *testing.T) {
 	checkMarshal(bxml, bxml.size())
 }
 
-// WIP approximation of first steps to be taken to encode manifest
 func TestEncode(t *testing.T) {
 	f, err := os.Open("testdata/bootstrap.xml")
 	if err != nil {
@@ -153,6 +152,50 @@ func TestEncode(t *testing.T) {
 	if err := compareStrings(t, bxml.Pool.strings, bx.Pool.strings); err != nil {
 		t.Fatal(err)
 	}
+
+	if err := compareUint32s(t, rtou(bxml.Map.rs), rtou(bx.Map.rs)); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func rtou(a []TableRef) (b []uint32) {
+	for _, x := range a {
+		b = append(b, uint32(x))
+	}
+	return
+}
+
+func compareUint32s(t *testing.T, a, b []uint32) error {
+	var err error
+	if len(a) != len(b) {
+		err = fmt.Errorf("lengths do not match")
+	}
+
+	n := len(a)
+	if n < len(b) {
+		n = len(b)
+	}
+
+	t.Log("a.Map.rs    b.Map.rs")
+	for i := 0; i < n; i++ {
+		var c, d string
+		if i < len(a) {
+			c = fmt.Sprintf("%0#8x ", a[i])
+		} else {
+			c = "__________"
+		}
+		if i < len(b) {
+			d = fmt.Sprintf("%0#8x ", b[i])
+		} else {
+			d = "__________"
+		}
+		if err == nil && c != d {
+			err = fmt.Errorf("has missing/incorrect values")
+		}
+		t.Log(c, d)
+	}
+
+	return err
 }
 
 func compareStrings(t *testing.T, a, b []string) error {
