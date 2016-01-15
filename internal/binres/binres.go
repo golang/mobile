@@ -50,8 +50,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"os"
-	"path"
 	"unicode"
 )
 
@@ -187,11 +185,7 @@ type xnode struct {
 }
 
 func UnmarshalXML(r io.Reader) (*XML, error) {
-	sdkdir := os.Getenv("ANDROID_HOME")
-	if sdkdir == "" {
-		return nil, fmt.Errorf("ANDROID_HOME env var not set")
-	}
-	tbl, err := OpenTable(path.Join(sdkdir, "platforms/android-15/android.jar"))
+	tbl, err := OpenTable()
 	if err != nil {
 		return nil, err
 	}
