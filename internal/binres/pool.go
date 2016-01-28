@@ -17,6 +17,11 @@ const (
 // PoolRef is the i'th string in a pool.
 type PoolRef uint32
 
+// Resolve returns the string entry of PoolRef in pl.
+func (ref PoolRef) Resolve(pl *Pool) string {
+	return pl.strings[ref]
+}
+
 // Pool is a container for string and style span collections.
 //
 // Pool has the following structure marshalled:
@@ -47,6 +52,17 @@ type Pool struct {
 	strings []string
 	styles  []*Span
 	flags   uint32 // SortedFlag, UTF8Flag
+}
+
+// ref returns the PoolRef of s, inserting s if it doesn't exist.
+func (pl *Pool) ref(s string) PoolRef {
+	for i, x := range pl.strings {
+		if s == x {
+			return PoolRef(i)
+		}
+	}
+	pl.strings = append(pl.strings, s)
+	return PoolRef(len(pl.strings) - 1)
 }
 
 func (pl *Pool) IsSorted() bool { return pl.flags&SortedFlag == SortedFlag }

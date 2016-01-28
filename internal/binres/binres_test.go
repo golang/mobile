@@ -13,11 +13,15 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 )
 
 func printrecurse(t *testing.T, pl *Pool, el *Element, ws string) {
+
+	t.Logf("%s+elem:ns(%v) name(%s)", ws, el.NS, el.Name.Resolve(pl))
+
 	for _, attr := range el.attrs {
 		ns := ""
 		if attr.NS != math.MaxUint32 {
@@ -27,14 +31,14 @@ func printrecurse(t *testing.T, pl *Pool, el *Element, ws string) {
 		}
 
 		val := ""
-		if attr.RawValue != math.MaxUint32 {
+		if attr.RawValue != NoEntry {
 			val = pl.strings[int(attr.RawValue)]
 		} else {
 			switch attr.TypedValue.Type {
 			case DataIntDec:
 				val = fmt.Sprintf("%v", attr.TypedValue.Value)
 			case DataIntBool:
-				val = fmt.Sprintf("%v", attr.TypedValue.Value == 1)
+				val = fmt.Sprintf("%v", attr.TypedValue.Value == 0xFFFFFFFF)
 			default:
 				val = fmt.Sprintf("0x%08X", attr.TypedValue.Value)
 			}
@@ -43,9 +47,9 @@ func printrecurse(t *testing.T, pl *Pool, el *Element, ws string) {
 
 		t.Logf("%s|attr:ns(%v) name(%s) val(%s) valtyp(%s)\n", ws, ns, pl.strings[int(attr.Name)], val, dt)
 	}
-	t.Log()
+	t.Logf("\n")
 	for _, e := range el.Children {
-		printrecurse(t, pl, e, ws+"        ")
+		printrecurse(t, pl, e, ws+"  ")
 	}
 }
 
@@ -150,11 +154,23 @@ func TestEncode(t *testing.T) {
 	}
 
 	if err := compareStrings(t, bxml.Pool.strings, bx.Pool.strings); err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
 
 	if err := compareUint32s(t, rtou(bxml.Map.rs), rtou(bx.Map.rs)); err != nil {
-		t.Fatal(err)
+		t.Error(err)
+	}
+
+	if !reflect.DeepEqual(bxml.Namespace, bx.Namespace) {
+		t.Errorf("Namespace doesn't match, have %+v, want %+v", bx.Namespace, bxml.Namespace)
+	}
+
+	if !reflect.DeepEqual(bxml.Children, bx.Children) {
+		t.Error("Children don't match")
+	}
+
+	for _, el := range bx.Children {
+		printrecurse(t, bx.Pool, el, "")
 	}
 }
 
@@ -176,23 +192,28 @@ func compareUint32s(t *testing.T, a, b []uint32) error {
 		n = len(b)
 	}
 
-	t.Log("a.Map.rs    b.Map.rs")
+	var buf bytes.Buffer
+	buf.WriteString("a.Map.rs    b.Map.rs\n")
 	for i := 0; i < n; i++ {
 		var c, d string
 		if i < len(a) {
 			c = fmt.Sprintf("%0#8x ", a[i])
 		} else {
-			c = "__________"
+			c = "__________ "
 		}
 		if i < len(b) {
 			d = fmt.Sprintf("%0#8x ", b[i])
 		} else {
-			d = "__________"
+			d = "__________ "
 		}
 		if err == nil && c != d {
 			err = fmt.Errorf("has missing/incorrect values")
 		}
-		t.Log(c, d)
+		buf.WriteString(c + " " + d + "\n")
+	}
+
+	if err != nil {
+		err = fmt.Errorf("%s\n%s", err, buf.String())
 	}
 
 	return err
@@ -203,6 +224,8 @@ func compareStrings(t *testing.T, a, b []string) error {
 	if len(a) != len(b) {
 		err = fmt.Errorf("lengths do not match")
 	}
+
+	buf := new(bytes.Buffer)
 
 	for i, x := range a {
 		v := "__"
@@ -224,7 +247,7 @@ func compareStrings(t *testing.T, a, b []string) error {
 				err = fmt.Errorf("has missing/incorrect values")
 			}
 		}
-		t.Logf("Pool(%2v, %s) %q", i, v, x)
+		fmt.Fprintf(buf, "Pool(%2v, %s) %q\n", i, v, x)
 	}
 
 	contains := func(xs []string, a string) bool {
@@ -237,21 +260,23 @@ func compareStrings(t *testing.T, a, b []string) error {
 	}
 
 	if err != nil {
-		t.Log()
-		t.Logf("## only in var a")
+		buf.WriteString("\n## only in var a\n")
 		for i, x := range a {
 			if !contains(b, x) {
-				t.Logf("Pool(%2v) %q", i, x)
+				fmt.Fprintf(buf, "Pool(%2v) %q\n", i, x)
 			}
 		}
 
-		t.Log()
-		t.Logf("## only in var b")
+		buf.WriteString("\n## only in var b\n")
 		for i, x := range b {
 			if !contains(a, x) {
-				t.Logf("Pool(%2v) %q", i, x)
+				fmt.Fprintf(buf, "Pool(%2v) %q\n", i, x)
 			}
 		}
+	}
+
+	if err != nil {
+		err = fmt.Errorf("%s\n%s", err, buf.String())
 	}
 
 	return err
@@ -301,7 +326,7 @@ func TestTableRefByName(t *testing.T) {
 	if sdkdir == "" {
 		t.Skip("ANDROID_HOME env var not set")
 	}
-	tbl, err := OpenTable()
+	tbl, err := OpenSDKTable()
 	if err != nil {
 		t.Fatal(err)
 	}
