@@ -50,6 +50,9 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"sort"
+	"strconv"
+	"strings"
 	"unicode"
 )
 
@@ -178,7 +181,9 @@ type xattr struct {
 	bool
 }
 
+// TODO remove once table can be sorted correctly
 type xnode struct {
+	line  uint32
 	name  xml.Name
 	attrs []xattr
 	cdata []string
@@ -192,10 +197,15 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 
 	var nodes []xnode
 
-	dec := xml.NewDecoder(r)
+	lr := &lineReader{r: r}
+	dec := xml.NewDecoder(lr)
 	bx := new(XML)
 
+	// temporary pool to resolve real poolref later
+	pool := new(Pool)
+
 	for {
+		line := lr.line(dec.InputOffset())
 		tkn, err := dec.Token()
 		if err != nil {
 			if err == io.EOF {
@@ -207,17 +217,90 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 
 		switch tkn := tkn.(type) {
 		case xml.StartElement:
-			nodes = append(nodes, xnode{name: tkn.Name})
+			nodes = append(nodes, xnode{line: uint32(line), name: tkn.Name})
+
+			el := &Element{
+				NodeHeader: NodeHeader{
+					LineNumber: uint32(line),
+					Comment:    0xFFFFFFFF,
+				},
+				NS:   NoEntry,
+				Name: pool.ref(tkn.Name.Local),
+			}
+			if len(bx.stack) == 0 {
+				bx.Children = append(bx.Children, el)
+			} else {
+				n := len(bx.stack)
+				var p *Element
+				p, bx.stack = bx.stack[n-1], bx.stack[:n-1]
+				p.Children = append(p.Children, el)
+				bx.stack = append(bx.stack, p)
+			}
+			bx.stack = append(bx.stack, el)
+
+			if tkn.Name.Local == "manifest" {
+				tkn.Attr = append(tkn.Attr,
+					xml.Attr{
+						Name: xml.Name{
+							Space: "",
+							Local: "platformBuildVersionCode",
+						},
+						Value: "15",
+					},
+					xml.Attr{
+						Name: xml.Name{
+							Space: "",
+							Local: "platformBuildVersionName",
+						},
+						Value: "4.0.3",
+					})
+			}
 
 			for _, attr := range tkn.Attr {
-				if attr.Name.Space == toolsSchema || (attr.Name.Space == "xmlns" && attr.Name.Local == "tools") {
+				if (attr.Name.Space == "xmlns" && attr.Name.Local == "tools") || attr.Name.Space == toolsSchema {
 					continue // TODO can tbl be queried for schemas to determine validity instead?
 				}
 
+				if attr.Name.Space == "xmlns" && attr.Name.Local == "android" {
+					if bx.Namespace != nil {
+						return nil, fmt.Errorf("multiple declarations of xmlns:android encountered")
+					}
+					bx.Namespace = &Namespace{
+						NodeHeader: NodeHeader{
+							LineNumber: uint32(line),
+							Comment:    NoEntry,
+						},
+						prefix: 0,
+						uri:    0,
+					}
+					continue
+				}
+
+				nattr := &Attribute{
+					NS:       pool.ref(attr.Name.Space),
+					Name:     pool.ref(attr.Name.Local),
+					RawValue: NoEntry,
+				}
+				el.attrs = append(el.attrs, nattr)
+
 				att := xattr{attr, false}
-				if attr.Name.Space == "" || attr.Name.Space == "xmlns" {
-					att.bool = true
-				} else if attr.Name.Space == androidSchema {
+				if attr.Name.Space == "" {
+					// TODO it's unclear how to query these
+					switch attr.Name.Local {
+					case "package", "platformBuildVersionName":
+						nattr.RawValue = pool.ref(attr.Value)
+						nattr.TypedValue.Type = DataString
+					case "platformBuildVersionCode":
+						nattr.TypedValue.Type = DataIntDec
+						i, err := strconv.Atoi(attr.Value)
+						if err != nil {
+							return nil, err
+						}
+						nattr.TypedValue.Value = uint32(i)
+					default:
+						return nil, fmt.Errorf("unknown attribute lacking namespace %q", attr.Name.Local)
+					}
+				} else {
 					// get type spec and value data type
 					ref, err := tbl.RefByName("attr/" + attr.Name.Local)
 					if err != nil {
@@ -228,8 +311,7 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 						return nil, err
 					}
 					if len(nt.values) == 0 {
-						// TODO don't know if this can happen
-						panic("TODO don't know how to handle empty values slice")
+						panic("encountered empty values slice")
 					}
 
 					if len(nt.values) == 1 {
@@ -237,18 +319,84 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 						if val.data.Type != DataIntDec {
 							panic("TODO only know how to handle DataIntDec type here")
 						}
+
 						t := DataType(val.data.Value)
 						switch t {
 						case DataString, DataAttribute, DataType(0x3e):
 							// TODO identify 0x3e, in bootstrap.xml this is the native lib name
-							// TODO why DataAttribute? confirm details of usage
 							att.bool = true
+							nattr.RawValue = pool.ref(attr.Value)
+							nattr.TypedValue.Type = DataString
+						case DataIntBool, DataType(0x08):
+							nattr.TypedValue.Type = DataIntBool
+							switch attr.Value {
+							case "true":
+								nattr.TypedValue.Value = 0xFFFFFFFF
+							case "false":
+								nattr.TypedValue.Value = 0
+							default:
+								return nil, fmt.Errorf("invalid bool value %q", attr.Value)
+							}
+						case DataIntDec, DataFloat, DataFraction:
+							// TODO DataFraction needs it's own case statement. minSdkVersion identifies as DataFraction
+							// but has accepted input in the past such as android:minSdkVersion="L"
+							// Other use-cases for DataFraction are currently unknown as applicable to manifest generation
+							// but this provides minimum support for writing out minSdkVersion="15" correctly.
+							nattr.TypedValue.Type = DataIntDec
+							i, err := strconv.Atoi(attr.Value)
+							if err != nil {
+								return nil, err
+							}
+							nattr.TypedValue.Value = uint32(i)
+						case DataReference:
+							nattr.TypedValue.Type = DataReference
+							dref, err := tbl.RefByName(attr.Value)
+							if err != nil {
+								return nil, err
+							}
+							nattr.TypedValue.Value = uint32(dref)
 						default:
-							// TODO resolve other data types
-							// fmt.Printf("unhandled data type %0#4x: %s\n", uint32(t), t)
+							return nil, fmt.Errorf("unhandled data type %0#2x: %s", uint8(t), t)
 						}
-					} else { // attribute value must resolve to one of the values here
-						// TODO resolve reference values and assure they match list of values here
+					} else {
+						// 0x01000000 is an unknown ref that doesn't point to anything, typically
+						// located at the start of entry value lists, peek at last value to determine type.
+						t := nt.values[len(nt.values)-1].data.Type
+						switch t {
+						case DataIntDec:
+							for _, val := range nt.values {
+								if val.name == 0x01000000 {
+									continue
+								}
+								nr, err := val.name.Resolve(tbl)
+								if err != nil {
+									return nil, err
+								}
+								if attr.Value == nr.key.Resolve(tbl.pkgs[0].keyPool) { // TODO hard-coded pkg ref
+									nattr.TypedValue = *val.data
+									break
+								}
+							}
+						case DataIntHex:
+							nattr.TypedValue.Type = t
+							for _, x := range strings.Split(attr.Value, "|") {
+								for _, val := range nt.values {
+									if val.name == 0x01000000 {
+										continue
+									}
+									nr, err := val.name.Resolve(tbl)
+									if err != nil {
+										return nil, err
+									}
+									if x == nr.key.Resolve(tbl.pkgs[0].keyPool) { // TODO hard-coded pkg ref
+										nattr.TypedValue.Value |= val.data.Value
+										break
+									}
+								}
+							}
+						default:
+							return nil, fmt.Errorf("unhandled data type for configuration %0#2x: %s", uint8(t), t)
+						}
 					}
 				}
 				nodes[len(nodes)-1].attrs = append(nodes[len(nodes)-1].attrs, att)
@@ -257,7 +405,15 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 			if s := poolTrim(string(tkn)); s != "" {
 				nodes[len(nodes)-1].cdata = append(nodes[len(nodes)-1].cdata, s)
 			}
-		case xml.EndElement, xml.Comment, xml.ProcInst:
+		case xml.EndElement:
+			n := len(bx.stack)
+			var el *Element
+			el, bx.stack = bx.stack[n-1], bx.stack[:n-1]
+			if el.end != nil {
+				return nil, fmt.Errorf("element end already exists")
+			}
+			el.end = new(ElementEnd)
+		case xml.Comment, xml.ProcInst:
 			// discard
 		default:
 			panic(fmt.Errorf("unhandled token type: %T %+v", tkn, tkn))
@@ -339,6 +495,31 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 			break // break after first non-ref as all strings after are also non-refs.
 		}
 		bx.Map.rs = append(bx.Map.rs, ref)
+	}
+
+	// resolve tmp pool refs to final pool refs
+	// TODO drop this in favor of sort directly on Table
+	var resolve func(el *Element)
+	resolve = func(el *Element) {
+		if el.NS != NoEntry {
+			el.NS = bx.Pool.ref(el.NS.Resolve(pool))
+		}
+		el.Name = bx.Pool.ref(el.Name.Resolve(pool))
+		for _, attr := range el.attrs {
+			if attr.NS != NoEntry {
+				attr.NS = bx.Pool.ref(attr.NS.Resolve(pool))
+			}
+			attr.Name = bx.Pool.ref(attr.Name.Resolve(pool))
+			if attr.RawValue != NoEntry {
+				attr.RawValue = bx.Pool.ref(attr.RawValue.Resolve(pool))
+			}
+		}
+		for _, child := range el.Children {
+			resolve(child)
+		}
+	}
+	for _, el := range bx.Children {
+		resolve(el)
 	}
 
 	return bx, nil
@@ -568,4 +749,27 @@ func iterElementsRecurse(el *Element, ch chan *Element) {
 	for _, e := range el.Children {
 		iterElementsRecurse(e, ch)
 	}
+}
+
+type lineReader struct {
+	off   int64
+	lines []int64
+	r     io.Reader
+}
+
+func (r *lineReader) Read(p []byte) (n int, err error) {
+	n, err = r.r.Read(p)
+	for i := 0; i < n; i++ {
+		if p[i] == '\n' {
+			r.lines = append(r.lines, r.off+int64(i))
+		}
+	}
+	r.off += int64(n)
+	return n, err
+}
+
+func (r *lineReader) line(pos int64) int {
+	return sort.Search(len(r.lines), func(i int) bool {
+		return pos < r.lines[i]
+	}) + 1
 }
