@@ -34,9 +34,9 @@ typedef struct pinned {
 // function call performance, but the goal is to start simple.
 typedef struct mem {
 	uint8_t *buf;
-	uint32_t off;
-	uint32_t len;
-	uint32_t cap;
+	size_t off;
+	size_t len;
+	size_t cap;
 
 	// TODO(hyangah): have it as a separate field outside mem?
 	pinned* pinned;
