@@ -176,26 +176,11 @@ const (
 	toolsSchema   = "http://schemas.android.com/tools"
 )
 
-type xattr struct {
-	xml.Attr
-	bool
-}
-
-// TODO remove once table can be sorted correctly
-type xnode struct {
-	line  uint32
-	name  xml.Name
-	attrs []xattr
-	cdata []string
-}
-
 func UnmarshalXML(r io.Reader) (*XML, error) {
 	tbl, err := OpenTable()
 	if err != nil {
 		return nil, err
 	}
-
-	var nodes []xnode
 
 	lr := &lineReader{r: r}
 	dec := xml.NewDecoder(lr)
@@ -217,8 +202,6 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 
 		switch tkn := tkn.(type) {
 		case xml.StartElement:
-			nodes = append(nodes, xnode{line: uint32(line), name: tkn.Name})
-
 			el := &Element{
 				NodeHeader: NodeHeader{
 					LineNumber: uint32(line),
@@ -283,13 +266,9 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 				}
 				el.attrs = append(el.attrs, nattr)
 
-				att := xattr{attr, false}
 				if attr.Name.Space == "" {
 					// TODO it's unclear how to query these
 					switch attr.Name.Local {
-					case "package", "platformBuildVersionName":
-						nattr.RawValue = pool.ref(attr.Value)
-						nattr.TypedValue.Type = DataString
 					case "platformBuildVersionCode":
 						nattr.TypedValue.Type = DataIntDec
 						i, err := strconv.Atoi(attr.Value)
@@ -297,8 +276,9 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 							return nil, err
 						}
 						nattr.TypedValue.Value = uint32(i)
-					default:
-						return nil, fmt.Errorf("unknown attribute lacking namespace %q", attr.Name.Local)
+					default: // "package", "platformBuildVersionName", and any invalid
+						nattr.RawValue = pool.ref(attr.Value)
+						nattr.TypedValue.Type = DataString
 					}
 				} else {
 					// get type spec and value data type
@@ -324,7 +304,6 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 						switch t {
 						case DataString, DataAttribute, DataType(0x3e):
 							// TODO identify 0x3e, in bootstrap.xml this is the native lib name
-							att.bool = true
 							nattr.RawValue = pool.ref(attr.Value)
 							nattr.TypedValue.Type = DataString
 						case DataIntBool, DataType(0x08):
@@ -399,11 +378,24 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 						}
 					}
 				}
-				nodes[len(nodes)-1].attrs = append(nodes[len(nodes)-1].attrs, att)
 			}
 		case xml.CharData:
 			if s := poolTrim(string(tkn)); s != "" {
-				nodes[len(nodes)-1].cdata = append(nodes[len(nodes)-1].cdata, s)
+				cdt := &CharData{
+					NodeHeader: NodeHeader{
+						LineNumber: uint32(line),
+						Comment:    NoEntry,
+					},
+					RawData: pool.ref(s),
+				}
+				el := bx.stack[len(bx.stack)-1]
+				if el.head == nil {
+					el.head = cdt
+				} else if el.tail == nil {
+					el.tail = cdt
+				} else {
+					return nil, fmt.Errorf("element head and tail already contain chardata")
+				}
 			}
 		case xml.EndElement:
 			n := len(bx.stack)
@@ -420,22 +412,6 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 		}
 	}
 
-	bvc := xml.Attr{
-		Name: xml.Name{
-			Space: "",
-			Local: "platformBuildVersionCode",
-		},
-		Value: "15",
-	}
-	bvn := xml.Attr{
-		Name: xml.Name{
-			Space: "",
-			Local: "platformBuildVersionName",
-		},
-		Value: "4.0.3",
-	}
-	nodes[0].attrs = append(nodes[0].attrs, xattr{bvc, true}, xattr{bvn, true})
-
 	// pools appear to be sorted as follows:
 	// * attribute names prefixed with android:
 	// * "android", [schema-url], [empty-string]
@@ -445,12 +421,19 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 	//   * attribute value if data type of name is DataString, DataAttribute, or 0x3e (an unknown)
 	bx.Pool = new(Pool)
 
-	for _, node := range nodes {
-		for _, attr := range node.attrs {
-			if attr.Name.Space == androidSchema {
-				bx.Pool.strings = append(bx.Pool.strings, attr.Name.Local)
+	var arecurse func(*Element)
+	arecurse = func(el *Element) {
+		for _, attr := range el.attrs {
+			if attr.NS.Resolve(pool) == androidSchema {
+				bx.Pool.strings = append(bx.Pool.strings, attr.Name.Resolve(pool))
 			}
 		}
+		for _, child := range el.Children {
+			arecurse(child)
+		}
+	}
+	for _, el := range bx.Children {
+		arecurse(el)
 	}
 
 	// TODO encoding/xml does not enforce namespace prefix and manifest encoding in aapt
@@ -462,21 +445,37 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 	// not present in manifest.
 	bx.Pool.strings = append(bx.Pool.strings, "")
 
-	for _, node := range nodes {
-		for _, attr := range node.attrs {
-			if attr.Name.Space == "" {
-				bx.Pool.strings = append(bx.Pool.strings, attr.Name.Local)
+	var brecurse func(*Element)
+	brecurse = func(el *Element) {
+		for _, attr := range el.attrs {
+			if attr.NS.Resolve(pool) == "" {
+				bx.Pool.strings = append(bx.Pool.strings, attr.Name.Resolve(pool))
 			}
 		}
-		bx.Pool.strings = append(bx.Pool.strings, node.name.Local)
-		for _, attr := range node.attrs {
-			if attr.bool {
-				bx.Pool.strings = append(bx.Pool.strings, attr.Value)
+
+		bx.Pool.strings = append(bx.Pool.strings, el.Name.Resolve(pool))
+
+		for _, attr := range el.attrs {
+			if attr.RawValue != NoEntry {
+				bx.Pool.strings = append(bx.Pool.strings, attr.RawValue.Resolve(pool))
+			} else if attr.NS.Resolve(pool) == "" {
+				bx.Pool.strings = append(bx.Pool.strings, fmt.Sprintf("%+v", attr.TypedValue.Value))
 			}
 		}
-		for _, x := range node.cdata {
-			bx.Pool.strings = append(bx.Pool.strings, x)
+
+		if el.head != nil {
+			bx.Pool.strings = append(bx.Pool.strings, el.head.RawData.Resolve(pool))
 		}
+		if el.tail != nil {
+			bx.Pool.strings = append(bx.Pool.strings, el.tail.RawData.Resolve(pool))
+		}
+
+		for _, child := range el.Children {
+			brecurse(child)
+		}
+	}
+	for _, el := range bx.Children {
+		brecurse(el)
 	}
 
 	// do not eliminate duplicates until the entire slice has been composed.
@@ -522,50 +521,20 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 		resolve(el)
 	}
 
+	var asort func(*Element)
+	asort = func(el *Element) {
+		sort.Sort(byType(el.attrs))
+		// sort.Sort(byName(el.attrs))
+		sort.Sort(byNamespace(el.attrs))
+		for _, child := range el.Children {
+			asort(child)
+		}
+	}
+	for _, el := range bx.Children {
+		asort(el)
+	}
+
 	return bx, nil
-}
-
-// asSet returns a set from a slice of strings.
-func asSet(xs []string) []string {
-	m := make(map[string]bool)
-	fo := xs[:0]
-	for _, x := range xs {
-		if !m[x] {
-			m[x] = true
-			fo = append(fo, x)
-		}
-	}
-	return fo
-}
-
-// poolTrim trims all but immediately surrounding space.
-// \n\t\tfoobar\n\t\t becomes \tfoobar\n
-func poolTrim(s string) string {
-	var start, end int
-	for i, r := range s {
-		if !unicode.IsSpace(r) {
-			if i != 0 {
-				start = i - 1 // preserve preceding space
-			}
-			break
-		}
-	}
-
-	for i := len(s) - 1; i >= 0; i-- {
-		r := rune(s[i])
-		if !unicode.IsSpace(r) {
-			if i != len(s)-1 {
-				end = i + 2
-			}
-			break
-		}
-	}
-
-	if start == 0 && end == 0 {
-		return "" // every char was a space
-	}
-
-	return s[start:end]
 }
 
 func (bx *XML) UnmarshalBinary(bin []byte) error {
@@ -750,6 +719,78 @@ func iterElementsRecurse(el *Element, ch chan *Element) {
 		iterElementsRecurse(e, ch)
 	}
 }
+
+// asSet returns a set from a slice of strings.
+func asSet(xs []string) []string {
+	m := make(map[string]bool)
+	fo := xs[:0]
+	for _, x := range xs {
+		if !m[x] {
+			m[x] = true
+			fo = append(fo, x)
+		}
+	}
+	return fo
+}
+
+// poolTrim trims all but immediately surrounding space.
+// \n\t\tfoobar\n\t\t becomes \tfoobar\n
+func poolTrim(s string) string {
+	var start, end int
+	for i, r := range s {
+		if !unicode.IsSpace(r) {
+			if i != 0 {
+				start = i - 1 // preserve preceding space
+			}
+			break
+		}
+	}
+
+	for i := len(s) - 1; i >= 0; i-- {
+		r := rune(s[i])
+		if !unicode.IsSpace(r) {
+			if i != len(s)-1 {
+				end = i + 2
+			}
+			break
+		}
+	}
+
+	if start == 0 && end == 0 {
+		return "" // every char was a space
+	}
+
+	return s[start:end]
+}
+
+// byNamespace sorts attributes based on string pool position of namespace.
+// Given that "android" always preceeds "" in the pool, this results in the
+// correct ordering of attributes.
+type byNamespace []*Attribute
+
+func (a byNamespace) Len() int { return len(a) }
+func (a byNamespace) Less(i, j int) bool {
+	return a[i].NS < a[j].NS
+}
+func (a byNamespace) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+
+// byType sorts attributes by the uint8 value of the type.
+type byType []*Attribute
+
+func (a byType) Len() int { return len(a) }
+func (a byType) Less(i, j int) bool {
+	return a[i].TypedValue.Type < a[j].TypedValue.Type
+}
+func (a byType) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+
+// byName sorts attributes that have matching types based on string pool position of name.
+type byName []*Attribute
+
+func (a byName) Len() int { return len(a) }
+func (a byName) Less(i, j int) bool {
+	return a[i].TypedValue.Type == a[j].TypedValue.Type && a[i].Name < a[j].Name
+}
+func (a byName) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 
 type lineReader struct {
 	off   int64
