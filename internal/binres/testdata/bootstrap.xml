@@ -12,10 +12,16 @@ license that can be found in the LICENSE file.
 	xmlns:tools="http://schemas.android.com/tools">
 
 	<uses-sdk android:minSdkVersion="9" />
+
+	<uses-permission android:name="android.permission.INTERNET" />
+
 	<application
 			android:label="Balloon世界"
+			android:allowBackup="true"
 			android:hasCode="false"
+			foo="bar"
 			android:debuggable="true"
+      baz="bar"
 			tools:strict="label">
 	<activity android:name="android.app.NativeActivity"
 		android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
