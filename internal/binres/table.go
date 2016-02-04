@@ -687,7 +687,7 @@ func (d *Data) UnmarshalBinary(bin []byte) error {
 
 func (d *Data) MarshalBinary() ([]byte, error) {
 	bin := make([]byte, 8)
-	putu16(bin, d.ByteSize)
+	putu16(bin, 8)
 	bin[2] = byte(d.Res0)
 	bin[3] = byte(d.Type)
 	putu32(bin[4:], d.Value)

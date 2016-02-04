@@ -13,7 +13,6 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"testing"
 )
@@ -51,6 +50,53 @@ func printrecurse(t *testing.T, pl *Pool, el *Element, ws string) {
 	for _, e := range el.Children {
 		printrecurse(t, pl, e, ws+"  ")
 	}
+}
+
+func compareBytes(a, b []byte) error {
+	if bytes.Equal(a, b) {
+		return nil
+	}
+	buf := new(bytes.Buffer)
+	x, y := len(a), len(b)
+	if x != y {
+		fmt.Fprintf(buf, "byte length does not match, have %v, want %v\n", y, x)
+	}
+	if x > y {
+		x, y = y, x
+	}
+	mismatch := false
+	for i := 0; i < x; i++ {
+		if mismatch = a[i] != b[i]; mismatch {
+			fmt.Fprintf(buf, "first byte mismatch at %v\n", i)
+			break
+		}
+	}
+	if mismatch {
+		// print out a reasonable amount of data to help identify issues
+		truncate := x > 3300
+		if truncate {
+			x = 3300
+		}
+		buf.WriteString("      HAVE               WANT\n")
+		for i := 0; i < x; i += 4 {
+			he, we := 4, 4
+			if i+he >= x {
+				he = x - i
+			}
+			if i+we >= y {
+				we = y - i
+			}
+			notequal := ""
+			if !bytes.Equal(b[i:i+he], a[i:i+we]) {
+				notequal = "***"
+			}
+			fmt.Fprintf(buf, "%3v | % X        % X    %s\n", i, b[i:i+he], a[i:i+we], notequal)
+		}
+		if truncate {
+			fmt.Fprint(buf, "... output truncated.\n")
+		}
+	}
+	return fmt.Errorf(buf.String())
 }
 
 func TestBootstrap(t *testing.T) {
@@ -143,7 +189,6 @@ func TestEncode(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	//
 	bin, err := ioutil.ReadFile("testdata/bootstrap.bin")
 	if err != nil {
 		log.Fatal(err)
@@ -161,17 +206,75 @@ func TestEncode(t *testing.T) {
 		t.Error(err)
 	}
 
-	if !reflect.DeepEqual(bxml.Namespace, bx.Namespace) {
-		t.Errorf("Namespace doesn't match, have %+v, want %+v", bx.Namespace, bxml.Namespace)
+	if err := compareNamespaces(bx.Namespace, bxml.Namespace); err != nil {
+		t.Error(err)
 	}
 
-	if !reflect.DeepEqual(bxml.Children, bx.Children) {
-		t.Error("Children don't match")
+	if err := compareElements(bx, bxml); err != nil {
+		t.Fatal(err)
 	}
 
-	for _, el := range bx.Children {
-		printrecurse(t, bx.Pool, el, "")
+	have, err := bx.MarshalBinary()
+	if err != nil {
+		t.Fatal(err)
 	}
+	if err := compareBytes(bin, have); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func compareElements(have, want *XML) error {
+	h, w := have.iterElements(), want.iterElements()
+	buf := new(bytes.Buffer)
+	for {
+		a, b := <-h, <-w
+		if a == nil || b == nil {
+			break
+		}
+		if a.NS != b.NS ||
+			a.Name != b.Name {
+			return fmt.Errorf("elements don't match, have %+v, want %+v", a, b)
+		}
+		if a.end.NS != b.end.NS ||
+			a.end.Name != b.end.Name {
+			return fmt.Errorf("element ends don't match, have %+v, want %+v", a.end, b.end)
+		}
+		if len(a.attrs) != len(b.attrs) {
+			return fmt.Errorf("element attribute lengths don't match, have %v, want %v", len(a.attrs), len(b.attrs))
+		}
+
+		for i, attr := range a.attrs {
+			bttr := b.attrs[i]
+			if attr.NS != bttr.NS ||
+				attr.Name != bttr.Name ||
+				attr.RawValue != bttr.RawValue ||
+				attr.TypedValue.Type != bttr.TypedValue.Type ||
+				attr.TypedValue.Value != bttr.TypedValue.Value {
+				fmt.Fprintf(buf, "attrs don't match\nhave: %+v\nwant: %+v\n", attr, bttr)
+			}
+		}
+		if buf.Len() > 0 {
+			buf.WriteString("-------------\n")
+		}
+	}
+	if buf.Len() > 0 {
+		return fmt.Errorf(buf.String())
+	}
+	return nil
+}
+
+func compareNamespaces(have, want *Namespace) error {
+	if have == nil || want == nil ||
+		have.LineNumber != want.LineNumber ||
+		have.Comment != want.Comment ||
+		have.prefix != want.prefix ||
+		have.uri != want.uri {
+		return fmt.Errorf("namespaces don't match, have %+v, want %+v", have, want)
+	}
+	if have.end != nil || want.end != nil {
+		return compareNamespaces(have.end, want.end)
+	}
+	return nil
 }
 
 func rtou(a []TableRef) (b []uint32) {

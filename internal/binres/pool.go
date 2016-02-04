@@ -215,6 +215,7 @@ func (pl *Pool) MarshalBinary() ([]byte, error) {
 		putu32(buf, x)
 		buf = buf[4:]
 	}
+
 	for _, x := range strs {
 		putu16(buf, x)
 		buf = buf[2:]
@@ -263,7 +264,10 @@ func (m *Map) UnmarshalBinary(bin []byte) error {
 }
 
 func (m *Map) MarshalBinary() ([]byte, error) {
-	bin := make([]byte, 8+len(m.rs)*4)
+	m.typ = ResXMLResourceMap
+	m.headerByteSize = 8
+	m.byteSize = uint32(m.headerByteSize) + uint32(len(m.rs)*4)
+	bin := make([]byte, m.byteSize)
 	b, err := m.chunkHeader.MarshalBinary()
 	if err != nil {
 		return nil, err

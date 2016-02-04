@@ -11,7 +11,7 @@ license that can be found in the LICENSE file.
 	android:versionName=""
 	xmlns:tools="http://schemas.android.com/tools">
 
-	<uses-sdk android:minSdkVersion="9" />
+	<uses-sdk android:minSdkVersion="15" />
 
 	<uses-permission android:name="android.permission.INTERNET" />
 
@@ -21,7 +21,7 @@ license that can be found in the LICENSE file.
 			android:hasCode="false"
 			foo="bar"
 			android:debuggable="true"
-      baz="bar"
+			baz="bar"
 			tools:strict="label">
 	<activity android:name="android.app.NativeActivity"
 		android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
