@@ -63,14 +63,7 @@ func errWrongType(have ResType, want ...ResType) error {
 type ResType uint16
 
 func (t ResType) IsSupported() bool {
-	// explicit for clarity
-	return t == ResStringPool || t == ResXML ||
-		t == ResXMLStartNamespace || t == ResXMLEndNamespace ||
-		t == ResXMLStartElement || t == ResXMLEndElement ||
-		t == ResXMLCharData ||
-		t == ResXMLResourceMap ||
-		t == ResTable || t == ResTablePackage ||
-		t == ResTableTypeSpec || t == ResTableType
+	return t != ResNull
 }
 
 // explicitly defined for clarity and resolvability with apt source
@@ -235,7 +228,7 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 							Space: "",
 							Local: "platformBuildVersionName",
 						},
-						Value: "4.0.3",
+						Value: "4.0.4-1406430",
 					})
 			}
 
@@ -267,6 +260,7 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 				el.attrs = append(el.attrs, nattr)
 
 				if attr.Name.Space == "" {
+					nattr.NS = NoEntry
 					// TODO it's unclear how to query these
 					switch attr.Name.Local {
 					case "platformBuildVersionCode":
@@ -306,6 +300,7 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 							// TODO identify 0x3e, in bootstrap.xml this is the native lib name
 							nattr.RawValue = pool.ref(attr.Value)
 							nattr.TypedValue.Type = DataString
+							nattr.TypedValue.Value = uint32(nattr.RawValue)
 						case DataIntBool, DataType(0x08):
 							nattr.TypedValue.Type = DataIntBool
 							switch attr.Value {
@@ -398,13 +393,30 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 				}
 			}
 		case xml.EndElement:
+			if tkn.Name.Local == "manifest" {
+				bx.Namespace.end = &Namespace{
+					NodeHeader: NodeHeader{
+						LineNumber: uint32(line),
+						Comment:    NoEntry,
+					},
+					prefix: 0,
+					uri:    0,
+				}
+			}
 			n := len(bx.stack)
 			var el *Element
 			el, bx.stack = bx.stack[n-1], bx.stack[:n-1]
 			if el.end != nil {
 				return nil, fmt.Errorf("element end already exists")
 			}
-			el.end = new(ElementEnd)
+			el.end = &ElementEnd{
+				NodeHeader: NodeHeader{
+					LineNumber: uint32(line),
+					Comment:    NoEntry,
+				},
+				NS:   el.NS,
+				Name: el.Name,
+			}
 		case xml.Comment, xml.ProcInst:
 			// discard
 		default:
@@ -424,6 +436,9 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 	var arecurse func(*Element)
 	arecurse = func(el *Element) {
 		for _, attr := range el.attrs {
+			if attr.NS == NoEntry {
+				continue
+			}
 			if attr.NS.Resolve(pool) == androidSchema {
 				bx.Pool.strings = append(bx.Pool.strings, attr.Name.Resolve(pool))
 			}
@@ -448,7 +463,7 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 	var brecurse func(*Element)
 	brecurse = func(el *Element) {
 		for _, attr := range el.attrs {
-			if attr.NS.Resolve(pool) == "" {
+			if attr.NS == NoEntry {
 				bx.Pool.strings = append(bx.Pool.strings, attr.Name.Resolve(pool))
 			}
 		}
@@ -458,7 +473,7 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 		for _, attr := range el.attrs {
 			if attr.RawValue != NoEntry {
 				bx.Pool.strings = append(bx.Pool.strings, attr.RawValue.Resolve(pool))
-			} else if attr.NS.Resolve(pool) == "" {
+			} else if attr.NS == NoEntry {
 				bx.Pool.strings = append(bx.Pool.strings, fmt.Sprintf("%+v", attr.TypedValue.Value))
 			}
 		}
@@ -502,8 +517,10 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 	resolve = func(el *Element) {
 		if el.NS != NoEntry {
 			el.NS = bx.Pool.ref(el.NS.Resolve(pool))
+			el.end.NS = el.NS
 		}
 		el.Name = bx.Pool.ref(el.Name.Resolve(pool))
+		el.end.Name = el.Name
 		for _, attr := range el.attrs {
 			if attr.NS != NoEntry {
 				attr.NS = bx.Pool.ref(attr.NS.Resolve(pool))
@@ -511,6 +528,9 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 			attr.Name = bx.Pool.ref(attr.Name.Resolve(pool))
 			if attr.RawValue != NoEntry {
 				attr.RawValue = bx.Pool.ref(attr.RawValue.Resolve(pool))
+				if attr.TypedValue.Type == DataString {
+					attr.TypedValue.Value = uint32(attr.RawValue)
+				}
 			}
 		}
 		for _, child := range el.Children {
@@ -524,14 +544,25 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 	var asort func(*Element)
 	asort = func(el *Element) {
 		sort.Sort(byType(el.attrs))
-		// sort.Sort(byName(el.attrs))
 		sort.Sort(byNamespace(el.attrs))
+		sort.Sort(byName(el.attrs))
 		for _, child := range el.Children {
 			asort(child)
 		}
 	}
 	for _, el := range bx.Children {
 		asort(el)
+	}
+
+	for i, s := range bx.Pool.strings {
+		switch s {
+		case androidSchema:
+			bx.Namespace.uri = PoolRef(i)
+			bx.Namespace.end.uri = PoolRef(i)
+		case "android":
+			bx.Namespace.prefix = PoolRef(i)
+			bx.Namespace.end.prefix = PoolRef(i)
+		}
 	}
 
 	return bx, nil
@@ -629,6 +660,9 @@ func (bx *XML) kind(t ResType) (unmarshaler, error) {
 }
 
 func (bx *XML) MarshalBinary() ([]byte, error) {
+	bx.typ = ResXML
+	bx.headerByteSize = 8
+
 	var (
 		bin, b []byte
 		err    error
@@ -669,6 +703,7 @@ func (bx *XML) MarshalBinary() ([]byte, error) {
 	}
 	bin = append(bin, b...)
 
+	putu32(bin[4:], uint32(len(bin)))
 	return bin, nil
 }
 
@@ -788,7 +823,9 @@ type byName []*Attribute
 
 func (a byName) Len() int { return len(a) }
 func (a byName) Less(i, j int) bool {
-	return a[i].TypedValue.Type == a[j].TypedValue.Type && a[i].Name < a[j].Name
+	return (a[i].TypedValue.Type == DataString || a[i].TypedValue.Type == DataIntDec) &&
+		(a[j].TypedValue.Type == DataString || a[j].TypedValue.Type == DataIntDec) &&
+		a[i].Name < a[j].Name
 }
 func (a byName) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 
