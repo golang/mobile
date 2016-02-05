@@ -282,7 +282,6 @@ public class Seq {
 			}
 			int refnum = next++;
 			Ref ref = new Ref(refnum, o);
-			javaObjs.put(refnum, ref);
 			return ref;
 		}
 
