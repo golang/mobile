@@ -5,8 +5,6 @@
 package go;
 
 import java.util.Arrays;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
 // Seq is a sequence of machine-dependent encoded values.
@@ -30,9 +28,6 @@ public class Seq {
 		}
 
 		initSeq();
-		new Thread("GoSeq") {
-			public void run() { Seq.receive(); }
-		}.start();
 	}
 
 	@SuppressWarnings("UnusedDeclaration")
@@ -108,55 +103,23 @@ public class Seq {
 	// a Ref to the receiver.
 	public static native void send(String descriptor, int code, Seq src, Seq dst);
 
-	// recv returns the next request from Go for a Java call.
-	static native void recv(Seq in, Receive params);
-
-	// recvRes sends the result of a Java call back to Go.
-	static native void recvRes(int handle, Seq out);
-
-	static final class Receive {
-		int refnum;
-		int code;
-		int handle;
-	}
-
 	protected void finalize() throws Throwable {
 		super.finalize();
 		free();
 	}
 	private native void free();
 
-	private static final ExecutorService receivePool = Executors.newCachedThreadPool();
-
-	// receive listens for callback requests from Go, invokes them on a thread
-	// pool and sends the responses.
-	public static void receive() {
-		Seq.Receive params = new Seq.Receive();
-		while (true) {
-			final Seq in = new Seq();
-			Seq.recv(in, params);
-
-			final int code = params.code;
-			final int handle = params.handle;
-			final int refnum = params.refnum;
-
-			if (code == -1) {
-				// Special signal from seq.FinalizeRef.
-				tracker.dec(refnum);
-				Seq out = new Seq();
-				Seq.recvRes(handle, out);
-				continue;
-			}
-
-			receivePool.execute(new Runnable() {
-				public void run() {
-					Ref r = tracker.get(refnum);
-					Seq out = new Seq();
-					r.obj.call(code, in, out);
-					Seq.recvRes(handle, out);
-				}
-			});
+	public static Seq recv(Seq in, int code, int refnum) {
+		Seq out = new Seq();
+		if (code == -1) {
+			// Special signal from seq.FinalizeRef.
+			tracker.dec(refnum);
+			return out;
 		}
+
+		Ref r = tracker.get(refnum);
+		r.obj.call(code, in, out);
+		return out;
 	}
 
 	// An Object is a Java object that matches a Go object.

@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <pthread.h>
 #include "seq_android.h"
 #include "_cgo_export.h"
 
@@ -15,11 +16,18 @@
 #define LOG_FATAL(...) __android_log_print(ANDROID_LOG_FATAL, "go/Seq", __VA_ARGS__)
 
 static jfieldID memptr_id;
-static jfieldID receive_refnum_id;
-static jfieldID receive_code_id;
-static jfieldID receive_handle_id;
 
 static jclass jbytearray_clazz;
+
+static jclass seq_clazz;
+static jmethodID seq_cons;
+static jmethodID seq_recv;
+
+static JavaVM *jvm;
+// jnienvs holds the per-thread JNIEnv* for Go threads where we called AttachCurrentThread.
+// A pthread key destructor is supplied to call DetachCurrentThread on exit. This trick is
+// documented in http://developer.android.com/training/articles/perf-jni.html under "Threads".
+static pthread_key_t jnienvs;
 
 // pinned represents a pinned array to be released at the end of Send call.
 typedef struct pinned {
@@ -201,15 +209,100 @@ static jclass find_class(JNIEnv *env, const char *class_name) {
 	return (*env)->NewGlobalRef(env, clazz);
 }
 
+static jmethodID get_method_id(JNIEnv *env, jclass clazz, const char *name, const char *sig) {
+	jmethodID m = (*env)->GetMethodID(env, clazz, name, sig);
+	if (m == NULL) {
+		describe_exception(env);
+		LOG_FATAL("cannot find method %s", name);
+	}
+	return m;
+}
+
+static jmethodID get_static_method_id(JNIEnv *env, jclass clazz, const char *name, const char *sig) {
+	jmethodID m = (*env)->GetStaticMethodID(env, clazz, name, sig);
+	if (m == NULL) {
+		describe_exception(env);
+		LOG_FATAL("cannot find static method %s", name);
+	}
+	return m;
+}
+
+void recv(int32_t ref, int code, uint8_t *in_ptr, size_t in_len, uint8_t **out_ptr, size_t *out_len) {
+	jobject out;
+	mem *out_mem;
+	mem *in_mem;
+	JNIEnv *env;
+	jobject in;
+	jint ret;
+
+	ret = (*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_6);
+	if (ret != JNI_OK) {
+		if (ret != JNI_EDETACHED) {
+			LOG_FATAL("failed to get thread env");
+			return;
+		}
+		if ((*jvm)->AttachCurrentThread(jvm, &env, NULL) != JNI_OK) {
+			LOG_FATAL("failed to attach current thread");
+			return;
+		}
+		pthread_setspecific(jnienvs, env);
+	}
+
+	in = (*env)->NewObject(env, seq_clazz, seq_cons);
+	if (in == NULL) {
+		describe_exception(env);
+		LOG_FATAL("cannot instantiate Seq");
+		return;
+	}
+	in_mem = mem_get(env, in);
+	if (in_mem == NULL) {
+		LOG_FATAL("recv on NULL in_mem");
+		return;
+	}
+	memcpy(mem_write(env, in, in_len, 1), in_ptr, in_len);
+	in_mem->off = 0;
+	out = (*env)->CallStaticObjectMethod(env, seq_clazz, seq_recv, in, code, ref);
+	if (out == NULL) {
+		describe_exception(env);
+		LOG_FATAL("failed to invoke Seq.recv");
+		return;
+	}
+	out_mem = mem_get(env, out);
+	if (out_mem == NULL) {
+		LOG_FATAL("recv on NULL out_mem");
+		return;
+	}
+	*out_ptr = out_mem->buf;
+	*out_len = out_mem->len;
+}
+
+// env_destructor is registered as a thread data key destructor to
+// clean up a Go thread that is attached to the JVM.
+static void env_destructor(void *env) {
+	if ((*jvm)->DetachCurrentThread(jvm) != JNI_OK) {
+		LOG_INFO("failed to detach current thread");
+	}
+}
+
 JNIEXPORT void JNICALL
 Java_go_Seq_initSeq(JNIEnv *env, jclass clazz) {
+	seq_clazz = (*env)->NewGlobalRef(env, clazz);
+	seq_recv = get_static_method_id(env, seq_clazz, "recv", "(Lgo/Seq;II)Lgo/Seq;");
+	seq_cons = get_method_id(env, seq_clazz, "<init>", "()V");
+
 	memptr_id = find_field(env, "go/Seq", "memptr", "J");
-	receive_refnum_id = find_field(env, "go/Seq$Receive", "refnum", "I");
-	receive_handle_id = find_field(env, "go/Seq$Receive", "handle", "I");
-	receive_code_id = find_field(env, "go/Seq$Receive", "code", "I");
 
 	jclass bclazz = find_class(env, "[B");
 	jbytearray_clazz = (*env)->NewGlobalRef(env, bclazz);
+
+	if ((*env)->GetJavaVM(env, &jvm) != 0) {
+		LOG_FATAL("failed to get JVM");
+		return;
+	}
+	if (pthread_key_create(&jnienvs, env_destructor) != 0) {
+		LOG_FATAL("failed to initialize jnienvs thread local storage");
+		return;
+	}
 }
 
 JNIEXPORT void JNICALL
@@ -432,27 +525,6 @@ Java_go_Seq_send(JNIEnv *env, jclass clazz, jstring descriptor, jint code, jobje
 	if (src != NULL) {
 		unpin_arrays(env, src);  // assume 'src' is no longer needed.
 	}
-}
-
-JNIEXPORT void JNICALL
-Java_go_Seq_recv(JNIEnv *env, jclass clazz, jobject in_obj, jobject receive) {
-	mem *in = mem_get(env, in_obj);
-	if (in == NULL) {
-		LOG_FATAL("recv in is NULL");
-	}
-	struct Recv_return ret = Recv(&in->buf, &in->len);
-	(*env)->SetIntField(env, receive, receive_refnum_id, ret.r0);
-	(*env)->SetIntField(env, receive, receive_code_id, ret.r1);
-	(*env)->SetIntField(env, receive, receive_handle_id, ret.r2);
-}
-
-JNIEXPORT void JNICALL
-Java_go_Seq_recvRes(JNIEnv *env, jclass clazz, jint handle, jobject out_obj) {
-	mem *out = mem_get(env, out_obj);
-	if (out == NULL) {
-		LOG_FATAL("recvRes out is NULL");
-	}
-	RecvRes((int32_t)handle, out->buf, out->len);
 }
 
 JNIEXPORT void JNICALL
