@@ -9,6 +9,56 @@ import go.Seq;
 public abstract class Structs {
     private Structs() {} // uninstantiable
     
+    public interface I extends go.Seq.Object {
+        public void M();
+        
+        public static abstract class Stub implements I {
+            static final String DESCRIPTOR = "go.structs.I";
+            
+            private final go.Seq.Ref ref;
+            public Stub() {
+                ref = go.Seq.createRef(this);
+            }
+            
+            public go.Seq.Ref ref() { return ref; }
+            
+            public void call(int code, go.Seq in, go.Seq out) {
+                switch (code) {
+                case Proxy.CALL_M: {
+                    this.M();
+                    return;
+                }
+                default:
+                    throw new RuntimeException("unknown code: "+ code);
+                }
+            }
+        }
+        
+        static final class Proxy implements I {
+            static final String DESCRIPTOR = Stub.DESCRIPTOR;
+        
+            private go.Seq.Ref ref;
+        
+            Proxy(go.Seq.Ref ref) { this.ref = ref; }
+        
+            public go.Seq.Ref ref() { return ref; }
+        
+            public void call(int code, go.Seq in, go.Seq out) {
+                throw new RuntimeException("cycle: cannot call proxy");
+            }
+        
+            public void M() {
+                go.Seq _in = null;
+                go.Seq _out = null;
+                _in = new go.Seq();
+                _in.writeRef(ref);
+                Seq.send(DESCRIPTOR, CALL_M, _in, _out);
+            }
+            
+            static final int CALL_M = 0x10a;
+        }
+    }
+    
     public static S Identity(S s) {
         go.Seq _in = null;
         go.Seq _out = null;
@@ -141,6 +191,48 @@ public abstract class Structs {
             b.append("S").append("{");
             b.append("X:").append(getX()).append(",");
             b.append("Y:").append(getY()).append(",");
+            return b.append("}").toString();
+        }
+        
+    }
+    
+    public static final class S2 implements go.Seq.Object, I {
+        private static final String DESCRIPTOR = "go.structs.S2";
+        private static final int CALL_M = 0x00c;
+        
+        private go.Seq.Ref ref;
+        
+        private S2(go.Seq.Ref ref) { this.ref = ref; }
+        
+        public go.Seq.Ref ref() { return ref; }
+        
+        public void call(int code, go.Seq in, go.Seq out) {
+            throw new RuntimeException("internal error: cycle: cannot call concrete proxy");
+        }
+        
+        public void M() {
+            go.Seq _in = null;
+            go.Seq _out = null;
+            _in = new go.Seq();
+            _in.writeRef(ref);
+            Seq.send(DESCRIPTOR, CALL_M, _in, _out);
+        }
+        
+        @Override public boolean equals(Object o) {
+            if (o == null || !(o instanceof S2)) {
+                return false;
+            }
+            S2 that = (S2)o;
+            return true;
+        }
+        
+        @Override public int hashCode() {
+            return java.util.Arrays.hashCode(new Object[] {});
+        }
+        
+        @Override public String toString() {
+            StringBuilder b = new StringBuilder();
+            b.append("S2").append("{");
             return b.append("}").toString();
         }
         

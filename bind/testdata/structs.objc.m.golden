@@ -15,6 +15,16 @@ static NSString* errDomain = @"go.structs";
 
 #define _DESCRIPTOR_ "structs"
 
+@class GoStructsI;
+
+@interface GoStructsI : NSObject <GoStructsI> {
+}
+@property(strong, readonly) id _ref;
+
+- (id)initWithRef:(id)ref;
+- (void)m;
+@end
+
 #define _GO_structs_S_DESCRIPTOR_ "go.structs.S"
 #define _GO_structs_S_FIELD_X_GET_ (0x00f)
 #define _GO_structs_S_FIELD_X_SET_ (0x01f)
@@ -110,6 +120,63 @@ static NSString* errDomain = @"go.structs";
 
 @end
 
+#define _GO_structs_S2_DESCRIPTOR_ "go.structs.S2"
+#define _GO_structs_S2_M_ (0x00c)
+
+@implementation GoStructsS2 {
+}
+
+- (id)initWithRef:(id)ref {
+	self = [super init];
+	if (self) { __ref = ref; }
+	return self;
+}
+
+- (void)m {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	go_seq_writeRef(&in_, self._ref);
+	go_seq_send(_GO_structs_S2_DESCRIPTOR_, _GO_structs_S2_M_, &in_, &out_);
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+}
+
+@end
+
+#define _GO_structs_I_DESCRIPTOR_ "go.structs.I"
+#define _GO_structs_I_M_ (0x10a)
+
+@implementation GoStructsI {
+}
+
+- (id)initWithRef:(id)ref {
+	self = [super init];
+	if (self) { __ref = ref; }
+	return self;
+}
+
+- (void)m {
+	GoSeq in_ = {};
+	GoSeq out_ = {};
+	go_seq_writeRef(&in_, self._ref);
+	go_seq_send(_GO_structs_I_DESCRIPTOR_, _GO_structs_I_M_, &in_, &out_);
+	go_seq_free(&in_);
+	go_seq_free(&out_);
+}
+
+@end
+
+static void proxyGoStructsI(id obj, int code, GoSeq* in, GoSeq* out) {
+	switch (code) {
+	case _GO_structs_I_M_: {
+		id<GoStructsI> o = (id<GoStructsI>)(obj);
+		[o m];
+	} break;
+	default:
+		NSLog(@"unknown code %x for _GO_structs_I_DESCRIPTOR_", code);
+	}
+}
+
 #define _CALL_Identity_ 1
 #define _CALL_IdentityWithError_ 2
 
@@ -161,3 +228,6 @@ BOOL GoStructsIdentityWithError(GoStructsS* s, GoStructsS** ret0_, NSError** err
 	return ([_error length] == 0);
 }
 
+__attribute__((constructor)) static void init() {
+	go_seq_register_proxy("go.structs.I", proxyGoStructsI);
+}

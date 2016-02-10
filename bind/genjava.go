@@ -17,7 +17,6 @@ import (
 )
 
 // TODO(crawshaw): disallow basic android java type names in exported symbols.
-// TODO(crawshaw): generate all relevant "implements" relationships for interfaces.
 // TODO(crawshaw): consider introducing Java functions for casting to and from interfaces at runtime.
 
 type ErrorList []error
@@ -41,11 +40,18 @@ type javaGen struct {
 	err     ErrorList
 }
 
-func (g *javaGen) genStruct(obj *types.TypeName, T *types.Struct) {
+func (g *javaGen) genStruct(obj *types.TypeName, T *types.Struct, intfs []*types.TypeName) {
 	fields := exportedFields(T)
 	methods := exportedMethodSet(types.NewPointer(obj.Type()))
 
-	g.Printf("public static final class %s implements go.Seq.Object {\n", obj.Name())
+	impls := []string{"go.Seq.Object"}
+	pT := types.NewPointer(obj.Type())
+	for _, intf := range intfs {
+		if types.AssignableTo(pT, intf.Type()) {
+			impls = append(impls, intf.Name())
+		}
+	}
+	g.Printf("public static final class %s implements %s {\n", obj.Name(), strings.Join(impls, ", "))
 	g.Indent()
 	g.Printf("private static final String DESCRIPTOR = \"go.%s.%s\";\n", g.pkg.Name(), obj.Name())
 	for i, f := range fields {
@@ -671,14 +677,30 @@ func (g *javaGen) gen() error {
 
 	scope := g.pkg.Scope()
 	names := scope.Names()
+	var objs []types.Object
+	var intfs []*types.TypeName
 	hasExported := false
 	for _, name := range names {
 		obj := scope.Lookup(name)
 		if !obj.Exported() {
 			continue
 		}
+		objs = append(objs, obj)
 		hasExported = true
-
+		o, ok := obj.(*types.TypeName)
+		if !ok {
+			continue
+		}
+		named := obj.Type().(*types.Named)
+		intf, ok := named.Underlying().(*types.Interface)
+		if ok && intf.NumMethods() > 0 {
+			intfs = append(intfs, o)
+		}
+	}
+	if !hasExported {
+		g.errorf("no exported names in the package %q", g.pkg.Path())
+	}
+	for _, obj := range objs {
 		switch o := obj.(type) {
 		// TODO(crawshaw): case *types.Var:
 		case *types.Func:
@@ -690,7 +712,7 @@ func (g *javaGen) gen() error {
 			named := o.Type().(*types.Named)
 			switch t := named.Underlying().(type) {
 			case *types.Struct:
-				g.genStruct(o, t)
+				g.genStruct(o, t, intfs)
 			case *types.Interface:
 				g.genInterface(o)
 			default:
@@ -704,9 +726,6 @@ func (g *javaGen) gen() error {
 		default:
 			g.errorf("unsupported exported type: %T", obj)
 		}
-	}
-	if !hasExported {
-		g.errorf("no exported names in the package %q", g.pkg.Path())
 	}
 
 	for i, name := range funcs {
