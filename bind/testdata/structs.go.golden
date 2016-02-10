@@ -9,6 +9,28 @@ import (
 	"structs"
 )
 
+const (
+	proxyI_Descriptor = "go.structs.I"
+	proxyI_M_Code     = 0x10a
+)
+
+func proxyI_M(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := ref.Get().(structs.I)
+	v.M()
+}
+
+func init() {
+	seq.Register(proxyI_Descriptor, proxyI_M_Code, proxyI_M)
+}
+
+type proxyI seq.Ref
+
+func (p *proxyI) M() {
+	in := new(seq.Buffer)
+	seq.Transact((*seq.Ref)(p), "go.structs.I", proxyI_M_Code, in)
+}
+
 func proxy_Identity(out, in *seq.Buffer) {
 	// Must be a Go object
 	param_s_ref := in.ReadRef()
@@ -92,6 +114,23 @@ func init() {
 	seq.Register(proxyS_Descriptor, proxyS_Y_Get_Code, proxyS_Y_Get)
 	seq.Register(proxyS_Descriptor, proxyS_Identity_Code, proxyS_Identity)
 	seq.Register(proxyS_Descriptor, proxyS_Sum_Code, proxyS_Sum)
+}
+
+const (
+	proxyS2_Descriptor = "go.structs.S2"
+	proxyS2_M_Code     = 0x00c
+)
+
+type proxyS2 seq.Ref
+
+func proxyS2_M(out, in *seq.Buffer) {
+	ref := in.ReadRef()
+	v := ref.Get().(*structs.S2)
+	v.M()
+}
+
+func init() {
+	seq.Register(proxyS2_Descriptor, proxyS2_M_Code, proxyS2_M)
 }
 
 func init() {
