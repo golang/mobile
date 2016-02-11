@@ -381,4 +381,12 @@ public class SeqTest extends AndroidTestCase {
     String got = n.getErr();
     assertEquals("want back the error message we set", want, got);
   }
+
+  public void testNullReferences() {
+    assertTrue(Testpkg.CallWithNull(null, new Testpkg.NullTest.Stub() {
+      public Testpkg.NullTest Null() {
+        return null;
+      }
+    }));
+  }
 }

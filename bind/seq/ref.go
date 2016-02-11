@@ -19,6 +19,8 @@ type countedObj struct {
 	cnt int32
 }
 
+const NullRefNum = 41 // also known to bind/java/Seq.java
+
 // refs stores Go objects that have been passed to another language.
 var refs struct {
 	sync.Mutex

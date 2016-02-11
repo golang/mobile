@@ -65,7 +65,7 @@ public abstract class Structs {
         _out = new go.Seq();
         S _result;
         _in = new go.Seq();
-        _in.writeRef(s.ref());
+        _in.writeRef(s != null ? s.ref() : null);
         Seq.send(DESCRIPTOR, CALL_Identity, _in, _out);
         _result = new S(_out.readRef());
         return _result;
@@ -77,7 +77,7 @@ public abstract class Structs {
         _out = new go.Seq();
         S _result;
         _in = new go.Seq();
-        _in.writeRef(s.ref());
+        _in.writeRef(s != null ? s.ref() : null);
         Seq.send(DESCRIPTOR, CALL_IdentityWithError, _in, _out);
         _result = new S(_out.readRef());
         String _err = _out.readString();

@@ -93,7 +93,7 @@ func var_setAnInterface(out, in *seq.Buffer) {
 	v_ref := in.ReadRef()
 	if v_ref.Num < 0 { // go object
 		v = v_ref.Get().(vars.I)
-	} else { // foreign object
+	} else if v_ref.Num != seq.NullRefNum { // foreign object
 		v = (*proxyI)(v_ref)
 	}
 	vars.AnInterface = v
