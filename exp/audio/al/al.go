@@ -72,13 +72,29 @@ func Geti(param int) int32 {
 	return alGetInteger(param)
 }
 
-// Getf returns the float value of the given parameter.
+// Getiv returns the int32 vector value of the given parameter.
+func Getiv(param int, v []int32) {
+	alGetIntegerv(param, v)
+}
+
+// Getf returns the float32 value of the given parameter.
 func Getf(param int) float32 {
 	return alGetFloat(param)
 }
 
+// Getfv returns the float32 vector value of the given parameter.
 func Getfv(param int, v []float32) {
 	alGetFloatv(param, v[:])
+}
+
+// Getb returns the bool value of the given parameter.
+func Getb(param int) bool {
+	return alGetBoolean(param)
+}
+
+// Getbv returns the bool vector value of the given parameter.
+func Getbv(param int, v []bool) {
+	alGetBooleanv(param, v)
 }
 
 // GetString returns the string value of the given parameter.
