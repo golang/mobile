@@ -77,6 +77,8 @@ public class Seq {
 	public native void writeByteArray(byte[] v);
 
 	public void writeRef(Ref ref) {
+		if (ref == null)
+			ref = RefTracker.nullRef;
 		tracker.inc(ref);
 		writeInt32(ref.refnum);
 	}
@@ -172,9 +174,10 @@ public class Seq {
 
 	static final class RefTracker {
 		private static final int REF_OFFSET = 42;
+		private static final int NULL_REFNUM = 41; // also known to bind/seq/ref.go
 
 		// use single Ref for null Seq.Object
-		private static final Ref nullRef = new Ref(REF_OFFSET - 1, null);
+		private static final Ref nullRef = new Ref(NULL_REFNUM, null);
 
 		// Next Java object reference number.
 		//

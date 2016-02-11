@@ -76,7 +76,7 @@ public abstract class Vars {
     
     public static void setAStructPtr(S v) {
         Seq in = new Seq();
-        in.writeRef(v.ref());
+        in.writeRef(v != null ? v.ref() : null);
         Seq.send("vars.AStructPtr", 1, in, null);
     }
     
@@ -154,7 +154,7 @@ public abstract class Vars {
     
     public static void setAnInterface(I v) {
         Seq in = new Seq();
-        in.writeRef(v.ref());
+        in.writeRef(v != null ? v.ref() : null);
         Seq.send("vars.AnInterface", 1, in, null);
     }
     

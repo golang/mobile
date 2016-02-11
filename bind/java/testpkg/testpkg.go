@@ -204,3 +204,11 @@ func ReadAsset() string {
 	}
 	return string(b)
 }
+
+type NullTest interface {
+	Null() NullTest
+}
+
+func CallWithNull(_null NullTest, nuller NullTest) bool {
+	return _null == nil && nuller.Null() == nil
+}

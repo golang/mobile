@@ -81,7 +81,7 @@ func seqWrite(o types.Type, name string) string {
 	t := seqType(o)
 	if t == "Ref" {
 		// TODO(crawshaw): do something cleaner, i.e. genWrite.
-		return t + "(" + name + ".ref())"
+		return t + "(" + name + " != null ? " + name + ".ref() : null)"
 	}
 	return t + "(" + name + ")"
 }

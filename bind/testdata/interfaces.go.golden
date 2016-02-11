@@ -14,7 +14,7 @@ func proxy_Add3(out, in *seq.Buffer) {
 	param_r_ref := in.ReadRef()
 	if param_r_ref.Num < 0 { // go object
 		param_r = param_r_ref.Get().(interfaces.I)
-	} else { // foreign object
+	} else if param_r_ref.Num != seq.NullRefNum { // foreign object
 		param_r = (*proxyI)(param_r_ref)
 	}
 	res := interfaces.Add3(param_r)
@@ -26,7 +26,7 @@ func proxy_CallErr(out, in *seq.Buffer) {
 	param_e_ref := in.ReadRef()
 	if param_e_ref.Num < 0 { // go object
 		param_e = param_e_ref.Get().(interfaces.Error)
-	} else { // foreign object
+	} else if param_e_ref.Num != seq.NullRefNum { // foreign object
 		param_e = (*proxyError)(param_e_ref)
 	}
 	err := interfaces.CallErr(param_e)

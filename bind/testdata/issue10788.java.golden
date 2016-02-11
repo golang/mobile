@@ -66,7 +66,7 @@ public abstract class Issue10788 {
                 go.Seq _out = null;
                 _in = new go.Seq();
                 _in.writeRef(ref);
-                _in.writeRef(s.ref());
+                _in.writeRef(s != null ? s.ref() : null);
                 Seq.send(DESCRIPTOR, CALL_DoSomeWork, _in, _out);
             }
             

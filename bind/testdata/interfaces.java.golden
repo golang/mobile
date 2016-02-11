@@ -15,7 +15,7 @@ public abstract class Interfaces {
         _out = new go.Seq();
         int _result;
         _in = new go.Seq();
-        _in.writeRef(r.ref());
+        _in.writeRef(r != null ? r.ref() : null);
         Seq.send(DESCRIPTOR, CALL_Add3, _in, _out);
         _result = _out.readInt32();
         return _result;
@@ -26,7 +26,7 @@ public abstract class Interfaces {
         go.Seq _out = null;
         _out = new go.Seq();
         _in = new go.Seq();
-        _in.writeRef(e.ref());
+        _in.writeRef(e != null ? e.ref() : null);
         Seq.send(DESCRIPTOR, CALL_CallErr, _in, _out);
         String _err = _out.readString();
         if (_err != null && !_err.isEmpty()) {
@@ -222,7 +222,7 @@ public abstract class Interfaces {
                 switch (code) {
                 case Proxy.CALL_F: {
                     I1 result = this.F();
-                    out.writeRef(result.ref());
+                    out.writeRef(result != null ? result.ref() : null);
                     return;
                 }
                 default:

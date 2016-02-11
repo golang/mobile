@@ -352,7 +352,7 @@ func (g *goGen) genRead(valName, seqName string, typ types.Type) {
 			g.Printf("if %s_ref.Num < 0 { // go object \n", valName)
 			g.Printf("   %s = %s_ref.Get().(%s.%s)\n", valName, valName, g.pkg.Name(), o.Name())
 			if hasProxy {
-				g.Printf("} else {  // foreign object \n")
+				g.Printf("} else if %s_ref.Num != seq.NullRefNum {  // foreign object \n", valName)
 				g.Printf("   %s = (*proxy%s)(%s_ref)\n", valName, o.Name(), valName)
 			}
 			g.Printf("}\n")
