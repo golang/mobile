@@ -374,6 +374,10 @@ public class SeqTest extends AndroidTestCase {
     assertEquals("want Node A points to Node B", "A:B:<end>", got);
   }
 
+  public void testImplementsInterface() {
+    Testpkg.Interface intf = Testpkg.NewConcrete();
+  }
+
   public void testErrorField() {
     final String want = "an error message";
     Testpkg.Node n = Testpkg.NewNode("ErrTest");

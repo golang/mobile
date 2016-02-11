@@ -191,6 +191,21 @@ func GarbageCollect() {
 	runtime.GC()
 }
 
+type (
+	Concrete struct{}
+
+	Interface interface {
+		F()
+	}
+)
+
+func (_ *Concrete) F() {
+}
+
+func NewConcrete() *Concrete {
+	return new(Concrete)
+}
+
 func ReadAsset() string {
 	rc, err := asset.Open("hello.txt")
 	if err != nil {
