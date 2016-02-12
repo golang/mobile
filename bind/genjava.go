@@ -5,103 +5,49 @@
 package bind
 
 import (
-	"bytes"
 	"fmt"
 	"go/constant"
-	"go/token"
 	"go/types"
-	"io"
 	"math"
-	"regexp"
 	"strings"
 )
 
 // TODO(crawshaw): disallow basic android java type names in exported symbols.
 // TODO(crawshaw): consider introducing Java functions for casting to and from interfaces at runtime.
 
-type ErrorList []error
-
-func (list ErrorList) Error() string {
-	buf := new(bytes.Buffer)
-	for i, err := range list {
-		if i > 0 {
-			buf.WriteRune('\n')
-		}
-		io.WriteString(buf, err.Error())
-	}
-	return buf.String()
-}
-
 type javaGen struct {
-	*printer
-	fset    *token.FileSet
-	pkg     *types.Package
 	javaPkg string
-	err     ErrorList
+
+	*generator
 }
 
-func (g *javaGen) genStruct(obj *types.TypeName, T *types.Struct, intfs []*types.TypeName) {
+func (g *javaGen) genStruct(obj *types.TypeName, T *types.Struct) {
 	fields := exportedFields(T)
 	methods := exportedMethodSet(types.NewPointer(obj.Type()))
 
 	impls := []string{"go.Seq.Object"}
 	pT := types.NewPointer(obj.Type())
-	for _, intf := range intfs {
-		if types.AssignableTo(pT, intf.Type()) {
-			impls = append(impls, intf.Name())
+	for _, iface := range g.interfaces {
+		if types.AssignableTo(pT, iface.obj.Type()) {
+			impls = append(impls, iface.obj.Name())
 		}
 	}
 	g.Printf("public static final class %s implements %s {\n", obj.Name(), strings.Join(impls, ", "))
 	g.Indent()
-	g.Printf("private static final String DESCRIPTOR = \"go.%s.%s\";\n", g.pkg.Name(), obj.Name())
-	for i, f := range fields {
-		g.Printf("private static final int FIELD_%s_GET = 0x%x0f;\n", f.Name(), i)
-		g.Printf("private static final int FIELD_%s_SET = 0x%x1f;\n", f.Name(), i)
-	}
-	for i, m := range methods {
-		g.Printf("private static final int CALL_%s = 0x%x0c;\n", m.Name(), i)
-	}
-	g.Printf("\n")
 
-	g.Printf("private go.Seq.Ref ref;\n\n")
+	g.Printf("private final go.Seq.Ref ref;\n\n")
 
 	n := obj.Name()
 	g.Printf("private %s(go.Seq.Ref ref) { this.ref = ref; }\n\n", n)
-	g.Printf(`public go.Seq.Ref ref() { return ref; }
-
-public void call(int code, go.Seq in, go.Seq out) {
-    throw new RuntimeException("internal error: cycle: cannot call concrete proxy");
-}
-
-`)
+	g.Printf("public final go.Seq.Ref ref() { return ref; }\n\n")
 
 	for _, f := range fields {
-		g.Printf("public %s get%s() {\n", g.javaType(f.Type()), f.Name())
-		g.Indent()
-		g.Printf("Seq in = new Seq();\n")
-		g.Printf("Seq out = new Seq();\n")
-		g.Printf("in.writeRef(ref);\n")
-		g.Printf("Seq.send(DESCRIPTOR, FIELD_%s_GET, in, out);\n", f.Name())
-		if seqType(f.Type()) == "Ref" {
-			g.Printf("return new %s(out.read%s);\n", g.javaType(f.Type()), seqRead(f.Type()))
-		} else {
-			g.Printf("return out.read%s;\n", seqRead(f.Type()))
-		}
-		g.Outdent()
-		g.Printf("}\n\n")
-
-		g.Printf("public void set%s(%s v) {\n", f.Name(), g.javaType(f.Type()))
-		g.Indent()
-		g.Printf("Seq in = new Seq();\n")
-		g.Printf("in.writeRef(ref);\n")
-		g.Printf("in.write%s;\n", seqWrite(f.Type(), "v"))
-		g.Printf("Seq.send(DESCRIPTOR, FIELD_%s_SET, in, null);\n", f.Name())
-		g.Outdent()
-		g.Printf("}\n\n")
+		g.Printf("public final native %s get%s();\n", g.javaType(f.Type()), f.Name())
+		g.Printf("public final native void set%s(%s v);\n\n", f.Name(), g.javaType(f.Type()))
 	}
 
 	for _, m := range methods {
-		g.genFunc(m, true)
+		g.genFuncSignature(m, false, false)
 	}
 
 	g.Printf("@Override public boolean equals(Object o) {\n")
@@ -151,7 +97,7 @@ public void call(int code, go.Seq in, go.Seq out) {
 	g.Printf(`return b.append("}").toString();`)
 	g.Printf("\n")
 	g.Outdent()
-	g.Printf("}\n\n")
+	g.Printf("}\n")
 
 	g.Outdent()
 	g.Printf("}\n\n")
@@ -161,134 +107,35 @@ func (g *javaGen) genInterfaceStub(o *types.TypeName, m *types.Interface) {
 	g.Printf("public static abstract class Stub implements %s {\n", o.Name())
 	g.Indent()
 
-	g.Printf("static final String DESCRIPTOR = \"go.%s.%s\";\n\n", g.pkg.Name(), o.Name())
 	g.Printf("private final go.Seq.Ref ref;\n")
 	g.Printf("public Stub() {\n    ref = go.Seq.createRef(this);\n}\n\n")
-	g.Printf("public go.Seq.Ref ref() { return ref; }\n\n")
-
-	g.Printf("public void call(int code, go.Seq in, go.Seq out) {\n")
-	g.Indent()
-	g.Printf("switch (code) {\n")
-
-	for i := 0; i < m.NumMethods(); i++ {
-		f := m.Method(i)
-		g.Printf("case Proxy.CALL_%s: {\n", f.Name())
-		g.Indent()
-
-		sig := f.Type().(*types.Signature)
-		params := sig.Params()
-		for i := 0; i < params.Len(); i++ {
-			p := sig.Params().At(i)
-			jt := g.javaType(p.Type())
-			g.Printf("%s param_%s;\n", jt, paramName(params, i))
-			g.genRead("param_"+paramName(params, i), "in", p.Type())
-		}
-
-		res := sig.Results()
-		var returnsError bool
-		var numRes = res.Len()
-		if (res.Len() == 1 && isErrorType(res.At(0).Type())) ||
-			(res.Len() == 2 && isErrorType(res.At(1).Type())) {
-			numRes -= 1
-			returnsError = true
-		}
-
-		if returnsError {
-			g.Printf("try {\n")
-			g.Indent()
-		}
-
-		if numRes > 0 {
-			g.Printf("%s result = ", g.javaType(res.At(0).Type()))
-		}
-
-		g.Printf("this.%s(", f.Name())
-		for i := 0; i < params.Len(); i++ {
-			if i > 0 {
-				g.Printf(", ")
-			}
-			g.Printf("param_%s", paramName(params, i))
-		}
-		g.Printf(");\n")
-
-		if numRes > 0 {
-			g.Printf("out.write%s;\n", seqWrite(res.At(0).Type(), "result"))
-		}
-		if returnsError {
-			g.Printf("out.writeString(null);\n")
-			g.Outdent()
-			g.Printf("} catch (Exception e) {\n")
-			g.Indent()
-			if numRes > 0 {
-				resTyp := res.At(0).Type()
-				g.Printf("%s result = %s;\n", g.javaType(resTyp), g.javaTypeDefault(resTyp))
-				g.Printf("out.write%s;\n", seqWrite(resTyp, "result"))
-			}
-			g.Printf("out.writeString(e.getMessage());\n")
-			g.Outdent()
-			g.Printf("}\n")
-		}
-		g.Printf("return;\n")
-		g.Outdent()
-		g.Printf("}\n")
-	}
-
-	g.Printf("default:\n    throw new RuntimeException(\"unknown code: \"+ code);\n")
-	g.Printf("}\n")
-	g.Outdent()
-	g.Printf("}\n")
+	g.Printf("public final go.Seq.Ref ref() { return ref; }\n\n")
 
 	g.Outdent()
 	g.Printf("}\n\n")
 }
 
-const javaProxyPreamble = `static final class Proxy implements %s {
-    static final String DESCRIPTOR = Stub.DESCRIPTOR;
-
-    private go.Seq.Ref ref;
-
-    Proxy(go.Seq.Ref ref) { this.ref = ref; }
-
-    public go.Seq.Ref ref() { return ref; }
-
-    public void call(int code, go.Seq in, go.Seq out) {
-        throw new RuntimeException("cycle: cannot call proxy");
-    }
-
-`
-
-func (g *javaGen) genInterface(o *types.TypeName) {
-	iface := o.Type().(*types.Named).Underlying().(*types.Interface)
-
-	summary := makeIfaceSummary(iface)
-
-	g.Printf("public interface %s extends go.Seq.Object {\n", o.Name())
+func (g *javaGen) genInterface(iface interfaceInfo) {
+	g.Printf("public interface %s extends go.Seq.Object {\n", iface.obj.Name())
 	g.Indent()
 
 	methodSigErr := false
-	for _, m := range summary.callable {
-		if err := g.funcSignature(m, false); err != nil {
-			methodSigErr = true
-			g.errorf("%v", err)
-		}
-		g.Printf(";\n\n")
+	for _, m := range iface.summary.callable {
+		g.genFuncSignature(m, false, true)
 	}
 	if methodSigErr {
 		return // skip stub generation, more of the same errors
 	}
 
-	if summary.implementable {
-		g.genInterfaceStub(o, iface)
+	if iface.summary.implementable {
+		g.genInterfaceStub(iface.obj, iface.t)
 	}
 
-	g.Printf(javaProxyPreamble, o.Name())
+	g.Printf(javaProxyPreamble, iface.obj.Name())
 	g.Indent()
 
-	for _, m := range summary.callable {
-		g.genFunc(m, true)
-	}
-	for i, m := range summary.callable {
-		g.Printf("static final int CALL_%s = 0x%x0a;\n", m.Name(), i+1)
+	for _, m := range iface.summary.callable {
+		g.genFuncSignature(m, false, false)
 	}
 
 	g.Outdent()
@@ -311,6 +158,91 @@ func isJavaPrimitive(T types.Type) bool {
 	return false
 }
 
+// jniType returns a string that can be used as a JNI type.
+func (g *javaGen) jniType(T types.Type) string {
+	if isErrorType(T) {
+		// The error type is usually translated into an exception in
+		// Java, however the type can be exposed in other ways, such
+		// as an exported field.
+		return g.jniType(types.Typ[types.String])
+	}
+	switch T := T.(type) {
+	case *types.Basic:
+		switch T.Kind() {
+		case types.Bool, types.UntypedBool:
+			return "jboolean"
+		case types.Int:
+			return "jlong"
+		case types.Int8:
+			return "jbyte"
+		case types.Int16:
+			return "jshort"
+		case types.Int32, types.UntypedRune: // types.Rune
+			return "jint"
+		case types.Int64, types.UntypedInt:
+			return "jlong"
+		case types.Uint8: // types.Byte
+			// TODO(crawshaw): Java bytes are signed, so this is
+			// questionable, but vital.
+			return "jbyte"
+		// TODO(crawshaw): case types.Uint, types.Uint16, types.Uint32, types.Uint64:
+		case types.Float32:
+			return "jfloat"
+		case types.Float64, types.UntypedFloat:
+			return "jdouble"
+		case types.String, types.UntypedString:
+			return "jstring"
+		default:
+			g.errorf("unsupported basic type: %s", T)
+			return "TODO"
+		}
+	case *types.Slice:
+		return "jbyteArray"
+
+	case *types.Pointer:
+		if _, ok := T.Elem().(*types.Named); ok {
+			return g.jniType(T.Elem())
+		}
+		panic(fmt.Sprintf("unsupported pointer to type: %s", T))
+	case *types.Named:
+		return "jobject"
+	default:
+		g.errorf("unsupported jniType: %#+v, %s\n", T, T)
+		return "TODO"
+	}
+}
+
+func (g *javaGen) javaBasicType(T *types.Basic) string {
+	switch T.Kind() {
+	case types.Bool, types.UntypedBool:
+		return "boolean"
+	case types.Int:
+		return "long"
+	case types.Int8:
+		return "byte"
+	case types.Int16:
+		return "short"
+	case types.Int32, types.UntypedRune: // types.Rune
+		return "int"
+	case types.Int64, types.UntypedInt:
+		return "long"
+	case types.Uint8: // types.Byte
+		// TODO(crawshaw): Java bytes are signed, so this is
+		// questionable, but vital.
+		return "byte"
+	// TODO(crawshaw): case types.Uint, types.Uint16, types.Uint32, types.Uint64:
+	case types.Float32:
+		return "float"
+	case types.Float64, types.UntypedFloat:
+		return "double"
+	case types.String, types.UntypedString:
+		return "String"
+	default:
+		g.errorf("unsupported basic type: %s", T)
+		return "TODO"
+	}
+}
+
 // javaType returns a string that can be used as a Java type.
 func (g *javaGen) javaType(T types.Type) string {
 	if isErrorType(T) {
@@ -321,34 +253,7 @@ func (g *javaGen) javaType(T types.Type) string {
 	}
 	switch T := T.(type) {
 	case *types.Basic:
-		switch T.Kind() {
-		case types.Bool, types.UntypedBool:
-			return "boolean"
-		case types.Int:
-			return "long"
-		case types.Int8:
-			return "byte"
-		case types.Int16:
-			return "short"
-		case types.Int32, types.UntypedRune: // types.Rune
-			return "int"
-		case types.Int64, types.UntypedInt:
-			return "long"
-		case types.Uint8: // types.Byte
-			// TODO(crawshaw): Java bytes are signed, so this is
-			// questionable, but vital.
-			return "byte"
-		// TODO(crawshaw): case types.Uint, types.Uint16, types.Uint32, types.Uint64:
-		case types.Float32:
-			return "float"
-		case types.Float64, types.UntypedFloat:
-			return "double"
-		case types.String, types.UntypedString:
-			return "String"
-		default:
-			g.errorf("unsupported basic type: %s", T)
-			return "TODO"
-		}
+		return g.javaBasicType(T)
 	case *types.Slice:
 		elem := g.javaType(T.Elem())
 		return elem + "[]"
@@ -375,48 +280,58 @@ func (g *javaGen) javaType(T types.Type) string {
 	}
 }
 
-// javaTypeDefault returns a string that represents the default value of the mapped java type.
-// TODO(hyangah): Combine javaType and javaTypeDefault?
-func (g *javaGen) javaTypeDefault(T types.Type) string {
-	switch T := T.(type) {
-	case *types.Basic:
-		switch T.Kind() {
-		case types.Bool:
-			return "false"
-		case types.Int, types.Int8, types.Int16, types.Int32,
-			types.Int64, types.Uint8:
-			return "0"
-		case types.Float32, types.Float64:
-			return "0.0"
-		case types.String:
-			return "null"
-		default:
-			g.errorf("unsupported return type: %s", T)
-			return "TODO"
+func (g *javaGen) genJNIFuncSignature(o *types.Func, sName string, proxy bool) {
+	sig := o.Type().(*types.Signature)
+	res := sig.Results()
+
+	var ret string
+	switch res.Len() {
+	case 2:
+		ret = g.jniType(res.At(0).Type())
+	case 1:
+		if isErrorType(res.At(0).Type()) {
+			ret = "void"
+		} else {
+			ret = g.jniType(res.At(0).Type())
 		}
-	case *types.Slice, *types.Pointer, *types.Named:
-		return "null"
-
+	case 0:
+		ret = "void"
 	default:
-		g.errorf("unsupported javaType: %#+v, %s\n", T, T)
-		return "TODO"
+		g.errorf("too many result values: %s", o)
+		return
 	}
+
+	g.Printf("JNIEXPORT %s JNICALL\n", ret)
+	g.Printf("Java_%s_%s", g.jniPkgName(), g.className())
+	if sName != "" {
+		// 0024 is the mangled form of $, for naming inner classes.
+		g.Printf("_00024%s", sName)
+		if proxy {
+			g.Printf("_00024Proxy")
+		}
+	}
+	g.Printf("_%s(JNIEnv* env, ", o.Name())
+	if sName != "" {
+		g.Printf("jobject this")
+	} else {
+		g.Printf("jclass clazz")
+	}
+	params := sig.Params()
+	for i := 0; i < params.Len(); i++ {
+		g.Printf(", ")
+		v := sig.Params().At(i)
+		name := paramName(params, i)
+		jt := g.jniType(v.Type())
+		g.Printf("%s %s", jt, name)
+	}
+	g.Printf(")")
 }
 
-var paramRE = regexp.MustCompile(`^p[0-9]*$`)
-
-// paramName replaces incompatible name with a p0-pN name.
-// Missing names, or existing names of the form p[0-9] are incompatible.
-// TODO(crawshaw): Replace invalid unicode names.
-func paramName(params *types.Tuple, pos int) string {
-	name := params.At(pos).Name()
-	if name == "" || name == "_" || paramRE.MatchString(name) {
-		name = fmt.Sprintf("p%d", pos)
-	}
-	return name
+func (g *javaGen) jniPkgName() string {
+	return strings.Replace(g.javaPkg, ".", "_", -1)
 }
 
-func (g *javaGen) funcSignature(o *types.Func, static bool) error {
+func (g *javaGen) genFuncSignature(o *types.Func, static, header bool) {
 	sig := o.Type().(*types.Signature)
 	res := sig.Results()
 
@@ -425,7 +340,8 @@ func (g *javaGen) funcSignature(o *types.Func, static bool) error {
 	switch res.Len() {
 	case 2:
 		if !isErrorType(res.At(1).Type()) {
-			return fmt.Errorf("second result value must be of type error: %s", o)
+			g.errorf("second result value must be of type error: %s", o)
+			return
 		}
 		returnsError = true
 		ret = g.javaType(res.At(0).Type())
@@ -439,14 +355,19 @@ func (g *javaGen) funcSignature(o *types.Func, static bool) error {
 	case 0:
 		ret = "void"
 	default:
-		return fmt.Errorf("too many result values: %s", o)
+		g.errorf("too many result values: %s", o)
+		return
 	}
 
 	g.Printf("public ")
 	if static {
 		g.Printf("static ")
 	}
-	g.Printf("%s %s(", ret, o.Name())
+	if !header {
+		g.Printf("native ")
+	}
+	oName := o.Name()
+	g.Printf("%s %s(", ret, oName)
 	params := sig.Params()
 	for i := 0; i < params.Len(); i++ {
 		if i > 0 {
@@ -461,131 +382,114 @@ func (g *javaGen) funcSignature(o *types.Func, static bool) error {
 	if returnsError {
 		g.Printf(" throws Exception")
 	}
-	return nil
+	g.Printf(";\n")
 }
 
 func (g *javaGen) genVar(o *types.Var) {
 	jType := g.javaType(o.Type())
-	varDesc := fmt.Sprintf("%s.%s", g.pkg.Name(), o.Name())
 
 	// setter
-	g.Printf("public static void set%s(%s v) {\n", o.Name(), jType)
-	g.Indent()
-	g.Printf("Seq in = new Seq();\n")
-	g.Printf("in.write%s;\n", seqWrite(o.Type(), "v"))
-	g.Printf("Seq.send(%q, 1, in, null);\n", varDesc)
-	g.Outdent()
-	g.Printf("}\n")
-	g.Printf("\n")
+	g.Printf("public static native void set%s(%s v);\n", o.Name(), jType)
 
 	// getter
-	g.Printf("public static %s get%s() {\n", jType, o.Name())
-	g.Indent()
-	g.Printf("Seq out = new Seq();\n")
-	g.Printf("Seq.send(%q, 2, null, out);\n", varDesc)
-	g.Printf("%s ", jType)
-	g.genRead("v", "out", o.Type())
-	g.Printf("return v;\n")
-	g.Outdent()
-	g.Printf("}\n")
-	g.Printf("\n")
+	g.Printf("public static native %s get%s();\n\n", jType, o.Name())
 }
 
-func (g *javaGen) genFunc(o *types.Func, method bool) {
-	if err := g.funcSignature(o, !method); err != nil {
-		g.errorf("%v", err)
+func (g *javaGen) genJavaToC(varName string, t types.Type, mode varMode) {
+	if isErrorType(t) {
+		g.genJavaToC(varName, types.Typ[types.String], mode)
 		return
 	}
-	sig := o.Type().(*types.Signature)
-	res := sig.Results()
-
-	g.Printf(" {\n")
-	g.Indent()
-	g.Printf("go.Seq _in = null;\n")
-	g.Printf("go.Seq _out = null;\n")
-
-	returnsError := false
-	var resultType types.Type
-	if res.Len() > 0 {
-		if !isErrorType(res.At(0).Type()) {
-			resultType = res.At(0).Type()
+	switch t := t.(type) {
+	case *types.Basic:
+		switch t.Kind() {
+		case types.String:
+			g.Printf("nstring _%s = go_seq_from_java_string(env, %s, %d);\n", varName, varName, g.toCFlag(mode.copyString()))
+		default:
+			g.Printf("%s _%s = (%s)%s;\n", g.cgoType(t), varName, g.cgoType(t), varName)
 		}
-		if res.Len() > 1 || isErrorType(res.At(0).Type()) {
-			returnsError = true
+	case *types.Slice:
+		switch e := t.Elem().(type) {
+		case *types.Basic:
+			switch e.Kind() {
+			case types.Uint8: // Byte.
+				g.Printf("nbyteslice _%s = go_seq_from_java_bytearray(env, %s, %d);\n", varName, varName, g.toCFlag(mode.copySlice()))
+			default:
+				g.errorf("unsupported type: %s", t)
+			}
+		default:
+			g.errorf("unsupported type: %s", t)
 		}
+	case *types.Named:
+		switch u := t.Underlying().(type) {
+		case *types.Interface:
+			g.Printf("int32_t _%s = go_seq_to_refnum(env, %s);\n", varName, varName)
+		default:
+			panic(fmt.Sprintf("unsupported named type: %s / %T", u, u))
+		}
+	case *types.Pointer:
+		g.Printf("int32_t _%s = go_seq_to_refnum(env, %s);\n", varName, varName)
+	default:
+		g.Printf("%s _%s = (%s)%s;\n", g.cgoType(t), varName, g.cgoType(t), varName)
 	}
-	if resultType != nil || returnsError {
-		g.Printf("_out = new go.Seq();\n")
-	}
-	if resultType != nil {
-		t := g.javaType(resultType)
-		g.Printf("%s _result;\n", t)
-	}
-
-	params := sig.Params()
-	if method || params.Len() > 0 {
-		g.Printf("_in = new go.Seq();\n")
-	}
-	if method {
-		g.Printf("_in.writeRef(ref);\n")
-	}
-	for i := 0; i < params.Len(); i++ {
-		p := params.At(i)
-		g.Printf("_in.write%s;\n", seqWrite(p.Type(), paramName(params, i)))
-	}
-	g.Printf("Seq.send(DESCRIPTOR, CALL_%s, _in, _out);\n", o.Name())
-	if resultType != nil {
-		g.genRead("_result", "_out", resultType)
-	}
-	if returnsError {
-		g.Printf(`String _err = _out.readString();
-if (_err != null && !_err.isEmpty()) {
-    throw new Exception(_err);
-}
-`)
-	}
-	if resultType != nil {
-		g.Printf("return _result;\n")
-	}
-	g.Outdent()
-	g.Printf("}\n\n")
 }
 
-func (g *javaGen) genRead(resName, seqName string, T types.Type) {
-	switch T := T.(type) {
+func (g *javaGen) genCToJava(toName, fromName string, t types.Type, mode varMode) {
+	if isErrorType(t) {
+		g.genCToJava(toName, fromName, types.Typ[types.String], mode)
+		return
+	}
+	switch t := t.(type) {
+	case *types.Basic:
+		switch t.Kind() {
+		case types.String:
+			g.Printf("jstring %s = go_seq_to_java_string(env, %s);\n", toName, fromName)
+		case types.Bool:
+			g.Printf("jboolean %s = %s ? JNI_TRUE : JNI_FALSE;\n", toName, fromName)
+		default:
+			g.Printf("%s %s = (%s)%s;\n", g.jniType(t), toName, g.jniType(t), fromName)
+		}
+	case *types.Slice:
+		switch e := t.Elem().(type) {
+		case *types.Basic:
+			switch e.Kind() {
+			case types.Uint8: // Byte.
+				g.Printf("jbyteArray %s = go_seq_to_java_bytearray(env, %s, %d);\n", toName, fromName, g.toCFlag(mode.copySlice()))
+			default:
+				g.errorf("unsupported type: %s", t)
+			}
+		default:
+			g.errorf("unsupported type: %s", t)
+		}
 	case *types.Pointer:
 		// TODO(crawshaw): test *int
 		// TODO(crawshaw): test **Generator
-		switch T := T.Elem().(type) {
+		switch t := t.Elem().(type) {
 		case *types.Named:
-			o := T.Obj()
+			o := t.Obj()
 			if o.Pkg() != g.pkg {
-				g.errorf("type %s not defined in %s", T, g.pkg)
+				g.errorf("type %s not defined in %s", t, g.pkg)
 				return
 			}
-			g.Printf("%s = new %s(%s.readRef());\n", resName, o.Name(), seqName)
+			g.Printf("jobject %s = go_seq_from_refnum(env, %s, proxy_class_%s_%s, proxy_class_%s_%s_cons);\n", toName, fromName, g.pkgPrefix, o.Name(), g.pkgPrefix, o.Name())
 		default:
-			g.errorf("unsupported type %s", T)
+			g.errorf("unsupported type %s", t)
 		}
 	case *types.Named:
-		switch T.Underlying().(type) {
+		switch t.Underlying().(type) {
 		case *types.Interface, *types.Pointer:
-			o := T.Obj()
+			o := t.Obj()
 			if o.Pkg() != g.pkg {
-				g.errorf("type %s not defined in %s", T, g.pkg)
+				g.errorf("type %s not defined in %s", t, g.pkg)
 				return
 			}
-			g.Printf("%s = new %s.Proxy(%s.readRef());\n", resName, o.Name(), seqName)
+			g.Printf("jobject %s = go_seq_from_refnum(env, %s, proxy_class_%s_%s, proxy_class_%s_%s_cons);\n", toName, fromName, g.pkgPrefix, o.Name(), g.pkgPrefix, o.Name())
 		default:
-			g.errorf("unsupported, direct named type %s", T)
+			g.errorf("unsupported, direct named type %s", t)
 		}
 	default:
-		g.Printf("%s = %s.read%s();\n", resName, seqName, seqType(T))
+		g.Printf("%s %s = (%s)%s;\n", g.jniType(t), toName, g.jniType(t), fromName)
 	}
-}
-
-func (g *javaGen) errorf(format string, args ...interface{}) {
-	g.err = append(g.err, fmt.Errorf(format, args...))
 }
 
 func (g *javaGen) gobindOpts() string {
@@ -595,16 +499,6 @@ func (g *javaGen) gobindOpts() string {
 	}
 	return strings.Join(opts, " ")
 }
-
-const javaPreamble = `// Java class %[1]s.%[2]s is a proxy for talking to a Go program.
-//   gobind %[3]s %[4]s
-//
-// File is generated by gobind. Do not edit.
-package %[1]s;
-
-import go.Seq;
-
-`
 
 var javaNameReplacer = strings.NewReplacer(
 	"-", "_",
@@ -666,73 +560,415 @@ func (g *javaGen) genConst(o *types.Const) {
 	g.Printf("public static final %s %s = %s;\n", g.javaType(o.Type()), o.Name(), val)
 }
 
-func (g *javaGen) gen() error {
+func (g *javaGen) genJNIField(o *types.TypeName, f *types.Var) {
+	// setter
+	g.Printf("JNIEXPORT void JNICALL\n")
+	g.Printf("Java_%s_%s_00024%s_set%s(JNIEnv *env, jobject this, %s v) {\n", g.jniPkgName(), g.className(), o.Name(), f.Name(), g.jniType(f.Type()))
+	g.Indent()
+	g.Printf("int32_t o = go_seq_to_refnum(env, this);\n")
+	g.genJavaToC("v", f.Type(), modeRetained)
+	g.Printf("proxy%s_%s_%s_Set(o, _v);\n", g.pkgPrefix, o.Name(), f.Name())
+	g.genRelease("v", f.Type(), modeRetained)
+	g.Outdent()
+	g.Printf("}\n\n")
+
+	// getter
+	g.Printf("JNIEXPORT %s JNICALL\n", g.jniType(f.Type()))
+	g.Printf("Java_%s_%s_00024%s_get%s(JNIEnv *env, jobject this) {\n", g.jniPkgName(), g.className(), o.Name(), f.Name())
+	g.Indent()
+	g.Printf("int32_t o = go_seq_to_refnum(env, this);\n")
+	g.Printf("%s r0 = ", g.cgoType(f.Type()))
+	g.Printf("proxy%s_%s_%s_Get(o);\n", g.pkgPrefix, o.Name(), f.Name())
+	g.genCToJava("_r0", "r0", f.Type(), modeReturned)
+	g.Printf("return _r0;\n")
+	g.Outdent()
+	g.Printf("}\n\n")
+}
+
+func (g *javaGen) genJNIVar(o *types.Var) {
+	// setter
+	g.Printf("JNIEXPORT void JNICALL\n")
+	g.Printf("Java_%s_%s_set%s(JNIEnv *env, jclass clazz, %s v) {\n", g.jniPkgName(), g.className(), o.Name(), g.jniType(o.Type()))
+	g.Indent()
+	g.genJavaToC("v", o.Type(), modeRetained)
+	g.Printf("var_set%s_%s(_v);\n", g.pkgPrefix, o.Name())
+	g.genRelease("v", o.Type(), modeRetained)
+	g.Outdent()
+	g.Printf("}\n\n")
+
+	// getter
+	g.Printf("JNIEXPORT %s JNICALL\n", g.jniType(o.Type()))
+	g.Printf("Java_%s_%s_get%s(JNIEnv *env, jclass clazz) {\n", g.jniPkgName(), g.className(), o.Name())
+	g.Indent()
+	g.Printf("%s r0 = ", g.cgoType(o.Type()))
+	g.Printf("var_get%s_%s();\n", g.pkgPrefix, o.Name())
+	g.genCToJava("_r0", "r0", o.Type(), modeReturned)
+	g.Printf("return _r0;\n")
+	g.Outdent()
+	g.Printf("}\n\n")
+}
+
+func (g *javaGen) genJNIFunc(o *types.Func, sName string, proxy bool) {
+	g.genJNIFuncSignature(o, sName, proxy)
+	sig := o.Type().(*types.Signature)
+	res := sig.Results()
+
+	g.Printf(" {\n")
+	g.Indent()
+
+	if sName != "" {
+		g.Printf("int32_t o = go_seq_to_refnum(env, this);\n")
+	}
+	params := sig.Params()
+	for i := 0; i < params.Len(); i++ {
+		name := paramName(params, i)
+		g.genJavaToC(name, params.At(i).Type(), modeTransient)
+	}
+	resPrefix := ""
+	if res.Len() > 0 {
+		if res.Len() == 1 {
+			g.Printf("%s r0 = ", g.cgoType(res.At(0).Type()))
+		} else {
+			resPrefix = "res."
+			g.Printf("struct proxy%s_%s_%s_return res = ", g.pkgPrefix, sName, o.Name())
+		}
+	}
+	g.Printf("proxy%s_%s_%s(", g.pkgPrefix, sName, o.Name())
+	if sName != "" {
+		g.Printf("o")
+	}
+	for i := 0; i < params.Len(); i++ {
+		if i > 0 || sName != "" {
+			g.Printf(", ")
+		}
+		g.Printf("_%s", paramName(params, i))
+	}
+	g.Printf(");\n")
+	for i := 0; i < params.Len(); i++ {
+		g.genRelease(paramName(params, i), params.At(i).Type(), modeTransient)
+	}
+	for i := 0; i < res.Len(); i++ {
+		tn := fmt.Sprintf("_r%d", i)
+		t := res.At(i).Type()
+		g.genCToJava(tn, fmt.Sprintf("%sr%d", resPrefix, i), t, modeReturned)
+	}
+	// Go backwards so that any exception is thrown before
+	// the return.
+	for i := res.Len() - 1; i >= 0; i-- {
+		t := res.At(i).Type()
+		if !isErrorType(t) {
+			g.Printf("return _r%d;\n", i)
+		} else {
+			g.Printf("go_seq_maybe_throw_exception(env, _r%d);\n", i)
+		}
+	}
+	g.Outdent()
+	g.Printf("}\n\n")
+}
+
+// genRelease cleans up arguments that weren't copied in genJavaToC.
+func (g *javaGen) genRelease(varName string, t types.Type, mode varMode) {
+	if isErrorType(t) {
+		g.genRelease(varName, types.Typ[types.String], mode)
+		return
+	}
+	switch t := t.(type) {
+	case *types.Basic:
+		switch t.Kind() {
+		case types.String:
+			if !mode.copyString() {
+				g.Printf("if (_%s.chars != NULL) {\n", varName)
+				g.Printf("  (*env)->ReleaseStringChars(env, %s, _%s.chars);\n", varName, varName)
+				g.Printf("}\n")
+			}
+		}
+	case *types.Slice:
+		switch e := t.Elem().(type) {
+		case *types.Basic:
+			switch e.Kind() {
+			case types.Uint8: // Byte.
+				if !mode.copySlice() {
+					g.Printf("if (_%s.ptr != NULL) {\n", varName)
+					g.Printf("  (*env)->ReleaseByteArrayElements(env, %s, _%s.ptr, 0);\n", varName, varName)
+					g.Printf("}\n")
+				}
+			}
+		}
+	}
+}
+
+func (g *javaGen) genMethodInterfaceProxy(oName string, m *types.Func) {
+	sig := m.Type().(*types.Signature)
+	params := sig.Params()
+	res := sig.Results()
+	g.genInterfaceMethodSignature(m, oName, false)
+	g.Indent()
+	// Push a JNI reference frame with a conservative capacity of two for each per parameter (Seq.Ref and Seq.Object),
+	// plus extra space for the receiver, the return value, and exception (if any).
+	g.Printf("JNIEnv *env = go_seq_push_local_frame(%d);\n", 2*params.Len()+10)
+	g.Printf("jobject o = go_seq_from_refnum(env, refnum, proxy_class_%s_%s, proxy_class_%s_%s_cons);\n", g.pkgPrefix, oName, g.pkgPrefix, oName)
+	for i := 0; i < params.Len(); i++ {
+		pn := paramName(params, i)
+		g.genCToJava("_"+pn, pn, params.At(i).Type(), modeTransient)
+	}
+	if res.Len() > 0 && !isErrorType(res.At(0).Type()) {
+		t := res.At(0).Type()
+		g.Printf("%s res = (*env)->Call%sMethod(env, o, ", g.jniType(t), g.jniCallType(t))
+	} else {
+		g.Printf("(*env)->CallVoidMethod(env, o, ")
+	}
+	g.Printf("mid_%s_%s", oName, m.Name())
+	for i := 0; i < params.Len(); i++ {
+		g.Printf(", _%s", paramName(params, i))
+	}
+	g.Printf(");\n")
+	var retName string
+	if res.Len() > 0 {
+		var rets []string
+		t := res.At(0).Type()
+		if !isErrorType(t) {
+			g.genJavaToC("res", t, modeReturned)
+			retName = "_res"
+			rets = append(rets, retName)
+		}
+		if res.Len() == 2 || isErrorType(t) {
+			g.Printf("jstring exc = go_seq_get_exception_message(env);\n")
+			st := types.Typ[types.String]
+			g.genJavaToC("exc", st, modeReturned)
+			retName = "_exc"
+			rets = append(rets, "_exc")
+		}
+
+		if res.Len() > 1 {
+			g.Printf("cproxy%s_%s_%s_return sres = {\n", g.pkgPrefix, oName, m.Name())
+			g.Printf("	%s\n", strings.Join(rets, ", "))
+			g.Printf("};\n")
+			retName = "sres"
+		}
+	}
+	g.Printf("go_seq_pop_local_frame(env);\n")
+	if retName != "" {
+		g.Printf("return %s;\n", retName)
+	}
+	g.Outdent()
+	g.Printf("}\n\n")
+}
+
+func (g *javaGen) genH() error {
+	g.Printf(hPreamble, g.gobindOpts(), g.pkg.Path(), g.className())
+	for _, iface := range g.interfaces {
+		for _, m := range iface.summary.callable {
+			g.genInterfaceMethodSignature(m, iface.obj.Name(), true)
+			g.Printf("\n")
+		}
+	}
+	g.Printf("#endif\n")
+	if len(g.err) > 0 {
+		return g.err
+	}
+	return nil
+}
+
+func (g *javaGen) jniCallType(t types.Type) string {
+	if isErrorType(t) {
+		return g.jniCallType(types.Typ[types.String])
+	}
+	switch t := t.(type) {
+	case *types.Basic:
+		switch t.Kind() {
+		case types.Bool, types.UntypedBool:
+			return "Boolean"
+		case types.Int:
+			return "Long"
+		case types.Int8, types.Uint8: // types.Byte
+			return "Byte"
+		case types.Int16:
+			return "Short"
+		case types.Int32, types.UntypedRune: // types.Rune
+			return "Int"
+		case types.Int64, types.UntypedInt:
+			return "Long"
+		case types.Float32:
+			return "Float"
+		case types.Float64, types.UntypedFloat:
+			return "Double"
+		case types.String, types.UntypedString:
+			return "Object"
+		default:
+			g.errorf("unsupported basic type: %s", t)
+			return "TODO"
+		}
+	case *types.Slice:
+		return "Object"
+	case *types.Pointer:
+		if _, ok := t.Elem().(*types.Named); ok {
+			return g.jniCallType(t.Elem())
+		}
+		panic(fmt.Sprintf("unsupported pointer to type: %s", t))
+	case *types.Named:
+		return "Object"
+	default:
+		return "Object"
+	}
+}
+
+func (g *javaGen) jniClassSigType(className string) string {
+	return strings.Replace(g.javaPkg, ".", "/", -1) + "/" + g.className() + "$" + className
+}
+
+func (g *javaGen) jniSigType(T types.Type) string {
+	if isErrorType(T) {
+		return g.jniSigType(types.Typ[types.String])
+	}
+	switch T := T.(type) {
+	case *types.Basic:
+		switch T.Kind() {
+		case types.Bool, types.UntypedBool:
+			return "Z"
+		case types.Int:
+			return "J"
+		case types.Int8:
+			return "B"
+		case types.Int16:
+			return "S"
+		case types.Int32, types.UntypedRune: // types.Rune
+			return "I"
+		case types.Int64, types.UntypedInt:
+			return "J"
+		case types.Uint8: // types.Byte
+			return "B"
+		case types.Float32:
+			return "F"
+		case types.Float64, types.UntypedFloat:
+			return "D"
+		case types.String, types.UntypedString:
+			return "Ljava/lang/String;"
+		default:
+			g.errorf("unsupported basic type: %s", T)
+			return "TODO"
+		}
+	case *types.Slice:
+		return "[" + g.jniSigType(T.Elem())
+	case *types.Pointer:
+		if _, ok := T.Elem().(*types.Named); ok {
+			return g.jniSigType(T.Elem())
+		}
+		panic(fmt.Sprintf("unsupported pointer to type: %s", T))
+	case *types.Named:
+		return "L" + g.jniClassSigType(T.Obj().Name()) + ";"
+	default:
+		g.errorf("unsupported jniType: %#+v, %s\n", T, T)
+		return "TODO"
+	}
+}
+
+func (g *javaGen) genC() error {
+	g.Printf(cPreamble, g.gobindOpts(), g.pkg.Path(), g.pkg.Name())
+	for _, iface := range g.interfaces {
+		g.Printf("static jclass proxy_class_%s_%s;\n", g.pkgPrefix, iface.obj.Name())
+		g.Printf("static jmethodID proxy_class_%s_%s_cons;\n", g.pkgPrefix, iface.obj.Name())
+		for i := 0; i < iface.t.NumMethods(); i++ {
+			g.Printf("static jmethodID mid_%s_%s;\n", iface.obj.Name(), iface.t.Method(i).Name())
+		}
+	}
+	for _, s := range g.structs {
+		g.Printf("static jclass proxy_class_%s_%s;\n", g.pkgPrefix, s.obj.Name())
+		g.Printf("static jmethodID proxy_class_%s_%s_cons;\n", g.pkgPrefix, s.obj.Name())
+	}
+	g.Printf("\n")
+	g.Printf("JNIEXPORT void JNICALL\n")
+	g.Printf("Java_%s_%s_init(JNIEnv *env, jclass _unused) {\n", g.jniPkgName(), g.className())
+	g.Indent()
+	g.Printf("jclass clazz;\n")
+	for _, s := range g.structs {
+		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigType(s.obj.Name()))
+		g.Printf("proxy_class_%s_%s = (*env)->NewGlobalRef(env, clazz);\n", g.pkgPrefix, s.obj.Name())
+		g.Printf("proxy_class_%s_%s_cons = (*env)->GetMethodID(env, clazz, \"<init>\", \"(Lgo/Seq$Ref;)V\");\n", g.pkgPrefix, s.obj.Name())
+	}
+	for _, iface := range g.interfaces {
+		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigType(iface.obj.Name()+"$Proxy"))
+		g.Printf("proxy_class_%s_%s = (*env)->NewGlobalRef(env, clazz);\n", g.pkgPrefix, iface.obj.Name())
+		g.Printf("proxy_class_%s_%s_cons = (*env)->GetMethodID(env, clazz, \"<init>\", \"(Lgo/Seq$Ref;)V\");\n", g.pkgPrefix, iface.obj.Name())
+		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigType(iface.obj.Name()))
+		for _, m := range iface.summary.callable {
+			sig := m.Type().(*types.Signature)
+			res := sig.Results()
+			retSig := "V"
+			if res.Len() > 0 {
+				if t := res.At(0).Type(); !isErrorType(t) {
+					retSig = g.jniSigType(t)
+				}
+			}
+			var jniParams string
+			params := sig.Params()
+			for i := 0; i < params.Len(); i++ {
+				jniParams += g.jniSigType(params.At(i).Type())
+			}
+			g.Printf("mid_%s_%s = (*env)->GetMethodID(env, clazz, %q, \"(%s)%s\");\n",
+				iface.obj.Name(), m.Name(), m.Name(), jniParams, retSig)
+		}
+		g.Printf("\n")
+	}
+	g.Outdent()
+	g.Printf("}\n\n")
+	for _, f := range g.funcs {
+		g.genJNIFunc(f, "", false)
+	}
+	for _, s := range g.structs {
+		sName := s.obj.Name()
+		for _, m := range exportedMethodSet(types.NewPointer(s.obj.Type())) {
+			g.genJNIFunc(m, sName, false)
+		}
+		for _, f := range exportedFields(s.t) {
+			g.genJNIField(s.obj, f)
+		}
+	}
+	for _, iface := range g.interfaces {
+		for _, m := range iface.summary.callable {
+			g.genJNIFunc(m, iface.obj.Name(), true)
+			g.genMethodInterfaceProxy(iface.obj.Name(), m)
+		}
+	}
+	for _, v := range g.vars {
+		g.genJNIVar(v)
+	}
+	if len(g.err) > 0 {
+		return g.err
+	}
+	return nil
+}
+
+func (g *javaGen) genJava() error {
 	g.Printf(javaPreamble, g.javaPkg, g.className(), g.gobindOpts(), g.pkg.Path())
 
 	g.Printf("public abstract class %s {\n", g.className())
 	g.Indent()
+	g.Printf("static {\n")
+	g.Indent()
+	g.Printf("Seq.touch(); // for loading the native library\n")
+	g.Printf("init();\n")
+	g.Outdent()
+	g.Printf("}\n\n")
 	g.Printf("private %s() {} // uninstantiable\n\n", g.className())
+	g.Printf("private static native void init();\n\n")
 
-	var funcs []string
-
-	scope := g.pkg.Scope()
-	names := scope.Names()
-	var objs []types.Object
-	var intfs []*types.TypeName
-	hasExported := false
-	for _, name := range names {
-		obj := scope.Lookup(name)
-		if !obj.Exported() {
-			continue
-		}
-		objs = append(objs, obj)
-		hasExported = true
-		o, ok := obj.(*types.TypeName)
-		if !ok {
-			continue
-		}
-		named := obj.Type().(*types.Named)
-		intf, ok := named.Underlying().(*types.Interface)
-		if ok && intf.NumMethods() > 0 {
-			intfs = append(intfs, o)
-		}
+	for _, s := range g.structs {
+		g.genStruct(s.obj, s.t)
 	}
-	if !hasExported {
-		g.errorf("no exported names in the package %q", g.pkg.Path())
+	for _, iface := range g.interfaces {
+		g.genInterface(iface)
 	}
-	for _, obj := range objs {
-		switch o := obj.(type) {
-		// TODO(crawshaw): case *types.Var:
-		case *types.Func:
-			if isCallable(o) {
-				g.genFunc(o, false)
-				funcs = append(funcs, o.Name())
-			}
-		case *types.TypeName:
-			named := o.Type().(*types.Named)
-			switch t := named.Underlying().(type) {
-			case *types.Struct:
-				g.genStruct(o, t, intfs)
-			case *types.Interface:
-				g.genInterface(o)
-			default:
-				g.errorf("%s: cannot generate binding for %s: %T", g.fset.Position(o.Pos()), o.Name(), t)
-				continue
-			}
-		case *types.Const:
-			g.genConst(o)
-		case *types.Var:
-			g.genVar(o)
-		default:
-			g.errorf("unsupported exported type: %T", obj)
-		}
+	for _, c := range g.constants {
+		g.genConst(c)
+	}
+	g.Printf("\n")
+	for _, v := range g.vars {
+		g.genVar(v)
+	}
+	for _, f := range g.funcs {
+		g.genFuncSignature(f, true, false)
 	}
 
-	for i, name := range funcs {
-		g.Printf("private static final int CALL_%s = %d;\n", name, i+1)
-	}
-
-	g.Printf("private static final String DESCRIPTOR = %q;\n", g.pkg.Name())
 	g.Outdent()
 	g.Printf("}\n")
 
@@ -741,3 +977,47 @@ func (g *javaGen) gen() error {
 	}
 	return nil
 }
+
+const (
+	javaProxyPreamble = `static final class Proxy implements %s {
+    private go.Seq.Ref ref;
+
+    Proxy(go.Seq.Ref ref) { this.ref = ref; }
+
+    public final go.Seq.Ref ref() { return ref; }
+
+`
+	javaPreamble = `// Java class %[1]s.%[2]s is a proxy for talking to a Go program.
+//   gobind %[3]s %[4]s
+//
+// File is generated by gobind. Do not edit.
+package %[1]s;
+
+import go.Seq;
+
+`
+	cPreamble = `// JNI functions for the Go <=> Java bridge.
+//   gobind %[1]s %[2]s
+//
+// File is generated by gobind. Do not edit.
+
+#include <android/log.h>
+#include <stdint.h>
+#include "seq.h"
+#include "%[3]s.h"
+#include "_cgo_export.h"
+
+
+`
+	hPreamble = `// JNI function headers for the Go <=> Java bridge.
+//   gobind %[1]s %[2]s
+//
+// File is generated by gobind. Do not edit.
+
+#ifndef __%[3]s_H__
+#define __%[3]s_H__
+
+#include <jni.h>
+
+`
+)

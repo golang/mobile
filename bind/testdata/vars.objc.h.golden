@@ -22,7 +22,7 @@
 @protocol GoVarsI
 @end
 
-@interface GoVars : NSObject 
+@interface GoVars : NSObject
 + (BOOL) aBool;
 + (void) setABool:(BOOL)v;
 

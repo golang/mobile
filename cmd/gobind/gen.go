@@ -20,26 +20,33 @@ func genPkg(p *types.Package) {
 	fname := defaultFileName(*lang, p)
 	switch *lang {
 	case "java":
-		w, closer := writer(fname, p)
-		processErr(bind.GenJava(w, fset, p, *javaPkg))
+		w, closer := writer(fname)
+		processErr(bind.GenJava(w, fset, p, *javaPkg, bind.Java))
+		closer()
+		cname := "java_" + p.Name() + ".c"
+		w, closer = writer(cname)
+		processErr(bind.GenJava(w, fset, p, *javaPkg, bind.JavaC))
+		closer()
+		hname := p.Name() + ".h"
+		w, closer = writer(hname)
+		processErr(bind.GenJava(w, fset, p, *javaPkg, bind.JavaH))
 		closer()
 	case "go":
-		w, closer := writer(fname, p)
+		w, closer := writer(fname)
 		processErr(bind.GenGo(w, fset, p))
 		closer()
 	case "objc":
-		if fname == "" {
-			processErr(bind.GenObjc(os.Stdout, fset, p, *prefix, true))
-			processErr(bind.GenObjc(os.Stdout, fset, p, *prefix, false))
-		} else {
-			hname := fname[:len(fname)-2] + ".h"
-			w, closer := writer(hname, p)
-			processErr(bind.GenObjc(w, fset, p, *prefix, true))
-			closer()
-			w, closer = writer(fname, p)
-			processErr(bind.GenObjc(w, fset, p, *prefix, false))
-			closer()
-		}
+		gohname := p.Name() + ".h"
+		w, closer := writer(gohname)
+		processErr(bind.GenObjc(w, fset, p, *prefix, bind.ObjcGoH))
+		closer()
+		hname := fname[:len(fname)-2] + ".h"
+		w, closer = writer(hname)
+		processErr(bind.GenObjc(w, fset, p, *prefix, bind.ObjcH))
+		closer()
+		w, closer = writer(fname)
+		processErr(bind.GenObjc(w, fset, p, *prefix, bind.ObjcM))
+		closer()
 	default:
 		errorf("unknown target language: %q", *lang)
 	}
@@ -59,18 +66,19 @@ func processErr(err error) {
 
 var fset = token.NewFileSet()
 
-func writer(fname string, pkg *types.Package) (w io.Writer, closer func()) {
-	if fname == "" {
+func writer(fname string) (w io.Writer, closer func()) {
+	if *outdir == "" {
 		return os.Stdout, func() { return }
 	}
 
-	dir := filepath.Dir(fname)
+	name := filepath.Join(*outdir, fname)
+	dir := filepath.Dir(name)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		errorf("invalid output dir: %v", err)
 		os.Exit(exitStatus)
 	}
 
-	f, err := os.Create(fname)
+	f, err := os.Create(name)
 	if err != nil {
 		errorf("invalid output dir: %v", err)
 		os.Exit(exitStatus)
@@ -84,21 +92,17 @@ func writer(fname string, pkg *types.Package) (w io.Writer, closer func()) {
 }
 
 func defaultFileName(lang string, pkg *types.Package) string {
-	if *outdir == "" {
-		return ""
-	}
-
 	switch lang {
 	case "java":
 		firstRune, size := utf8.DecodeRuneInString(pkg.Name())
 		className := string(unicode.ToUpper(firstRune)) + pkg.Name()[size:]
-		return filepath.Join(*outdir, className+".java")
+		return className + ".java"
 	case "go":
-		return filepath.Join(*outdir, "go_"+pkg.Name()+".go")
+		return "go_" + pkg.Name() + ".go"
 	case "objc":
 		firstRune, size := utf8.DecodeRuneInString(pkg.Name())
 		className := string(unicode.ToUpper(firstRune)) + pkg.Name()[size:]
-		return filepath.Join(*outdir, "Go"+className+".m")
+		return "Go" + className + ".m"
 	}
 	errorf("unknown target language: %q", lang)
 	os.Exit(exitStatus)

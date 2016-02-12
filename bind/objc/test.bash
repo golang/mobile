@@ -20,12 +20,15 @@ trap cleanup EXIT
 
 (cd testpkg; go generate)
 
-go build -x -v -buildmode=c-archive -o=${WORK}/libgo.a test_main.go
-cp ./seq.h ${WORK}/
-cp testpkg/objc_testpkg/GoTestpkg.* ${WORK}/
+cp ./seq.h ./testpkg/go_testpkg
+cp ./seq_darwin.m.support ./testpkg/go_testpkg/seq_darwin.m
+cp ./seq_darwin.go.support ./testpkg/go_testpkg/seq_darwin.go
+cp ../seq.go.support ./testpkg/go_testpkg/seq.go
+go build -x -v -buildmode=c-archive -ldflags="$ccargs" -o=${WORK}/libgo.a test_main.go
+cp testpkg/go_testpkg/GoTestpkg.h ${WORK}/
 cp ./SeqTest.m ${WORK}/
 
 ccargs="-Wl,-no_pie -framework Foundation -fobjc-arc"
-$(go env CC) $(go env GOGCCFLAGS) $ccargs -o ${WORK}/a.out ${WORK}/libgo.a ${WORK}/GoTestpkg.m ${WORK}/SeqTest.m
+$(go env CC) $(go env GOGCCFLAGS) $ccargs -o ${WORK}/a.out ${WORK}/libgo.a ${WORK}/SeqTest.m
 
 ${WORK}/a.out

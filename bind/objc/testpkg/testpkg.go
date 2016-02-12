@@ -4,8 +4,8 @@
 
 package testpkg
 
-//go:generate gobind -lang=go -outdir=go_testpkg .
-//go:generate gobind -lang=objc -outdir=objc_testpkg .
+//go:generate gobind -lang=go -outdir=go_testpkg golang.org/x/mobile/bind/objc/testpkg
+//go:generate gobind -lang=objc -outdir=go_testpkg golang.org/x/mobile/bind/objc/testpkg
 
 import (
 	"errors"
@@ -97,6 +97,8 @@ func Multiply(idx int32, val int32) int64 {
 
 func GC() {
 	runtime.GC()
+	// Allow for finalizers to run and release any foreign references
+	time.Sleep(100 * time.Millisecond)
 }
 
 func Hi() {
@@ -190,5 +192,44 @@ type Z interface {
 }
 
 func Echo(s string) string {
+	return s
+}
+
+type NullTest interface {
+	Null() NullTest
+}
+
+func NewNullInterface() I {
+	return nil
+}
+
+func NewNullStruct() *S {
+	return nil
+}
+
+func CallWithNull(_null NullTest, nuller NullTest) bool {
+	return _null == nil && nuller.Null() == nil
+}
+
+func ReadIntoByteArray(s []byte) (int, error) {
+	if len(s) != cap(s) {
+		return 0, fmt.Errorf("cap %d != len %d", cap(s), len(s))
+	}
+	for i := 0; i < len(s); i++ {
+		s[i] = byte(i)
+	}
+	return len(s), nil
+}
+
+// Issue #13033
+type NullFieldStruct struct {
+	F *S
+}
+
+func NewNullFieldStruct() *NullFieldStruct {
+	return &NullFieldStruct{}
+}
+
+func StringDup(s string) string {
 	return s
 }

@@ -9,10 +9,13 @@
 #include <Foundation/Foundation.h>
 
 @class GoTestpkgNode;
+@class GoTestpkgNullFieldStruct;
 @class GoTestpkgS;
 @class GoTestpkgStructThatStartsWithLetterBeforeZ;
 @protocol GoTestpkgI;
 @class GoTestpkgI;
+@protocol GoTestpkgNullTest;
+@class GoTestpkgNullTest;
 @protocol GoTestpkgZ;
 @class GoTestpkgZ;
 
@@ -25,6 +28,15 @@
 - (void)setV:(NSString*)v;
 - (NSString*)err;
 - (void)setErr:(NSString*)v;
+@end
+
+@interface GoTestpkgNullFieldStruct : NSObject {
+}
+@property(strong, readonly) id _ref;
+
+- (id)initWithRef:(id)ref;
+- (GoTestpkgS*)f;
+- (void)setF:(GoTestpkgS*)v;
 @end
 
 @interface GoTestpkgS : NSObject {
@@ -55,11 +67,16 @@
 - (int64_t)times:(int32_t)v;
 @end
 
+@protocol GoTestpkgNullTest
+- (id<GoTestpkgNullTest>)null;
+@end
+
 @protocol GoTestpkgZ
 @end
 
 FOUNDATION_EXPORT const BOOL GoTestpkgABool;
 FOUNDATION_EXPORT const double GoTestpkgAFloat;
+FOUNDATION_EXPORT NSString* const GoTestpkgALongString;
 FOUNDATION_EXPORT NSString* const GoTestpkgAString;
 FOUNDATION_EXPORT const int64_t GoTestpkgAnInt;
 FOUNDATION_EXPORT const double GoTestpkgLog2E;
@@ -72,7 +89,7 @@ FOUNDATION_EXPORT const int64_t GoTestpkgMinInt64;
 FOUNDATION_EXPORT const float GoTestpkgSmallestNonzeroFloat32;
 FOUNDATION_EXPORT const double GoTestpkgSmallestNonzeroFloat64;
 
-@interface GoTestpkg : NSObject 
+@interface GoTestpkg : NSObject
 + (int) intVar;
 + (void) setIntVar:(int)v;
 
@@ -95,6 +112,8 @@ FOUNDATION_EXPORT BOOL GoTestpkgCallIStringError(id<GoTestpkgI> i, NSString* s, 
 
 FOUNDATION_EXPORT double GoTestpkgCallSSum(GoTestpkgS* s);
 
+FOUNDATION_EXPORT BOOL GoTestpkgCallWithNull(id<GoTestpkgNullTest> p0, id<GoTestpkgNullTest> nuller);
+
 FOUNDATION_EXPORT int GoTestpkgCollectS(int want, int timeoutSec);
 
 FOUNDATION_EXPORT NSString* GoTestpkgEcho(NSString* s);
@@ -113,11 +132,21 @@ FOUNDATION_EXPORT id<GoTestpkgI> GoTestpkgNewI();
 
 FOUNDATION_EXPORT GoTestpkgNode* GoTestpkgNewNode(NSString* name);
 
+FOUNDATION_EXPORT GoTestpkgNullFieldStruct* GoTestpkgNewNullFieldStruct();
+
+FOUNDATION_EXPORT id<GoTestpkgI> GoTestpkgNewNullInterface();
+
+FOUNDATION_EXPORT GoTestpkgS* GoTestpkgNewNullStruct();
+
 FOUNDATION_EXPORT GoTestpkgS* GoTestpkgNewS(double x, double y);
+
+FOUNDATION_EXPORT BOOL GoTestpkgReadIntoByteArray(NSData* s, int* ret0_, NSError** error);
 
 FOUNDATION_EXPORT void GoTestpkgRegisterI(int32_t idx, id<GoTestpkgI> i);
 
 FOUNDATION_EXPORT BOOL GoTestpkgReturnsError(BOOL b, NSString** ret0_, NSError** error);
+
+FOUNDATION_EXPORT NSString* GoTestpkgStringDup(NSString* s);
 
 FOUNDATION_EXPORT int64_t GoTestpkgSum(int64_t x, int64_t y);
 

@@ -15,7 +15,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"text/template"
 )
 
 func goAndroidBind(pkgs []*build.Package, androidArchs []string) error {
@@ -71,27 +70,19 @@ func goAndroidBind(pkgs []*build.Package, androidArchs []string) error {
 			return err
 		}
 
+		srcDir := filepath.Join(tmpdir, "gomobile_bind")
 		for _, pkg := range typesPkgs {
-			if err := binder.GenGo(pkg, tmpdir); err != nil {
+			if err := binder.GenGo(pkg, srcDir); err != nil {
 				return err
 			}
 		}
 
 		err = writeFile(mainFile, func(w io.Writer) error {
-			return androidMainTmpl.Execute(w, binder.pkgs)
+			_, err := w.Write(androidMainFile)
+			return err
 		})
 		if err != nil {
 			return fmt.Errorf("failed to create the main package for android: %v", err)
-		}
-
-		err = goBuild(
-			mainFile,
-			env,
-			"-buildmode=c-shared",
-			"-o="+filepath.Join(androidDir, "src/main/jniLibs/"+toolchain.abi+"/libgojni.so"),
-		)
-		if err != nil {
-			return err
 		}
 
 		p, err := ctx.Import("golang.org/x/mobile/bind", cwd, build.ImportComment)
@@ -105,15 +96,31 @@ func goAndroidBind(pkgs []*build.Package, androidArchs []string) error {
 			if bindJavaPkg == "" {
 				pkgpath = "go/" + pkg.Name()
 			}
-			if err := binder.GenJava(pkg, filepath.Join(androidDir, "src/main/java/"+pkgpath)); err != nil {
+			if err := binder.GenJava(pkg, srcDir, filepath.Join(androidDir, "src/main/java/"+pkgpath)); err != nil {
 				return err
 			}
+		}
+		if err := binder.GenJavaSupport(srcDir); err != nil {
+			return err
+		}
+		if err := binder.GenGoSupport(srcDir); err != nil {
+			return err
 		}
 
 		javaDir := filepath.Join(androidDir, "src/main/java/go")
 		if err := mkdir(javaDir); err != nil {
 			return err
 		}
+		err = goBuild(
+			mainFile,
+			env,
+			"-buildmode=c-shared",
+			"-o="+filepath.Join(androidDir, "src/main/jniLibs/"+toolchain.abi+"/libgojni.so"),
+		)
+		if err != nil {
+			return err
+		}
+
 		for _, javaFile := range []string{"Seq.java", "LoadJNI.java"} {
 			src := filepath.Join(repo, "bind/java/"+javaFile)
 			dst := filepath.Join(javaDir, javaFile)
@@ -127,17 +134,16 @@ func goAndroidBind(pkgs []*build.Package, androidArchs []string) error {
 	return buildAAR(androidDir, pkgs, androidArchs)
 }
 
-var androidMainTmpl = template.Must(template.New("android.go").Parse(`
+var androidMainFile = []byte(`
 package main
 
 import (
 	_ "golang.org/x/mobile/bind/java"
-{{range .}}	_ "../go_{{.Name}}"
-{{end}}
+	_ "../gomobile_bind"
 )
 
 func main() {}
-`))
+`)
 
 // AAR is the format for the binary distribution of an Android Library Project
 // and it is a ZIP archive with extension .aar.

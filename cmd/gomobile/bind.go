@@ -138,6 +138,28 @@ type binder struct {
 	pkgs  []*types.Package
 }
 
+func (b *binder) GenGoSupport(outdir string) error {
+	bindPkg, err := ctx.Import("golang.org/x/mobile/bind", "", build.FindOnly)
+	if err != nil {
+		return err
+	}
+	return copyFile(filepath.Join(outdir, "seq.go"), filepath.Join(bindPkg.Dir, "seq.go.support"))
+}
+
+func (b *binder) GenObjcSupport(outdir string) error {
+	objcPkg, err := ctx.Import("golang.org/x/mobile/bind/objc", "", build.FindOnly)
+	if err != nil {
+		return err
+	}
+	if err := copyFile(filepath.Join(outdir, "seq_darwin.m"), filepath.Join(objcPkg.Dir, "seq_darwin.m.support")); err != nil {
+		return err
+	}
+	if err := copyFile(filepath.Join(outdir, "seq_darwin.go"), filepath.Join(objcPkg.Dir, "seq_darwin.go.support")); err != nil {
+		return err
+	}
+	return copyFile(filepath.Join(outdir, "seq.h"), filepath.Join(objcPkg.Dir, "seq.h"))
+}
+
 func (b *binder) GenObjc(pkg *types.Package, outdir string) (string, error) {
 	const bindPrefixDefault = "Go"
 	if bindPrefix == "" {
@@ -152,6 +174,7 @@ func (b *binder) GenObjc(pkg *types.Package, outdir string) (string, error) {
 	fileBase := bindPrefix + name
 	mfile := filepath.Join(outdir, fileBase+".m")
 	hfile := filepath.Join(outdir, fileBase+".h")
+	gohfile := filepath.Join(outdir, pkg.Name()+".h")
 
 	generate := func(w io.Writer) error {
 		if buildX {
@@ -160,7 +183,7 @@ func (b *binder) GenObjc(pkg *types.Package, outdir string) (string, error) {
 		if buildN {
 			return nil
 		}
-		return bind.GenObjc(w, b.fset, pkg, bindPrefix, false)
+		return bind.GenObjc(w, b.fset, pkg, bindPrefix, bind.ObjcM)
 	}
 	if err := writeFile(mfile, generate); err != nil {
 		return "", err
@@ -169,25 +192,43 @@ func (b *binder) GenObjc(pkg *types.Package, outdir string) (string, error) {
 		if buildN {
 			return nil
 		}
-		return bind.GenObjc(w, b.fset, pkg, bindPrefix, true)
+		return bind.GenObjc(w, b.fset, pkg, bindPrefix, bind.ObjcH)
 	}
 	if err := writeFile(hfile, generate); err != nil {
 		return "", err
 	}
+	generate = func(w io.Writer) error {
+		if buildN {
+			return nil
+		}
+		return bind.GenObjc(w, b.fset, pkg, bindPrefix, bind.ObjcGoH)
+	}
+	if err := writeFile(gohfile, generate); err != nil {
+		return "", err
+	}
 
-	objcPkg, err := ctx.Import("golang.org/x/mobile/bind/objc", "", build.FindOnly)
-	if err != nil {
-		return "", err
-	}
-	if err := copyFile(filepath.Join(outdir, "seq.h"), filepath.Join(objcPkg.Dir, "seq.h")); err != nil {
-		return "", err
-	}
 	return fileBase, nil
 }
 
-func (b *binder) GenJava(pkg *types.Package, outdir string) error {
+func (b *binder) GenJavaSupport(outdir string) error {
+	javaPkg, err := ctx.Import("golang.org/x/mobile/bind/java", "", build.FindOnly)
+	if err != nil {
+		return err
+	}
+	if err := copyFile(filepath.Join(outdir, "seq_android.go"), filepath.Join(javaPkg.Dir, "seq_android.go.support")); err != nil {
+		return err
+	}
+	if err := copyFile(filepath.Join(outdir, "seq_android.c"), filepath.Join(javaPkg.Dir, "seq_android.c.support")); err != nil {
+		return err
+	}
+	return copyFile(filepath.Join(outdir, "seq.h"), filepath.Join(javaPkg.Dir, "seq.h"))
+}
+
+func (b *binder) GenJava(pkg *types.Package, outdir, javadir string) error {
 	className := strings.Title(pkg.Name())
-	javaFile := filepath.Join(outdir, className+".java")
+	javaFile := filepath.Join(javadir, className+".java")
+	cFile := filepath.Join(outdir, "java_"+pkg.Name()+".c")
+	hFile := filepath.Join(outdir, pkg.Name()+".h")
 	bindOption := "-lang=java"
 	if bindJavaPkg != "" {
 		bindOption += " -javapkg=" + bindJavaPkg
@@ -195,22 +236,36 @@ func (b *binder) GenJava(pkg *types.Package, outdir string) error {
 
 	generate := func(w io.Writer) error {
 		if buildX {
-			printcmd("gobind %s -outdir=%s %s", bindOption, outdir, pkg.Path())
+			printcmd("gobind %s -outdir=%s %s", bindOption, javadir, pkg.Path())
 		}
 		if buildN {
 			return nil
 		}
-		return bind.GenJava(w, b.fset, pkg, bindJavaPkg)
+		return bind.GenJava(w, b.fset, pkg, bindJavaPkg, bind.Java)
 	}
 	if err := writeFile(javaFile, generate); err != nil {
 		return err
 	}
-	return nil
+	generate = func(w io.Writer) error {
+		if buildN {
+			return nil
+		}
+		return bind.GenJava(w, b.fset, pkg, bindJavaPkg, bind.JavaC)
+	}
+	if err := writeFile(cFile, generate); err != nil {
+		return err
+	}
+	generate = func(w io.Writer) error {
+		if buildN {
+			return nil
+		}
+		return bind.GenJava(w, b.fset, pkg, bindJavaPkg, bind.JavaH)
+	}
+	return writeFile(hFile, generate)
 }
 
 func (b *binder) GenGo(pkg *types.Package, outdir string) error {
 	pkgName := "go_" + pkg.Name()
-	outdir = filepath.Join(outdir, pkgName)
 	goFile := filepath.Join(outdir, pkgName+"main.go")
 
 	generate := func(w io.Writer) error {
