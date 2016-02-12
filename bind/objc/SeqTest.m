@@ -335,6 +335,89 @@ void testVar() {
   }
 }
 
+// Objective-C implementation of testpkg.NullTest.
+@interface NullTest : NSObject <GoTestpkgNullTest> {
+}
+
+- (GoTestpkgNullTest *)null;
+@end
+
+@implementation NullTest {
+}
+
+- (GoTestpkgNullTest *)null {
+  return nil;
+}
+@end
+
+void testNullReferences() {
+  NullTest *t = [[NullTest alloc] init];
+  BOOL res = GoTestpkgCallWithNull(nil, t);
+  if (!res) {
+    ERROR(@"GoTestpkg.CallWithNull failed");
+  }
+  id<GoTestpkgI> i = GoTestpkgNewNullInterface();
+  if (i != nil) {
+    ERROR(@"NewNullInterface() returned %p; expected nil", i);
+  }
+  GoTestpkgS *s = GoTestpkgNewNullStruct();
+  if (s != nil) {
+    ERROR(@"NewNullStruct() returned %p; expected nil", s);
+  }
+}
+
+void testByteArrayRead() {
+  NSData *arr = [NSMutableData dataWithLength:8];
+  int n;
+  BOOL success = GoTestpkgReadIntoByteArray(arr, &n, nil);
+  if (!success) {
+    ERROR(@"ReadIntoByteArray failed");
+  }
+  if (n != 8) {
+    ERROR(@"ReadIntoByteArray wrote %d bytes, expected %d", n, 8);
+  }
+  const uint8_t *b = [arr bytes];
+  for (int i = 0; i < [arr length]; i++) {
+    if (b[i] != i) {
+      ERROR(@"ReadIntoByteArray wrote %d at %d; expected %d", b[i], i, i);
+    }
+  }
+  // Test that immutable data cannot be changed from Go
+  const uint8_t buf[] = {42};
+  arr = [NSData dataWithBytes:buf length:1];
+  success = GoTestpkgReadIntoByteArray(arr, &n, nil);
+  if (!success) {
+    ERROR(@"ReadIntoByteArray failed");
+  }
+  if (n != 1) {
+    ERROR(@"ReadIntoByteArray wrote %d bytes, expected %d", n, 8);
+  }
+  b = [arr bytes];
+  if (b[0] != 42) {
+    ERROR(@"ReadIntoByteArray wrote to an immutable NSData; expected no change");
+  }
+}
+
+void testNilField() {
+  GoTestpkgNullFieldStruct *s = GoTestpkgNewNullFieldStruct();
+  if ([s f] != nil) {
+    ERROR(@"NullFieldStruct has non-nil field; expected nil");
+  }
+}
+
+void testStringDup(NSString *want) {
+  NSString *got = GoTestpkgStringDup(want);
+  if (![want isEqualToString:got]) {
+    ERROR(@"StringDup returned %@; expected %@", got, want)
+  }
+}
+
+void testUnicodeStrings() {
+  testStringDup(@"abcxyz09{}");
+  testStringDup(@"Hello, 世界");
+  testStringDup(@"\uffff\U00010000\U00010001\U00012345\U0010ffff");
+}
+
 // Invokes functions and object methods defined in Testpkg.h.
 //
 // TODO(hyangah): apply testing framework (e.g. XCTestCase)
@@ -361,7 +444,9 @@ int main(void) {
 
     testBytesAppend(@"Foo", @"Bar");
 
-    testStruct();
+    @autoreleasepool {
+      testStruct();
+    }
     int numS = GoTestpkgCollectS(
         1, 10); // within 10 seconds, collect the S used in testStruct.
     if (numS != 1) {
@@ -384,6 +469,14 @@ int main(void) {
     testIssue12307();
 
     testVar();
+
+    testNullReferences();
+
+    testByteArrayRead();
+
+    testNilField();
+
+    testUnicodeStrings();
   }
 
   fprintf(stderr, "%s\n", err ? "FAIL" : "PASS");

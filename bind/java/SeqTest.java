@@ -68,8 +68,6 @@ public class SeqTest extends InstrumentationTestCase {
     Testpkg.setStructVar(s1);
     assertEquals("var StructVar", s1.String(), Testpkg.getStructVar().String());
 
-    // TODO(hyangah): handle nil return value (translate to null)
-
     AnI obj = new AnI();
     obj.name = "this is an I";
     Testpkg.setInterfaceVar(obj);
@@ -118,9 +116,14 @@ public class SeqTest extends InstrumentationTestCase {
   }
 
   public void testUnicode() {
-    String want = "Hello, 世界";
-    String got = Testpkg.StrDup(want);
-    assertEquals("Strings should match", want, got);
+    String[] tests = new String[]{
+      "abcxyz09{}",
+      "Hello, 世界",
+      "\uffff\uD800\uDC00\uD800\uDC01\uD808\uDF45\uDBFF\uDFFF"};
+    for (String want : tests) {
+      String got = Testpkg.StrDup(want);
+      assertEquals("Strings should match", want, got);
+    }
   }
 
   public void testNilErr() throws Exception {
@@ -420,5 +423,37 @@ public class SeqTest extends InstrumentationTestCase {
         return null;
       }
     }));
+	assertEquals("Go nil interface is null", null, Testpkg.NewNullInterface());
+	assertEquals("Go nil struct pointer is null", null, Testpkg.NewNullStruct());
+  }
+
+  public void testPassByteArray() {
+    Testpkg.PassByteArray(new Testpkg.B.Stub() {
+      @Override public void B(byte[] b) {
+        byte[] want = new byte[]{1, 2, 3, 4};
+        MoreAsserts.assertEquals("bytes should match", want, b);
+      }
+    });
+  }
+
+  public void testReader() {
+    byte[] b = new byte[8];
+    try {
+      long n = Testpkg.ReadIntoByteArray(b);
+      assertEquals("wrote to the entire byte array", b.length, n);
+      byte[] want = new byte[b.length];
+      for (int i = 0; i < want.length; i++)
+        want[i] = (byte)i;
+      MoreAsserts.assertEquals("bytes should match", want, b);
+     } catch (Exception e) {
+       fail("Failed to write: " + e.toString());
+     }
+  }
+
+  public void testGoroutineCallback() {
+    Testpkg.GoroutineCallback(new Testpkg.Receiver.Stub() {
+      @Override public void Hello(String msg) {
+      }
+    });
   }
 }

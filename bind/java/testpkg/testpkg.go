@@ -236,10 +236,50 @@ type NullTest interface {
 	Null() NullTest
 }
 
+func NewNullInterface() I {
+	return nil
+}
+
+func NewNullStruct() *S {
+	return nil
+}
+
 func CallWithNull(_null NullTest, nuller NullTest) bool {
 	return _null == nil && nuller.Null() == nil
 }
 
 type Issue14168 interface {
 	F(seq int32)
+}
+
+func ReadIntoByteArray(s []byte) (int, error) {
+	if len(s) != cap(s) {
+		return 0, fmt.Errorf("cap %d != len %d", cap(s), len(s))
+	}
+	for i := 0; i < len(s); i++ {
+		s[i] = byte(i)
+	}
+	return len(s), nil
+}
+
+type B interface {
+	B(b []byte)
+}
+
+func PassByteArray(b B) {
+	b.B([]byte{1, 2, 3, 4})
+}
+
+func GoroutineCallback(r Receiver) {
+	done := make(chan struct{})
+	go func() {
+		// Run it multiple times to increase the chance that the goroutine
+		// will use different threads for the call. Use a long argument string to
+		// make sure the JNI calls take more time.
+		for i := 0; i < 100000; i++ {
+			r.Hello("HelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHelloHello")
+		}
+		close(done)
+	}()
+	<-done
 }

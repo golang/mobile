@@ -6,6 +6,7 @@
 #include "EXCustomprefix.h"
 #include <Foundation/Foundation.h>
 #include "seq.h"
+#include "_cgo_export.h"
 
 static NSString* errDomain = @"go.customprefix";
 
@@ -13,15 +14,11 @@ static NSString* errDomain = @"go.customprefix";
 -(GoSeqRef*) _ref;
 @end
 
-#define _DESCRIPTOR_ "customprefix"
-
-#define _CALL_F_ 1
 
 void EXCustomprefixF() {
-	GoSeq in_ = {};
-	GoSeq out_ = {};
-	go_seq_send(_DESCRIPTOR_, _CALL_F_, &in_, &out_);
-	go_seq_free(&in_);
-	go_seq_free(&out_);
+	proxycustomprefix__F();
 }
 
+__attribute__((constructor)) static void init() {
+	init_seq();
+}

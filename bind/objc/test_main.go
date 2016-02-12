@@ -10,7 +10,6 @@ package main
 import "C"
 
 import (
-	_ "golang.org/x/mobile/bind/objc"
 	_ "golang.org/x/mobile/bind/objc/testpkg/go_testpkg"
 )
 
