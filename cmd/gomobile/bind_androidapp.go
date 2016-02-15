@@ -110,9 +110,13 @@ func goAndroidBind(pkgs []*build.Package, androidArchs []string) error {
 			}
 		}
 
+		javaDir := filepath.Join(androidDir, "src/main/java/go")
+		if err := mkdir(javaDir); err != nil {
+			return err
+		}
 		for _, javaFile := range []string{"Seq.java", "LoadJNI.java"} {
 			src := filepath.Join(repo, "bind/java/"+javaFile)
-			dst := filepath.Join(androidDir, "src/main/java/go/"+javaFile)
+			dst := filepath.Join(javaDir, javaFile)
 			rm(dst)
 			if err := symlink(src, dst); err != nil {
 				return err
