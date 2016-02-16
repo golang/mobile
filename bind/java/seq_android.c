@@ -262,12 +262,14 @@ void recv(int32_t ref, int code, uint8_t *in_ptr, size_t in_len, uint8_t **out_p
 	memcpy(mem_write(env, in, in_len, 1), in_ptr, in_len);
 	in_mem->off = 0;
 	out = (*env)->CallStaticObjectMethod(env, seq_clazz, seq_recv, in, code, ref);
+	(*env)->DeleteLocalRef(env, in);
 	if (out == NULL) {
 		describe_exception(env);
 		LOG_FATAL("failed to invoke Seq.recv");
 		return;
 	}
 	out_mem = mem_get(env, out);
+	(*env)->DeleteLocalRef(env, out);
 	if (out_mem == NULL) {
 		LOG_FATAL("recv on NULL out_mem");
 		return;
