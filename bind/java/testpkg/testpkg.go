@@ -220,6 +220,16 @@ func ReadAsset() string {
 	return string(b)
 }
 
+type GoCallback interface {
+	VarUpdate()
+}
+
+func CallWithCallback(gcb GoCallback) {
+	for i := 0; i < 1000; i++ {
+		gcb.VarUpdate()
+	}
+}
+
 type NullTest interface {
 	Null() NullTest
 }

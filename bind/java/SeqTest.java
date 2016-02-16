@@ -4,10 +4,9 @@
 
 package go;
 
-import android.util.Log;
-import android.test.suitebuilder.annotation.Suppress;
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
+
 import java.util.Arrays;
 import java.util.Random;
 
@@ -384,6 +383,17 @@ public class SeqTest extends AndroidTestCase {
     n.setErr(want);
     String got = n.getErr();
     assertEquals("want back the error message we set", want, got);
+  }
+
+  //test if we have JNI local reference table overflow error
+  public void testLocalReferenceOverflow() {
+    Testpkg.CallWithCallback(new Testpkg.GoCallback.Stub() {
+
+      @Override
+      public void VarUpdate() {
+        //do nothing
+      }
+    });
   }
 
   public void testNullReferences() {
