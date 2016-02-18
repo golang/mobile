@@ -5,15 +5,15 @@
 package go_try
 
 import (
-	"golang.org/x/mobile/bind/seq"
+	_seq "golang.org/x/mobile/bind/seq"
 	"try"
 )
 
-func proxy_This(out, in *seq.Buffer) {
+func proxy_This(out, in *_seq.Buffer) {
 	res := try.This()
 	out.WriteString(res)
 }
 
 func init() {
-	seq.Register("try", 1, proxy_This)
+	_seq.Register("try", 1, proxy_This)
 }

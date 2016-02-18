@@ -5,28 +5,28 @@
 package go_interfaces
 
 import (
-	"golang.org/x/mobile/bind/seq"
+	_seq "golang.org/x/mobile/bind/seq"
 	"interfaces"
 )
 
-func proxy_Add3(out, in *seq.Buffer) {
+func proxy_Add3(out, in *_seq.Buffer) {
 	var param_r interfaces.I
 	param_r_ref := in.ReadRef()
 	if param_r_ref.Num < 0 { // go object
 		param_r = param_r_ref.Get().(interfaces.I)
-	} else if param_r_ref.Num != seq.NullRefNum { // foreign object
+	} else if param_r_ref.Num != _seq.NullRefNum { // foreign object
 		param_r = (*proxyI)(param_r_ref)
 	}
 	res := interfaces.Add3(param_r)
 	out.WriteInt32(res)
 }
 
-func proxy_CallErr(out, in *seq.Buffer) {
+func proxy_CallErr(out, in *_seq.Buffer) {
 	var param_e interfaces.Error
 	param_e_ref := in.ReadRef()
 	if param_e_ref.Num < 0 { // go object
 		param_e = param_e_ref.Get().(interfaces.Error)
-	} else if param_e_ref.Num != seq.NullRefNum { // foreign object
+	} else if param_e_ref.Num != _seq.NullRefNum { // foreign object
 		param_e = (*proxyError)(param_e_ref)
 	}
 	err := interfaces.CallErr(param_e)
@@ -42,7 +42,7 @@ const (
 	proxyError_Err_Code   = 0x10a
 )
 
-func proxyError_Err(out, in *seq.Buffer) {
+func proxyError_Err(out, in *_seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(interfaces.Error)
 	err := v.Err()
@@ -54,14 +54,14 @@ func proxyError_Err(out, in *seq.Buffer) {
 }
 
 func init() {
-	seq.Register(proxyError_Descriptor, proxyError_Err_Code, proxyError_Err)
+	_seq.Register(proxyError_Descriptor, proxyError_Err_Code, proxyError_Err)
 }
 
-type proxyError seq.Ref
+type proxyError _seq.Ref
 
 func (p *proxyError) Err() error {
-	in := new(seq.Buffer)
-	out := seq.Transact((*seq.Ref)(p), "go.interfaces.Error", proxyError_Err_Code, in)
+	in := new(_seq.Buffer)
+	out := _seq.Transact((*_seq.Ref)(p), "go.interfaces.Error", proxyError_Err_Code, in)
 	res_0 := out.ReadError()
 	return res_0
 }
@@ -71,7 +71,7 @@ const (
 	proxyI_Rand_Code  = 0x10a
 )
 
-func proxyI_Rand(out, in *seq.Buffer) {
+func proxyI_Rand(out, in *_seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(interfaces.I)
 	res := v.Rand()
@@ -79,14 +79,14 @@ func proxyI_Rand(out, in *seq.Buffer) {
 }
 
 func init() {
-	seq.Register(proxyI_Descriptor, proxyI_Rand_Code, proxyI_Rand)
+	_seq.Register(proxyI_Descriptor, proxyI_Rand_Code, proxyI_Rand)
 }
 
-type proxyI seq.Ref
+type proxyI _seq.Ref
 
 func (p *proxyI) Rand() int32 {
-	in := new(seq.Buffer)
-	out := seq.Transact((*seq.Ref)(p), "go.interfaces.I", proxyI_Rand_Code, in)
+	in := new(_seq.Buffer)
+	out := _seq.Transact((*_seq.Ref)(p), "go.interfaces.I", proxyI_Rand_Code, in)
 	res_0 := out.ReadInt32()
 	return res_0
 }
@@ -96,14 +96,14 @@ const (
 	proxyI1_J_Code     = 0x10a
 )
 
-func proxyI1_J(out, in *seq.Buffer) {
+func proxyI1_J(out, in *_seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(interfaces.I1)
 	v.J()
 }
 
 func init() {
-	seq.Register(proxyI1_Descriptor, proxyI1_J_Code, proxyI1_J)
+	_seq.Register(proxyI1_Descriptor, proxyI1_J_Code, proxyI1_J)
 }
 
 const (
@@ -111,14 +111,14 @@ const (
 	proxyI2_G_Code     = 0x10a
 )
 
-func proxyI2_G(out, in *seq.Buffer) {
+func proxyI2_G(out, in *_seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(interfaces.I2)
 	v.G()
 }
 
 func init() {
-	seq.Register(proxyI2_Descriptor, proxyI2_G_Code, proxyI2_G)
+	_seq.Register(proxyI2_Descriptor, proxyI2_G_Code, proxyI2_G)
 }
 
 const (
@@ -126,7 +126,7 @@ const (
 	proxyI3_F_Code     = 0x10a
 )
 
-func proxyI3_F(out, in *seq.Buffer) {
+func proxyI3_F(out, in *_seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(interfaces.I3)
 	res := v.F()
@@ -134,14 +134,14 @@ func proxyI3_F(out, in *seq.Buffer) {
 }
 
 func init() {
-	seq.Register(proxyI3_Descriptor, proxyI3_F_Code, proxyI3_F)
+	_seq.Register(proxyI3_Descriptor, proxyI3_F_Code, proxyI3_F)
 }
 
-type proxyI3 seq.Ref
+type proxyI3 _seq.Ref
 
 func (p *proxyI3) F() interfaces.I1 {
-	in := new(seq.Buffer)
-	out := seq.Transact((*seq.Ref)(p), "go.interfaces.I3", proxyI3_F_Code, in)
+	in := new(_seq.Buffer)
+	out := _seq.Transact((*_seq.Ref)(p), "go.interfaces.I3", proxyI3_F_Code, in)
 	var res_0 interfaces.I1
 	res_0_ref := out.ReadRef()
 	if res_0_ref.Num < 0 { // go object
@@ -150,7 +150,7 @@ func (p *proxyI3) F() interfaces.I1 {
 	return res_0
 }
 
-func proxy_Seven(out, in *seq.Buffer) {
+func proxy_Seven(out, in *_seq.Buffer) {
 	res := interfaces.Seven()
 	out.WriteGoRef(res)
 }
@@ -160,7 +160,7 @@ const (
 	proxyWithParam_HasParam_Code = 0x10a
 )
 
-func proxyWithParam_HasParam(out, in *seq.Buffer) {
+func proxyWithParam_HasParam(out, in *_seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(interfaces.WithParam)
 	param_p0 := in.ReadBool()
@@ -168,19 +168,19 @@ func proxyWithParam_HasParam(out, in *seq.Buffer) {
 }
 
 func init() {
-	seq.Register(proxyWithParam_Descriptor, proxyWithParam_HasParam_Code, proxyWithParam_HasParam)
+	_seq.Register(proxyWithParam_Descriptor, proxyWithParam_HasParam_Code, proxyWithParam_HasParam)
 }
 
-type proxyWithParam seq.Ref
+type proxyWithParam _seq.Ref
 
 func (p *proxyWithParam) HasParam(p0 bool) {
-	in := new(seq.Buffer)
+	in := new(_seq.Buffer)
 	in.WriteBool(p0)
-	seq.Transact((*seq.Ref)(p), "go.interfaces.WithParam", proxyWithParam_HasParam_Code, in)
+	_seq.Transact((*_seq.Ref)(p), "go.interfaces.WithParam", proxyWithParam_HasParam_Code, in)
 }
 
 func init() {
-	seq.Register("interfaces", 1, proxy_Add3)
-	seq.Register("interfaces", 2, proxy_CallErr)
-	seq.Register("interfaces", 3, proxy_Seven)
+	_seq.Register("interfaces", 1, proxy_Add3)
+	_seq.Register("interfaces", 2, proxy_CallErr)
+	_seq.Register("interfaces", 3, proxy_Seven)
 }

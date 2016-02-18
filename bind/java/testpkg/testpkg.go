@@ -54,7 +54,7 @@ type I interface {
 	VE() (int, error)
 	I() I
 	S() *S
-	StoString(*S) string
+	StoString(seq *S) string
 
 	String() string
 }
@@ -236,4 +236,8 @@ type NullTest interface {
 
 func CallWithNull(_null NullTest, nuller NullTest) bool {
 	return _null == nil && nuller.Null() == nil
+}
+
+type Issue14168 interface {
+	F(seq int32)
 }

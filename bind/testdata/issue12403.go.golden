@@ -5,7 +5,7 @@
 package go_issue12403
 
 import (
-	"golang.org/x/mobile/bind/seq"
+	_seq "golang.org/x/mobile/bind/seq"
 	"issue12403"
 )
 
@@ -15,7 +15,7 @@ const (
 	proxyParsable_ToJSON_Code   = 0x20a
 )
 
-func proxyParsable_FromJSON(out, in *seq.Buffer) {
+func proxyParsable_FromJSON(out, in *_seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(issue12403.Parsable)
 	param_jstr := in.ReadString()
@@ -23,7 +23,7 @@ func proxyParsable_FromJSON(out, in *seq.Buffer) {
 	out.WriteString(res)
 }
 
-func proxyParsable_ToJSON(out, in *seq.Buffer) {
+func proxyParsable_ToJSON(out, in *_seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(issue12403.Parsable)
 	res, err := v.ToJSON()
@@ -36,23 +36,23 @@ func proxyParsable_ToJSON(out, in *seq.Buffer) {
 }
 
 func init() {
-	seq.Register(proxyParsable_Descriptor, proxyParsable_FromJSON_Code, proxyParsable_FromJSON)
-	seq.Register(proxyParsable_Descriptor, proxyParsable_ToJSON_Code, proxyParsable_ToJSON)
+	_seq.Register(proxyParsable_Descriptor, proxyParsable_FromJSON_Code, proxyParsable_FromJSON)
+	_seq.Register(proxyParsable_Descriptor, proxyParsable_ToJSON_Code, proxyParsable_ToJSON)
 }
 
-type proxyParsable seq.Ref
+type proxyParsable _seq.Ref
 
 func (p *proxyParsable) FromJSON(jstr string) string {
-	in := new(seq.Buffer)
+	in := new(_seq.Buffer)
 	in.WriteString(jstr)
-	out := seq.Transact((*seq.Ref)(p), "go.issue12403.Parsable", proxyParsable_FromJSON_Code, in)
+	out := _seq.Transact((*_seq.Ref)(p), "go.issue12403.Parsable", proxyParsable_FromJSON_Code, in)
 	res_0 := out.ReadString()
 	return res_0
 }
 
 func (p *proxyParsable) ToJSON() (string, error) {
-	in := new(seq.Buffer)
-	out := seq.Transact((*seq.Ref)(p), "go.issue12403.Parsable", proxyParsable_ToJSON_Code, in)
+	in := new(_seq.Buffer)
+	out := _seq.Transact((*_seq.Ref)(p), "go.issue12403.Parsable", proxyParsable_ToJSON_Code, in)
 	res_0 := out.ReadString()
 	res_1 := out.ReadError()
 	return res_0, res_1
