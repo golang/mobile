@@ -5,7 +5,7 @@
 package go_structs
 
 import (
-	"golang.org/x/mobile/bind/seq"
+	_seq "golang.org/x/mobile/bind/seq"
 	"structs"
 )
 
@@ -14,24 +14,24 @@ const (
 	proxyI_M_Code     = 0x10a
 )
 
-func proxyI_M(out, in *seq.Buffer) {
+func proxyI_M(out, in *_seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(structs.I)
 	v.M()
 }
 
 func init() {
-	seq.Register(proxyI_Descriptor, proxyI_M_Code, proxyI_M)
+	_seq.Register(proxyI_Descriptor, proxyI_M_Code, proxyI_M)
 }
 
-type proxyI seq.Ref
+type proxyI _seq.Ref
 
 func (p *proxyI) M() {
-	in := new(seq.Buffer)
-	seq.Transact((*seq.Ref)(p), "go.structs.I", proxyI_M_Code, in)
+	in := new(_seq.Buffer)
+	_seq.Transact((*_seq.Ref)(p), "go.structs.I", proxyI_M_Code, in)
 }
 
-func proxy_Identity(out, in *seq.Buffer) {
+func proxy_Identity(out, in *_seq.Buffer) {
 	// Must be a Go object
 	param_s_ref := in.ReadRef()
 	param_s := param_s_ref.Get().(*structs.S)
@@ -39,7 +39,7 @@ func proxy_Identity(out, in *seq.Buffer) {
 	out.WriteGoRef(res)
 }
 
-func proxy_IdentityWithError(out, in *seq.Buffer) {
+func proxy_IdentityWithError(out, in *_seq.Buffer) {
 	// Must be a Go object
 	param_s_ref := in.ReadRef()
 	param_s := param_s_ref.Get().(*structs.S)
@@ -62,33 +62,33 @@ const (
 	proxyS_Sum_Code      = 0x10c
 )
 
-type proxyS seq.Ref
+type proxyS _seq.Ref
 
-func proxyS_X_Set(out, in *seq.Buffer) {
+func proxyS_X_Set(out, in *_seq.Buffer) {
 	ref := in.ReadRef()
 	v := in.ReadFloat64()
 	ref.Get().(*structs.S).X = v
 }
 
-func proxyS_X_Get(out, in *seq.Buffer) {
+func proxyS_X_Get(out, in *_seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(*structs.S).X
 	out.WriteFloat64(v)
 }
 
-func proxyS_Y_Set(out, in *seq.Buffer) {
+func proxyS_Y_Set(out, in *_seq.Buffer) {
 	ref := in.ReadRef()
 	v := in.ReadFloat64()
 	ref.Get().(*structs.S).Y = v
 }
 
-func proxyS_Y_Get(out, in *seq.Buffer) {
+func proxyS_Y_Get(out, in *_seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(*structs.S).Y
 	out.WriteFloat64(v)
 }
 
-func proxyS_Identity(out, in *seq.Buffer) {
+func proxyS_Identity(out, in *_seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(*structs.S)
 	res, err := v.Identity()
@@ -100,7 +100,7 @@ func proxyS_Identity(out, in *seq.Buffer) {
 	}
 }
 
-func proxyS_Sum(out, in *seq.Buffer) {
+func proxyS_Sum(out, in *_seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(*structs.S)
 	res := v.Sum()
@@ -108,12 +108,12 @@ func proxyS_Sum(out, in *seq.Buffer) {
 }
 
 func init() {
-	seq.Register(proxyS_Descriptor, proxyS_X_Set_Code, proxyS_X_Set)
-	seq.Register(proxyS_Descriptor, proxyS_X_Get_Code, proxyS_X_Get)
-	seq.Register(proxyS_Descriptor, proxyS_Y_Set_Code, proxyS_Y_Set)
-	seq.Register(proxyS_Descriptor, proxyS_Y_Get_Code, proxyS_Y_Get)
-	seq.Register(proxyS_Descriptor, proxyS_Identity_Code, proxyS_Identity)
-	seq.Register(proxyS_Descriptor, proxyS_Sum_Code, proxyS_Sum)
+	_seq.Register(proxyS_Descriptor, proxyS_X_Set_Code, proxyS_X_Set)
+	_seq.Register(proxyS_Descriptor, proxyS_X_Get_Code, proxyS_X_Get)
+	_seq.Register(proxyS_Descriptor, proxyS_Y_Set_Code, proxyS_Y_Set)
+	_seq.Register(proxyS_Descriptor, proxyS_Y_Get_Code, proxyS_Y_Get)
+	_seq.Register(proxyS_Descriptor, proxyS_Identity_Code, proxyS_Identity)
+	_seq.Register(proxyS_Descriptor, proxyS_Sum_Code, proxyS_Sum)
 }
 
 const (
@@ -121,19 +121,19 @@ const (
 	proxyS2_M_Code     = 0x00c
 )
 
-type proxyS2 seq.Ref
+type proxyS2 _seq.Ref
 
-func proxyS2_M(out, in *seq.Buffer) {
+func proxyS2_M(out, in *_seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(*structs.S2)
 	v.M()
 }
 
 func init() {
-	seq.Register(proxyS2_Descriptor, proxyS2_M_Code, proxyS2_M)
+	_seq.Register(proxyS2_Descriptor, proxyS2_M_Code, proxyS2_M)
 }
 
 func init() {
-	seq.Register("structs", 1, proxy_Identity)
-	seq.Register("structs", 2, proxy_IdentityWithError)
+	_seq.Register("structs", 1, proxy_Identity)
+	_seq.Register("structs", 2, proxy_IdentityWithError)
 }

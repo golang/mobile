@@ -5,7 +5,7 @@
 package go_issue10788
 
 import (
-	"golang.org/x/mobile/bind/seq"
+	_seq "golang.org/x/mobile/bind/seq"
 	"issue10788"
 )
 
@@ -15,7 +15,7 @@ const (
 	proxyTestInterface_MultipleUnnamedParams_Code = 0x20a
 )
 
-func proxyTestInterface_DoSomeWork(out, in *seq.Buffer) {
+func proxyTestInterface_DoSomeWork(out, in *_seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(issue10788.TestInterface)
 	// Must be a Go object
@@ -24,7 +24,7 @@ func proxyTestInterface_DoSomeWork(out, in *seq.Buffer) {
 	v.DoSomeWork(param_s)
 }
 
-func proxyTestInterface_MultipleUnnamedParams(out, in *seq.Buffer) {
+func proxyTestInterface_MultipleUnnamedParams(out, in *_seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(issue10788.TestInterface)
 	param_p0 := in.ReadInt()
@@ -34,24 +34,24 @@ func proxyTestInterface_MultipleUnnamedParams(out, in *seq.Buffer) {
 }
 
 func init() {
-	seq.Register(proxyTestInterface_Descriptor, proxyTestInterface_DoSomeWork_Code, proxyTestInterface_DoSomeWork)
-	seq.Register(proxyTestInterface_Descriptor, proxyTestInterface_MultipleUnnamedParams_Code, proxyTestInterface_MultipleUnnamedParams)
+	_seq.Register(proxyTestInterface_Descriptor, proxyTestInterface_DoSomeWork_Code, proxyTestInterface_DoSomeWork)
+	_seq.Register(proxyTestInterface_Descriptor, proxyTestInterface_MultipleUnnamedParams_Code, proxyTestInterface_MultipleUnnamedParams)
 }
 
-type proxyTestInterface seq.Ref
+type proxyTestInterface _seq.Ref
 
 func (p *proxyTestInterface) DoSomeWork(s *issue10788.TestStruct) {
-	in := new(seq.Buffer)
+	in := new(_seq.Buffer)
 	in.WriteGoRef(s)
-	seq.Transact((*seq.Ref)(p), "go.issue10788.TestInterface", proxyTestInterface_DoSomeWork_Code, in)
+	_seq.Transact((*_seq.Ref)(p), "go.issue10788.TestInterface", proxyTestInterface_DoSomeWork_Code, in)
 }
 
 func (p *proxyTestInterface) MultipleUnnamedParams(p0 int, p1 string, p2 int64) {
-	in := new(seq.Buffer)
+	in := new(_seq.Buffer)
 	in.WriteInt(p0)
 	in.WriteString(p1)
 	in.WriteInt64(p2)
-	seq.Transact((*seq.Ref)(p), "go.issue10788.TestInterface", proxyTestInterface_MultipleUnnamedParams_Code, in)
+	_seq.Transact((*_seq.Ref)(p), "go.issue10788.TestInterface", proxyTestInterface_MultipleUnnamedParams_Code, in)
 }
 
 const (
@@ -60,21 +60,21 @@ const (
 	proxyTestStruct_Value_Set_Code = 0x01f
 )
 
-type proxyTestStruct seq.Ref
+type proxyTestStruct _seq.Ref
 
-func proxyTestStruct_Value_Set(out, in *seq.Buffer) {
+func proxyTestStruct_Value_Set(out, in *_seq.Buffer) {
 	ref := in.ReadRef()
 	v := in.ReadString()
 	ref.Get().(*issue10788.TestStruct).Value = v
 }
 
-func proxyTestStruct_Value_Get(out, in *seq.Buffer) {
+func proxyTestStruct_Value_Get(out, in *_seq.Buffer) {
 	ref := in.ReadRef()
 	v := ref.Get().(*issue10788.TestStruct).Value
 	out.WriteString(v)
 }
 
 func init() {
-	seq.Register(proxyTestStruct_Descriptor, proxyTestStruct_Value_Set_Code, proxyTestStruct_Value_Set)
-	seq.Register(proxyTestStruct_Descriptor, proxyTestStruct_Value_Get_Code, proxyTestStruct_Value_Get)
+	_seq.Register(proxyTestStruct_Descriptor, proxyTestStruct_Value_Set_Code, proxyTestStruct_Value_Set)
+	_seq.Register(proxyTestStruct_Descriptor, proxyTestStruct_Value_Get_Code, proxyTestStruct_Value_Get)
 }
