@@ -350,7 +350,7 @@ func alGetBooleanv(k int, v []bool) {
 			val[i] = C.AL_FALSE
 		}
 	}
-	C.call_alGetBooleanv(alGetBooleanvFunc, C.ALenum(k), (*C.ALboolean)(unsafe.Pointer(&val[0])))
+	C.call_alGetBooleanv(alGetBooleanvFunc, C.ALenum(k), &val[0])
 }
 
 func alGetString(v int) string {
