@@ -4,7 +4,7 @@
 
 package go;
 
-import android.test.AndroidTestCase;
+import android.test.InstrumentationTestCase;
 import android.test.MoreAsserts;
 
 import java.util.Arrays;
@@ -12,7 +12,7 @@ import java.util.Random;
 
 import go.testpkg.Testpkg;
 
-public class SeqTest extends AndroidTestCase {
+public class SeqTest extends InstrumentationTestCase {
   public SeqTest() {
   }
 
@@ -61,6 +61,8 @@ public class SeqTest extends AndroidTestCase {
   }
 
   public void testAssets() {
+    // Make sure that a valid context is set before reading assets
+    Seq.setContext(getInstrumentation().getContext());
     String want = "Hello, Assets.\n";
     String got = Testpkg.ReadAsset();
     assertEquals("Asset read", want, got);
