@@ -105,6 +105,27 @@ func TestBootstrap(t *testing.T) {
 		log.Fatal(err)
 	}
 
+	// unmarshal binary xml and store byte indices of decoded resources.
+	debugIndices := make(map[encoding.BinaryMarshaler]int)
+	trackUnmarshal := func(buf []byte) (*XML, error) {
+		bx := new(XML)
+		if err := (&bx.chunkHeader).UnmarshalBinary(buf); err != nil {
+			return nil, err
+		}
+		buf = buf[8:]
+		debugIndex := 8
+		for len(buf) > 0 {
+			k, err := bx.unmarshalBinaryKind(buf)
+			if err != nil {
+				return nil, err
+			}
+			debugIndices[k.(encoding.BinaryMarshaler)] = debugIndex
+			debugIndex += k.size()
+			buf = buf[k.size():]
+		}
+		return bx, nil
+	}
+
 	checkMarshal := func(res encoding.BinaryMarshaler, bsize int) {
 		b, err := res.MarshalBinary()
 		if err != nil {
@@ -151,8 +172,8 @@ func TestBootstrap(t *testing.T) {
 		}
 	}
 
-	bxml := new(XML)
-	if err := bxml.UnmarshalBinary(bin); err != nil {
+	bxml, err := trackUnmarshal(bin)
+	if err != nil {
 		t.Fatal(err)
 	}
 
