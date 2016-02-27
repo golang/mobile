@@ -33,6 +33,22 @@ public class SeqTest extends InstrumentationTestCase {
     assertEquals("const Log2E", 1/0.693147180559945309417232121458176568075500134360255254120680009, Testpkg.Log2E, 0.0001);
   }
 
+  public void testRefMap() {
+    // Ensure that the RefMap.live count is kept in sync
+    // even a particular reference number is removed and
+    // added again
+    Seq.RefMap m = new Seq.RefMap();
+    Seq.Ref r = new Seq.Ref(1, null);
+    m.put(r.refnum, r);
+    m.remove(r.refnum);
+    m.put(r.refnum, r);
+    // Force the RefMap to grow, to activate the sanity
+    // checking of the live count in RefMap.grow.
+    for (int i = 2; i < 24; i++) {
+      m.put(i, new Seq.Ref(i, null));
+    }
+  }
+
   public void testVar() {
     assertEquals("var StringVar", "a string var", Testpkg.getStringVar());
 

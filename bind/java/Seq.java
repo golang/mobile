@@ -154,7 +154,7 @@ public class Seq {
 
 		public Seq.Object obj;  // for Java obj: pointers to the Java obj.
 
-		private Ref(int refnum, Seq.Object o) {
+		Ref(int refnum, Seq.Object o) {
 			this.refnum = refnum;
 			this.refcnt = 0;
 			this.obj = o;
@@ -281,7 +281,7 @@ public class Seq {
 	// RefMap is a mapping of integers to Ref objects.
 	//
 	// The integers can be sparse. In Go this would be a map[int]*Ref.
-	private static final class RefMap {
+	static final class RefMap {
 		private int next = 0;
 		private int live = 0;
 		private int[] keys = new int[16];
@@ -315,6 +315,7 @@ public class Seq {
 			if (i >= 0) {
 				if (objs[i] == null) {
 					objs[i] = obj;
+					live++;
 				}
 				if (objs[i] != obj) {
 					throw new RuntimeException("replacing an existing ref (with key "+key+")");
@@ -337,7 +338,7 @@ public class Seq {
 			next++;
 		}
 
-                private void grow() {
+		private void grow() {
 			// Compact and (if necessary) grow backing store.
 			int[] newKeys;
 			Ref[] newObjs;
@@ -370,7 +371,7 @@ public class Seq {
 			if (live != next) {
 				throw new RuntimeException("bad state: live="+live+", next="+next);
 			}
-                }
+		}
 
 		private static int roundPow2(int x) {
 			int p = 1;
