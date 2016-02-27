@@ -159,11 +159,6 @@ type XML struct {
 	stack []*Element
 }
 
-// TODO this is used strictly for querying in tests and dependent on
-// current XML.UnmarshalBinary implementation. Look into moving directly
-// into tests.
-var debugIndices = make(map[encoding.BinaryMarshaler]int)
-
 const (
 	androidSchema = "http://schemas.android.com/apk/res/android"
 	toolsSchema   = "http://schemas.android.com/tools"
@@ -568,31 +563,34 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 	return bx, nil
 }
 
-func (bx *XML) UnmarshalBinary(bin []byte) error {
-	buf := bin
-	if err := (&bx.chunkHeader).UnmarshalBinary(bin); err != nil {
+// UnmarshalBinary decodes all resource chunks in buf returning any error encountered.
+func (bx *XML) UnmarshalBinary(buf []byte) error {
+	if err := (&bx.chunkHeader).UnmarshalBinary(buf); err != nil {
 		return err
 	}
 	buf = buf[8:]
-
-	// TODO this is tracked strictly for querying in tests; look into moving this
-	// functionality directly into tests if possible.
-	debugIndex := 8
-
 	for len(buf) > 0 {
-		t := ResType(btou16(buf))
-		k, err := bx.kind(t)
+		k, err := bx.unmarshalBinaryKind(buf)
 		if err != nil {
 			return err
 		}
-		if err := k.UnmarshalBinary(buf); err != nil {
-			return err
-		}
-		debugIndices[k.(encoding.BinaryMarshaler)] = debugIndex
-		debugIndex += int(k.size())
 		buf = buf[k.size():]
 	}
 	return nil
+}
+
+// unmarshalBinaryKind decodes and stores the first resource chunk of bin.
+// It returns the unmarshaler interface and any error encountered.
+// If k.size() < len(bin), subsequent chunks can be decoded at bin[k.size():].
+func (bx *XML) unmarshalBinaryKind(bin []byte) (k unmarshaler, err error) {
+	k, err = bx.kind(ResType(btou16(bin)))
+	if err != nil {
+		return nil, err
+	}
+	if err = k.UnmarshalBinary(bin); err != nil {
+		return nil, err
+	}
+	return k, nil
 }
 
 func (bx *XML) kind(t ResType) (unmarshaler, error) {
