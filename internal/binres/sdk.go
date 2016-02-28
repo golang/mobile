@@ -8,24 +8,23 @@ import (
 	"io"
 	"os"
 	"path"
-	"path/filepath"
 )
 
-func apiJarPath() (string, error) {
+// MinSDK is the targetted sdk version for support by package binres.
+const MinSDK = 15
+
+// Requires environment variable ANDROID_HOME to be set.
+func apiResources() ([]byte, error) {
 	sdkdir := os.Getenv("ANDROID_HOME")
 	if sdkdir == "" {
-		return "", fmt.Errorf("ANDROID_HOME env var not set")
+		return nil, fmt.Errorf("ANDROID_HOME env var not set")
 	}
-	return path.Join(sdkdir, "platforms/android-15/android.jar"), nil
-}
-
-func apiResources() ([]byte, error) {
-	p, err := apiJarPath()
+	platform := fmt.Sprintf("android-%v", MinSDK)
+	zr, err := zip.OpenReader(path.Join(sdkdir, "platforms", platform, "android.jar"))
 	if err != nil {
-		return nil, err
-	}
-	zr, err := zip.OpenReader(p)
-	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf(`%v; consider installing with "android update sdk --all --no-ui --filter %s"`, err, platform)
+		}
 		return nil, err
 	}
 	defer zr.Close()
@@ -51,11 +50,11 @@ func apiResources() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// packResources produces a stripped down version of the resources.arsc from api jar.
-func packResources() error {
+// PackResources produces a stripped down gzip version of the resources.arsc from api jar.
+func PackResources() ([]byte, error) {
 	tbl, err := OpenSDKTable()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	tbl.pool.strings = []string{} // should not be needed
@@ -123,20 +122,20 @@ func packResources() error {
 
 	bin, err := tbl.MarshalBinary()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	f, err := os.Create(filepath.Join("data", "packed.arsc.gz"))
-	if err != nil {
-		return err
-	}
-	defer f.Close()
+	buf := new(bytes.Buffer)
 
-	zw := gzip.NewWriter(f)
-	defer zw.Close()
-
+	zw := gzip.NewWriter(buf)
 	if _, err := zw.Write(bin); err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	if err := zw.Flush(); err != nil {
+		return nil, err
+	}
+	if err := zw.Close(); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }

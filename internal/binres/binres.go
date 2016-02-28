@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:generate go run genarsc.go
 //go:generate stringer -output binres_string.go -type ResType,DataType
 
 // Package binres implements encoding and decoding of android binary resources.
@@ -164,6 +165,11 @@ const (
 	toolsSchema   = "http://schemas.android.com/tools"
 )
 
+// skipSynthesize is set true for tests to avoid synthesis of additional nodes and attributes.
+var skipSynthesize bool
+
+// UnmarshalXML decodes an AndroidManifest.xml document returning type XML
+// containing decoded resources.
 func UnmarshalXML(r io.Reader) (*XML, error) {
 	tbl, err := OpenTable()
 	if err != nil {
@@ -177,6 +183,12 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 	// temporary pool to resolve real poolref later
 	pool := new(Pool)
 
+	type ltoken struct {
+		xml.Token
+		line int
+	}
+	var q []ltoken
+
 	for {
 		line := lr.line(dec.InputOffset())
 		tkn, err := dec.Token()
@@ -187,6 +199,62 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 			return nil, err
 		}
 		tkn = xml.CopyToken(tkn)
+
+		switch tkn := tkn.(type) {
+		case xml.StartElement:
+			switch tkn.Name.Local {
+			default:
+				q = append(q, ltoken{tkn, line})
+			case "uses-sdk":
+				return nil, fmt.Errorf("manual declaration of uses-sdk in AndroidManifest.xml not supported")
+			case "manifest":
+				// synthesize additional attributes and nodes for use during encode.
+				tkn.Attr = append(tkn.Attr,
+					xml.Attr{
+						Name: xml.Name{
+							Space: "",
+							Local: "platformBuildVersionCode",
+						},
+						Value: "15",
+					},
+					xml.Attr{
+						Name: xml.Name{
+							Space: "",
+							Local: "platformBuildVersionName",
+						},
+						Value: "4.0.4-1406430",
+					})
+
+				q = append(q, ltoken{tkn, line})
+
+				if !skipSynthesize {
+					s := xml.StartElement{
+						Name: xml.Name{
+							Space: "",
+							Local: "uses-sdk",
+						},
+						Attr: []xml.Attr{
+							xml.Attr{
+								Name: xml.Name{
+									Space: androidSchema,
+									Local: "minSdkVersion",
+								},
+								Value: fmt.Sprintf("%v", MinSDK),
+							},
+						},
+					}
+					e := xml.EndElement{Name: xml.Name{Local: "uses-sdk"}}
+
+					q = append(q, ltoken{s, line}, ltoken{e, line})
+				}
+			}
+		default:
+			q = append(q, ltoken{tkn, line})
+		}
+	}
+
+	for _, ltkn := range q {
+		tkn, line := ltkn.Token, ltkn.line
 
 		switch tkn := tkn.(type) {
 		case xml.StartElement:
@@ -208,24 +276,6 @@ func UnmarshalXML(r io.Reader) (*XML, error) {
 				bx.stack = append(bx.stack, p)
 			}
 			bx.stack = append(bx.stack, el)
-
-			if tkn.Name.Local == "manifest" {
-				tkn.Attr = append(tkn.Attr,
-					xml.Attr{
-						Name: xml.Name{
-							Space: "",
-							Local: "platformBuildVersionCode",
-						},
-						Value: "15",
-					},
-					xml.Attr{
-						Name: xml.Name{
-							Space: "",
-							Local: "platformBuildVersionName",
-						},
-						Value: "4.0.4-1406430",
-					})
-			}
 
 			for _, attr := range tkn.Attr {
 				if (attr.Name.Space == "xmlns" && attr.Name.Local == "tools") || attr.Name.Space == toolsSchema {

@@ -10,8 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
 	"strings"
 	"unicode/utf16"
 )
@@ -73,20 +71,15 @@ func OpenSDKTable() (*Table, error) {
 
 // OpenTable decodes the prepacked resources.arsc for the supported sdk platform.
 func OpenTable() (*Table, error) {
-	f, err := os.Open(filepath.Join("data", "packed.arsc.gz"))
+	zr, err := gzip.NewReader(bytes.NewReader(arsc))
 	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	zr, err := gzip.NewReader(f)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("gzip: %v", err)
 	}
 	defer zr.Close()
 
 	var buf bytes.Buffer
 	if _, err := io.Copy(&buf, zr); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("io: %v", err)
 	}
 	tbl := new(Table)
 	if err := tbl.UnmarshalBinary(buf.Bytes()); err != nil {

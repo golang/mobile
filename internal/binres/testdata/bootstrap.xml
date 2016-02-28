@@ -11,8 +11,6 @@ license that can be found in the LICENSE file.
 	android:versionName=""
 	xmlns:tools="http://schemas.android.com/tools">
 
-	<uses-sdk android:minSdkVersion="15" />
-
 	<uses-permission android:name="android.permission.INTERNET" />
 
 	<application
