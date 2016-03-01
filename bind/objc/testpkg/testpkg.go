@@ -21,6 +21,8 @@ const (
 	ABool   = true
 	AFloat  = 0.12345
 
+	ALongString = "LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString"
+
 	MinInt32               int32   = math.MinInt32
 	MaxInt32               int32   = math.MaxInt32
 	MinInt64                       = math.MinInt64

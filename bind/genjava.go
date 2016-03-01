@@ -641,7 +641,7 @@ func (g *javaGen) genConst(o *types.Const) {
 	// TODO(hyangah): should const names use upper cases + "_"?
 	// TODO(hyangah): check invalid names.
 	jType := g.javaType(o.Type())
-	val := o.Val().String()
+	val := o.Val().ExactString()
 	switch b := o.Type().(*types.Basic); b.Kind() {
 	case types.Int64, types.UntypedInt:
 		i, exact := constant.Int64Val(o.Val())
