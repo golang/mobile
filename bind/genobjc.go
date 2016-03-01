@@ -330,7 +330,7 @@ func (g *objcGen) genConstM(o *types.Const) {
 		g.Printf("const BOOL %s = %s;\n", cName, v)
 
 	case types.String, types.UntypedString:
-		g.Printf("NSString* const %s = @%s;\n", cName, o.Val())
+		g.Printf("NSString* const %s = @%s;\n", cName, o.Val().ExactString())
 
 	case types.Int, types.Int8, types.Int16, types.Int32:
 		g.Printf("const %s %s = %s;\n", cType, cName, o.Val())
