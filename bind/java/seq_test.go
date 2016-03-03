@@ -33,7 +33,7 @@ func TestJavaSeqTest(t *testing.T) {
 //
 // while running the benchmark to see the results.
 func TestJavaSeqBench(t *testing.T) {
-	runTest(t, "golang.org/x/mobile/bind/benchmarkpkg", "SeqBench")
+	runTest(t, "golang.org/x/mobile/bind/benchmark", "SeqBench")
 }
 
 func runTest(t *testing.T, pkgName, javaCls string) {
