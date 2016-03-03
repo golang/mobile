@@ -13,16 +13,16 @@ import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 
-import go.benchmarkpkg.Benchmarkpkg;
+import go.benchmark.Benchmark;
 
 public class SeqBench extends InstrumentationTestCase {
 
-  public static class AnI extends Benchmarkpkg.I.Stub {
+  public static class AnI extends Benchmark.I.Stub {
     @Override public void F() {
     }
   }
 
-  private static class Benchmarks extends Benchmarkpkg.Benchmarks.Stub {
+  private static class Benchmarks extends Benchmark.Benchmarks.Stub {
     private static Map<String, Runnable> benchmarks;
     private static ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -34,66 +34,66 @@ public class SeqBench extends InstrumentationTestCase {
       });
       benchmarks.put("Noargs", new Runnable() {
         @Override public void run() {
-          Benchmarkpkg.Noargs();
+          Benchmark.Noargs();
         }
       });
       benchmarks.put("Onearg", new Runnable() {
         @Override public void run() {
-          Benchmarkpkg.Onearg(0);
+          Benchmark.Onearg(0);
         }
       });
       benchmarks.put("Manyargs", new Runnable() {
         @Override public void run() {
-          Benchmarkpkg.Manyargs(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+          Benchmark.Manyargs(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
         }
       });
       benchmarks.put("Oneret", new Runnable() {
         @Override public void run() {
-          Benchmarkpkg.Oneret();
+          Benchmark.Oneret();
         }
       });
-      final Benchmarkpkg.I javaRef = new AnI();
+      final Benchmark.I javaRef = new AnI();
       benchmarks.put("Refjava", new Runnable() {
         @Override public void run() {
-          Benchmarkpkg.Ref(javaRef);
+          Benchmark.Ref(javaRef);
         }
       });
-      final Benchmarkpkg.I goRef = Benchmarkpkg.NewI();
+      final Benchmark.I goRef = Benchmark.NewI();
       benchmarks.put("Refgo", new Runnable() {
         @Override public void run() {
-          Benchmarkpkg.Ref(goRef);
+          Benchmark.Ref(goRef);
         }
       });
       benchmarks.put("StringShort", new Runnable() {
         @Override public void run() {
-          Benchmarkpkg.String(Benchmarkpkg.ShortString);
+          Benchmark.String(Benchmark.ShortString);
         }
       });
       benchmarks.put("StringLong", new Runnable() {
         @Override public void run() {
-          Benchmarkpkg.String(Benchmarkpkg.LongString);
+          Benchmark.String(Benchmark.LongString);
         }
       });
       benchmarks.put("StringShortUnicode", new Runnable() {
         @Override public void run() {
-          Benchmarkpkg.String(Benchmarkpkg.ShortStringUnicode);
+          Benchmark.String(Benchmark.ShortStringUnicode);
         }
       });
       benchmarks.put("StringLongUnicode", new Runnable() {
         @Override public void run() {
-          Benchmarkpkg.String(Benchmarkpkg.LongStringUnicode);
+          Benchmark.String(Benchmark.LongStringUnicode);
         }
       });
-      final byte[] shortSlice = Benchmarkpkg.getShortSlice();
+      final byte[] shortSlice = Benchmark.getShortSlice();
       benchmarks.put("SliceShort", new Runnable() {
         @Override public void run() {
-          Benchmarkpkg.Slice(shortSlice);
+          Benchmark.Slice(shortSlice);
         }
       });
-      final byte[] longSlice = Benchmarkpkg.getLongSlice();
+      final byte[] longSlice = Benchmark.getLongSlice();
       benchmarks.put("SliceLong", new Runnable() {
         @Override public void run() {
-          Benchmarkpkg.Slice(longSlice);
+          Benchmark.Slice(longSlice);
         }
       });
     }
@@ -120,10 +120,10 @@ public class SeqBench extends InstrumentationTestCase {
       }
     }
 
-    @Override public Benchmarkpkg.I NewI() {
+    @Override public Benchmark.I NewI() {
       return new AnI();
     }
-    @Override public void Ref(Benchmarkpkg.I i) {
+    @Override public void Ref(Benchmark.I i) {
     }
     @Override public void Noargs() {
     }
@@ -141,6 +141,6 @@ public class SeqBench extends InstrumentationTestCase {
   }
 
   public void testBenchmark() {
-    Benchmarkpkg.RunBenchmarks(new Benchmarks());
+    Benchmark.RunBenchmarks(new Benchmarks());
   }
 }

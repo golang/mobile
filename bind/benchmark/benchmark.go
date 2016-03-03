@@ -2,10 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build darwin linux
-
-// Package benchmarkpkg contains functions for benchmarking bound functions.
-package benchmarkpkg
+// Package benchmark contains benchmarking bound functions for internal use.
+package benchmark
 
 import (
 	"log"
@@ -15,7 +13,7 @@ import (
 type Benchmarks interface {
 	// It seems to be much faster to call a native function from Java
 	// when there is already a native call earlier in the stack.
-	//
+
 	// Run runs a named benchmark from a different thread, with
 	// no native call prior in the stack.
 	Run(name string, n int)
