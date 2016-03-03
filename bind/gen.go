@@ -245,3 +245,18 @@ func paramName(params *types.Tuple, pos int) string {
 	}
 	return name
 }
+
+func constExactString(o *types.Const) string {
+	// TODO(hyangah): this is a temporary fix for golang.org/issues/14615.
+	// Clean this up when we can require at least go 1.6 or above.
+
+	type exactStringer interface {
+		ExactString() string
+	}
+	v := o.Val()
+	if v, ok := v.(exactStringer); ok {
+		return v.ExactString()
+	}
+	// TODO: warning?
+	return v.String()
+}
