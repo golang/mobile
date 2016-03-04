@@ -404,7 +404,7 @@ func (g *javaGen) genJavaToC(varName string, t types.Type, mode varMode) {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.String:
-			g.Printf("nstring _%s = go_seq_from_java_string(env, %s, %d);\n", varName, varName, g.toCFlag(mode.copyString()))
+			g.Printf("nstring _%s = go_seq_from_java_string(env, %s);\n", varName, varName)
 		default:
 			g.Printf("%s _%s = (%s)%s;\n", g.cgoType(t), varName, g.cgoType(t), varName)
 		}
@@ -413,7 +413,7 @@ func (g *javaGen) genJavaToC(varName string, t types.Type, mode varMode) {
 		case *types.Basic:
 			switch e.Kind() {
 			case types.Uint8: // Byte.
-				g.Printf("nbyteslice _%s = go_seq_from_java_bytearray(env, %s, %d);\n", varName, varName, g.toCFlag(mode.copySlice()))
+				g.Printf("nbyteslice _%s = go_seq_from_java_bytearray(env, %s, %d);\n", varName, varName, g.toCFlag(mode == modeRetained))
 			default:
 				g.errorf("unsupported type: %s", t)
 			}
@@ -454,7 +454,7 @@ func (g *javaGen) genCToJava(toName, fromName string, t types.Type, mode varMode
 		case *types.Basic:
 			switch e.Kind() {
 			case types.Uint8: // Byte.
-				g.Printf("jbyteArray %s = go_seq_to_java_bytearray(env, %s, %d);\n", toName, fromName, g.toCFlag(mode.copySlice()))
+				g.Printf("jbyteArray %s = go_seq_to_java_bytearray(env, %s, %d);\n", toName, fromName, g.toCFlag(mode == modeRetained))
 			default:
 				g.errorf("unsupported type: %s", t)
 			}
@@ -579,7 +579,7 @@ func (g *javaGen) genJNIField(o *types.TypeName, f *types.Var) {
 	g.Printf("int32_t o = go_seq_to_refnum(env, this);\n")
 	g.Printf("%s r0 = ", g.cgoType(f.Type()))
 	g.Printf("proxy%s_%s_%s_Get(o);\n", g.pkgPrefix, o.Name(), f.Name())
-	g.genCToJava("_r0", "r0", f.Type(), modeReturned)
+	g.genCToJava("_r0", "r0", f.Type(), modeRetained)
 	g.Printf("return _r0;\n")
 	g.Outdent()
 	g.Printf("}\n\n")
@@ -602,7 +602,7 @@ func (g *javaGen) genJNIVar(o *types.Var) {
 	g.Indent()
 	g.Printf("%s r0 = ", g.cgoType(o.Type()))
 	g.Printf("var_get%s_%s();\n", g.pkgPrefix, o.Name())
-	g.genCToJava("_r0", "r0", o.Type(), modeReturned)
+	g.genCToJava("_r0", "r0", o.Type(), modeRetained)
 	g.Printf("return _r0;\n")
 	g.Outdent()
 	g.Printf("}\n\n")
@@ -650,7 +650,7 @@ func (g *javaGen) genJNIFunc(o *types.Func, sName string, proxy bool) {
 	for i := 0; i < res.Len(); i++ {
 		tn := fmt.Sprintf("_r%d", i)
 		t := res.At(i).Type()
-		g.genCToJava(tn, fmt.Sprintf("%sr%d", resPrefix, i), t, modeReturned)
+		g.genCToJava(tn, fmt.Sprintf("%sr%d", resPrefix, i), t, modeRetained)
 	}
 	// Go backwards so that any exception is thrown before
 	// the return.
@@ -674,20 +674,12 @@ func (g *javaGen) genRelease(varName string, t types.Type, mode varMode) {
 	}
 	switch t := t.(type) {
 	case *types.Basic:
-		switch t.Kind() {
-		case types.String:
-			if !mode.copyString() {
-				g.Printf("if (_%s.chars != NULL) {\n", varName)
-				g.Printf("  (*env)->ReleaseStringChars(env, %s, _%s.chars);\n", varName, varName)
-				g.Printf("}\n")
-			}
-		}
 	case *types.Slice:
 		switch e := t.Elem().(type) {
 		case *types.Basic:
 			switch e.Kind() {
 			case types.Uint8: // Byte.
-				if !mode.copySlice() {
+				if mode == modeTransient {
 					g.Printf("if (_%s.ptr != NULL) {\n", varName)
 					g.Printf("  (*env)->ReleaseByteArrayElements(env, %s, _%s.ptr, 0);\n", varName, varName)
 					g.Printf("}\n")
@@ -727,14 +719,14 @@ func (g *javaGen) genMethodInterfaceProxy(oName string, m *types.Func) {
 		var rets []string
 		t := res.At(0).Type()
 		if !isErrorType(t) {
-			g.genJavaToC("res", t, modeReturned)
+			g.genJavaToC("res", t, modeRetained)
 			retName = "_res"
 			rets = append(rets, retName)
 		}
 		if res.Len() == 2 || isErrorType(t) {
 			g.Printf("jstring exc = go_seq_get_exception_message(env);\n")
 			st := types.Typ[types.String]
-			g.genJavaToC("exc", st, modeReturned)
+			g.genJavaToC("exc", st, modeRetained)
 			retName = "_exc"
 			rets = append(rets, "_exc")
 		}

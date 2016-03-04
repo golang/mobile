@@ -24,6 +24,6 @@ var _ = _seq.FromRefNum
 //export proxytry__This
 func proxytry__This() C.nstring {
 	res_0 := try.This()
-	_res_0 := encodeString(res_0, true)
+	_res_0 := encodeString(res_0)
 	return _res_0
 }

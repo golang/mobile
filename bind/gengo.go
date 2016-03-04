@@ -76,7 +76,7 @@ func (g *goGen) genFuncBody(o *types.Func, selectorLHS string) {
 
 	for i := 0; i < res.Len(); i++ {
 		pn := fmt.Sprintf("res_%d", i)
-		g.genWrite("_"+pn, pn, res.At(i).Type(), modeReturned)
+		g.genWrite("_"+pn, pn, res.At(i).Type(), modeRetained)
 	}
 	if res.Len() > 0 {
 		g.Printf("return ")
@@ -105,7 +105,7 @@ func (g *goGen) genWrite(toVar, fromVar string, t types.Type, mode varMode) {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.String:
-			g.Printf("%s := encodeString(%s, %v)\n", toVar, fromVar, mode.copyString())
+			g.Printf("%s := encodeString(%s)\n", toVar, fromVar)
 		case types.Bool:
 			g.Printf("var %s C.%s = 0\n", toVar, g.cgoType(t))
 			g.Printf("if %s { %s = 1 }\n", fromVar, toVar)
@@ -117,7 +117,7 @@ func (g *goGen) genWrite(toVar, fromVar string, t types.Type, mode varMode) {
 		case *types.Basic:
 			switch e.Kind() {
 			case types.Uint8: // Byte.
-				g.Printf("%s := fromSlice(%s, %v)\n", toVar, fromVar, mode.copySlice())
+				g.Printf("%s := fromSlice(%s, %v)\n", toVar, fromVar, mode == modeRetained)
 			default:
 				g.errorf("unsupported type: %s", t)
 			}
@@ -219,7 +219,7 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 		g.Indent()
 		g.Printf("ref := _seq.FromRefNum(int32(refnum))\n")
 		g.Printf("v := ref.Get().(*%s.%s).%s\n", g.pkg.Name(), obj.Name(), f.Name())
-		g.genWrite("_v", "v", f.Type(), modeReturned)
+		g.genWrite("_v", "v", f.Type(), modeRetained)
 		g.Printf("return _v\n")
 		g.Outdent()
 		g.Printf("}\n\n")
@@ -257,7 +257,7 @@ func (g *goGen) genVar(o *types.Var) {
 	g.Printf("func var_get%s_%s() C.%s {\n", g.pkgPrefix, o.Name(), g.cgoType(o.Type()))
 	g.Indent()
 	g.Printf("v := %s\n", v)
-	g.genWrite("_v", "v", o.Type(), modeReturned)
+	g.genWrite("_v", "v", o.Type(), modeRetained)
 	g.Printf("return _v\n")
 	g.Outdent()
 	g.Printf("}\n")
@@ -333,13 +333,13 @@ func (g *goGen) genInterface(obj *types.TypeName) {
 		if res.Len() > 0 {
 			if res.Len() == 1 {
 				T := res.At(0).Type()
-				g.genRead("_res", "res", T, modeReturned)
+				g.genRead("_res", "res", T, modeRetained)
 				retName = "_res"
 			} else {
 				var rvs []string
 				for i := 0; i < res.Len(); i++ {
 					rv := fmt.Sprintf("res_%d", i)
-					g.genRead(rv, fmt.Sprintf("res.r%d", i), res.At(i).Type(), modeReturned)
+					g.genRead(rv, fmt.Sprintf("res.r%d", i), res.At(i).Type(), modeRetained)
 					rvs = append(rvs, rv)
 				}
 				retName = strings.Join(rvs, ", ")
@@ -361,7 +361,7 @@ func (g *goGen) genRead(toVar, fromVar string, typ types.Type, mode varMode) {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.String:
-			g.Printf("%s := decodeString(%s, %v)\n", toVar, fromVar, mode.copyString())
+			g.Printf("%s := decodeString(%s)\n", toVar, fromVar)
 		case types.Bool:
 			g.Printf("%s := %s != 0\n", toVar, fromVar)
 		default:
@@ -372,7 +372,7 @@ func (g *goGen) genRead(toVar, fromVar string, typ types.Type, mode varMode) {
 		case *types.Basic:
 			switch e.Kind() {
 			case types.Uint8: // Byte.
-				g.Printf("%s := toSlice(%s, %v)\n", toVar, fromVar, mode.copySlice())
+				g.Printf("%s := toSlice(%s, %v)\n", toVar, fromVar, mode == modeRetained)
 			default:
 				g.errorf("unsupported type: %s", t)
 			}

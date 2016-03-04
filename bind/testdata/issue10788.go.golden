@@ -26,7 +26,7 @@ type proxyTestStruct _seq.Ref
 //export proxyissue10788_TestStruct_Value_Set
 func proxyissue10788_TestStruct_Value_Set(refnum C.int32_t, v C.nstring) {
 	ref := _seq.FromRefNum(int32(refnum))
-	_v := decodeString(v, false)
+	_v := decodeString(v)
 	ref.Get().(*issue10788.TestStruct).Value = _v
 }
 
@@ -34,7 +34,7 @@ func proxyissue10788_TestStruct_Value_Set(refnum C.int32_t, v C.nstring) {
 func proxyissue10788_TestStruct_Value_Get(refnum C.int32_t) C.nstring {
 	ref := _seq.FromRefNum(int32(refnum))
 	v := ref.Get().(*issue10788.TestStruct).Value
-	_v := encodeString(v, true)
+	_v := encodeString(v)
 	return _v
 }
 
@@ -53,7 +53,7 @@ func proxyissue10788_TestInterface_MultipleUnnamedParams(refnum C.int32_t, param
 	ref := _seq.FromRefNum(int32(refnum))
 	v := ref.Get().(issue10788.TestInterface)
 	_param_p0 := int(param_p0)
-	_param_p1 := decodeString(param_p1, false)
+	_param_p1 := decodeString(param_p1)
 	_param_p2 := int64(param_p2)
 	v.MultipleUnnamedParams(_param_p0, _param_p1, _param_p2)
 }
@@ -70,7 +70,7 @@ func (p *proxyissue10788_TestInterface) DoSomeWork(param_s *issue10788.TestStruc
 
 func (p *proxyissue10788_TestInterface) MultipleUnnamedParams(param_p0 int, param_p1 string, param_p2 int64) {
 	_param_p0 := C.nint(param_p0)
-	_param_p1 := encodeString(param_p1, false)
+	_param_p1 := encodeString(param_p1)
 	_param_p2 := C.int64_t(param_p2)
 	C.cproxyissue10788_TestInterface_MultipleUnnamedParams(C.int32_t(p.Num), _param_p0, _param_p1, _param_p2)
 }

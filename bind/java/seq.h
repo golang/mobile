@@ -14,12 +14,15 @@
 
 // Platform specific types
 typedef struct nstring {
-    void *chars; // utf16 encoded
-    jsize len; // length in bytes
+	// UTF16 or UTF8 Encoded string. When converting from Java string to Go
+	// string, UTF16. When converting from Go to Java, UTF8.
+	void *chars;
+	// length in bytes, regardless of encoding
+	jsize len;
 } nstring;
 typedef struct nbyteslice {
-    void *ptr;
-    jsize len;
+	void *ptr;
+	jsize len;
 } nbyteslice;
 typedef jlong nint;
 
@@ -34,7 +37,7 @@ extern jbyteArray go_seq_to_java_bytearray(JNIEnv *env, nbyteslice s, int copy);
 extern nbyteslice go_seq_from_java_bytearray(JNIEnv *env, jbyteArray s, int copy);
 
 extern jstring go_seq_to_java_string(JNIEnv *env, nstring str);
-extern nstring go_seq_from_java_string(JNIEnv *env, jstring s, int copy);
+extern nstring go_seq_from_java_string(JNIEnv *env, jstring s);
 
 // push_local_frame retrieves or creates the JNIEnv* for the current thread
 // and pushes a JNI reference frame. Must be matched with call to pop_local_frame.
