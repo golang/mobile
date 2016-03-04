@@ -31,9 +31,7 @@ func DestroyRef(refnum C.int32_t) {
 }
 
 // encodeString copies a Go string and returns it as a nstring.
-// The result is always a copy, because go_seq_to_objc_string
-// uses NSString initWithBytesNoCopy to another copy.
-func encodeString(s string, cpy bool) C.nstring {
+func encodeString(s string) C.nstring {
 	n := C.int(len(s))
 	if n == 0 {
 		return C.nstring{}
@@ -46,10 +44,9 @@ func encodeString(s string, cpy bool) C.nstring {
 	return C.nstring{ptr: ptr, len: n}
 }
 
-// decodeString converts a nstring to a Go string.
-// The data in str is always a copy, so cpy is ignored
-// and the data is always freed.
-func decodeString(str C.nstring, cpy bool) string {
+// decodeString converts a nstring to a Go string. The
+// data in str is freed after use.
+func decodeString(str C.nstring) string {
 	if str.ptr == nil {
 		return ""
 	}

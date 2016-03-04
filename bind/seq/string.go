@@ -4,10 +4,7 @@
 
 package seq
 
-import (
-	"unicode/utf16"
-	"unsafe"
-)
+import "unicode/utf16"
 
 // Based heavily on package unicode/utf16 from the Go standard library.
 
@@ -26,10 +23,6 @@ const (
 
 	surrSelf = 0x10000
 )
-
-func writeUint16(b []byte, v rune) {
-	*(*uint16)(unsafe.Pointer(&b[0])) = uint16(v)
-}
 
 // UTF16Encode utf16 encodes s into chars. It returns the resulting
 // length in units of uint16. It is assumed that the chars slice

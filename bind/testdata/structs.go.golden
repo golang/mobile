@@ -68,7 +68,7 @@ func proxystructs_S_Identity(refnum C.int32_t) (C.int32_t, C.nstring) {
 	} else {
 		_res_1_str = res_1.Error()
 	}
-	_res_1 := encodeString(_res_1_str, true)
+	_res_1 := encodeString(_res_1_str)
 	return _res_0, _res_1
 }
 
@@ -132,6 +132,6 @@ func proxystructs__IdentityWithError(param_s C.int32_t) (C.int32_t, C.nstring) {
 	} else {
 		_res_1_str = res_1.Error()
 	}
-	_res_1 := encodeString(_res_1_str, true)
+	_res_1 := encodeString(_res_1_str)
 	return _res_0, _res_1
 }

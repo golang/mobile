@@ -29,6 +29,8 @@ type Benchmarks interface {
 	Ref(_ I)
 	Manyargs(_, _, _, _, _, _, _, _, _, _ int)
 	String(_ string)
+	StringRetShort() string
+	StringRetLong() string
 	Slice(_ []byte)
 }
 
@@ -94,6 +96,8 @@ func RunBenchmarks(b Benchmarks) {
 		"StringLong",
 		"StringShortUnicode",
 		"StringLongUnicode",
+		"StringRetShort",
+		"StringRetLong",
 		"SliceShort",
 		"SliceLong",
 	}
@@ -118,6 +122,8 @@ func RunBenchmarks(b Benchmarks) {
 	runGoBenchmark("StringLong", func() { b.String(LongString) })
 	runGoBenchmark("StringShortUnicode", func() { b.String(ShortStringUnicode) })
 	runGoBenchmark("StringLongUnicode", func() { b.String(LongStringUnicode) })
+	runGoBenchmark("StringRetShort", func() { b.StringRetShort() })
+	runGoBenchmark("StringRetLong", func() { b.StringRetLong() })
 	runGoBenchmark("SliceShort", func() { b.Slice(ShortSlice) })
 	runGoBenchmark("SliceLong", func() { b.Slice(LongSlice) })
 }
@@ -136,6 +142,14 @@ func Oneret() int {
 }
 
 func String(_ string) {
+}
+
+func StringRetShort() string {
+	return ShortString
+}
+
+func StringRetLong() string {
+	return LongString
 }
 
 func Slice(_ []byte) {

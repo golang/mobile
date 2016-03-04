@@ -26,7 +26,7 @@ type proxyT _seq.Ref
 //export proxyissue12328_T_Err_Set
 func proxyissue12328_T_Err_Set(refnum C.int32_t, v C.nstring) {
 	ref := _seq.FromRefNum(int32(refnum))
-	_v_str := decodeString(v, false)
+	_v_str := decodeString(v)
 	_v := toError(_v_str)
 	ref.Get().(*issue12328.T).Err = _v
 }
@@ -41,6 +41,6 @@ func proxyissue12328_T_Err_Get(refnum C.int32_t) C.nstring {
 	} else {
 		_v_str = v.Error()
 	}
-	_v := encodeString(_v_str, true)
+	_v := encodeString(_v_str)
 	return _v
 }

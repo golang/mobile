@@ -30,25 +30,14 @@ type (
 const (
 	// modeTransient are for function arguments that
 	// are not used after the function returns.
-	// Transient strings and byte slices don't need copying
+	// Transient byte slices don't need copying
 	// when passed accross the language barrier.
 	modeTransient varMode = iota
-	// modeRetained are for function arguments that are
-	// used after the function returns. Retained strings
-	// don't need an intermediate copy, while byte slices do.
+	// modeRetained are for returned values and for function
+	// arguments that are used after the function returns.
+	// Retained byte slices need an intermediate copy.
 	modeRetained
-	// modeReturned are for values that are returned to the
-	// caller of a function. Returned values are always copied.
-	modeReturned
 )
-
-func (m varMode) copyString() bool {
-	return m == modeReturned
-}
-
-func (m varMode) copySlice() bool {
-	return m == modeReturned || m == modeRetained
-}
 
 func (list ErrorList) Error() string {
 	buf := new(bytes.Buffer)

@@ -82,11 +82,8 @@ Java_go_vars_Vars_getAFloat64(JNIEnv *env, jclass clazz) {
 
 JNIEXPORT void JNICALL
 Java_go_vars_Vars_setAString(JNIEnv *env, jclass clazz, jstring v) {
-    nstring _v = go_seq_from_java_string(env, v, 0);
+    nstring _v = go_seq_from_java_string(env, v);
     var_setvars_AString(_v);
-    if (_v.chars != NULL) {
-      (*env)->ReleaseStringChars(env, v, _v.chars);
-    }
 }
 
 JNIEXPORT jstring JNICALL

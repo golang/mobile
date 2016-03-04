@@ -32,7 +32,7 @@ func proxyinterfaces_Error_Err(refnum C.int32_t) C.nstring {
 	} else {
 		_res_0_str = res_0.Error()
 	}
-	_res_0 := encodeString(_res_0_str, true)
+	_res_0 := encodeString(_res_0_str)
 	return _res_0
 }
 
@@ -40,7 +40,7 @@ type proxyinterfaces_Error _seq.Ref
 
 func (p *proxyinterfaces_Error) Err() error {
 	res := C.cproxyinterfaces_Error_Err(C.int32_t(p.Num))
-	_res_str := decodeString(res, true)
+	_res_str := decodeString(res)
 	_res := toError(_res_str)
 	return _res
 }
@@ -154,7 +154,7 @@ func proxyinterfaces__CallErr(param_e C.int32_t) C.nstring {
 	} else {
 		_res_0_str = res_0.Error()
 	}
-	_res_0 := encodeString(_res_0_str, true)
+	_res_0 := encodeString(_res_0_str)
 	return _res_0
 }
 

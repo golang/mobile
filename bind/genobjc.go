@@ -257,7 +257,7 @@ func (g *objcGen) genVarM(o *types.Var) {
 	g.Indent()
 	g.Printf("%s r0 = ", g.cgoType(o.Type()))
 	g.Printf("var_get%s_%s();\n", g.pkgPrefix, o.Name())
-	g.genRead("_r0", "r0", o.Type(), modeReturned)
+	g.genRead("_r0", "r0", o.Type(), modeRetained)
 	g.Printf("return _r0;\n")
 	g.Outdent()
 	g.Printf("}\n\n")
@@ -470,7 +470,7 @@ func (g *objcGen) genGetter(oName string, f *types.Var) {
 	g.Printf("int32_t refnum = go_seq_go_to_refnum(self._ref);\n")
 	g.Printf("%s r0 = ", g.cgoType(f.Type()))
 	g.Printf("proxy%s_%s_%s_Get(refnum);\n", g.pkgPrefix, oName, f.Name())
-	g.genRead("_r0", "r0", f.Type(), modeReturned)
+	g.genRead("_r0", "r0", f.Type(), modeRetained)
 	g.Printf("return _r0;\n")
 	g.Outdent()
 	g.Printf("}\n\n")
@@ -510,7 +510,7 @@ func (g *objcGen) genWrite(varName string, t types.Type, mode varMode) {
 		case *types.Basic:
 			switch e.Kind() {
 			case types.Uint8: // Byte.
-				g.Printf("nbyteslice _%s = go_seq_from_objc_bytearray(%s, %d);\n", varName, varName, g.toCFlag(mode.copySlice()))
+				g.Printf("nbyteslice _%s = go_seq_from_objc_bytearray(%s, %d);\n", varName, varName, g.toCFlag(mode == modeRetained))
 			default:
 				g.errorf("unsupported type: %s", t)
 			}
@@ -577,7 +577,7 @@ func (g *objcGen) genRead(toName, fromName string, t types.Type, mode varMode) {
 		case *types.Basic:
 			switch e.Kind() {
 			case types.Uint8: // Byte.
-				g.Printf("NSData *%s = go_seq_to_objc_bytearray(%s, %d);\n", toName, fromName, g.toCFlag(mode.copySlice()))
+				g.Printf("NSData *%s = go_seq_to_objc_bytearray(%s, %d);\n", toName, fromName, g.toCFlag(mode == modeRetained))
 			default:
 				g.errorf("unsupported type: %s", t)
 			}
@@ -635,7 +635,7 @@ func (g *objcGen) genFunc(s *funcSummary, objName string) {
 	}
 
 	for i, r := range s.retParams {
-		g.genRead("_"+r.name, fmt.Sprintf("%sr%d", resPrefix, i), r.typ, modeReturned)
+		g.genRead("_"+r.name, fmt.Sprintf("%sr%d", resPrefix, i), r.typ, modeRetained)
 	}
 
 	if !s.returnsVal() {
@@ -754,7 +754,7 @@ func (g *objcGen) genInterfaceMethodProxy(obj *types.TypeName, m *types.Func) {
 	if len(s.retParams) > 0 {
 		if s.returnsVal() { // len(s.retParams) == 1 && s.retParams[0] != error
 			p := s.retParams[0]
-			g.genWrite("returnVal", p.typ, modeReturned)
+			g.genWrite("returnVal", p.typ, modeRetained)
 			g.Printf("return _returnVal;\n")
 		} else {
 			var rets []string
@@ -775,10 +775,10 @@ func (g *objcGen) genInterfaceMethodProxy(obj *types.TypeName, m *types.Func) {
 					g.Printf("}\n")
 					g.Outdent()
 					g.Printf("}\n")
-					g.genWrite(p.name+"_str", p.typ, modeReturned)
+					g.genWrite(p.name+"_str", p.typ, modeRetained)
 					rets = append(rets, fmt.Sprintf("_%s_str", p.name))
 				} else {
-					g.genWrite(p.name, p.typ, modeReturned)
+					g.genWrite(p.name, p.typ, modeRetained)
 					rets = append(rets, "_"+p.name)
 				}
 			}
@@ -808,7 +808,7 @@ func (g *objcGen) genRelease(varName string, t types.Type, mode varMode) {
 		case *types.Basic:
 			switch e.Kind() {
 			case types.Uint8: // Byte.
-				if !mode.copySlice() {
+				if mode == modeTransient {
 					// If the argument was not mutable, go_seq_from_objc_bytearray created a copy.
 					// Free it here.
 					g.Printf("if (![%s isKindOfClass:[NSMutableData class]]) {\n", varName)

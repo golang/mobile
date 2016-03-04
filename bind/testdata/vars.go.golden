@@ -82,14 +82,14 @@ func var_getvars_AFloat64() C.double {
 
 //export var_setvars_AString
 func var_setvars_AString(v C.nstring) {
-	_v := decodeString(v, false)
+	_v := decodeString(v)
 	vars.AString = _v
 }
 
 //export var_getvars_AString
 func var_getvars_AString() C.nstring {
 	v := vars.AString
-	_v := encodeString(v, true)
+	_v := encodeString(v)
 	return _v
 }
 

@@ -49,7 +49,7 @@ func proxybasictypes__Error() C.nstring {
 	} else {
 		_res_0_str = res_0.Error()
 	}
-	_res_0 := encodeString(_res_0_str, true)
+	_res_0 := encodeString(_res_0_str)
 	return _res_0
 }
 
@@ -63,7 +63,7 @@ func proxybasictypes__ErrorPair() (C.nint, C.nstring) {
 	} else {
 		_res_1_str = res_1.Error()
 	}
-	_res_1 := encodeString(_res_1_str, true)
+	_res_1 := encodeString(_res_1_str)
 	return _res_0, _res_1
 }
 

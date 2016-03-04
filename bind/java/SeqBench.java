@@ -84,6 +84,16 @@ public class SeqBench extends InstrumentationTestCase {
           Benchmark.String(Benchmark.LongStringUnicode);
         }
       });
+      benchmarks.put("StringRetShort", new Runnable() {
+        @Override public void run() {
+          Benchmark.StringRetShort();
+        }
+      });
+      benchmarks.put("StringRetLong", new Runnable() {
+        @Override public void run() {
+          Benchmark.StringRetLong();
+        }
+      });
       final byte[] shortSlice = Benchmark.getShortSlice();
       benchmarks.put("SliceShort", new Runnable() {
         @Override public void run() {
@@ -138,6 +148,12 @@ public class SeqBench extends InstrumentationTestCase {
     }
     @Override public void Slice(byte[] s) {
     }
+	@Override public String StringRetShort() {
+		return Benchmark.ShortString;
+	}
+	@Override public String StringRetLong() {
+		return Benchmark.LongString;
+	}
   }
 
   public void testBenchmark() {

@@ -119,9 +119,25 @@ public class SeqTest extends InstrumentationTestCase {
     String[] tests = new String[]{
       "abcxyz09{}",
       "Hello, 世界",
-      "\uffff\uD800\uDC00\uD800\uDC01\uD808\uDF45\uDBFF\uDFFF"};
-    for (String want : tests) {
-      String got = Testpkg.StrDup(want);
+      "\uffff\uD800\uDC00\uD800\uDC01\uD808\uDF45\uDBFF\uDFFF",
+      // From Go std lib tests in unicode/utf16/utf16_test.go
+      "\u0001\u0002\u0003\u0004",
+      "\uffff\ud800\udc00\ud800\udc01\ud808\udf45\udbff\udfff",
+      "\ud800a",
+      "\udfff"
+    };
+    String[] wants = new String[]{
+      "abcxyz09{}",
+      "Hello, 世界",
+      "\uffff\uD800\uDC00\uD800\uDC01\uD808\uDF45\uDBFF\uDFFF",
+      "\u0001\u0002\u0003\u0004",
+      "\uffff\ud800\udc00\ud800\udc01\ud808\udf45\udbff\udfff",
+      "\ufffda",
+      "\ufffd"
+    };
+    for (int i = 0; i < tests.length; i++) {
+      String got = Testpkg.StrDup(tests[i]);
+      String want = wants[i];
       assertEquals("Strings should match", want, got);
     }
   }
