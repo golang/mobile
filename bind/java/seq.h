@@ -10,7 +10,11 @@
 #include <jni.h>
 
 #define LOG_INFO(...) __android_log_print(ANDROID_LOG_INFO, "go/Seq", __VA_ARGS__)
-#define LOG_FATAL(...) __android_log_print(ANDROID_LOG_FATAL, "go/Seq", __VA_ARGS__)
+#define LOG_FATAL(...)                                             \
+  {                                                                \
+    __android_log_print(ANDROID_LOG_FATAL, "go/Seq", __VA_ARGS__); \
+    abort();                                                       \
+  }
 
 // Platform specific types
 typedef struct nstring {
