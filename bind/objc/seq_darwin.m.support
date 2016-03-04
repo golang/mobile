@@ -168,7 +168,6 @@ nbyteslice go_seq_from_objc_bytearray(NSData *data, int copy) {
     void *arr_copy = malloc(sz);
     if (arr_copy == NULL) {
       LOG_FATAL(@"malloc failed");
-      return res;
     }
     memcpy(arr_copy, [data bytes], sz);
     ptr = arr_copy;
@@ -194,7 +193,6 @@ nstring go_seq_from_objc_string(NSString *s) {
   char *buf = (char *)malloc(len);
   if (buf == NULL) {
     LOG_FATAL(@"malloc failed");
-    return res;
   }
   NSUInteger used;
   [s getBytes:buf
@@ -214,7 +212,6 @@ nstring go_seq_from_objc_string(NSString *s) {
 
 - (id)init {
   LOG_FATAL(@"GoSeqRef init is disallowed");
-  return nil;
 }
 
 // called when an object from Go is passed in.
@@ -279,14 +276,12 @@ nstring go_seq_from_objc_string(NSString *s) {
 - (void)dec:(int32_t)refnum { // called whenever a go proxy object is finalized.
   if (IS_FROM_GO(refnum)) {
     LOG_FATAL(@"dec:invalid refnum for Objective-C objects");
-    return;
   }
   @synchronized(self) {
     id key = @(refnum);
     RefCounter *counter = [_objs objectForKey:key];
     if (counter == NULL) {
       LOG_FATAL(@"unknown refnum");
-      return;
     }
     int n = counter.cnt;
     if (n <= 0) {
@@ -305,13 +300,11 @@ nstring go_seq_from_objc_string(NSString *s) {
 - (id)get:(int32_t)refnum {
   if (IS_FROM_GO(refnum)) {
     LOG_FATAL(@"get:invalid refnum for Objective-C objects");
-    return NULL;
   }
   @synchronized(self) {
     RefCounter *counter = _objs[@(refnum)];
     if (counter == NULL) {
       LOG_FATAL(@"unidentified object refnum: %d", refnum);
-      return NULL;
     }
     return counter.obj;
   }

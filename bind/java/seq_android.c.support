@@ -48,11 +48,9 @@ static JNIEnv *go_seq_get_thread_env(void) {
 	if (ret != JNI_OK) {
 		if (ret != JNI_EDETACHED) {
 			LOG_FATAL("failed to get thread env");
-			return;
 		}
 		if ((*jvm)->AttachCurrentThread(jvm, &env, NULL) != JNI_OK) {
 			LOG_FATAL("failed to attach current thread");
-			return;
 		}
 		pthread_setspecific(jnienvs, env);
 	}
@@ -81,7 +79,6 @@ jbyteArray go_seq_to_java_bytearray(JNIEnv *env, nbyteslice s, int copy) {
 	jbyteArray res = (*env)->NewByteArray(env, s.len);
 	if (res == NULL) {
 		LOG_FATAL("NewByteArray failed");
-		return res;
 	}
 	(*env)->SetByteArrayRegion(env, res, 0, s.len, s.ptr);
 	if (copy) {
@@ -187,7 +184,6 @@ nstring go_seq_from_java_string(JNIEnv *env, jstring str) {
 	jchar *chars = (jchar *)(*env)->GetStringChars(env, str, NULL);
 	if (chars == NULL) {
 		LOG_FATAL("GetStringChars failed");
-		return res;
 	}
 	nstring nstr = utf16_decode(chars, nchars);
 	(*env)->ReleaseStringChars(env, str, chars);
@@ -207,13 +203,11 @@ nbyteslice go_seq_from_java_bytearray(JNIEnv *env, jbyteArray arr, int copy) {
 	jbyte *ptr = (*env)->GetByteArrayElements(env, arr, NULL);
 	if (ptr == NULL) {
 		LOG_FATAL("GetByteArrayElements failed");
-		return res;
 	}
 	if (copy) {
 		void *ptr_copy = (void *)malloc(len);
 		if (ptr_copy == NULL) {
 			LOG_FATAL("malloc failed");
-			return res;
 		}
 		memcpy(ptr_copy, ptr, len);
 		(*env)->ReleaseByteArrayElements(env, arr, ptr, JNI_ABORT);
@@ -239,7 +233,6 @@ jobject go_seq_from_refnum(JNIEnv *env, int32_t refnum, jclass proxy_class, jmet
 	jobject ref = (*env)->CallStaticObjectMethod(env, seq_class, seq_getRef, (jint)refnum);
 	if (ref == NULL) {
 		LOG_FATAL("Unknown reference: %d", refnum);
-		return NULL;
 	}
 	if (refnum > 0) { // Java object
 		// return ref.obj
@@ -283,54 +276,44 @@ JNIEXPORT void JNICALL
 Java_go_Seq_init(JNIEnv *env, jclass clazz) {
 	if ((*env)->GetJavaVM(env, &jvm) != 0) {
 		LOG_FATAL("failed to get JVM");
-		return;
 	}
 	if (pthread_key_create(&jnienvs, env_destructor) != 0) {
 		LOG_FATAL("failed to initialize jnienvs thread local storage");
-		return;
 	}
 
 	seq_class = (*env)->NewGlobalRef(env, clazz);
 	seq_throw_exc = (*env)->GetStaticMethodID(env, seq_class, "throwException", "(Ljava/lang/String;)V");
 	if (seq_throw_exc == NULL) {
 		LOG_FATAL("failed to find method Seq.throwException");
-		return;
 	}
 
 	seq_getRef = (*env)->GetStaticMethodID(env, seq_class, "getRef", "(I)Lgo/Seq$Ref;");
 	if (seq_getRef == NULL) {
 		LOG_FATAL("failed to find method Seq.getRef");
-		return;
 	}
 	seq_decRef = (*env)->GetStaticMethodID(env, seq_class, "decRef", "(I)V");
 	if (seq_decRef == NULL) {
 		LOG_FATAL("failed to find method Seq.decRef");
-		return;
 	}
 	seq_incRef = (*env)->GetStaticMethodID(env, seq_class, "incRef", "(Lgo/Seq$Object;)I");
 	if (seq_incRef == NULL) {
 		LOG_FATAL("failed to find method Seq.incRef");
-		return;
 	}
 	jclass throwable_class = (*env)->FindClass(env, "java/lang/Throwable");
 	if (throwable_class == NULL) {
 		LOG_FATAL("failed to find Throwable class");
-		return;
 	}
 	throwable_getMessage = (*env)->GetMethodID(env, throwable_class, "getMessage", "()Ljava/lang/String;");
 	if (throwable_getMessage == NULL) {
 		LOG_FATAL("failed to find method Throwable.getMessage");
-		return;
 	}
 	jclass ref_class = (*env)->FindClass(env, "go/Seq$Ref");
 	if (ref_class == NULL) {
 		LOG_FATAL("failed to find the Seq.Ref class");
-		return;
 	}
 	ref_objField = (*env)->GetFieldID(env, ref_class, "obj", "Lgo/Seq$Object;");
 	if (ref_objField == NULL) {
 		LOG_FATAL("failed to find the Seq.Ref.obj field");
-		return;
 	}
 }
 
