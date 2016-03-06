@@ -499,6 +499,10 @@ func TestTableRefByName(t *testing.T) {
 }
 
 func TestTableMarshal(t *testing.T) {
+	sdkdir := os.Getenv("ANDROID_HOME")
+	if sdkdir == "" {
+		t.Skip("ANDROID_HOME env var not set")
+	}
 	tbl, err := OpenSDKTable()
 	if err != nil {
 		t.Fatal(err)
