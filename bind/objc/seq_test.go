@@ -16,15 +16,37 @@ import (
 	"testing"
 )
 
+// Use the Xcode XCTestCase framework to run the SeqTest.m tests and the SeqBench.m benchmarks.
+//
+// SeqTest.m runs in the xcodetest project as normal unit test (logic test in Xcode lingo).
+// Unit tests execute faster but cannot run on a real device. That is why SeqBench.m runs as
+// a UI unit test through the xcodebench project.
+//
+// Both xcodetest and xcodebench were constructed in Xcode 7 by:
+//
+// - Creating a new project through Xcode. Choose to include either unit tests or UI tests as
+//   needed.
+// - Add SeqTest.m or SeqBench.m to the right unit test target.
+// - Xcode schemes are per-user by default. The shared scheme is created by selecting
+//   Project => Schemes => Manage Schemes from the Xcode menu and selecting "Shared".
+// - Remove files not needed for xcodebuild (determined empirically). In particular, the empty
+//   tests Xcode creates can be removed and the unused user scheme.
+
 var destination = flag.String("device", "platform=iOS Simulator,name=iPhone 6s Plus", "Specify the -destination flag to xcodebuild")
 
 // TestObjcSeqTest runs ObjC test SeqTest.m.
 // This requires the xcode command lines tools.
 func TestObjcSeqTest(t *testing.T) {
-	runTest(t, "golang.org/x/mobile/bind/objc/testpkg", "xcodetest", "SeqTest.m")
+	runTest(t, "golang.org/x/mobile/bind/objc/testpkg", "xcodetest", "SeqTest.m", false)
 }
 
-func runTest(t *testing.T, pkgName, project, testfile string) {
+// TestObjcSeqBench runs ObjC test SeqBench.m.
+// This requires the xcode command lines tools.
+func TestObjcSeqBench(t *testing.T) {
+	runTest(t, "golang.org/x/mobile/bind/benchmark", "xcodebench", "SeqBench.m", true)
+}
+
+func runTest(t *testing.T, pkgName, project, testfile string, dumpOutput bool) {
 	if _, err := run("which xcodebuild"); err != nil {
 		t.Skip("command xcodebuild not found, skipping")
 	}
@@ -68,10 +90,14 @@ func runTest(t *testing.T, pkgName, project, testfile string) {
 		t.Fatalf("failed to run gomobile bind: %v", err)
 	}
 
-	cmd := exec.Command("xcodebuild", "test", "-scheme", "xcodetest", "-destination", *destination)
-	if buf, err := cmd.CombinedOutput(); err != nil {
+	cmd := exec.Command("xcodebuild", "test", "-scheme", project, "-destination", *destination)
+	buf, err = cmd.CombinedOutput()
+	if err != nil {
 		t.Logf("%s", buf)
 		t.Errorf("failed to run xcodebuild: %v", err)
+	}
+	if dumpOutput {
+		t.Logf("%s", buf)
 	}
 }
 

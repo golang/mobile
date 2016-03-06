@@ -90,7 +90,7 @@ func RunBenchmarks(b Benchmarks) {
 		"Onearg",
 		"Oneret",
 		"Manyargs",
-		"Refjava",
+		"Refforeign",
 		"Refgo",
 		"StringShort",
 		"StringLong",
@@ -102,10 +102,10 @@ func RunBenchmarks(b Benchmarks) {
 		"SliceLong",
 	}
 	for _, name := range names {
-		runBenchmark("Java"+name, func(n int) {
+		runBenchmark("Foreign"+name, func(n int) {
 			b.Run(name, n)
 		})
-		runBenchmark("Java"+name+"Direct", func(n int) {
+		runBenchmark("Foreign"+name+"Direct", func(n int) {
 			b.RunDirect(name, n)
 		})
 	}
@@ -113,8 +113,8 @@ func RunBenchmarks(b Benchmarks) {
 	runGoBenchmark("Noarg", func() { b.Noargs() })
 	runGoBenchmark("Onearg", func() { b.Onearg(0) })
 	runGoBenchmark("Oneret", func() { b.Oneret() })
-	javaRef := b.NewI()
-	runGoBenchmark("Refjava", func() { b.Ref(javaRef) })
+	foreignRef := b.NewI()
+	runGoBenchmark("Refforeign", func() { b.Ref(foreignRef) })
 	goRef := NewI()
 	runGoBenchmark("Refgo", func() { b.Ref(goRef) })
 	runGoBenchmark("Manyargs", func() { b.Manyargs(0, 0, 0, 0, 0, 0, 0, 0, 0, 0) })
