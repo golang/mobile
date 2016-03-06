@@ -37,7 +37,7 @@ var destination = flag.String("device", "platform=iOS Simulator,name=iPhone 6s P
 // TestObjcSeqTest runs ObjC test SeqTest.m.
 // This requires the xcode command lines tools.
 func TestObjcSeqTest(t *testing.T) {
-	runTest(t, "golang.org/x/mobile/bind/objc/testpkg", "xcodetest", "SeqTest.m", false)
+	runTest(t, "golang.org/x/mobile/bind/testpkg", "xcodetest", "SeqTest.m", false)
 }
 
 // TestObjcSeqBench runs ObjC test SeqBench.m.

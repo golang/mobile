@@ -16,6 +16,7 @@ static NSString* errDomain = @"go.basictypes";
 
 const BOOL GoBasictypesABool = YES;
 const double GoBasictypesAFloat = 0.2015;
+NSString* const GoBasictypesALongString = @"LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString";
 const int32_t GoBasictypesARune = 32;
 NSString* const GoBasictypesAString = @"a string";
 const int64_t GoBasictypesAnInt = 7LL;

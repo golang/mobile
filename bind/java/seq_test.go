@@ -19,7 +19,7 @@ import (
 // This requires the gradle command in PATH and
 // the Android SDK whose path is available through ANDROID_HOME environment variable.
 func TestJavaSeqTest(t *testing.T) {
-	runTest(t, "golang.org/x/mobile/bind/java/testpkg", "SeqTest")
+	runTest(t, "golang.org/x/mobile/bind/testpkg", "SeqTest")
 }
 
 // TestJavaSeqBench runs java test SeqBench.java, with the same

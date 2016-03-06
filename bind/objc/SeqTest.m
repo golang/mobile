@@ -9,7 +9,7 @@
 #import "testpkg/Testpkg.h"
 
 // Objective-C implementation of testpkg.I.
-@interface Number : NSObject <GoTestpkgI> {
+@interface Number : NSObject <GoTestpkgI2> {
 }
 @property int32_t value;
 
@@ -96,13 +96,13 @@ static int numI = 0;
     GoTestpkgInt(42);
 }
 
-- (void)testSum {
-    int64_t sum = GoTestpkgSum(31, 21);
+- (void)testAdd {
+    int64_t sum = GoTestpkgAdd(31, 21);
     XCTAssertEqual(sum, 52, @"GoTestpkgSum(31, 21) = %lld, want 52\n", sum);
 }
 
 - (void)testHello:(NSString *)input {
-    NSString *got = GoTestpkgHello(input);
+    NSString *got = GoTestpkgAppendHello(input);
     NSString *want = [NSString stringWithFormat:@"Hello, %@!", input];
     XCTAssertEqualObjects(got, want, @"want %@\nGoTestpkgHello(%@)= %@", want, input, got);
 }
@@ -117,23 +117,23 @@ static int numI = 0;
 
 - (void)testString {
     NSString *input = @"";
-    NSString *got = GoTestpkgEcho(input);
+    NSString *got = GoTestpkgStrDup(input);
     XCTAssertEqualObjects(got, input, @"want %@\nGoTestpkgEcho(%@)= %@", input, input, got);
 
     input = @"FOO";
-    got = GoTestpkgEcho(input);
+    got = GoTestpkgStrDup(input);
     XCTAssertEqualObjects(got, input, @"want %@\nGoTestpkgEcho(%@)= %@", input, input, got);
 }
 
 - (void)testStruct {
-    GoTestpkgS *s = GoTestpkgNewS(10.0, 100.0);
-    XCTAssertNotNil(s, @"GoTestpkgNewS returned NULL");
+    GoTestpkgS2 *s = GoTestpkgNewS2(10.0, 100.0);
+    XCTAssertNotNil(s, @"GoTestpkgNewS2 returned NULL");
 
     double x = [s x];
     double y = [s y];
     double sum = [s sum];
     XCTAssertTrue(x == 10.0 && y == 100.0 && sum == 110.0,
-            @"GoTestpkgS(10.0, 100.0).X=%f Y=%f SUM=%f; want 10, 100, 110", x, y, sum);
+            @"GoTestpkgS2(10.0, 100.0).X=%f Y=%f SUM=%f; want 10, 100, 110", x, y, sum);
 
     double sum2 = GoTestpkgCallSSum(s);
     XCTAssertEqual(sum, sum2, @"GoTestpkgCallSSum(s)=%f; want %f as returned by s.Sum", sum2, sum);
@@ -144,7 +144,7 @@ static int numI = 0;
     y = [s y];
     sum = [s sum];
     XCTAssertTrue(x == 7 && y == 70 && sum == 77,
-            @"GoTestpkgS(7, 70).X=%f Y=%f SUM=%f; want 7, 70, 77", x, y, sum);
+            @"GoTestpkgS2(7, 70).X=%f Y=%f SUM=%f; want 7, 70, 77", x, y, sum);
 
     NSString *first = @"trytwotested";
     NSString *second = @"test";
@@ -159,7 +159,7 @@ static int numI = 0;
     }
 
     GoTestpkgGC();
-    int numS = GoTestpkgCollectS(
+    int numS = GoTestpkgCollectS2(
             1, 10); // within 10 seconds, collect the S used in testStruct.
     XCTAssertEqual(numS, 1, @"%d S objects were collected; S used in testStruct is supposed to "
                 @"be collected.",
@@ -178,7 +178,7 @@ static int numI = 0;
 
 - (void)testInterface {
     // Test Go object implementing testpkg.I is handled correctly.
-    id<GoTestpkgI> goObj = GoTestpkgNewI();
+    id<GoTestpkgI2> goObj = GoTestpkgNewI();
     int64_t got = [goObj times:10];
     XCTAssertEqual(got, 100, @"GoTestpkgNewI().times(10) = %lld; want %d", got, 100);
     int32_t key = -1;
@@ -268,20 +268,20 @@ static int numI = 0;
 	i = [GoTestpkg intVar];
 	XCTAssertEqual(i, 7777, @"GoTestpkg.intVar = %lld, want 7777", i);
 
-	GoTestpkgNode *n0 = GoTestpkg.structVar;
-	XCTAssertEqualObjects(n0.v, @"a struct var", @"GoTestpkg.structVar = %@, want 'a struct var'", n0.v);
+	GoTestpkgNode *n0 = GoTestpkg.nodeVar;
+	XCTAssertEqualObjects(n0.v, @"a struct var", @"GoTestpkg.NodeVar = %@, want 'a struct var'", n0.v);
 	GoTestpkgNode *n1 = GoTestpkgNewNode(@"a new struct var");
-	GoTestpkg.structVar = n1;
-	GoTestpkgNode *n2 = GoTestpkg.structVar;
-	XCTAssertEqualObjects(n2.v, @"a new struct var", @"GoTestpkg.StructVar = %@, want 'a new struct var'", n2.v);
+	GoTestpkg.nodeVar = n1;
+	GoTestpkgNode *n2 = GoTestpkg.nodeVar;
+	XCTAssertEqualObjects(n2.v, @"a new struct var", @"GoTestpkg.NodeVar = %@, want 'a new struct var'", n2.v);
 
 	Number *num = [[Number alloc] init];
 	num.value = 12345;
-	GoTestpkg.interfaceVar = num;
-	id<GoTestpkgI> iface = GoTestpkg.interfaceVar;
+	GoTestpkg.interfaceVar2 = num;
+	id<GoTestpkgI2> iface = GoTestpkg.interfaceVar2;
 	int64_t x = [iface times:10];
 	int64_t y = [num times:10];
-	XCTAssertEqual(x, y, @"GoTestpkg.InterfaceVar Times 10 = %lld, want %lld", x, y);
+	XCTAssertEqual(x, y, @"GoTestpkg.InterfaceVar2 Times 10 = %lld, want %lld", x, y);
 }
 
 - (void)testIssue12403 {
@@ -296,15 +296,15 @@ static int numI = 0;
 	XCTAssertEqualObjects(ret, @"OK", @"GoTestpkgCallIStringError(Number, 'number') returned unexpected results %@", ret);
 }
 
-- (void)testStringDup:(NSString *)want {
-	NSString *got = GoTestpkgStringDup(want);
-	XCTAssertEqualObjects(want, got, @"StringDup returned %@; expected %@", got, want);
+- (void)testStrDup:(NSString *)want {
+	NSString *got = GoTestpkgStrDup(want);
+	XCTAssertEqualObjects(want, got, @"StrDup returned %@; expected %@", got, want);
 }
 
 - (void)testUnicodeStrings {
-	[self testStringDup:@"abcxyz09{}"];
-	[self testStringDup:@"Hello, 世界"];
-	[self testStringDup:@"\uffff\U00010000\U00010001\U00012345\U0010ffff"];
+	[self testStrDup:@"abcxyz09{}"];
+	[self testStrDup:@"Hello, 世界"];
+	[self testStrDup:@"\uffff\U00010000\U00010001\U00012345\U0010ffff"];
 }
 
 - (void)testByteArrayRead {
