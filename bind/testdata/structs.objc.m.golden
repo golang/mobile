@@ -173,8 +173,10 @@ BOOL GoStructsIdentityWithError(GoStructsS* s, GoStructsS** ret0_, NSError** err
 }
 
 void cproxystructs_I_M(int32_t refnum) {
-	id<GoStructsI> o = go_seq_objc_from_refnum(refnum);
-	[o m];
+	@autoreleasepool {
+		id<GoStructsI> o = go_seq_objc_from_refnum(refnum);
+		[o m];
+	}
 }
 
 __attribute__((constructor)) static void init() {

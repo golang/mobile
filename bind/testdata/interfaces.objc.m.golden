@@ -221,54 +221,66 @@ id<GoInterfacesI> GoInterfacesSeven() {
 }
 
 nstring cproxyinterfaces_Error_Err(int32_t refnum) {
-	id<GoInterfacesError> o = go_seq_objc_from_refnum(refnum);
-	NSError* error = nil;
-	BOOL returnVal = [o err:&error];
-	NSString *error_str = nil;
-	if (!returnVal) {
-		error_str = [error localizedDescription];
-		if (error_str == nil || error_str.length == 0) {
-			error_str = @"gobind: unknown error";
+	@autoreleasepool {
+		id<GoInterfacesError> o = go_seq_objc_from_refnum(refnum);
+		NSError* error = nil;
+		BOOL returnVal = [o err:&error];
+		NSString *error_str = nil;
+		if (!returnVal) {
+			error_str = [error localizedDescription];
+			if (error_str == nil || error_str.length == 0) {
+				error_str = @"gobind: unknown error";
+			}
 		}
+		nstring _error_str = go_seq_from_objc_string(error_str);
+		return _error_str;
 	}
-	nstring _error_str = go_seq_from_objc_string(error_str);
-	return _error_str;
 }
 
 int32_t cproxyinterfaces_I_Rand(int32_t refnum) {
-	id<GoInterfacesI> o = go_seq_objc_from_refnum(refnum);
-	int32_t returnVal = [o rand];
-	int32_t _returnVal = (int32_t)returnVal;
-	return _returnVal;
+	@autoreleasepool {
+		id<GoInterfacesI> o = go_seq_objc_from_refnum(refnum);
+		int32_t returnVal = [o rand];
+		int32_t _returnVal = (int32_t)returnVal;
+		return _returnVal;
+	}
 }
 
 void cproxyinterfaces_I1_J(int32_t refnum) {
-	GoInterfacesI1* o = go_seq_objc_from_refnum(refnum);
-	[o j];
+	@autoreleasepool {
+		GoInterfacesI1* o = go_seq_objc_from_refnum(refnum);
+		[o j];
+	}
 }
 
 void cproxyinterfaces_I2_G(int32_t refnum) {
-	GoInterfacesI2* o = go_seq_objc_from_refnum(refnum);
-	[o g];
+	@autoreleasepool {
+		GoInterfacesI2* o = go_seq_objc_from_refnum(refnum);
+		[o g];
+	}
 }
 
 int32_t cproxyinterfaces_I3_F(int32_t refnum) {
-	id<GoInterfacesI3> o = go_seq_objc_from_refnum(refnum);
-	GoInterfacesI1* returnVal = [o f];
-	int32_t _returnVal;
-	if ([(id<NSObject>)(returnVal) isKindOfClass:[GoInterfacesI1 class]]) {
-		id<goSeqRefInterface> returnVal_proxy = (id<goSeqRefInterface>)(returnVal);
-		_returnVal = go_seq_go_to_refnum(returnVal_proxy._ref);
-	} else {
-		_returnVal = go_seq_to_refnum(returnVal);
+	@autoreleasepool {
+		id<GoInterfacesI3> o = go_seq_objc_from_refnum(refnum);
+		GoInterfacesI1* returnVal = [o f];
+		int32_t _returnVal;
+		if ([(id<NSObject>)(returnVal) isKindOfClass:[GoInterfacesI1 class]]) {
+			id<goSeqRefInterface> returnVal_proxy = (id<goSeqRefInterface>)(returnVal);
+			_returnVal = go_seq_go_to_refnum(returnVal_proxy._ref);
+		} else {
+			_returnVal = go_seq_to_refnum(returnVal);
+		}
+		return _returnVal;
 	}
-	return _returnVal;
 }
 
 void cproxyinterfaces_WithParam_HasParam(int32_t refnum, char p0) {
-	id<GoInterfacesWithParam> o = go_seq_objc_from_refnum(refnum);
-	BOOL _p0 = p0 ? YES : NO;
-	[o hasParam:_p0];
+	@autoreleasepool {
+		id<GoInterfacesWithParam> o = go_seq_objc_from_refnum(refnum);
+		BOOL _p0 = p0 ? YES : NO;
+		[o hasParam:_p0];
+	}
 }
 
 __attribute__((constructor)) static void init() {

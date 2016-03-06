@@ -729,6 +729,8 @@ func (g *objcGen) genInterfaceMethodProxy(obj *types.TypeName, m *types.Func) {
 	s := g.funcSummary(m)
 	g.genInterfaceMethodSignature(m, oName, false)
 	g.Indent()
+	g.Printf("@autoreleasepool {\n")
+	g.Indent()
 	g.Printf("%s o = go_seq_objc_from_refnum(refnum);\n", g.objcType(obj.Type()))
 	for _, p := range s.params {
 		g.genRead("_"+p.name, p.name, p.typ, modeTransient)
@@ -792,6 +794,8 @@ func (g *objcGen) genInterfaceMethodProxy(obj *types.TypeName, m *types.Func) {
 			}
 		}
 	}
+	g.Outdent()
+	g.Printf("}\n")
 	g.Outdent()
 	g.Printf("}\n\n")
 }

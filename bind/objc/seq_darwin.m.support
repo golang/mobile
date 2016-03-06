@@ -103,7 +103,9 @@ static RefTracker *tracker = NULL;
 void init_seq() { tracker = [[RefTracker alloc] init]; }
 
 void go_seq_dec_ref(int32_t refnum) {
-  [tracker dec:refnum];
+  @autoreleasepool {
+    [tracker dec:refnum];
+  }
 }
 
 NSData *go_seq_to_objc_bytearray(nbyteslice s, int copy) {

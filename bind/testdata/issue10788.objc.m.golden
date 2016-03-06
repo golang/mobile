@@ -84,24 +84,28 @@ static NSString* errDomain = @"go.issue10788";
 
 
 void cproxyissue10788_TestInterface_DoSomeWork(int32_t refnum, int32_t s) {
-	id<GoIssue10788TestInterface> o = go_seq_objc_from_refnum(refnum);
-	GoIssue10788TestStruct* _s = nil;
-	GoSeqRef* _s_ref = go_seq_from_refnum(s);
-	if (_s_ref != NULL) {
-		_s = _s_ref.obj;
-		if (_s == nil) {
-			_s = [[GoIssue10788TestStruct alloc] initWithRef:_s_ref];
+	@autoreleasepool {
+		id<GoIssue10788TestInterface> o = go_seq_objc_from_refnum(refnum);
+		GoIssue10788TestStruct* _s = nil;
+		GoSeqRef* _s_ref = go_seq_from_refnum(s);
+		if (_s_ref != NULL) {
+			_s = _s_ref.obj;
+			if (_s == nil) {
+				_s = [[GoIssue10788TestStruct alloc] initWithRef:_s_ref];
+			}
 		}
+		[o doSomeWork:_s];
 	}
-	[o doSomeWork:_s];
 }
 
 void cproxyissue10788_TestInterface_MultipleUnnamedParams(int32_t refnum, nint p0, nstring p1, int64_t p2) {
-	id<GoIssue10788TestInterface> o = go_seq_objc_from_refnum(refnum);
-	int _p0 = (int)p0;
-	NSString *_p1 = go_seq_to_objc_string(p1);
-	int64_t _p2 = (int64_t)p2;
-	[o multipleUnnamedParams:_p0 p1:_p1 p2:_p2];
+	@autoreleasepool {
+		id<GoIssue10788TestInterface> o = go_seq_objc_from_refnum(refnum);
+		int _p0 = (int)p0;
+		NSString *_p1 = go_seq_to_objc_string(p1);
+		int64_t _p2 = (int64_t)p2;
+		[o multipleUnnamedParams:_p0 p1:_p1 p2:_p2];
+	}
 }
 
 __attribute__((constructor)) static void init() {
