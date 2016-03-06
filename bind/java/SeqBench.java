@@ -53,7 +53,7 @@ public class SeqBench extends InstrumentationTestCase {
         }
       });
       final Benchmark.I javaRef = new AnI();
-      benchmarks.put("Refjava", new Runnable() {
+      benchmarks.put("Refforeign", new Runnable() {
         @Override public void run() {
           Benchmark.Ref(javaRef);
         }
