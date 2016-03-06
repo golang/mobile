@@ -28,8 +28,6 @@ const (
 	ABool   = true
 	AFloat  = 0.12345
 
-	ALongString = "LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString"
-
 	MinInt32               int32   = math.MinInt32
 	MaxInt32               int32   = math.MaxInt32
 	MinInt64                       = math.MinInt64
@@ -42,10 +40,12 @@ const (
 )
 
 var (
-	StringVar    = "a string var"
-	IntVar       = 77
-	StructVar    = &S{name: "a struct var"}
-	InterfaceVar I
+	StringVar     = "a string var"
+	IntVar        = 77
+	StructVar     = &S{name: "a struct var"}
+	InterfaceVar  I
+	InterfaceVar2 I2
+	NodeVar       = &Node{V: "a struct var"}
 )
 
 type I interface {
@@ -282,4 +282,132 @@ func GoroutineCallback(r Receiver) {
 		close(done)
 	}()
 	<-done
+}
+
+func Hi() {
+	fmt.Println("Hi")
+}
+
+func Int(x int32) {
+	fmt.Println("Received int32", x)
+}
+
+type I2 interface {
+	Times(v int32) int64
+	Error(triggerError bool) error
+
+	StringError(s string) (string, error)
+}
+
+type myI2 struct{}
+
+func (_ *myI2) Times(v int32) int64 {
+	return int64(v) * 10
+}
+
+func (_ *myI2) Error(e bool) error {
+	if e {
+		return errors.New("some error")
+	}
+	return nil
+}
+
+func (_ *myI2) StringError(s string) (string, error) {
+	return s, nil
+}
+
+func CallIError(i I2, triggerError bool) error {
+	return i.Error(triggerError)
+}
+
+func CallIStringError(i I2, s string) (string, error) {
+	return i.StringError(s)
+}
+
+func NewI() I2 {
+	return &myI2{}
+}
+
+var pinnedI = make(map[int32]I2)
+
+func RegisterI(idx int32, i I2) {
+	pinnedI[idx] = i
+}
+
+func UnregisterI(idx int32) {
+	delete(pinnedI, idx)
+}
+
+func Multiply(idx int32, val int32) int64 {
+	i, ok := pinnedI[idx]
+	if !ok {
+		panic(fmt.Sprintf("unknown I2 with index %d", idx))
+	}
+	return i.Times(val)
+}
+
+func AppendHello(s string) string {
+	return fmt.Sprintf("Hello, %s!", s)
+}
+
+func ReturnsError(b bool) (string, error) {
+	if b {
+		return "", errors.New("Error")
+	}
+	return "OK", nil
+}
+
+var collectS2 = make(chan struct{}, 100)
+
+func finalizeS(a *S2) {
+	collectS2 <- struct{}{}
+}
+
+func CollectS2(want, timeoutSec int) int {
+	runtime.GC()
+
+	tick := time.NewTicker(time.Duration(timeoutSec) * time.Second)
+	defer tick.Stop()
+
+	for i := 0; i < want; i++ {
+		select {
+		case <-collectS2:
+		case <-tick.C:
+			fmt.Println("CollectS: timed out")
+			return i
+		}
+	}
+	return want
+}
+
+type S2 struct {
+	X, Y       float64
+	unexported bool
+}
+
+func NewS2(x, y float64) *S2 {
+	s := &S2{X: x, Y: y}
+	runtime.SetFinalizer(s, finalizeS)
+	return s
+}
+
+func (_ *S2) TryTwoStrings(first, second string) string {
+	return first + second
+}
+
+func (s *S2) Sum() float64 {
+	return s.X + s.Y
+}
+
+func CallSSum(s *S2) float64 {
+	return s.Sum()
+}
+
+// Issue #13033
+type NullFieldStruct struct {
+	F *S
+}
+
+func NewNullFieldStruct() *NullFieldStruct {
+	return &NullFieldStruct{}
 }
