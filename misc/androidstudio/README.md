@@ -15,6 +15,9 @@ gobind {
   // GOPATH
   GOPATH "/home/gopher"
 
+  // Optional list of architectures. Defaults to all supported architectures.
+  GOARCH="arm amd64"
+
   // Absolute path to the gomobile binary
   GOMOBILE "/mypath/bin/gomobile"
 
