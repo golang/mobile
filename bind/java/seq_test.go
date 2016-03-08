@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // TestJavaSeqTest runs java test SeqTest.java.
@@ -44,13 +45,17 @@ func runTest(t *testing.T, pkgName, javaCls string) {
 		t.Skip("ANDROID_HOME environment var not set, skipping")
 	}
 	if _, err := run("which gomobile"); err != nil {
-		_, err := run("go install golang.org/x/mobile/cmd/gomobile")
-		if err != nil {
-			t.Skip("gomobile not available, skipping")
+		t.Log("go install gomobile")
+		if _, err := run("go install golang.org/x/mobile/cmd/gomobile"); err != nil {
+			t.Fatalf("gomobile install failed: %v", err)
 		}
+		t.Log("gomobile init")
+		start := time.Now()
+		if _, err := run("gomobile init"); err != nil {
+			t.Fatalf("gomobile init failed: %v", err)
+		}
+		t.Logf("gomobile init took %v", time.Since(start))
 	}
-
-	// TODO(hyangah): gomobile init if necessary.
 
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -146,7 +151,7 @@ const buildgradle = `buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.1.3'
+        classpath 'com.android.tools.build:gradle:1.5.0'
     }
 }
 
