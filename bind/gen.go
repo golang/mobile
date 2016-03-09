@@ -159,7 +159,7 @@ func (g *generator) cgoType(t types.Type) string {
 		case types.String:
 			return "nstring"
 		default:
-			panic(fmt.Sprintf("unsupported basic type: %s", t))
+			g.errorf("unsupported basic type: %s", t)
 		}
 	case *types.Slice:
 		switch e := t.Elem().(type) {
@@ -168,21 +168,22 @@ func (g *generator) cgoType(t types.Type) string {
 			case types.Uint8: // Byte.
 				return "nbyteslice"
 			default:
-				panic(fmt.Sprintf("unsupported slice type: %s", t))
+				g.errorf("unsupported slice type: %s", t)
 			}
 		default:
-			panic(fmt.Sprintf("unsupported slice type: %s", t))
+			g.errorf("unsupported slice type: %s", t)
 		}
 	case *types.Pointer:
 		if _, ok := t.Elem().(*types.Named); ok {
 			return g.cgoType(t.Elem())
 		}
-		panic(fmt.Sprintf("unsupported pointer to type: %s", t))
+		g.errorf("unsupported pointer to type: %s", t)
 	case *types.Named:
 		return "int32_t"
 	default:
-		panic(fmt.Sprintf("unsupported type: %s", t))
+		g.errorf("unsupported type: %s", t)
 	}
+	return "TODO"
 }
 
 func (g *generator) genInterfaceMethodSignature(m *types.Func, iName string, header bool) {
