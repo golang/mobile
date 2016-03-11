@@ -9,7 +9,7 @@ plugins {
 }
 
 gobind {
-  // package to bind
+  // Package to bind. Separate multiple packages with spaces.
   pkg "github.com/someone/somepackage"
 
   // GOPATH
