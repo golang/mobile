@@ -46,10 +46,10 @@ class GobindTask extends DefaultTask implements OutputFileTask {
 
 	@TaskAction
 	def gobind() {
-		def pkg = project.gobind.pkg
+		def pkg = project.gobind.pkg.trim()
 		def gopath = (project.gobind.GOPATH ?: System.getenv("GOPATH"))?.trim()
 		if (!pkg || !gopath) {
-		throw new GradleException('gobind.pkg and gobind.GOPATH must be set')
+			throw new GradleException('gobind.pkg and gobind.GOPATH must be set')
 		}
 
 		def paths = (gopath.split(File.pathSeparator).collect{ "$it/bin" } +
@@ -97,7 +97,7 @@ class GobindTask extends DefaultTask implements OutputFileTask {
 			if (gomobileFlags) {
 				cmd = cmd+gomobileFlags.split(" ")
 			}
-			cmd << pkg
+			cmd.addAll(pkg.split(" "))
 
 			args(cmd)
 			if (!androidHome?.trim()) {
@@ -137,7 +137,7 @@ class GobindTask extends DefaultTask implements OutputFileTask {
 }
 
 class GobindExtension {
-	// Package to bind. (required)
+	// Package to bind. Separate multiple packages with spaces. (required)
 	def String pkg = ""
 
 	// GOPATH: necessary for gomobile tool. (required)
