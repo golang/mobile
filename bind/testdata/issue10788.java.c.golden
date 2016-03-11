@@ -6,16 +6,15 @@
 #include <android/log.h>
 #include <stdint.h>
 #include "seq.h"
-#include "issue10788.h"
 #include "_cgo_export.h"
+#include "issue10788.h"
 
-
-static jclass proxy_class_issue10788_TestInterface;
-static jmethodID proxy_class_issue10788_TestInterface_cons;
+jclass proxy_class_issue10788_TestInterface;
+jmethodID proxy_class_issue10788_TestInterface_cons;
 static jmethodID mid_TestInterface_DoSomeWork;
 static jmethodID mid_TestInterface_MultipleUnnamedParams;
-static jclass proxy_class_issue10788_TestStruct;
-static jmethodID proxy_class_issue10788_TestStruct_cons;
+jclass proxy_class_issue10788_TestStruct;
+jmethodID proxy_class_issue10788_TestStruct_cons;
 
 JNIEXPORT void JNICALL
 Java_go_issue10788_Issue10788_init(JNIEnv *env, jclass _unused) {

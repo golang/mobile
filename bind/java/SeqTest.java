@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Random;
 
 import go.testpkg.Testpkg;
+import go.secondpkg.Secondpkg;
 
 public class SeqTest extends InstrumentationTestCase {
   public SeqTest() {
@@ -471,5 +472,24 @@ public class SeqTest extends InstrumentationTestCase {
       @Override public void Hello(String msg) {
       }
     });
+  }
+
+  public void testImportedPkg() {
+    assertEquals("imported string should match", Secondpkg.HelloString, Secondpkg.Hello());
+    Secondpkg.I i = Testpkg.NewImportedI();
+    Secondpkg.S s = Testpkg.NewImportedS();
+    i = Testpkg.getImportedVarI();
+    s = Testpkg.getImportedVarS();
+    assertEquals("numbers should match", 8, i.F(8));
+    assertEquals("numbers should match", 8, s.F(8));
+    Testpkg.setImportedVarI(i);
+    Testpkg.setImportedVarS(s);
+    Testpkg.ImportedFields fields = Testpkg.NewImportedFields();
+    i = fields.getI();
+    s = fields.getS();
+    fields.setI(i);
+    fields.setS(s);
+    Testpkg.WithImportedI(i);
+    Testpkg.WithImportedS(s);
   }
 }

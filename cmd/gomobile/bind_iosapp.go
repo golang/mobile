@@ -36,8 +36,8 @@ func goIOSBind(pkgs []*build.Package) error {
 	}
 
 	srcDir := filepath.Join(tmpdir, "src", "gomobile_bind")
-	for _, pkg := range typesPkgs {
-		if err := binder.GenGo(pkg, srcDir); err != nil {
+	for _, pkg := range binder.pkgs {
+		if err := binder.GenGo(pkg, binder.pkgs, srcDir); err != nil {
 			return err
 		}
 	}
@@ -51,8 +51,8 @@ func goIOSBind(pkgs []*build.Package) error {
 	}
 
 	fileBases := make([]string, len(typesPkgs))
-	for i, pkg := range typesPkgs {
-		if fileBases[i], err = binder.GenObjc(pkg, srcDir); err != nil {
+	for i, pkg := range binder.pkgs {
+		if fileBases[i], err = binder.GenObjc(pkg, binder.pkgs, srcDir); err != nil {
 			return err
 		}
 	}

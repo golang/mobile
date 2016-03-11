@@ -21,8 +21,6 @@ import (
 // suppress the error if seq ends up unused
 var _ = _seq.FromRefNum
 
-type proxyS _seq.Ref
-
 //export proxystructs_S_X_Set
 func proxystructs_S_X_Set(refnum C.int32_t, v C.double) {
 	ref := _seq.FromRefNum(int32(refnum))
@@ -80,8 +78,6 @@ func proxystructs_S_Sum(refnum C.int32_t) C.double {
 	_res_0 := C.double(res_0)
 	return _res_0
 }
-
-type proxyS2 _seq.Ref
 
 //export proxystructs_S2_M
 func proxystructs_S2_M(refnum C.int32_t) {

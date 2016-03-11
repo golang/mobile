@@ -348,4 +348,23 @@ static int numI = 0;
 	XCTAssertEqualObjects(got, want, @"want %@\nGoTestpkgReturnsError(TRUE) = (%@, %@)", want, value, got);
 }
 
+- (void)testImportedPkg {
+	XCTAssertEqualObjects(GoSecondpkgHelloString, GoSecondpkgHello(), @"imported string should match");
+    id<GoSecondpkgI> i = GoTestpkgNewImportedI();
+	GoSecondpkgS *s = GoTestpkgNewImportedS();
+	XCTAssertEqual(8, [i f:8], @"numbers should match");
+	XCTAssertEqual(8, [s f:8], @"numbers should match");
+	i = GoTestpkgWithImportedI(i);
+	s = GoTestpkgWithImportedS(s);
+	i = [GoTestpkg importedVarI];
+	s = [GoTestpkg importedVarS];
+	[GoTestpkg setImportedVarI:i];
+	[GoTestpkg setImportedVarS:s];
+	GoTestpkgImportedFields *fields = GoTestpkgNewImportedFields();
+	i = [fields i];
+	s = [fields s];
+	[fields setI:i];
+	[fields setS:s];
+}
+
 @end

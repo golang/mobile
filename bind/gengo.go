@@ -5,6 +5,7 @@
 package bind
 
 import (
+	"bytes"
 	"fmt"
 	"go/types"
 	"strings"
@@ -12,6 +13,7 @@ import (
 
 type goGen struct {
 	*generator
+	imports map[string]struct{}
 }
 
 const (
@@ -29,14 +31,6 @@ package gomobile_bind
 
 */
 import "C"
-
-import (
-	_seq "golang.org/x/mobile/bind/seq"
-	%[2]q
-)
-
-// suppress the error if seq ends up unused
-var _ = _seq.FromRefNum
 
 `
 )
@@ -129,11 +123,6 @@ func (g *goGen) genWrite(toVar, fromVar string, t types.Type, mode varMode) {
 		// TODO(crawshaw): test **Generator
 		switch t := t.Elem().(type) {
 		case *types.Named:
-			obj := t.Obj()
-			if obj.Pkg() != g.pkg {
-				g.errorf("type %s not defined in %s", t, g.pkg)
-				return
-			}
 			g.genToRefNum(toVar, fromVar)
 		default:
 			g.errorf("unsupported type %s", t)
@@ -193,7 +182,7 @@ func (g *goGen) genFuncSignature(o *types.Func, objName string) {
 func (g *goGen) genFunc(o *types.Func) {
 	g.genFuncSignature(o, "")
 	g.Indent()
-	g.genFuncBody(o, g.pkg.Name())
+	g.genFuncBody(o, g.pkgName(g.pkg))
 	g.Outdent()
 	g.Printf("}\n\n")
 }
@@ -202,15 +191,13 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 	fields := exportedFields(T)
 	methods := exportedMethodSet(types.NewPointer(obj.Type()))
 
-	g.Printf("type proxy%s _seq.Ref\n\n", obj.Name())
-
 	for _, f := range fields {
 		g.Printf("//export proxy%s_%s_%s_Set\n", g.pkgPrefix, obj.Name(), f.Name())
 		g.Printf("func proxy%s_%s_%s_Set(refnum C.int32_t, v C.%s) {\n", g.pkgPrefix, obj.Name(), f.Name(), g.cgoType(f.Type()))
 		g.Indent()
 		g.Printf("ref := _seq.FromRefNum(int32(refnum))\n")
 		g.genRead("_v", "v", f.Type(), modeRetained)
-		g.Printf("ref.Get().(*%s.%s).%s = _v\n", g.pkg.Name(), obj.Name(), f.Name())
+		g.Printf("ref.Get().(*%s.%s).%s = _v\n", g.pkgName(g.pkg), obj.Name(), f.Name())
 		g.Outdent()
 		g.Printf("}\n\n")
 
@@ -218,7 +205,7 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 		g.Printf("func proxy%s_%s_%s_Get(refnum C.int32_t) C.%s {\n", g.pkgPrefix, obj.Name(), f.Name(), g.cgoType(f.Type()))
 		g.Indent()
 		g.Printf("ref := _seq.FromRefNum(int32(refnum))\n")
-		g.Printf("v := ref.Get().(*%s.%s).%s\n", g.pkg.Name(), obj.Name(), f.Name())
+		g.Printf("v := ref.Get().(*%s.%s).%s\n", g.pkgName(g.pkg), obj.Name(), f.Name())
 		g.genWrite("_v", "v", f.Type(), modeRetained)
 		g.Printf("return _v\n")
 		g.Outdent()
@@ -229,7 +216,7 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 		g.genFuncSignature(m, obj.Name())
 		g.Indent()
 		g.Printf("ref := _seq.FromRefNum(int32(refnum))\n")
-		g.Printf("v := ref.Get().(*%s.%s)\n", g.pkg.Name(), obj.Name())
+		g.Printf("v := ref.Get().(*%s.%s)\n", g.pkgName(g.pkg), obj.Name())
 		g.genFuncBody(m, "v")
 		g.Outdent()
 		g.Printf("}\n\n")
@@ -239,7 +226,7 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 func (g *goGen) genVar(o *types.Var) {
 	// TODO(hyangah): non-struct pointer types (*int), struct type.
 
-	v := fmt.Sprintf("%s.%s", g.pkg.Name(), o.Name())
+	v := fmt.Sprintf("%s.%s", g.pkgName(g.pkg), o.Name())
 
 	// var I int
 	//
@@ -273,7 +260,7 @@ func (g *goGen) genInterface(obj *types.TypeName) {
 		g.genFuncSignature(m, obj.Name())
 		g.Indent()
 		g.Printf("ref := _seq.FromRefNum(int32(refnum))\n")
-		g.Printf("v := ref.Get().(%s.%s)\n", g.pkg.Name(), obj.Name())
+		g.Printf("v := ref.Get().(%s.%s)\n", g.pkgName(g.pkg), obj.Name())
 		g.genFuncBody(m, "v")
 		g.Outdent()
 		g.Printf("}\n\n")
@@ -383,13 +370,14 @@ func (g *goGen) genRead(toVar, fromVar string, typ types.Type, mode varMode) {
 		switch u := t.Elem().(type) {
 		case *types.Named:
 			o := u.Obj()
-			if o.Pkg() != g.pkg {
-				g.errorf("type %s not defined in %s", u, g.pkg)
+			oPkg := o.Pkg()
+			if !g.validPkg(oPkg) {
+				g.errorf("type %s is defined in %s, which is not bound", u, oPkg)
 				return
 			}
 			g.Printf("// Must be a Go object\n")
 			g.Printf("%s_ref := _seq.FromRefNum(int32(%s))\n", toVar, fromVar)
-			g.Printf("%s := %s_ref.Get().(*%s.%s)\n", toVar, toVar, g.pkg.Name(), o.Name())
+			g.Printf("%s := %s_ref.Get().(*%s.%s)\n", toVar, toVar, g.pkgName(oPkg), o.Name())
 		default:
 			g.errorf("unsupported pointer type %s", t)
 		}
@@ -401,18 +389,19 @@ func (g *goGen) genRead(toVar, fromVar string, typ types.Type, mode varMode) {
 				hasProxy = makeIfaceSummary(iface).implementable
 			}
 			o := t.Obj()
-			if o.Pkg() != g.pkg {
-				g.errorf("type %s not defined in %s", t, g.pkg)
+			oPkg := o.Pkg()
+			if !g.validPkg(oPkg) {
+				g.errorf("type %s is defined in %s, which is not bound", t, oPkg)
 				return
 			}
 			g.Printf("var %s %s\n", toVar, g.typeString(t))
 			g.Printf("%s_ref := _seq.FromRefNum(int32(%s))\n", toVar, fromVar)
 			g.Printf("if %s_ref != nil {\n", toVar)
 			g.Printf("	if %s_ref.Num < 0 { // go object \n", toVar)
-			g.Printf("  	 %s = %s_ref.Get().(%s.%s)\n", toVar, toVar, g.pkg.Name(), o.Name())
+			g.Printf("  	 %s = %s_ref.Get().(%s.%s)\n", toVar, toVar, g.pkgName(oPkg), o.Name())
 			if hasProxy {
 				g.Printf("	} else { // foreign object \n")
-				g.Printf("	   %s = (*proxy%s_%s)(%s_ref)\n", toVar, g.pkgPrefix, o.Name(), toVar)
+				g.Printf("	   %s = (*proxy%s_%s)(%s_ref)\n", toVar, pkgPrefix(oPkg), o.Name(), toVar)
 			}
 			g.Printf("	}\n")
 			g.Printf("}\n")
@@ -433,13 +422,15 @@ func (g *goGen) typeString(typ types.Type) string {
 		if obj.Pkg() == nil { // e.g. error type is *types.Named.
 			return types.TypeString(typ, types.RelativeTo(pkg))
 		}
-		if obj.Pkg() != g.pkg {
-			g.errorf("type %s not defined in %s", t, g.pkg)
+		oPkg := obj.Pkg()
+		if !g.validPkg(oPkg) {
+			g.errorf("type %s is defined in %s, which is not bound", t, oPkg)
+			return "TODO"
 		}
 
 		switch t.Underlying().(type) {
 		case *types.Interface, *types.Struct:
-			return fmt.Sprintf("%s.%s", pkg.Name(), types.TypeString(typ, types.RelativeTo(pkg)))
+			return fmt.Sprintf("%s.%s", g.pkgName(oPkg), types.TypeString(typ, types.RelativeTo(oPkg)))
 		default:
 			g.errorf("unsupported named type %s / %T", t, t)
 		}
@@ -456,8 +447,30 @@ func (g *goGen) typeString(typ types.Type) string {
 	return ""
 }
 
-func (g *goGen) gen() error {
+// genPreamble generates the preamble. It is generated after everything
+// else, where we know which bound packages to import.
+func (g *goGen) genPreamble() {
 	g.Printf(goPreamble, g.pkg.Name(), g.pkg.Path())
+	g.Printf("import (\n")
+	g.Indent()
+	g.Printf("_seq \"golang.org/x/mobile/bind/seq\"\n")
+	for path := range g.imports {
+		g.Printf("%q\n", path)
+	}
+	g.Outdent()
+	g.Printf(")\n\n")
+}
+
+func (g *goGen) gen() error {
+	g.imports = make(map[string]struct{})
+
+	// Switch to a temporary buffer so the preamble can be
+	// written last.
+	oldBuf := g.printer.buf
+	newBuf := new(bytes.Buffer)
+	g.printer.buf = newBuf
+	g.Printf("// suppress the error if seq ends up unused\n")
+	g.Printf("var _ = _seq.FromRefNum\n")
 
 	for _, s := range g.structs {
 		g.genStruct(s.obj, s.t)
@@ -471,8 +484,20 @@ func (g *goGen) gen() error {
 	for _, f := range g.funcs {
 		g.genFunc(f)
 	}
+	// Switch to the original buffer, write the preamble
+	// and append the rest of the file.
+	g.printer.buf = oldBuf
+	g.genPreamble()
+	g.printer.buf.Write(newBuf.Bytes())
 	if len(g.err) > 0 {
 		return g.err
 	}
 	return nil
+}
+
+// pkgName retuns the package name and adds the package to the list of
+// imports.
+func (g *goGen) pkgName(pkg *types.Package) string {
+	g.imports[pkg.Path()] = struct{}{}
+	return pkg.Name()
 }

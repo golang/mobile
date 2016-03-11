@@ -71,8 +71,8 @@ func goAndroidBind(pkgs []*build.Package, androidArchs []string) error {
 		}
 
 		srcDir := filepath.Join(tmpdir, "gomobile_bind")
-		for _, pkg := range typesPkgs {
-			if err := binder.GenGo(pkg, srcDir); err != nil {
+		for _, pkg := range binder.pkgs {
+			if err := binder.GenGo(pkg, binder.pkgs, srcDir); err != nil {
 				return err
 			}
 		}
@@ -96,7 +96,7 @@ func goAndroidBind(pkgs []*build.Package, androidArchs []string) error {
 			if bindJavaPkg == "" {
 				pkgpath = "go/" + pkg.Name()
 			}
-			if err := binder.GenJava(pkg, srcDir, filepath.Join(androidDir, "src/main/java/"+pkgpath)); err != nil {
+			if err := binder.GenJava(pkg, binder.pkgs, srcDir, filepath.Join(androidDir, "src/main/java/"+pkgpath)); err != nil {
 				return err
 			}
 		}

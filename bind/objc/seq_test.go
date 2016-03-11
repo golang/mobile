@@ -38,16 +38,20 @@ var destination = flag.String("device", "platform=iOS Simulator,name=iPhone 6s P
 // TestObjcSeqTest runs ObjC test SeqTest.m.
 // This requires the xcode command lines tools.
 func TestObjcSeqTest(t *testing.T) {
-	runTest(t, "golang.org/x/mobile/bind/testpkg", "xcodetest", "SeqTest.m", false)
+	runTest(t, []string{
+		"golang.org/x/mobile/bind/testpkg",
+		"golang.org/x/mobile/bind/testpkg/secondpkg",
+		"golang.org/x/mobile/bind/testpkg/simplepkg",
+	}, "xcodetest", "SeqTest.m", false)
 }
 
 // TestObjcSeqBench runs ObjC test SeqBench.m.
 // This requires the xcode command lines tools.
 func TestObjcSeqBench(t *testing.T) {
-	runTest(t, "golang.org/x/mobile/bind/benchmark", "xcodebench", "SeqBench.m", true)
+	runTest(t, []string{"golang.org/x/mobile/bind/benchmark"}, "xcodebench", "SeqBench.m", true)
 }
 
-func runTest(t *testing.T, pkgName, project, testfile string, dumpOutput bool) {
+func runTest(t *testing.T, pkgNames []string, project, testfile string, dumpOutput bool) {
 	if _, err := run("which xcodebuild"); err != nil {
 		t.Skip("command xcodebuild not found, skipping")
 	}
@@ -89,7 +93,7 @@ func runTest(t *testing.T, pkgName, project, testfile string, dumpOutput bool) {
 	}
 	defer os.Chdir(cwd)
 
-	buf, err := run("gomobile bind -target=ios " + pkgName)
+	buf, err := run("gomobile bind -target=ios " + strings.Join(pkgNames, " "))
 	if err != nil {
 		t.Logf("%s", buf)
 		t.Fatalf("failed to run gomobile bind: %v", err)

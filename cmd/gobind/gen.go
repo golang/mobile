@@ -16,36 +16,48 @@ import (
 	"golang.org/x/mobile/bind"
 )
 
-func genPkg(p *types.Package) {
+func genPkg(p *types.Package, allPkg []*types.Package) {
 	fname := defaultFileName(*lang, p)
+	conf := &bind.GeneratorConfig{
+		Fset:   fset,
+		Pkg:    p,
+		AllPkg: allPkg,
+	}
 	switch *lang {
 	case "java":
 		w, closer := writer(fname)
-		processErr(bind.GenJava(w, fset, p, *javaPkg, bind.Java))
+		conf.Writer = w
+		processErr(bind.GenJava(conf, *javaPkg, bind.Java))
 		closer()
 		cname := "java_" + p.Name() + ".c"
 		w, closer = writer(cname)
-		processErr(bind.GenJava(w, fset, p, *javaPkg, bind.JavaC))
+		conf.Writer = w
+		processErr(bind.GenJava(conf, *javaPkg, bind.JavaC))
 		closer()
 		hname := p.Name() + ".h"
 		w, closer = writer(hname)
-		processErr(bind.GenJava(w, fset, p, *javaPkg, bind.JavaH))
+		conf.Writer = w
+		processErr(bind.GenJava(conf, *javaPkg, bind.JavaH))
 		closer()
 	case "go":
 		w, closer := writer(fname)
-		processErr(bind.GenGo(w, fset, p))
+		conf.Writer = w
+		processErr(bind.GenGo(conf))
 		closer()
 	case "objc":
 		gohname := p.Name() + ".h"
 		w, closer := writer(gohname)
-		processErr(bind.GenObjc(w, fset, p, *prefix, bind.ObjcGoH))
+		conf.Writer = w
+		processErr(bind.GenObjc(conf, *prefix, bind.ObjcGoH))
 		closer()
 		hname := fname[:len(fname)-2] + ".h"
 		w, closer = writer(hname)
-		processErr(bind.GenObjc(w, fset, p, *prefix, bind.ObjcH))
+		conf.Writer = w
+		processErr(bind.GenObjc(conf, *prefix, bind.ObjcH))
 		closer()
 		w, closer = writer(fname)
-		processErr(bind.GenObjc(w, fset, p, *prefix, bind.ObjcM))
+		conf.Writer = w
+		processErr(bind.GenObjc(conf, *prefix, bind.ObjcM))
 		closer()
 	default:
 		errorf("unknown target language: %q", *lang)

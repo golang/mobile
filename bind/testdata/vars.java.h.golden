@@ -8,4 +8,9 @@
 
 #include <jni.h>
 
+extern jclass proxy_class_vars_I;
+extern jmethodID proxy_class_vars_I_cons;
+
+extern jclass proxy_class_vars_S;
+extern jmethodID proxy_class_vars_S_cons;
 #endif

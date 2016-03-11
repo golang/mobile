@@ -6,14 +6,13 @@
 #include <android/log.h>
 #include <stdint.h>
 #include "seq.h"
-#include "vars.h"
 #include "_cgo_export.h"
+#include "vars.h"
 
-
-static jclass proxy_class_vars_I;
-static jmethodID proxy_class_vars_I_cons;
-static jclass proxy_class_vars_S;
-static jmethodID proxy_class_vars_S_cons;
+jclass proxy_class_vars_I;
+jmethodID proxy_class_vars_I_cons;
+jclass proxy_class_vars_S;
+jmethodID proxy_class_vars_S_cons;
 
 JNIEXPORT void JNICALL
 Java_go_vars_Vars_init(JNIEnv *env, jclass _unused) {
