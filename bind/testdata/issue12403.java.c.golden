@@ -6,12 +6,11 @@
 #include <android/log.h>
 #include <stdint.h>
 #include "seq.h"
-#include "issue12403.h"
 #include "_cgo_export.h"
+#include "issue12403.h"
 
-
-static jclass proxy_class_issue12403_Parsable;
-static jmethodID proxy_class_issue12403_Parsable_cons;
+jclass proxy_class_issue12403_Parsable;
+jmethodID proxy_class_issue12403_Parsable_cons;
 static jmethodID mid_Parsable_FromJSON;
 static jmethodID mid_Parsable_ToJSON;
 

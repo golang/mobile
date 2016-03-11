@@ -160,7 +160,7 @@ func (b *binder) GenObjcSupport(outdir string) error {
 	return copyFile(filepath.Join(outdir, "seq.h"), filepath.Join(objcPkg.Dir, "seq.h"))
 }
 
-func (b *binder) GenObjc(pkg *types.Package, outdir string) (string, error) {
+func (b *binder) GenObjc(pkg *types.Package, allPkg []*types.Package, outdir string) (string, error) {
 	const bindPrefixDefault = "Go"
 	if bindPrefix == "" {
 		bindPrefix = bindPrefixDefault
@@ -176,6 +176,11 @@ func (b *binder) GenObjc(pkg *types.Package, outdir string) (string, error) {
 	hfile := filepath.Join(outdir, fileBase+".h")
 	gohfile := filepath.Join(outdir, pkg.Name()+".h")
 
+	conf := &bind.GeneratorConfig{
+		Fset:   b.fset,
+		Pkg:    pkg,
+		AllPkg: allPkg,
+	}
 	generate := func(w io.Writer) error {
 		if buildX {
 			printcmd("gobind %s -outdir=%s %s", bindOption, outdir, pkg.Path())
@@ -183,7 +188,8 @@ func (b *binder) GenObjc(pkg *types.Package, outdir string) (string, error) {
 		if buildN {
 			return nil
 		}
-		return bind.GenObjc(w, b.fset, pkg, bindPrefix, bind.ObjcM)
+		conf.Writer = w
+		return bind.GenObjc(conf, bindPrefix, bind.ObjcM)
 	}
 	if err := writeFile(mfile, generate); err != nil {
 		return "", err
@@ -192,7 +198,8 @@ func (b *binder) GenObjc(pkg *types.Package, outdir string) (string, error) {
 		if buildN {
 			return nil
 		}
-		return bind.GenObjc(w, b.fset, pkg, bindPrefix, bind.ObjcH)
+		conf.Writer = w
+		return bind.GenObjc(conf, bindPrefix, bind.ObjcH)
 	}
 	if err := writeFile(hfile, generate); err != nil {
 		return "", err
@@ -201,7 +208,8 @@ func (b *binder) GenObjc(pkg *types.Package, outdir string) (string, error) {
 		if buildN {
 			return nil
 		}
-		return bind.GenObjc(w, b.fset, pkg, bindPrefix, bind.ObjcGoH)
+		conf.Writer = w
+		return bind.GenObjc(conf, bindPrefix, bind.ObjcGoH)
 	}
 	if err := writeFile(gohfile, generate); err != nil {
 		return "", err
@@ -224,7 +232,7 @@ func (b *binder) GenJavaSupport(outdir string) error {
 	return copyFile(filepath.Join(outdir, "seq.h"), filepath.Join(javaPkg.Dir, "seq.h"))
 }
 
-func (b *binder) GenJava(pkg *types.Package, outdir, javadir string) error {
+func (b *binder) GenJava(pkg *types.Package, allPkg []*types.Package, outdir, javadir string) error {
 	className := strings.Title(pkg.Name())
 	javaFile := filepath.Join(javadir, className+".java")
 	cFile := filepath.Join(outdir, "java_"+pkg.Name()+".c")
@@ -234,6 +242,11 @@ func (b *binder) GenJava(pkg *types.Package, outdir, javadir string) error {
 		bindOption += " -javapkg=" + bindJavaPkg
 	}
 
+	conf := &bind.GeneratorConfig{
+		Fset:   b.fset,
+		Pkg:    pkg,
+		AllPkg: allPkg,
+	}
 	generate := func(w io.Writer) error {
 		if buildX {
 			printcmd("gobind %s -outdir=%s %s", bindOption, javadir, pkg.Path())
@@ -241,7 +254,8 @@ func (b *binder) GenJava(pkg *types.Package, outdir, javadir string) error {
 		if buildN {
 			return nil
 		}
-		return bind.GenJava(w, b.fset, pkg, bindJavaPkg, bind.Java)
+		conf.Writer = w
+		return bind.GenJava(conf, bindJavaPkg, bind.Java)
 	}
 	if err := writeFile(javaFile, generate); err != nil {
 		return err
@@ -250,7 +264,8 @@ func (b *binder) GenJava(pkg *types.Package, outdir, javadir string) error {
 		if buildN {
 			return nil
 		}
-		return bind.GenJava(w, b.fset, pkg, bindJavaPkg, bind.JavaC)
+		conf.Writer = w
+		return bind.GenJava(conf, bindJavaPkg, bind.JavaC)
 	}
 	if err := writeFile(cFile, generate); err != nil {
 		return err
@@ -259,12 +274,13 @@ func (b *binder) GenJava(pkg *types.Package, outdir, javadir string) error {
 		if buildN {
 			return nil
 		}
-		return bind.GenJava(w, b.fset, pkg, bindJavaPkg, bind.JavaH)
+		conf.Writer = w
+		return bind.GenJava(conf, bindJavaPkg, bind.JavaH)
 	}
 	return writeFile(hFile, generate)
 }
 
-func (b *binder) GenGo(pkg *types.Package, outdir string) error {
+func (b *binder) GenGo(pkg *types.Package, allPkg []*types.Package, outdir string) error {
 	pkgName := "go_" + pkg.Name()
 	goFile := filepath.Join(outdir, pkgName+"main.go")
 
@@ -275,7 +291,13 @@ func (b *binder) GenGo(pkg *types.Package, outdir string) error {
 		if buildN {
 			return nil
 		}
-		return bind.GenGo(w, b.fset, pkg)
+		conf := &bind.GeneratorConfig{
+			Writer: w,
+			Fset:   b.fset,
+			Pkg:    pkg,
+			AllPkg: allPkg,
+		}
+		return bind.GenGo(conf)
 	}
 	if err := writeFile(goFile, generate); err != nil {
 		return err

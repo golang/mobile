@@ -20,6 +20,9 @@ import (
 	"time"
 
 	"golang.org/x/mobile/asset"
+
+	"golang.org/x/mobile/bind/testpkg/secondpkg"
+	"golang.org/x/mobile/bind/testpkg/simplepkg"
 )
 
 const (
@@ -410,4 +413,41 @@ type NullFieldStruct struct {
 
 func NewNullFieldStruct() *NullFieldStruct {
 	return &NullFieldStruct{}
+}
+
+var (
+	ImportedVarI secondpkg.I  = NewImportedI()
+	ImportedVarS *secondpkg.S = NewImportedS()
+)
+
+type ImportedFields struct {
+	I secondpkg.I
+	S *secondpkg.S
+}
+
+func NewImportedFields() *ImportedFields {
+	return &ImportedFields{
+		I: NewImportedI(),
+		S: NewImportedS(),
+	}
+}
+
+func NewImportedI() secondpkg.I {
+	return NewImportedS()
+}
+
+func NewImportedS() *secondpkg.S {
+	return new(secondpkg.S)
+}
+
+func WithImportedI(i secondpkg.I) secondpkg.I {
+	return i
+}
+
+func WithImportedS(s *secondpkg.S) *secondpkg.S {
+	return s
+}
+
+func NewSimpleS() *simplepkg.S {
+	return nil
 }

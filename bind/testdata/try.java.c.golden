@@ -6,9 +6,8 @@
 #include <android/log.h>
 #include <stdint.h>
 #include "seq.h"
-#include "try.h"
 #include "_cgo_export.h"
-
+#include "try.h"
 
 
 JNIEXPORT void JNICALL

@@ -20,7 +20,11 @@ import (
 // This requires the gradle command in PATH and
 // the Android SDK whose path is available through ANDROID_HOME environment variable.
 func TestJavaSeqTest(t *testing.T) {
-	runTest(t, "golang.org/x/mobile/bind/testpkg", "SeqTest")
+	runTest(t, []string{
+		"golang.org/x/mobile/bind/testpkg",
+		"golang.org/x/mobile/bind/testpkg/secondpkg",
+		"golang.org/x/mobile/bind/testpkg/simplepkg",
+	}, "SeqTest")
 }
 
 // TestJavaSeqBench runs java test SeqBench.java, with the same
@@ -34,10 +38,10 @@ func TestJavaSeqTest(t *testing.T) {
 //
 // while running the benchmark to see the results.
 func TestJavaSeqBench(t *testing.T) {
-	runTest(t, "golang.org/x/mobile/bind/benchmark", "SeqBench")
+	runTest(t, []string{"golang.org/x/mobile/bind/benchmark"}, "SeqBench")
 }
 
-func runTest(t *testing.T, pkgName, javaCls string) {
+func runTest(t *testing.T, pkgNames []string, javaCls string) {
 	if _, err := run("which gradle"); err != nil {
 		t.Skip("command gradle not found, skipping")
 	}
@@ -80,7 +84,7 @@ func runTest(t *testing.T, pkgName, javaCls string) {
 		}
 	}
 
-	buf, err := run("gomobile bind -o pkg.aar " + pkgName)
+	buf, err := run("gomobile bind -o pkg.aar " + strings.Join(pkgNames, " "))
 	if err != nil {
 		t.Logf("%s", buf)
 		t.Fatalf("failed to run gomobile bind: %v", err)

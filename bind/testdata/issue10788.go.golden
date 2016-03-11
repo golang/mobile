@@ -21,8 +21,6 @@ import (
 // suppress the error if seq ends up unused
 var _ = _seq.FromRefNum
 
-type proxyTestStruct _seq.Ref
-
 //export proxyissue10788_TestStruct_Value_Set
 func proxyissue10788_TestStruct_Value_Set(refnum C.int32_t, v C.nstring) {
 	ref := _seq.FromRefNum(int32(refnum))

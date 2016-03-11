@@ -21,8 +21,6 @@ import (
 // suppress the error if seq ends up unused
 var _ = _seq.FromRefNum
 
-type proxyS _seq.Ref
-
 type proxyvars_I _seq.Ref
 
 //export var_setvars_ABool

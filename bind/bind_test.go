@@ -100,7 +100,7 @@ func TestGenObjc(t *testing.T) {
 
 		for typ, suffix := range suffixes {
 			var buf bytes.Buffer
-			if err := GenObjc(&buf, fset, pkg, "", typ); err != nil {
+			if err := GenObjc(&buf, fset, pkg, []*types.Package{pkg}, "", typ); err != nil {
 				t.Errorf("%s: %v", filename, err)
 				continue
 			}
@@ -132,7 +132,7 @@ func TestGenJava(t *testing.T) {
 		pkg := typeCheck(t, filename)
 		for typ, suffix := range suffixes {
 			var buf bytes.Buffer
-			if err := GenJava(&buf, fset, pkg, "", typ); err != nil {
+			if err := GenJava(&buf, fset, pkg, []*types.Package{pkg}, "", typ); err != nil {
 				t.Errorf("%s: %v", filename, err)
 				continue
 			}
@@ -158,7 +158,7 @@ func TestGenGo(t *testing.T) {
 	for _, filename := range tests {
 		var buf bytes.Buffer
 		pkg := typeCheck(t, filename)
-		if err := GenGo(&buf, fset, pkg); err != nil {
+		if err := GenGo(&buf, fset, pkg, []*types.Package{pkg}); err != nil {
 			t.Errorf("%s: %v", filename, err)
 			continue
 		}
@@ -189,27 +189,27 @@ func TestCustomPrefix(t *testing.T) {
 	}{
 		{
 			"testdata/customprefix.java.golden",
-			func(w io.Writer) error { return GenJava(w, fset, pkg, "com.example", Java) },
+			func(w io.Writer) error { return GenJava(w, fset, pkg, []*types.Package{pkg}, "com.example", Java) },
 		},
 		{
 			"testdata/customprefix.java.h.golden",
-			func(w io.Writer) error { return GenJava(w, fset, pkg, "com.example", JavaH) },
+			func(w io.Writer) error { return GenJava(w, fset, pkg, []*types.Package{pkg}, "com.example", JavaH) },
 		},
 		{
 			"testdata/customprefix.java.c.golden",
-			func(w io.Writer) error { return GenJava(w, fset, pkg, "com.example", JavaC) },
+			func(w io.Writer) error { return GenJava(w, fset, pkg, []*types.Package{pkg}, "com.example", JavaC) },
 		},
 		{
 			"testdata/customprefix.objc.go.h.golden",
-			func(w io.Writer) error { return GenObjc(w, fset, pkg, "EX", ObjcGoH) },
+			func(w io.Writer) error { return GenObjc(w, fset, pkg, []*types.Package{pkg}, "EX", ObjcGoH) },
 		},
 		{
 			"testdata/customprefix.objc.h.golden",
-			func(w io.Writer) error { return GenObjc(w, fset, pkg, "EX", ObjcH) },
+			func(w io.Writer) error { return GenObjc(w, fset, pkg, []*types.Package{pkg}, "EX", ObjcH) },
 		},
 		{
 			"testdata/customprefix.objc.m.golden",
-			func(w io.Writer) error { return GenObjc(w, fset, pkg, "EX", ObjcM) },
+			func(w io.Writer) error { return GenObjc(w, fset, pkg, []*types.Package{pkg}, "EX", ObjcM) },
 		},
 	}
 

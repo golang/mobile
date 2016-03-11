@@ -6,29 +6,28 @@
 #include <android/log.h>
 #include <stdint.h>
 #include "seq.h"
-#include "interfaces.h"
 #include "_cgo_export.h"
+#include "interfaces.h"
 
-
-static jclass proxy_class_interfaces_Error;
-static jmethodID proxy_class_interfaces_Error_cons;
+jclass proxy_class_interfaces_Error;
+jmethodID proxy_class_interfaces_Error_cons;
 static jmethodID mid_Error_Err;
-static jclass proxy_class_interfaces_I;
-static jmethodID proxy_class_interfaces_I_cons;
+jclass proxy_class_interfaces_I;
+jmethodID proxy_class_interfaces_I_cons;
 static jmethodID mid_I_Rand;
-static jclass proxy_class_interfaces_I1;
-static jmethodID proxy_class_interfaces_I1_cons;
+jclass proxy_class_interfaces_I1;
+jmethodID proxy_class_interfaces_I1_cons;
 static jmethodID mid_I1_H;
 static jmethodID mid_I1_J;
-static jclass proxy_class_interfaces_I2;
-static jmethodID proxy_class_interfaces_I2_cons;
+jclass proxy_class_interfaces_I2;
+jmethodID proxy_class_interfaces_I2_cons;
 static jmethodID mid_I2_G;
 static jmethodID mid_I2_f;
-static jclass proxy_class_interfaces_I3;
-static jmethodID proxy_class_interfaces_I3_cons;
+jclass proxy_class_interfaces_I3;
+jmethodID proxy_class_interfaces_I3_cons;
 static jmethodID mid_I3_F;
-static jclass proxy_class_interfaces_WithParam;
-static jmethodID proxy_class_interfaces_WithParam_cons;
+jclass proxy_class_interfaces_WithParam;
+jmethodID proxy_class_interfaces_WithParam_cons;
 static jmethodID mid_WithParam_HasParam;
 
 JNIEXPORT void JNICALL

@@ -8,4 +8,6 @@
 
 #include <jni.h>
 
+extern jclass proxy_class_issue12328_T;
+extern jmethodID proxy_class_issue12328_T_cons;
 #endif

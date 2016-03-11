@@ -43,7 +43,15 @@ type structInfo struct {
 
 func (g *objcGen) init() {
 	g.generator.init()
-	g.namePrefix = g.prefix + strings.Title(g.pkgName)
+	g.namePrefix = g.namePrefixOf(g.pkg)
+}
+
+func (g *objcGen) namePrefixOf(pkg *types.Package) string {
+	p := g.prefix
+	if p == "" {
+		p = "Go"
+	}
+	return p + strings.Title(pkg.Name())
 }
 
 func (g *objcGen) genGoH() error {
@@ -73,10 +81,15 @@ func (g *objcGen) genGoH() error {
 
 func (g *objcGen) genH() error {
 	g.Printf(objcPreamble, g.pkg.Path(), g.gobindOpts(), g.pkg.Path())
-	g.Printf("#ifndef __%s%s_H__\n", g.prefix, strings.Title(g.pkgName))
-	g.Printf("#define __%s%s_H__\n", g.prefix, strings.Title(g.pkgName))
+	g.Printf("#ifndef __%s_H__\n", g.namePrefix)
+	g.Printf("#define __%s_H__\n", g.namePrefix)
 	g.Printf("\n")
 	g.Printf("#include <Foundation/Foundation.h>\n")
+	for _, pkg := range g.pkg.Imports() {
+		if g.validPkg(pkg) {
+			g.Printf("#include %q\n", g.namePrefixOf(pkg)+".h")
+		}
+	}
 	g.Printf("\n")
 
 	// Forward declaration of @class and @protocol
@@ -136,39 +149,6 @@ func (g *objcGen) genH() error {
 		g.Printf("\n")
 	}
 
-	// declare all named types first.
-	g.Printf("#endif\n")
-
-	if len(g.err) > 0 {
-		return g.err
-	}
-	return nil
-}
-
-func (g *objcGen) gobindOpts() string {
-	opts := []string{"-lang=objc"}
-	if g.prefix != "Go" {
-		opts = append(opts, "-prefix="+g.prefix)
-	}
-	return strings.Join(opts, " ")
-}
-
-func (g *objcGen) genM() error {
-	g.Printf(objcPreamble, g.pkg.Path(), g.gobindOpts(), g.pkg.Path())
-	g.Printf("#include %q\n", g.namePrefix+".h")
-	g.Printf("#include <Foundation/Foundation.h>\n")
-	g.Printf("#include \"seq.h\"\n")
-	g.Printf("#include \"_cgo_export.h\"\n")
-	g.Printf("\n")
-	g.Printf("static NSString* errDomain = @\"go.%s\";\n", g.pkg.Path())
-	g.Printf("\n")
-	g.Printf(`@protocol goSeqRefInterface
--(GoSeqRef*) _ref;
-@end
-
-`)
-
-	// forward declarations skipped from genH
 	for _, i := range g.interfaces {
 		if i.summary.implementable {
 			g.Printf("@class %s%s;\n\n", g.namePrefix, i.obj.Name())
@@ -181,6 +161,37 @@ func (g *objcGen) genM() error {
 			g.Printf("\n")
 		}
 	}
+
+	g.Printf("#endif\n")
+
+	if len(g.err) > 0 {
+		return g.err
+	}
+	return nil
+}
+
+func (g *objcGen) gobindOpts() string {
+	opts := []string{"-lang=objc"}
+	if g.prefix != "" {
+		opts = append(opts, "-prefix="+g.prefix)
+	}
+	return strings.Join(opts, " ")
+}
+
+func (g *objcGen) genM() error {
+	g.Printf(objcPreamble, g.pkg.Path(), g.gobindOpts(), g.pkg.Path())
+	g.Printf("#include <Foundation/Foundation.h>\n")
+	g.Printf("#include \"seq.h\"\n")
+	g.Printf("#include \"_cgo_export.h\"\n")
+	g.Printf("#include %q\n", g.namePrefix+".h")
+	g.Printf("\n")
+	g.Printf("static NSString* errDomain = @\"go.%s\";\n", g.pkg.Path())
+	g.Printf("\n")
+	g.Printf(`@protocol goSeqRefInterface
+-(GoSeqRef*) _ref;
+@end
+
+`)
 
 	// struct
 	for _, s := range g.structs {
@@ -889,10 +900,10 @@ func (g *objcGen) refTypeBase(typ types.Type) string {
 		}
 	case *types.Named:
 		n := typ.Obj()
-		if n.Pkg() == g.pkg {
+		if g.validPkg(n.Pkg()) {
 			switch typ.Underlying().(type) {
 			case *types.Interface, *types.Struct:
-				return g.namePrefix + n.Name()
+				return g.namePrefixOf(n.Pkg()) + n.Name()
 			}
 		}
 	}
@@ -965,19 +976,19 @@ func (g *objcGen) objcType(typ types.Type) string {
 		return "TODO"
 	case *types.Named:
 		n := typ.Obj()
-		if n.Pkg() != g.pkg {
-			g.errorf("type %s is in package %s; only types defined in package %s is supported", n.Name(), n.Pkg().Name(), g.pkg.Name())
+		if !g.validPkg(n.Pkg()) {
+			g.errorf("type %s is in package %s, which is not bound", n.Name(), n.Pkg().Name())
 			return "TODO"
 		}
 		switch t := typ.Underlying().(type) {
 		case *types.Interface:
 			if makeIfaceSummary(t).implementable {
-				return "id<" + g.namePrefix + n.Name() + ">"
+				return "id<" + g.namePrefixOf(n.Pkg()) + n.Name() + ">"
 			} else {
-				return g.namePrefix + n.Name() + "*"
+				return g.namePrefixOf(n.Pkg()) + n.Name() + "*"
 			}
 		case *types.Struct:
-			return g.namePrefix + n.Name()
+			return g.namePrefixOf(n.Pkg()) + n.Name()
 		}
 		g.errorf("unsupported, named type %s", typ)
 		return "TODO"

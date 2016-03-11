@@ -52,14 +52,13 @@ func (list ErrorList) Error() string {
 
 type generator struct {
 	*printer
-	fset *token.FileSet
-	pkg  *types.Package
-	err  ErrorList
+	fset   *token.FileSet
+	allPkg []*types.Package
+	pkg    *types.Package
+	err    ErrorList
 
 	// fields set by init.
-	pkgName string
-	// pkgPrefix is a prefix for disambiguating
-	// function names for binding multiple packages
+	pkgName   string
 	pkgPrefix string
 	funcs     []*types.Func
 	constants []*types.Const
@@ -70,12 +69,19 @@ type generator struct {
 	otherNames []*types.TypeName
 }
 
+// pkgPrefix returns a prefix that disambiguates symbol names for binding
+// multiple packages.
+//
+// TODO(elias.naur): Avoid (and test) name clashes from multiple packages
+// with the same name. Perhaps use the index from the order the package is
+// generated.
+func pkgPrefix(pkg *types.Package) string {
+	return pkg.Name()
+}
+
 func (g *generator) init() {
 	g.pkgName = g.pkg.Name()
-	// TODO(elias.naur): Avoid (and test) name clashes from multiple packages
-	// with the same name. Perhaps use the index from the order the package is
-	// generated.
-	g.pkgPrefix = g.pkgName
+	g.pkgPrefix = pkgPrefix(g.pkg)
 
 	scope := g.pkg.Scope()
 	hasExported := false
@@ -221,6 +227,15 @@ func (g *generator) genInterfaceMethodSignature(m *types.Func, iName string, hea
 	} else {
 		g.Printf(" {\n")
 	}
+}
+
+func (g *generator) validPkg(pkg *types.Package) bool {
+	for _, p := range g.allPkg {
+		if p.Path() == pkg.Path() {
+			return true
+		}
+	}
+	return false
 }
 
 var paramRE = regexp.MustCompile(`^p[0-9]*$`)

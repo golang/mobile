@@ -16,6 +16,8 @@ import (
 // TODO(crawshaw): consider introducing Java functions for casting to and from interfaces at runtime.
 
 type javaGen struct {
+	// javaPkg is the custom name of the Java pkg that contains the generated classes. If empty,
+	// use a package name generated from the Go package name.
 	javaPkg string
 
 	*generator
@@ -262,22 +264,24 @@ func (g *javaGen) javaType(T types.Type) string {
 		if _, ok := T.Elem().(*types.Named); ok {
 			return g.javaType(T.Elem())
 		}
-		panic(fmt.Sprintf("unsupported pointer to type: %s", T))
+		g.errorf("unsupported pointer to type: %s", T)
 	case *types.Named:
 		n := T.Obj()
-		if n.Pkg() != g.pkg {
-			nPkgName := "<nilpkg>"
-			if nPkg := n.Pkg(); nPkg != nil {
-				nPkgName = nPkg.Name()
-			}
-			panic(fmt.Sprintf("type %s is in package %s, must be defined in package %s", n.Name(), nPkgName, g.pkg.Name()))
+		nPkg := n.Pkg()
+		if !g.validPkg(nPkg) {
+			g.errorf("type %s is in %s, which is not bound", n.Name(), nPkg)
+			break
 		}
 		// TODO(crawshaw): more checking here
-		return n.Name()
+		if nPkg != g.pkg {
+			return fmt.Sprintf("%s.%s.%s", g.javaPkgName(nPkg), className(nPkg), n.Name())
+		} else {
+			return n.Name()
+		}
 	default:
 		g.errorf("unsupported javaType: %#+v, %s\n", T, T)
-		return "TODO"
 	}
+	return "TODO"
 }
 
 func (g *javaGen) genJNIFuncSignature(o *types.Func, sName string, proxy bool) {
@@ -328,7 +332,7 @@ func (g *javaGen) genJNIFuncSignature(o *types.Func, sName string, proxy bool) {
 }
 
 func (g *javaGen) jniPkgName() string {
-	return strings.Replace(g.javaPkg, ".", "_", -1)
+	return strings.Replace(g.javaPkgName(g.pkg), ".", "_", -1)
 }
 
 func (g *javaGen) genFuncSignature(o *types.Func, static, header bool) {
@@ -466,24 +470,14 @@ func (g *javaGen) genCToJava(toName, fromName string, t types.Type, mode varMode
 		// TODO(crawshaw): test **Generator
 		switch t := t.Elem().(type) {
 		case *types.Named:
-			o := t.Obj()
-			if o.Pkg() != g.pkg {
-				g.errorf("type %s not defined in %s", t, g.pkg)
-				return
-			}
-			g.Printf("jobject %s = go_seq_from_refnum(env, %s, proxy_class_%s_%s, proxy_class_%s_%s_cons);\n", toName, fromName, g.pkgPrefix, o.Name(), g.pkgPrefix, o.Name())
+			g.genFromRefnum(toName, fromName, t, t.Obj())
 		default:
 			g.errorf("unsupported type %s", t)
 		}
 	case *types.Named:
 		switch t.Underlying().(type) {
 		case *types.Interface, *types.Pointer:
-			o := t.Obj()
-			if o.Pkg() != g.pkg {
-				g.errorf("type %s not defined in %s", t, g.pkg)
-				return
-			}
-			g.Printf("jobject %s = go_seq_from_refnum(env, %s, proxy_class_%s_%s, proxy_class_%s_%s_cons);\n", toName, fromName, g.pkgPrefix, o.Name(), g.pkgPrefix, o.Name())
+			g.genFromRefnum(toName, fromName, t, t.Obj())
 		default:
 			g.errorf("unsupported, direct named type %s", t)
 		}
@@ -492,9 +486,19 @@ func (g *javaGen) genCToJava(toName, fromName string, t types.Type, mode varMode
 	}
 }
 
+func (g *javaGen) genFromRefnum(toName, fromName string, t types.Type, o *types.TypeName) {
+	oPkg := o.Pkg()
+	if !g.validPkg(oPkg) {
+		g.errorf("type %s is defined in package %s, which is not bound", t, oPkg)
+		return
+	}
+	p := pkgPrefix(oPkg)
+	g.Printf("jobject %s = go_seq_from_refnum(env, %s, proxy_class_%s_%s, proxy_class_%s_%s_cons);\n", toName, fromName, p, o.Name(), p, o.Name())
+}
+
 func (g *javaGen) gobindOpts() string {
 	opts := []string{"-lang=java"}
-	if g.javaPkg != javaPkgName(g.pkg.Name()) {
+	if g.javaPkg != "" {
 		opts = append(opts, "-javapkg="+g.javaPkg)
 	}
 	return strings.Join(opts, " ")
@@ -505,8 +509,11 @@ var javaNameReplacer = strings.NewReplacer(
 	".", "_",
 )
 
-func javaPkgName(pkgName string) string {
-	s := javaNameReplacer.Replace(pkgName)
+func (g *javaGen) javaPkgName(pkg *types.Package) string {
+	if g.javaPkg != "" {
+		return g.javaPkg
+	}
+	s := javaNameReplacer.Replace(pkg.Name())
 	// Look for Java keywords that are not Go keywords, and avoid using
 	// them as a package name.
 	//
@@ -528,7 +535,11 @@ func javaPkgName(pkgName string) string {
 }
 
 func (g *javaGen) className() string {
-	return strings.Title(javaNameReplacer.Replace(g.pkg.Name()))
+	return className(g.pkg)
+}
+
+func className(pkg *types.Package) string {
+	return strings.Title(javaNameReplacer.Replace(pkg.Name()))
 }
 
 func (g *javaGen) genConst(o *types.Const) {
@@ -749,10 +760,17 @@ func (g *javaGen) genMethodInterfaceProxy(oName string, m *types.Func) {
 func (g *javaGen) genH() error {
 	g.Printf(hPreamble, g.gobindOpts(), g.pkg.Path(), g.className())
 	for _, iface := range g.interfaces {
+		g.Printf("extern jclass proxy_class_%s_%s;\n", g.pkgPrefix, iface.obj.Name())
+		g.Printf("extern jmethodID proxy_class_%s_%s_cons;\n", g.pkgPrefix, iface.obj.Name())
+		g.Printf("\n")
 		for _, m := range iface.summary.callable {
 			g.genInterfaceMethodSignature(m, iface.obj.Name(), true)
 			g.Printf("\n")
 		}
+	}
+	for _, s := range g.structs {
+		g.Printf("extern jclass proxy_class_%s_%s;\n", g.pkgPrefix, s.obj.Name())
+		g.Printf("extern jmethodID proxy_class_%s_%s_cons;\n", g.pkgPrefix, s.obj.Name())
 	}
 	g.Printf("#endif\n")
 	if len(g.err) > 0 {
@@ -805,7 +823,7 @@ func (g *javaGen) jniCallType(t types.Type) string {
 }
 
 func (g *javaGen) jniClassSigType(className string) string {
-	return strings.Replace(g.javaPkg, ".", "/", -1) + "/" + g.className() + "$" + className
+	return strings.Replace(g.javaPkgName(g.pkg), ".", "/", -1) + "/" + g.className() + "$" + className
 }
 
 func (g *javaGen) jniSigType(T types.Type) string {
@@ -856,16 +874,24 @@ func (g *javaGen) jniSigType(T types.Type) string {
 
 func (g *javaGen) genC() error {
 	g.Printf(cPreamble, g.gobindOpts(), g.pkg.Path(), g.pkg.Name())
+	g.Printf("#include %q\n", g.pkg.Name()+".h")
+	for _, pkg := range g.pkg.Imports() {
+		if g.validPkg(pkg) {
+			g.Printf("#include \"%s.h\"\n", pkg.Name())
+		}
+	}
+	g.Printf("\n")
+
 	for _, iface := range g.interfaces {
-		g.Printf("static jclass proxy_class_%s_%s;\n", g.pkgPrefix, iface.obj.Name())
-		g.Printf("static jmethodID proxy_class_%s_%s_cons;\n", g.pkgPrefix, iface.obj.Name())
+		g.Printf("jclass proxy_class_%s_%s;\n", g.pkgPrefix, iface.obj.Name())
+		g.Printf("jmethodID proxy_class_%s_%s_cons;\n", g.pkgPrefix, iface.obj.Name())
 		for i := 0; i < iface.t.NumMethods(); i++ {
 			g.Printf("static jmethodID mid_%s_%s;\n", iface.obj.Name(), iface.t.Method(i).Name())
 		}
 	}
 	for _, s := range g.structs {
-		g.Printf("static jclass proxy_class_%s_%s;\n", g.pkgPrefix, s.obj.Name())
-		g.Printf("static jmethodID proxy_class_%s_%s_cons;\n", g.pkgPrefix, s.obj.Name())
+		g.Printf("jclass proxy_class_%s_%s;\n", g.pkgPrefix, s.obj.Name())
+		g.Printf("jmethodID proxy_class_%s_%s_cons;\n", g.pkgPrefix, s.obj.Name())
 	}
 	g.Printf("\n")
 	g.Printf("JNIEXPORT void JNICALL\n")
@@ -931,7 +957,7 @@ func (g *javaGen) genC() error {
 }
 
 func (g *javaGen) genJava() error {
-	g.Printf(javaPreamble, g.javaPkg, g.className(), g.gobindOpts(), g.pkg.Path())
+	g.Printf(javaPreamble, g.javaPkgName(g.pkg), g.className(), g.gobindOpts(), g.pkg.Path())
 
 	g.Printf("public abstract class %s {\n", g.className())
 	g.Indent()
@@ -996,11 +1022,9 @@ import go.Seq;
 #include <android/log.h>
 #include <stdint.h>
 #include "seq.h"
-#include "%[3]s.h"
 #include "_cgo_export.h"
-
-
 `
+
 	hPreamble = `// JNI function headers for the Go <=> Java bridge.
 //   gobind %[1]s %[2]s
 //

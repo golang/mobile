@@ -8,6 +8,9 @@
 
 #include <jni.h>
 
+extern jclass proxy_class_issue12403_Parsable;
+extern jmethodID proxy_class_issue12403_Parsable_cons;
+
 nstring cproxyissue12403_Parsable_FromJSON(int32_t refnum, nstring jstr);
 
 typedef struct cproxyissue12403_Parsable_ToJSON_return {
