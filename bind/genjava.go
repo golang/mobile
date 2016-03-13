@@ -964,10 +964,17 @@ func (g *javaGen) genJava() error {
 	g.Printf("static {\n")
 	g.Indent()
 	g.Printf("Seq.touch(); // for loading the native library\n")
+	for _, p := range g.pkg.Imports() {
+		if g.validPkg(p) {
+			g.Printf("%s.%s.touch();\n", g.javaPkgName(p), className(p))
+		}
+	}
 	g.Printf("init();\n")
 	g.Outdent()
 	g.Printf("}\n\n")
 	g.Printf("private %s() {} // uninstantiable\n\n", g.className())
+	g.Printf("// touch is called from other bound packages to initialize this package\n")
+	g.Printf("public static void touch() {}\n\n")
 	g.Printf("private static native void init();\n\n")
 
 	for _, s := range g.structs {
