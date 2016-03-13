@@ -43,6 +43,10 @@
 
 @end
 
+@protocol goSeqRefInterface
+-(GoSeqRef*) _ref;
+@end
+
 // Platform specific types
 typedef struct nstring {
 	void *ptr;

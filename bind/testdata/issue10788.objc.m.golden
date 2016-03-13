@@ -10,10 +10,6 @@
 
 static NSString* errDomain = @"go.issue10788";
 
-@protocol goSeqRefInterface
--(GoSeqRef*) _ref;
-@end
-
 
 @implementation GoIssue10788TestStruct {
 }

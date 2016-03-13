@@ -10,10 +10,6 @@
 
 static NSString* errDomain = @"go.try";
 
-@protocol goSeqRefInterface
--(GoSeqRef*) _ref;
-@end
-
 
 NSString* GoTryThis() {
 	nstring r0 = proxytry__This();

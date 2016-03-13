@@ -187,11 +187,6 @@ func (g *objcGen) genM() error {
 	g.Printf("\n")
 	g.Printf("static NSString* errDomain = @\"go.%s\";\n", g.pkg.Path())
 	g.Printf("\n")
-	g.Printf(`@protocol goSeqRefInterface
--(GoSeqRef*) _ref;
-@end
-
-`)
 
 	// struct
 	for _, s := range g.structs {

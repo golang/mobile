@@ -10,10 +10,6 @@
 
 static NSString* errDomain = @"go.customprefix";
 
-@protocol goSeqRefInterface
--(GoSeqRef*) _ref;
-@end
-
 
 void EXCustomprefixF() {
 	proxycustomprefix__F();
