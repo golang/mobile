@@ -822,8 +822,8 @@ func (g *javaGen) jniCallType(t types.Type) string {
 	}
 }
 
-func (g *javaGen) jniClassSigType(className string) string {
-	return strings.Replace(g.javaPkgName(g.pkg), ".", "/", -1) + "/" + g.className() + "$" + className
+func (g *javaGen) jniClassSigType(obj *types.TypeName) string {
+	return strings.Replace(g.javaPkgName(obj.Pkg()), ".", "/", -1) + "/" + className(obj.Pkg()) + "$" + obj.Name()
 }
 
 func (g *javaGen) jniSigType(T types.Type) string {
@@ -865,7 +865,7 @@ func (g *javaGen) jniSigType(T types.Type) string {
 		}
 		panic(fmt.Sprintf("unsupported pointer to type: %s", T))
 	case *types.Named:
-		return "L" + g.jniClassSigType(T.Obj().Name()) + ";"
+		return "L" + g.jniClassSigType(T.Obj()) + ";"
 	default:
 		g.errorf("unsupported jniType: %#+v, %s\n", T, T)
 		return "TODO"
@@ -899,15 +899,15 @@ func (g *javaGen) genC() error {
 	g.Indent()
 	g.Printf("jclass clazz;\n")
 	for _, s := range g.structs {
-		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigType(s.obj.Name()))
+		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigType(s.obj))
 		g.Printf("proxy_class_%s_%s = (*env)->NewGlobalRef(env, clazz);\n", g.pkgPrefix, s.obj.Name())
 		g.Printf("proxy_class_%s_%s_cons = (*env)->GetMethodID(env, clazz, \"<init>\", \"(Lgo/Seq$Ref;)V\");\n", g.pkgPrefix, s.obj.Name())
 	}
 	for _, iface := range g.interfaces {
-		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigType(iface.obj.Name()+"$Proxy"))
+		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigType(iface.obj)+"$Proxy")
 		g.Printf("proxy_class_%s_%s = (*env)->NewGlobalRef(env, clazz);\n", g.pkgPrefix, iface.obj.Name())
 		g.Printf("proxy_class_%s_%s_cons = (*env)->GetMethodID(env, clazz, \"<init>\", \"(Lgo/Seq$Ref;)V\");\n", g.pkgPrefix, iface.obj.Name())
-		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigType(iface.obj.Name()))
+		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigType(iface.obj))
 		for _, m := range iface.summary.callable {
 			sig := m.Type().(*types.Signature)
 			res := sig.Results()
