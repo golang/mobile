@@ -107,10 +107,6 @@ func (g *generator) init() {
 				g.otherNames = append(g.otherNames, obj)
 			}
 		case *types.Const:
-			if _, ok := obj.Type().(*types.Basic); !ok {
-				g.errorf("unsupported exported const for %s: %T", obj.Name(), obj)
-				continue
-			}
 			g.constants = append(g.constants, obj)
 		case *types.Var:
 			g.vars = append(g.vars, obj)

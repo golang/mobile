@@ -180,6 +180,10 @@ func (g *goGen) genFuncSignature(o *types.Func, objName string) {
 }
 
 func (g *goGen) genFunc(o *types.Func) {
+	if !isSigSupported(o.Type()) {
+		g.Printf("// skipped function %s with unsupported parameter or result types\n", o.Name())
+		return
+	}
 	g.genFuncSignature(o, "")
 	g.Indent()
 	g.genFuncBody(o, g.pkgName(g.pkg))
@@ -192,6 +196,10 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 	methods := exportedMethodSet(types.NewPointer(obj.Type()))
 
 	for _, f := range fields {
+		if t := f.Type(); !isSupported(t) {
+			g.Printf("// skipped field %s.%s with unsupported type: %T\n\n", obj.Name(), f.Name(), t)
+			continue
+		}
 		g.Printf("//export proxy%s_%s_%s_Set\n", g.pkgPrefix, obj.Name(), f.Name())
 		g.Printf("func proxy%s_%s_%s_Set(refnum C.int32_t, v C.%s) {\n", g.pkgPrefix, obj.Name(), f.Name(), g.cgoType(f.Type()))
 		g.Indent()
@@ -213,6 +221,10 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 	}
 
 	for _, m := range methods {
+		if !isSigSupported(m.Type()) {
+			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", obj.Name(), m.Name())
+			continue
+		}
 		g.genFuncSignature(m, obj.Name())
 		g.Indent()
 		g.Printf("ref := _seq.FromRefNum(int32(refnum))\n")
@@ -224,6 +236,10 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 }
 
 func (g *goGen) genVar(o *types.Var) {
+	if t := o.Type(); !isSupported(t) {
+		g.Printf("// skipped variable %s with unsupported type %T\n\n", o.Name(), t)
+		return
+	}
 	// TODO(hyangah): non-struct pointer types (*int), struct type.
 
 	v := fmt.Sprintf("%s.%s", g.pkgName(g.pkg), o.Name())
@@ -257,6 +273,10 @@ func (g *goGen) genInterface(obj *types.TypeName) {
 
 	// Define the entry points.
 	for _, m := range summary.callable {
+		if !isSigSupported(m.Type()) {
+			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", obj.Name(), m.Name())
+			continue
+		}
 		g.genFuncSignature(m, obj.Name())
 		g.Indent()
 		g.Printf("ref := _seq.FromRefNum(int32(refnum))\n")
@@ -278,6 +298,10 @@ func (g *goGen) genInterface(obj *types.TypeName) {
 	g.Printf("func (p *proxy%s_%s) Bind_proxy_refnum__() int32 { return p.Num }\n\n", g.pkgPrefix, obj.Name())
 
 	for _, m := range summary.callable {
+		if !isSigSupported(m.Type()) {
+			g.Printf("// skipped method %s.%s with unsupported parameter or result types\n", obj.Name(), m.Name())
+			continue
+		}
 		sig := m.Type().(*types.Signature)
 		params := sig.Params()
 		res := sig.Results()
