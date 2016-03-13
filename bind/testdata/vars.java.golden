@@ -14,6 +14,9 @@ public abstract class Vars {
     
     private Vars() {} // uninstantiable
     
+    // touch is called from other bound packages to initialize this package
+    public static void touch() {}
+    
     private static native void init();
     
     public static final class S implements go.Seq.Object, I {

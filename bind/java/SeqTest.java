@@ -475,6 +475,11 @@ public class SeqTest extends InstrumentationTestCase {
   }
 
   public void testImportedPkg() {
+    Testpkg.CallImportedI(new Secondpkg.I.Stub() {
+      @Override public long F(long i) {
+        return i;
+      }
+    });
     assertEquals("imported string should match", Secondpkg.HelloString, Secondpkg.Hello());
     Secondpkg.I i = Testpkg.NewImportedI();
     Secondpkg.S s = Testpkg.NewImportedS();

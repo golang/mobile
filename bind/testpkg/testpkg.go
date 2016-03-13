@@ -454,6 +454,10 @@ func WithImportedS(s *secondpkg.S) *secondpkg.S {
 	return s
 }
 
+func CallImportedI(i secondpkg.I) {
+	i.F(0)
+}
+
 func NewSimpleS() *simplepkg.S {
 	return nil
 }
