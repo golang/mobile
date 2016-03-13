@@ -420,10 +420,16 @@ var (
 	ImportedVarS *secondpkg.S = NewImportedS()
 )
 
-type ImportedFields struct {
-	I secondpkg.I
-	S *secondpkg.S
-}
+type (
+	ImportedFields struct {
+		I secondpkg.I
+		S *secondpkg.S
+	}
+
+	ImportedI interface {
+		F(_ secondpkg.I)
+	}
+)
 
 func NewImportedFields() *ImportedFields {
 	return &ImportedFields{
