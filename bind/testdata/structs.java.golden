@@ -73,6 +73,7 @@ public abstract class Structs {
         public final go.Seq.Ref ref() { return ref; }
         
         public native void M();
+        public native String String();
         @Override public boolean equals(Object o) {
             if (o == null || !(o instanceof S2)) {
                 return false;
@@ -86,9 +87,7 @@ public abstract class Structs {
         }
         
         @Override public String toString() {
-            StringBuilder b = new StringBuilder();
-            b.append("S2").append("{");
-            return b.append("}").toString();
+            return String();
         }
     }
     

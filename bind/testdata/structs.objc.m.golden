@@ -95,6 +95,13 @@ static NSString* errDomain = @"go.structs";
 	proxystructs_S2_M(refnum);
 }
 
+- (NSString*)string {
+	int32_t refnum = go_seq_go_to_refnum(self._ref);
+	nstring r0 = proxystructs_S2_String(refnum);
+	NSString *_ret0_ = go_seq_to_objc_string(r0);
+	return _ret0_;
+}
+
 @end
 
 @implementation GoStructsI {

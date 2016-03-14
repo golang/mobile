@@ -48,8 +48,12 @@ func (g *javaGen) genStruct(obj *types.TypeName, T *types.Struct) {
 		g.Printf("public final native void set%s(%s v);\n\n", f.Name(), g.javaType(f.Type()))
 	}
 
+	var isStringer bool
 	for _, m := range methods {
 		g.genFuncSignature(m, false, false)
+		t := m.Type().(*types.Signature)
+		isStringer = isStringer || (m.Name() == "String" && t.Params().Len() == 0 && t.Results().Len() == 1 &&
+			types.Identical(t.Results().At(0).Type(), types.Typ[types.String]))
 	}
 
 	g.Printf("@Override public boolean equals(Object o) {\n")
@@ -85,19 +89,22 @@ func (g *javaGen) genStruct(obj *types.TypeName, T *types.Struct) {
 	g.Printf("});\n")
 	g.Printf("}\n\n")
 
-	// TODO(crawshaw): use String() string if it is defined.
 	g.Printf("@Override public String toString() {\n")
 	g.Indent()
-	g.Printf("StringBuilder b = new StringBuilder();\n")
-	g.Printf(`b.append("%s").append("{");`, obj.Name())
-	g.Printf("\n")
-	for _, f := range fields {
-		n := f.Name()
-		g.Printf(`b.append("%s:").append(get%s()).append(",");`, n, n)
+	if isStringer {
+		g.Printf("return String();\n")
+	} else {
+		g.Printf("StringBuilder b = new StringBuilder();\n")
+		g.Printf(`b.append("%s").append("{");`, obj.Name())
+		g.Printf("\n")
+		for _, f := range fields {
+			n := f.Name()
+			g.Printf(`b.append("%s:").append(get%s()).append(",");`, n, n)
+			g.Printf("\n")
+		}
+		g.Printf(`return b.append("}").toString();`)
 		g.Printf("\n")
 	}
-	g.Printf(`return b.append("}").toString();`)
-	g.Printf("\n")
 	g.Outdent()
 	g.Printf("}\n")
 
