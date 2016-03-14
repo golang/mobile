@@ -892,8 +892,8 @@ func (g *javaGen) genC() error {
 	for _, iface := range g.interfaces {
 		g.Printf("jclass proxy_class_%s_%s;\n", g.pkgPrefix, iface.obj.Name())
 		g.Printf("jmethodID proxy_class_%s_%s_cons;\n", g.pkgPrefix, iface.obj.Name())
-		for i := 0; i < iface.t.NumMethods(); i++ {
-			g.Printf("static jmethodID mid_%s_%s;\n", iface.obj.Name(), iface.t.Method(i).Name())
+		for _, m := range iface.summary.callable {
+			g.Printf("static jmethodID mid_%s_%s;\n", iface.obj.Name(), m.Name())
 		}
 	}
 	for _, s := range g.structs {
