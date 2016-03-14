@@ -497,4 +497,9 @@ public class SeqTest extends InstrumentationTestCase {
     Testpkg.WithImportedI(i);
     Testpkg.WithImportedS(s);
   }
+
+  public void testIDup() {
+    Testpkg.I want = new AnI();
+    assertTrue("java object passed through Go should not be wrapped", want == Testpkg.IDup(want));
+  }
 }

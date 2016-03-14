@@ -138,6 +138,10 @@ func NumSCollected() int {
 	return numSCollected
 }
 
+func IDup(i I) I {
+	return i
+}
+
 func StrDup(s string) string {
 	return s
 }

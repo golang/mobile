@@ -275,6 +275,8 @@ func (g *goGen) genInterface(obj *types.TypeName) {
 	}
 	g.Printf("type proxy%s_%s _seq.Ref\n\n", g.pkgPrefix, obj.Name())
 
+	g.Printf("func (p *proxy%s_%s) Bind_proxy_refnum__() int32 { return p.Num }\n\n", g.pkgPrefix, obj.Name())
+
 	for _, m := range summary.callable {
 		sig := m.Type().(*types.Signature)
 		params := sig.Params()

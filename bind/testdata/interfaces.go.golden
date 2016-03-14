@@ -38,6 +38,8 @@ func proxyinterfaces_Error_Err(refnum C.int32_t) C.nstring {
 
 type proxyinterfaces_Error _seq.Ref
 
+func (p *proxyinterfaces_Error) Bind_proxy_refnum__() int32 { return p.Num }
+
 func (p *proxyinterfaces_Error) Err() error {
 	res := C.cproxyinterfaces_Error_Err(C.int32_t(p.Num))
 	_res_str := decodeString(res)
@@ -55,6 +57,8 @@ func proxyinterfaces_I_Rand(refnum C.int32_t) C.int32_t {
 }
 
 type proxyinterfaces_I _seq.Ref
+
+func (p *proxyinterfaces_I) Bind_proxy_refnum__() int32 { return p.Num }
 
 func (p *proxyinterfaces_I) Rand() int32 {
 	res := C.cproxyinterfaces_I_Rand(C.int32_t(p.Num))
@@ -90,6 +94,8 @@ func proxyinterfaces_I3_F(refnum C.int32_t) C.int32_t {
 
 type proxyinterfaces_I3 _seq.Ref
 
+func (p *proxyinterfaces_I3) Bind_proxy_refnum__() int32 { return p.Num }
+
 func (p *proxyinterfaces_I3) F() interfaces.I1 {
 	res := C.cproxyinterfaces_I3_F(C.int32_t(p.Num))
 	var _res interfaces.I1
@@ -111,6 +117,8 @@ func proxyinterfaces_WithParam_HasParam(refnum C.int32_t, param_p0 C.char) {
 }
 
 type proxyinterfaces_WithParam _seq.Ref
+
+func (p *proxyinterfaces_WithParam) Bind_proxy_refnum__() int32 { return p.Num }
 
 func (p *proxyinterfaces_WithParam) HasParam(param_p0 bool) {
 	var _param_p0 C.char = 0

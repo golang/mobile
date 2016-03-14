@@ -49,6 +49,8 @@ func proxyissue12403_Parsable_ToJSON(refnum C.int32_t) (C.nstring, C.nstring) {
 
 type proxyissue12403_Parsable _seq.Ref
 
+func (p *proxyissue12403_Parsable) Bind_proxy_refnum__() int32 { return p.Num }
+
 func (p *proxyissue12403_Parsable) FromJSON(param_jstr string) string {
 	_param_jstr := encodeString(param_jstr)
 	res := C.cproxyissue12403_Parsable_FromJSON(C.int32_t(p.Num), _param_jstr)
