@@ -45,9 +45,23 @@ type Ref struct {
 	Num int32
 }
 
-// ToRefNum increments the reference count for a Go object and
-// return its refnum.
+type proxy interface {
+	// Use a strange name and hope that user code does not implement it
+	Bind_proxy_refnum__() int32
+}
+
+// ToRefNum increments the reference count for an object and
+// returns its refnum.
 func ToRefNum(obj interface{}) int32 {
+	// We don't track foreign objects, so if obj is a proxy
+	// return its refnum.
+	if r, ok := obj.(proxy); ok {
+		refnum := r.Bind_proxy_refnum__()
+		if refnum <= 0 {
+			panic(fmt.Errorf("seq: proxy contained invalid Go refnum: %d", refnum))
+		}
+		return refnum
+	}
 	refs.Lock()
 	num := refs.refs[obj]
 	if num != 0 {

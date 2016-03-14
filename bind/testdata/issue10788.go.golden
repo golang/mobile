@@ -58,6 +58,8 @@ func proxyissue10788_TestInterface_MultipleUnnamedParams(refnum C.int32_t, param
 
 type proxyissue10788_TestInterface _seq.Ref
 
+func (p *proxyissue10788_TestInterface) Bind_proxy_refnum__() int32 { return p.Num }
+
 func (p *proxyissue10788_TestInterface) DoSomeWork(param_s *issue10788.TestStruct) {
 	var _param_s C.int32_t = _seq.NullRefNum
 	if param_s != nil {

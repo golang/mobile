@@ -23,6 +23,8 @@ var _ = _seq.FromRefNum
 
 type proxyvars_I _seq.Ref
 
+func (p *proxyvars_I) Bind_proxy_refnum__() int32 { return p.Num }
+
 //export var_setvars_ABool
 func var_setvars_ABool(v C.char) {
 	_v := v != 0
