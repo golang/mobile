@@ -34,3 +34,7 @@ type (
 
 func (s *S2) M() {
 }
+
+func (_ *S2) String() string {
+	return ""
+}

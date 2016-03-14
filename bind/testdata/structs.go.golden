@@ -86,6 +86,15 @@ func proxystructs_S2_M(refnum C.int32_t) {
 	v.M()
 }
 
+//export proxystructs_S2_String
+func proxystructs_S2_String(refnum C.int32_t) C.nstring {
+	ref := _seq.FromRefNum(int32(refnum))
+	v := ref.Get().(*structs.S2)
+	res_0 := v.String()
+	_res_0 := encodeString(res_0)
+	return _res_0
+}
+
 //export proxystructs_I_M
 func proxystructs_I_M(refnum C.int32_t) {
 	ref := _seq.FromRefNum(int32(refnum))

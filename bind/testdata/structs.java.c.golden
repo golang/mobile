@@ -106,6 +106,14 @@ Java_go_structs_Structs_00024S2_M(JNIEnv* env, jobject this) {
     proxystructs_S2_M(o);
 }
 
+JNIEXPORT jstring JNICALL
+Java_go_structs_Structs_00024S2_String(JNIEnv* env, jobject this) {
+    int32_t o = go_seq_to_refnum(env, this);
+    nstring r0 = proxystructs_S2_String(o);
+    jstring _r0 = go_seq_to_java_string(env, r0);
+    return _r0;
+}
+
 JNIEXPORT void JNICALL
 Java_go_structs_Structs_00024I_00024Proxy_M(JNIEnv* env, jobject this) {
     int32_t o = go_seq_to_refnum(env, this);
