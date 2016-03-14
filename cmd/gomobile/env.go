@@ -291,6 +291,14 @@ var ndk = ndkConfig{
 		toolPrefix: "arm-linux-androideabi",
 		minGoVer:   go1_5,
 	},
+	"arm64": {
+		arch:       "arm64",
+		abi:        "arm64-v8a",
+		platform:   "android-21",
+		gcc:        "aarch64-linux-android-4.9",
+		toolPrefix: "aarch64-linux-android",
+		minGoVer:   go1_6,
+	},
 
 	"386": {
 		arch:       "x86",
