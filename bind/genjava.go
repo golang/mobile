@@ -29,9 +29,13 @@ func (g *javaGen) genStruct(obj *types.TypeName, T *types.Struct) {
 
 	impls := []string{"go.Seq.Object"}
 	pT := types.NewPointer(obj.Type())
-	for _, iface := range g.interfaces {
+	for _, iface := range g.allIntf {
 		if types.AssignableTo(pT, iface.obj.Type()) {
-			impls = append(impls, iface.obj.Name())
+			n := iface.obj.Name()
+			if p := iface.obj.Pkg(); p != g.pkg {
+				n = fmt.Sprintf("%s.%s.%s", g.javaPkgName(p), className(p), n)
+			}
+			impls = append(impls, n)
 		}
 	}
 	g.Printf("public static final class %s implements %s {\n", obj.Name(), strings.Join(impls, ", "))
@@ -45,7 +49,7 @@ func (g *javaGen) genStruct(obj *types.TypeName, T *types.Struct) {
 
 	for _, f := range fields {
 		if t := f.Type(); !g.isSupported(t) {
-			g.Printf("// skipped field %s.%s with unsupported type: %T\n\n", f.Name(), t)
+			g.Printf("// skipped field %s.%s with unsupported type: %T\n\n", n, f.Name(), t)
 			continue
 		}
 		g.Printf("public final native %s get%s();\n", g.javaType(f.Type()), f.Name())
@@ -70,7 +74,7 @@ func (g *javaGen) genStruct(obj *types.TypeName, T *types.Struct) {
 	g.Printf("%s that = (%s)o;\n", n, n)
 	for _, f := range fields {
 		if t := f.Type(); !g.isSupported(t) {
-			g.Printf("// skipped field %s.%s with unsupported type: %T\n\n", f.Name(), t)
+			g.Printf("// skipped field %s.%s with unsupported type: %T\n\n", n, f.Name(), t)
 			continue
 		}
 		nf := f.Name()
@@ -145,7 +149,19 @@ func (g *javaGen) genInterfaceStub(o *types.TypeName, m *types.Interface) {
 }
 
 func (g *javaGen) genInterface(iface interfaceInfo) {
-	g.Printf("public interface %s extends go.Seq.Object {\n", iface.obj.Name())
+	exts := []string{"go.Seq.Object"}
+	numM := iface.t.NumMethods()
+	for _, other := range g.allIntf {
+		// Only extend interfaces with fewer methods to avoid circular references
+		if other.t.NumMethods() < numM && types.AssignableTo(iface.t, other.t) {
+			n := other.obj.Name()
+			if p := other.obj.Pkg(); p != g.pkg {
+				n = fmt.Sprintf("%s.%s.%s", g.javaPkgName(p), className(p), n)
+			}
+			exts = append(exts, n)
+		}
+	}
+	g.Printf("public interface %s extends %s {\n", iface.obj.Name(), strings.Join(exts, ", "))
 	g.Indent()
 
 	methodSigErr := false

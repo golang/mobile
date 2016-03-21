@@ -496,6 +496,10 @@ public class SeqTest extends InstrumentationTestCase {
     fields.setS(s);
     Testpkg.WithImportedI(i);
     Testpkg.WithImportedS(s);
+
+    Secondpkg.IF f = new AnI();
+    f = Testpkg.New();
+    Secondpkg.Ser ser = Testpkg.NewSer();
   }
 
   public void testIDup() {

@@ -24,6 +24,13 @@ static jmethodID mid_I2_G;
 jclass proxy_class_interfaces_I3;
 jmethodID proxy_class_interfaces_I3_cons;
 static jmethodID mid_I3_F;
+jclass proxy_class_interfaces_LargerI;
+jmethodID proxy_class_interfaces_LargerI_cons;
+static jmethodID mid_LargerI_AnotherFunc;
+static jmethodID mid_LargerI_Rand;
+jclass proxy_class_interfaces_SameI;
+jmethodID proxy_class_interfaces_SameI_cons;
+static jmethodID mid_SameI_Rand;
 jclass proxy_class_interfaces_WithParam;
 jmethodID proxy_class_interfaces_WithParam_cons;
 static jmethodID mid_WithParam_HasParam;
@@ -60,6 +67,19 @@ Java_go_interfaces_Interfaces_init(JNIEnv *env, jclass _unused) {
     proxy_class_interfaces_I3_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
     clazz = (*env)->FindClass(env, "go/interfaces/Interfaces$I3");
     mid_I3_F = (*env)->GetMethodID(env, clazz, "F", "()Lgo/interfaces/Interfaces$I1;");
+    
+    clazz = (*env)->FindClass(env, "go/interfaces/Interfaces$LargerI$Proxy");
+    proxy_class_interfaces_LargerI = (*env)->NewGlobalRef(env, clazz);
+    proxy_class_interfaces_LargerI_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    clazz = (*env)->FindClass(env, "go/interfaces/Interfaces$LargerI");
+    mid_LargerI_AnotherFunc = (*env)->GetMethodID(env, clazz, "AnotherFunc", "()V");
+    mid_LargerI_Rand = (*env)->GetMethodID(env, clazz, "Rand", "()I");
+    
+    clazz = (*env)->FindClass(env, "go/interfaces/Interfaces$SameI$Proxy");
+    proxy_class_interfaces_SameI = (*env)->NewGlobalRef(env, clazz);
+    proxy_class_interfaces_SameI_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    clazz = (*env)->FindClass(env, "go/interfaces/Interfaces$SameI");
+    mid_SameI_Rand = (*env)->GetMethodID(env, clazz, "Rand", "()I");
     
     clazz = (*env)->FindClass(env, "go/interfaces/Interfaces$WithParam$Proxy");
     proxy_class_interfaces_WithParam = (*env)->NewGlobalRef(env, clazz);
@@ -166,6 +186,53 @@ int32_t cproxyinterfaces_I3_F(int32_t refnum) {
     jobject o = go_seq_from_refnum(env, refnum, proxy_class_interfaces_I3, proxy_class_interfaces_I3_cons);
     jobject res = (*env)->CallObjectMethod(env, o, mid_I3_F);
     int32_t _res = go_seq_to_refnum(env, res);
+    go_seq_pop_local_frame(env);
+    return _res;
+}
+
+JNIEXPORT void JNICALL
+Java_go_interfaces_Interfaces_00024LargerI_00024Proxy_AnotherFunc(JNIEnv* env, jobject this) {
+    int32_t o = go_seq_to_refnum(env, this);
+    proxyinterfaces_LargerI_AnotherFunc(o);
+}
+
+void cproxyinterfaces_LargerI_AnotherFunc(int32_t refnum) {
+    JNIEnv *env = go_seq_push_local_frame(10);
+    jobject o = go_seq_from_refnum(env, refnum, proxy_class_interfaces_LargerI, proxy_class_interfaces_LargerI_cons);
+    (*env)->CallVoidMethod(env, o, mid_LargerI_AnotherFunc);
+    go_seq_pop_local_frame(env);
+}
+
+JNIEXPORT jint JNICALL
+Java_go_interfaces_Interfaces_00024LargerI_00024Proxy_Rand(JNIEnv* env, jobject this) {
+    int32_t o = go_seq_to_refnum(env, this);
+    int32_t r0 = proxyinterfaces_LargerI_Rand(o);
+    jint _r0 = (jint)r0;
+    return _r0;
+}
+
+int32_t cproxyinterfaces_LargerI_Rand(int32_t refnum) {
+    JNIEnv *env = go_seq_push_local_frame(10);
+    jobject o = go_seq_from_refnum(env, refnum, proxy_class_interfaces_LargerI, proxy_class_interfaces_LargerI_cons);
+    jint res = (*env)->CallIntMethod(env, o, mid_LargerI_Rand);
+    int32_t _res = (int32_t)res;
+    go_seq_pop_local_frame(env);
+    return _res;
+}
+
+JNIEXPORT jint JNICALL
+Java_go_interfaces_Interfaces_00024SameI_00024Proxy_Rand(JNIEnv* env, jobject this) {
+    int32_t o = go_seq_to_refnum(env, this);
+    int32_t r0 = proxyinterfaces_SameI_Rand(o);
+    jint _r0 = (jint)r0;
+    return _r0;
+}
+
+int32_t cproxyinterfaces_SameI_Rand(int32_t refnum) {
+    JNIEnv *env = go_seq_push_local_frame(10);
+    jobject o = go_seq_from_refnum(env, refnum, proxy_class_interfaces_SameI, proxy_class_interfaces_SameI_cons);
+    jint res = (*env)->CallIntMethod(env, o, mid_SameI_Rand);
+    int32_t _res = (int32_t)res;
     go_seq_pop_local_frame(env);
     return _res;
 }

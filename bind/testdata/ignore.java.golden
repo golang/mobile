@@ -26,7 +26,7 @@ public abstract class Ignore {
         
         public final go.Seq.Ref ref() { return ref; }
         
-        // skipped field F.interface{} with unsupported type: %!T(MISSING)
+        // skipped field S.F with unsupported type: *types.Interface
         
         // skipped method S.Argument with unsupported parameter or return types
         
@@ -37,7 +37,7 @@ public abstract class Ignore {
                 return false;
             }
             S that = (S)o;
-            // skipped field F.interface{} with unsupported type: %!T(MISSING)
+            // skipped field S.F with unsupported type: *types.Interface
             
             return true;
         }

@@ -442,7 +442,12 @@ type (
 	ImportedI interface {
 		F(_ secondpkg.I)
 	}
+
+	AnSer struct{}
 )
+
+func (_ *AnSer) S(_ *secondpkg.S) {
+}
 
 func NewImportedFields() *ImportedFields {
 	return &ImportedFields{
@@ -469,6 +474,10 @@ func WithImportedS(s *secondpkg.S) *secondpkg.S {
 
 func CallImportedI(i secondpkg.I) {
 	i.F(0)
+}
+
+func NewSer() *AnSer {
+	return nil
 }
 
 func NewSimpleS() *simplepkg.S {
