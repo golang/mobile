@@ -23,6 +23,7 @@ import (
 
 	"golang.org/x/mobile/bind/testpkg/secondpkg"
 	"golang.org/x/mobile/bind/testpkg/simplepkg"
+	"golang.org/x/mobile/bind/testpkg/unboundpkg"
 )
 
 const (
@@ -468,4 +469,10 @@ func CallImportedI(i secondpkg.I) {
 
 func NewSimpleS() *simplepkg.S {
 	return nil
+}
+
+func UnboundS(_ *unboundpkg.S) {
+}
+
+func UnboundI(_ unboundpkg.I) {
 }

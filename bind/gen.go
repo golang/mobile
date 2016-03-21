@@ -234,6 +234,52 @@ func (g *generator) validPkg(pkg *types.Package) bool {
 	return false
 }
 
+// isSigSupported returns whether the generators can handle a given
+// function signature
+func (g *generator) isSigSupported(t types.Type) bool {
+	sig := t.(*types.Signature)
+	params := sig.Params()
+	for i := 0; i < params.Len(); i++ {
+		if !g.isSupported(params.At(i).Type()) {
+			return false
+		}
+	}
+	res := sig.Results()
+	for i := 0; i < res.Len(); i++ {
+		if !g.isSupported(res.At(i).Type()) {
+			return false
+		}
+	}
+	return true
+}
+
+// isSupported returns whether the generators can handle the type.
+func (g *generator) isSupported(t types.Type) bool {
+	if isErrorType(t) {
+		return true
+	}
+	switch t := t.(type) {
+	case *types.Basic:
+		return true
+	case *types.Slice:
+		switch e := t.Elem().(type) {
+		case *types.Basic:
+			return e.Kind() == types.Uint8
+		}
+	case *types.Pointer:
+		switch t := t.Elem().(type) {
+		case *types.Named:
+			return g.validPkg(t.Obj().Pkg())
+		}
+	case *types.Named:
+		switch t.Underlying().(type) {
+		case *types.Interface, *types.Pointer:
+			return g.validPkg(t.Obj().Pkg())
+		}
+	}
+	return false
+}
+
 var paramRE = regexp.MustCompile(`^p[0-9]*$`)
 
 // paramName replaces incompatible name with a p0-pN name.
