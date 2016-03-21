@@ -51,6 +51,10 @@ var (
 	NodeVar       = &Node{V: "a struct var"}
 )
 
+type Nummer interface {
+	Num()
+}
+
 type I interface {
 	F()
 

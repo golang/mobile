@@ -42,7 +42,7 @@ func init() {
 // A Ref represents a Java or Go object passed across the language
 // boundary.
 type Ref struct {
-	Num int32
+	Bind_Num int32
 }
 
 type proxy interface {
@@ -88,7 +88,7 @@ func FromRefNum(num int32) *Ref {
 		return nil
 	}
 	ref := &Ref{num}
-	if ref.Num > 0 {
+	if ref.Bind_Num > 0 {
 		// This is a foreign object reference.
 		// Track its lifetime with a finalizer.
 		runtime.SetFinalizer(ref, FinalizeRef)
@@ -100,10 +100,10 @@ func FromRefNum(num int32) *Ref {
 // Get returns the underlying object.
 func (r *Ref) Get() interface{} {
 	refs.Lock()
-	o, ok := refs.objs[r.Num]
+	o, ok := refs.objs[r.Bind_Num]
 	refs.Unlock()
 	if !ok {
-		panic(fmt.Sprintf("unknown ref %d", r.Num))
+		panic(fmt.Sprintf("unknown ref %d", r.Bind_Num))
 	}
 	return o.obj
 }
