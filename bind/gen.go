@@ -67,6 +67,8 @@ type generator struct {
 	interfaces []interfaceInfo
 	structs    []structInfo
 	otherNames []*types.TypeName
+	// allIntf contains interfaces from all bound packages.
+	allIntf []interfaceInfo
 }
 
 // pkgPrefix returns a prefix that disambiguates symbol names for binding
@@ -116,6 +118,21 @@ func (g *generator) init() {
 	}
 	if !hasExported {
 		g.errorf("no exported names in the package %q", g.pkg.Path())
+	}
+	for _, p := range g.allPkg {
+		scope := p.Scope()
+		for _, name := range scope.Names() {
+			obj := scope.Lookup(name)
+			if !obj.Exported() {
+				continue
+			}
+			if obj, ok := obj.(*types.TypeName); ok {
+				named := obj.Type().(*types.Named)
+				if t, ok := named.Underlying().(*types.Interface); ok {
+					g.allIntf = append(g.allIntf, interfaceInfo{obj, t, makeIfaceSummary(t)})
+				}
+			}
+		}
 	}
 }
 
@@ -227,7 +244,7 @@ func (g *generator) genInterfaceMethodSignature(m *types.Func, iName string, hea
 
 func (g *generator) validPkg(pkg *types.Package) bool {
 	for _, p := range g.allPkg {
-		if p.Path() == pkg.Path() {
+		if p == pkg {
 			return true
 		}
 	}

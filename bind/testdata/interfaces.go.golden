@@ -108,6 +108,55 @@ func (p *proxyinterfaces_I3) F() interfaces.I1 {
 	return _res
 }
 
+//export proxyinterfaces_LargerI_AnotherFunc
+func proxyinterfaces_LargerI_AnotherFunc(refnum C.int32_t) {
+	ref := _seq.FromRefNum(int32(refnum))
+	v := ref.Get().(interfaces.LargerI)
+	v.AnotherFunc()
+}
+
+//export proxyinterfaces_LargerI_Rand
+func proxyinterfaces_LargerI_Rand(refnum C.int32_t) C.int32_t {
+	ref := _seq.FromRefNum(int32(refnum))
+	v := ref.Get().(interfaces.LargerI)
+	res_0 := v.Rand()
+	_res_0 := C.int32_t(res_0)
+	return _res_0
+}
+
+type proxyinterfaces_LargerI _seq.Ref
+
+func (p *proxyinterfaces_LargerI) Bind_proxy_refnum__() int32 { return p.Bind_Num }
+
+func (p *proxyinterfaces_LargerI) AnotherFunc() {
+	C.cproxyinterfaces_LargerI_AnotherFunc(C.int32_t(p.Bind_Num))
+}
+
+func (p *proxyinterfaces_LargerI) Rand() int32 {
+	res := C.cproxyinterfaces_LargerI_Rand(C.int32_t(p.Bind_Num))
+	_res := int32(res)
+	return _res
+}
+
+//export proxyinterfaces_SameI_Rand
+func proxyinterfaces_SameI_Rand(refnum C.int32_t) C.int32_t {
+	ref := _seq.FromRefNum(int32(refnum))
+	v := ref.Get().(interfaces.SameI)
+	res_0 := v.Rand()
+	_res_0 := C.int32_t(res_0)
+	return _res_0
+}
+
+type proxyinterfaces_SameI _seq.Ref
+
+func (p *proxyinterfaces_SameI) Bind_proxy_refnum__() int32 { return p.Bind_Num }
+
+func (p *proxyinterfaces_SameI) Rand() int32 {
+	res := C.cproxyinterfaces_SameI_Rand(C.int32_t(p.Bind_Num))
+	_res := int32(res)
+	return _res
+}
+
 //export proxyinterfaces_WithParam_HasParam
 func proxyinterfaces_WithParam_HasParam(refnum C.int32_t, param_p0 C.char) {
 	ref := _seq.FromRefNum(int32(refnum))

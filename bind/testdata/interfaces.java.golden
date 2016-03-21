@@ -114,6 +114,54 @@ public abstract class Interfaces {
         }
     }
     
+    public interface LargerI extends go.Seq.Object, I, SameI {
+        public void AnotherFunc();
+        public int Rand();
+        public static abstract class Stub implements LargerI {
+            private final go.Seq.Ref ref;
+            public Stub() {
+                ref = go.Seq.createRef(this);
+            }
+            
+            public final go.Seq.Ref ref() { return ref; }
+            
+        }
+        
+        static final class Proxy implements LargerI {
+            private go.Seq.Ref ref;
+        
+            Proxy(go.Seq.Ref ref) { this.ref = ref; }
+        
+            public final go.Seq.Ref ref() { return ref; }
+        
+            public native void AnotherFunc();
+            public native int Rand();
+        }
+    }
+    
+    public interface SameI extends go.Seq.Object {
+        public int Rand();
+        public static abstract class Stub implements SameI {
+            private final go.Seq.Ref ref;
+            public Stub() {
+                ref = go.Seq.createRef(this);
+            }
+            
+            public final go.Seq.Ref ref() { return ref; }
+            
+        }
+        
+        static final class Proxy implements SameI {
+            private go.Seq.Ref ref;
+        
+            Proxy(go.Seq.Ref ref) { this.ref = ref; }
+        
+            public final go.Seq.Ref ref() { return ref; }
+        
+            public native int Rand();
+        }
+    }
+    
     public interface WithParam extends go.Seq.Object {
         public void HasParam(boolean p0);
         public static abstract class Stub implements WithParam {
