@@ -180,7 +180,7 @@ func (g *goGen) genFuncSignature(o *types.Func, objName string) {
 }
 
 func (g *goGen) genFunc(o *types.Func) {
-	if !isSigSupported(o.Type()) {
+	if !g.isSigSupported(o.Type()) {
 		g.Printf("// skipped function %s with unsupported parameter or result types\n", o.Name())
 		return
 	}
@@ -196,7 +196,7 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 	methods := exportedMethodSet(types.NewPointer(obj.Type()))
 
 	for _, f := range fields {
-		if t := f.Type(); !isSupported(t) {
+		if t := f.Type(); !g.isSupported(t) {
 			g.Printf("// skipped field %s.%s with unsupported type: %T\n\n", obj.Name(), f.Name(), t)
 			continue
 		}
@@ -221,7 +221,7 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 	}
 
 	for _, m := range methods {
-		if !isSigSupported(m.Type()) {
+		if !g.isSigSupported(m.Type()) {
 			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", obj.Name(), m.Name())
 			continue
 		}
@@ -236,7 +236,7 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 }
 
 func (g *goGen) genVar(o *types.Var) {
-	if t := o.Type(); !isSupported(t) {
+	if t := o.Type(); !g.isSupported(t) {
 		g.Printf("// skipped variable %s with unsupported type %T\n\n", o.Name(), t)
 		return
 	}
@@ -273,7 +273,7 @@ func (g *goGen) genInterface(obj *types.TypeName) {
 
 	// Define the entry points.
 	for _, m := range summary.callable {
-		if !isSigSupported(m.Type()) {
+		if !g.isSigSupported(m.Type()) {
 			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", obj.Name(), m.Name())
 			continue
 		}
@@ -298,7 +298,7 @@ func (g *goGen) genInterface(obj *types.TypeName) {
 	g.Printf("func (p *proxy%s_%s) Bind_proxy_refnum__() int32 { return p.Bind_Num }\n\n", g.pkgPrefix, obj.Name())
 
 	for _, m := range summary.callable {
-		if !isSigSupported(m.Type()) {
+		if !g.isSigSupported(m.Type()) {
 			g.Printf("// skipped method %s.%s with unsupported parameter or result types\n", obj.Name(), m.Name())
 			continue
 		}
