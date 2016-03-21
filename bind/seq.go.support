@@ -28,9 +28,9 @@ func toError(s string) error {
 
 func init() {
 	_seq.FinalizeRef = func(ref *_seq.Ref) {
-		if ref.Num < 0 {
-			panic(fmt.Sprintf("not a foreign ref: %d", ref.Num))
+		if ref.Bind_Num < 0 {
+			panic(fmt.Sprintf("not a foreign ref: %d", ref.Bind_Num))
 		}
-		C.go_seq_dec_ref(C.int32_t(ref.Num))
+		C.go_seq_dec_ref(C.int32_t(ref.Bind_Num))
 	}
 }

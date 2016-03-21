@@ -295,7 +295,7 @@ func (g *goGen) genInterface(obj *types.TypeName) {
 	}
 	g.Printf("type proxy%s_%s _seq.Ref\n\n", g.pkgPrefix, obj.Name())
 
-	g.Printf("func (p *proxy%s_%s) Bind_proxy_refnum__() int32 { return p.Num }\n\n", g.pkgPrefix, obj.Name())
+	g.Printf("func (p *proxy%s_%s) Bind_proxy_refnum__() int32 { return p.Bind_Num }\n\n", g.pkgPrefix, obj.Name())
 
 	for _, m := range summary.callable {
 		if !isSigSupported(m.Type()) {
@@ -337,7 +337,7 @@ func (g *goGen) genInterface(obj *types.TypeName) {
 		if res.Len() > 0 {
 			g.Printf("res := ")
 		}
-		g.Printf("C.cproxy%s_%s_%s(C.int32_t(p.Num)", g.pkgPrefix, obj.Name(), m.Name())
+		g.Printf("C.cproxy%s_%s_%s(C.int32_t(p.Bind_Num)", g.pkgPrefix, obj.Name(), m.Name())
 		for i := 0; i < params.Len(); i++ {
 			g.Printf(", _param_%s", paramName(params, i))
 		}
@@ -423,7 +423,7 @@ func (g *goGen) genRead(toVar, fromVar string, typ types.Type, mode varMode) {
 			g.Printf("var %s %s\n", toVar, g.typeString(t))
 			g.Printf("%s_ref := _seq.FromRefNum(int32(%s))\n", toVar, fromVar)
 			g.Printf("if %s_ref != nil {\n", toVar)
-			g.Printf("	if %s_ref.Num < 0 { // go object \n", toVar)
+			g.Printf("	if %s_ref.Bind_Num < 0 { // go object \n", toVar)
 			g.Printf("  	 %s = %s_ref.Get().(%s.%s)\n", toVar, toVar, g.pkgName(oPkg), o.Name())
 			if hasProxy {
 				g.Printf("	} else { // foreign object \n")
