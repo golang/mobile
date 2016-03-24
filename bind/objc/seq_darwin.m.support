@@ -157,7 +157,7 @@ int32_t go_seq_go_to_refnum(GoSeqRef *ref) {
 }
 
 nbyteslice go_seq_from_objc_bytearray(NSData *data, int copy) {
-  struct nbyteslice res = {NULL, 0, NO};
+  struct nbyteslice res = {NULL, 0};
   int sz = data.length;
   if (sz == 0) {
     return res;
