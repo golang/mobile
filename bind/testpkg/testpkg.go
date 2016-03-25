@@ -143,6 +143,10 @@ func NumSCollected() int {
 	return numSCollected
 }
 
+func I2Dup(i I2) I2 {
+	return i
+}
+
 func IDup(i I) I {
 	return i
 }

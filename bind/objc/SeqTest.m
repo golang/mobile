@@ -369,7 +369,7 @@ static int numI = 0;
 
 - (void)testIDup {
 	Number *want = [[Number alloc] init];
-	Number *got = GoTestpkgIDup(want);
+	Number *got = (Number *)GoTestpkgI2Dup(want);
 	XCTAssertEqual(got, want, @"ObjC object passed through Go should not be wrapped");
 }
 
