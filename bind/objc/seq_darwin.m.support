@@ -270,6 +270,7 @@ nstring go_seq_from_objc_string(NSString *s) {
   self = [super init];
   if (self) {
     _next = 42;
+    _refs = [[NSMutableDictionary alloc] init];
     _objs = [[NSMutableDictionary alloc] init];
   }
   return self;
