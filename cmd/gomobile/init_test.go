@@ -133,8 +133,8 @@ go install -p={{.NumCPU}} -x golang.org/x/mobile/gl
 go install -p={{.NumCPU}} -x golang.org/x/mobile/app
 go install -p={{.NumCPU}} -x golang.org/x/mobile/exp/app/debug{{end}}
 GOOS=android GOARCH=arm CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-gcc{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-g++{{.EXE}} CGO_ENABLED=1 GOARM=7 go install -p={{.NumCPU}} -pkgdir=$GOMOBILE/pkg_android_arm -x std
-{{if eq .GOOS "darwin"}}GOOS=darwin GOARCH=arm GOARM=7 CC=clang-iphoneos CXX=clang-iphoneos CGO_CFLAGS=-isysroot=iphoneos -arch armv7 CGO_LDFLAGS=-isysroot=iphoneos -arch armv7 CGO_ENABLED=1 go install -p={{.NumCPU}} -pkgdir=$GOMOBILE/pkg_darwin_arm -x std
-GOOS=darwin GOARCH=arm64 CC=clang-iphoneos CXX=clang-iphoneos CGO_CFLAGS=-isysroot=iphoneos -arch arm64 CGO_LDFLAGS=-isysroot=iphoneos -arch arm64 CGO_ENABLED=1 go install -p={{.NumCPU}} -pkgdir=$GOMOBILE/pkg_darwin_arm64 -x std
+{{if eq .GOOS "darwin"}}GOOS=darwin GOARCH=arm GOARM=7 CC=clang-iphoneos CXX=clang-iphoneos CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=6.1 -arch armv7 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=6.1 -arch armv7 CGO_ENABLED=1 go install -p={{.NumCPU}} -pkgdir=$GOMOBILE/pkg_darwin_arm -x std
+GOOS=darwin GOARCH=arm64 CC=clang-iphoneos CXX=clang-iphoneos CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=6.1 -arch arm64 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=6.1 -arch arm64 CGO_ENABLED=1 go install -p={{.NumCPU}} -pkgdir=$GOMOBILE/pkg_darwin_arm64 -x std
 GOOS=darwin GOARCH=amd64 CC=clang-iphonesimulator CXX=clang-iphonesimulator CGO_CFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=6.1 -arch x86_64 CGO_LDFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=6.1 -arch x86_64 CGO_ENABLED=1 go install -p={{.NumCPU}} -tags=ios -pkgdir=$GOMOBILE/pkg_darwin_amd64 -x std
 {{end}}go version > $GOMOBILE/version
 rm -r -f "$WORK"
