@@ -209,9 +209,7 @@ func installPkg(pkg string, env []string, args ...string) error {
 		}
 	}
 
-	// The -p flag is to speed up darwin/arm builds.
-	// Remove when golang.org/issue/10477 is resolved.
-	cmd := exec.Command("go", "install", fmt.Sprintf("-p=%d", runtime.NumCPU()))
+	cmd := exec.Command("go", "install")
 	cmd.Args = append(cmd.Args, args...)
 	if buildV {
 		cmd.Args = append(cmd.Args, "-v")
