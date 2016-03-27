@@ -8,8 +8,6 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
-	"runtime"
-	"strconv"
 	"strings"
 	"testing"
 	"text/template"
@@ -86,7 +84,6 @@ type outputData struct {
 	Xproj     string
 	Xcontents string
 	Xinfo     infoplistTmplData
-	NumCPU    string
 }
 
 func defaultOutputData() outputData {
@@ -99,7 +96,6 @@ func defaultOutputData() outputData {
 		Xproj:     projPbxproj,
 		Xcontents: contentsJSON,
 		Xinfo:     infoplistTmplData{BundleID: "org.golang.todo.basic", Name: "Basic"},
-		NumCPU:    strconv.Itoa(runtime.NumCPU()),
 	}
 	if goos == "windows" {
 		data.EXE = ".exe"
@@ -113,10 +109,9 @@ WORK={{.GOPATH}}/pkg/gomobile/work
 mkdir -p $GOMOBILE/dl
 curl -o$GOMOBILE/dl/gomobile-{{.NDK}}-{{.GOOS}}-{{.NDKARCH}}.tar.gz https://dl.google.com/go/mobile/gomobile-{{.NDK}}-{{.GOOS}}-{{.NDKARCH}}.tar.gz
 tar xfz $GOMOBILE/dl/gomobile-{{.NDK}}-{{.GOOS}}-{{.NDKARCH}}.tar.gz
-mkdir -p $GOMOBILE/android-{{.NDK}}/llvm/bin
-mv $WORK/android-{{.NDK}}/toolchains/llvm/prebuilt/linux-x86_64/bin/clang $GOMOBILE/android-{{.NDK}}/llvm/bin/clang
-mv $WORK/android-{{.NDK}}/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ $GOMOBILE/android-{{.NDK}}/llvm/bin/clang++
+mkdir -p $GOMOBILE/android-{{.NDK}}/llvm
 mv $WORK/android-{{.NDK}}/toolchains/llvm/prebuilt/linux-x86_64/lib64 $GOMOBILE/android-{{.NDK}}/llvm/lib64
+mv $WORK/android-{{.NDK}}/toolchains/llvm/prebuilt/linux-x86_64/bin $GOMOBILE/android-{{.NDK}}/llvm/bin
 mkdir -p $GOMOBILE/android-{{.NDK}}/arm/sysroot
 mv $WORK/android-{{.NDK}}/platforms/android-15/arch-arm/usr $GOMOBILE/android-{{.NDK}}/arm/sysroot/usr
 mv $WORK/android-{{.NDK}}/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin $GOMOBILE/android-{{.NDK}}/arm/bin
@@ -127,19 +122,20 @@ ln -s $GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-as{{.EXE}} $GOMOB
 ln -s $GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-nm{{.EXE}} $GOMOBILE/android-{{.NDK}}/arm/arm-linux-androideabi/bin/nm{{.EXE}}
 ln -s $GOMOBILE/android-{{.NDK}}/llvm/bin/clang $GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-clang
 ln -s $GOMOBILE/android-{{.NDK}}/llvm/bin/clang++ $GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-clang++
+ln -s $GOMOBILE/android-{{.NDK}}/llvm/lib64 $GOMOBILE/android-{{.NDK}}/arm/lib64
 mkdir -p $GOMOBILE/dl
 curl -o$GOMOBILE/dl/gomobile-openal-soft-1.16.0.1-{{.NDK}}.tar.gz https://dl.google.com/go/mobile/gomobile-openal-soft-1.16.0.1-{{.NDK}}.tar.gz
 tar xfz $GOMOBILE/dl/gomobile-openal-soft-1.16.0.1-{{.NDK}}.tar.gz
 cp -r $WORK/openal/include/AL $GOMOBILE/android-{{.NDK}}/arm/sysroot/usr/include/AL
 mkdir -p $GOMOBILE/android-{{.NDK}}/openal
 mv $WORK/openal/lib $GOMOBILE/android-{{.NDK}}/openal/lib{{if eq .GOOS "darwin"}}
-go install -p={{.NumCPU}} -x golang.org/x/mobile/gl
-go install -p={{.NumCPU}} -x golang.org/x/mobile/app
-go install -p={{.NumCPU}} -x golang.org/x/mobile/exp/app/debug{{end}}
-GOOS=android GOARCH=arm CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-clang{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-clang++{{.EXE}} CGO_CFLAGS=-target armv7a-none-linux-androideabi --sysroot $GOMOBILE/android-{{.NDK}}/arm/sysroot CGO_CPPFLAGS=-target armv7a-none-linux-androideabi --sysroot $GOMOBILE/android-{{.NDK}}/arm/sysroot CGO_LDFLAGS=-target armv7a-none-linux-androideabi --sysroot $GOMOBILE/android-{{.NDK}}/arm/sysroot CGO_ENABLED=1 GOARM=7 go install -p={{.NumCPU}} -pkgdir=$GOMOBILE/pkg_android_arm -x std
-{{if eq .GOOS "darwin"}}GOOS=darwin GOARCH=arm GOARM=7 CC=clang-iphoneos CXX=clang-iphoneos CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=6.1 -arch armv7 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=6.1 -arch armv7 CGO_ENABLED=1 go install -p={{.NumCPU}} -pkgdir=$GOMOBILE/pkg_darwin_arm -x std
-GOOS=darwin GOARCH=arm64 CC=clang-iphoneos CXX=clang-iphoneos CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=6.1 -arch arm64 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=6.1 -arch arm64 CGO_ENABLED=1 go install -p={{.NumCPU}} -pkgdir=$GOMOBILE/pkg_darwin_arm64 -x std
-GOOS=darwin GOARCH=amd64 CC=clang-iphonesimulator CXX=clang-iphonesimulator CGO_CFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=6.1 -arch x86_64 CGO_LDFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=6.1 -arch x86_64 CGO_ENABLED=1 go install -p={{.NumCPU}} -tags=ios -pkgdir=$GOMOBILE/pkg_darwin_amd64 -x std
+go install -x golang.org/x/mobile/gl
+go install -x golang.org/x/mobile/app
+go install -x golang.org/x/mobile/exp/app/debug{{end}}
+GOOS=android GOARCH=arm CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-clang{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-clang++{{.EXE}} CGO_CFLAGS=-target armv7a-none-linux-androideabi --sysroot $GOMOBILE/android-{{.NDK}}/arm/sysroot CGO_CPPFLAGS=-target armv7a-none-linux-androideabi --sysroot $GOMOBILE/android-{{.NDK}}/arm/sysroot CGO_LDFLAGS=-target armv7a-none-linux-androideabi --sysroot $GOMOBILE/android-{{.NDK}}/arm/sysroot CGO_ENABLED=1 GOARM=7 go install -pkgdir=$GOMOBILE/pkg_android_arm -x std
+{{if eq .GOOS "darwin"}}GOOS=darwin GOARCH=arm GOARM=7 CC=clang-iphoneos CXX=clang-iphoneos CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=6.1 -arch armv7 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=6.1 -arch armv7 CGO_ENABLED=1 go install -pkgdir=$GOMOBILE/pkg_darwin_arm -x std
+GOOS=darwin GOARCH=arm64 CC=clang-iphoneos CXX=clang-iphoneos CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=6.1 -arch arm64 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=6.1 -arch arm64 CGO_ENABLED=1 go install -pkgdir=$GOMOBILE/pkg_darwin_arm64 -x std
+GOOS=darwin GOARCH=amd64 CC=clang-iphonesimulator CXX=clang-iphonesimulator CGO_CFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=6.1 -arch x86_64 CGO_LDFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=6.1 -arch x86_64 CGO_ENABLED=1 go install -tags=ios -pkgdir=$GOMOBILE/pkg_darwin_amd64 -x std
 {{end}}go version > $GOMOBILE/version
 rm -r -f "$WORK"
 `))
