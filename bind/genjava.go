@@ -27,7 +27,7 @@ func (g *javaGen) genStruct(obj *types.TypeName, T *types.Struct) {
 	fields := exportedFields(T)
 	methods := exportedMethodSet(types.NewPointer(obj.Type()))
 
-	impls := []string{"go.Seq.Object"}
+	var impls []string
 	pT := types.NewPointer(obj.Type())
 	for _, iface := range g.allIntf {
 		if types.AssignableTo(pT, iface.obj.Type()) {
@@ -38,14 +38,15 @@ func (g *javaGen) genStruct(obj *types.TypeName, T *types.Struct) {
 			impls = append(impls, n)
 		}
 	}
-	g.Printf("public static final class %s implements %s {\n", obj.Name(), strings.Join(impls, ", "))
+	g.Printf("public static final class %s extends Seq.Proxy", obj.Name())
+	if len(impls) > 0 {
+		g.Printf(" implements %s", strings.Join(impls, ", "))
+	}
+	g.Printf(" {\n")
 	g.Indent()
 
-	g.Printf("private final go.Seq.Ref ref;\n\n")
-
 	n := obj.Name()
-	g.Printf("private %s(go.Seq.Ref ref) { this.ref = ref; }\n\n", n)
-	g.Printf("public final go.Seq.Ref ref() { return ref; }\n\n")
+	g.Printf("private %s(go.Seq.Ref ref) { super(ref); }\n\n", n)
 
 	for _, f := range fields {
 		if t := f.Type(); !g.isSupported(t) {
@@ -136,20 +137,8 @@ func (g *javaGen) genStruct(obj *types.TypeName, T *types.Struct) {
 	g.Printf("}\n\n")
 }
 
-func (g *javaGen) genInterfaceStub(o *types.TypeName, m *types.Interface) {
-	g.Printf("public static abstract class Stub implements %s {\n", o.Name())
-	g.Indent()
-
-	g.Printf("private final go.Seq.Ref ref;\n")
-	g.Printf("public Stub() {\n    ref = go.Seq.createRef(this);\n}\n\n")
-	g.Printf("public final go.Seq.Ref ref() { return ref; }\n\n")
-
-	g.Outdent()
-	g.Printf("}\n\n")
-}
-
 func (g *javaGen) genInterface(iface interfaceInfo) {
-	exts := []string{"go.Seq.Object"}
+	var exts []string
 	numM := iface.t.NumMethods()
 	for _, other := range g.allIntf {
 		// Only extend interfaces with fewer methods to avoid circular references
@@ -161,10 +150,13 @@ func (g *javaGen) genInterface(iface interfaceInfo) {
 			exts = append(exts, n)
 		}
 	}
-	g.Printf("public interface %s extends %s {\n", iface.obj.Name(), strings.Join(exts, ", "))
+	g.Printf("public interface %s", iface.obj.Name())
+	if len(exts) > 0 {
+		g.Printf(" extends %s", strings.Join(exts, ", "))
+	}
+	g.Printf(" {\n")
 	g.Indent()
 
-	methodSigErr := false
 	for _, m := range iface.summary.callable {
 		if !g.isSigSupported(m.Type()) {
 			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", iface.obj.Name(), m.Name())
@@ -172,14 +164,8 @@ func (g *javaGen) genInterface(iface interfaceInfo) {
 		}
 		g.genFuncSignature(m, false, true)
 	}
-	if methodSigErr {
-		return // skip stub generation, more of the same errors
-	}
 
-	if iface.summary.implementable {
-		g.genInterfaceStub(iface.obj, iface.t)
-	}
-
+	g.Printf("\n")
 	g.Printf(javaProxyPreamble, iface.obj.Name())
 	g.Indent()
 
@@ -1099,12 +1085,8 @@ func (g *javaGen) genJava() error {
 }
 
 const (
-	javaProxyPreamble = `static final class Proxy implements %s {
-    private go.Seq.Ref ref;
-
-    Proxy(go.Seq.Ref ref) { this.ref = ref; }
-
-    public final go.Seq.Ref ref() { return ref; }
+	javaProxyPreamble = `static final class Proxy extends Seq.Proxy implements %s {
+    Proxy(Seq.Ref ref) { super(ref); }
 
 `
 	javaPreamble = `// Java class %[1]s.%[2]s is a proxy for talking to a Go program.
