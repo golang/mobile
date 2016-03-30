@@ -489,3 +489,25 @@ func UnboundS(_ *unboundpkg.S) {
 
 func UnboundI(_ unboundpkg.I) {
 }
+
+type (
+	InterfaceDupper interface {
+		IDup(i Interface) Interface
+	}
+
+	ConcreteDupper interface {
+		CDup(c *Concrete) *Concrete
+	}
+)
+
+func CallIDupper(d InterfaceDupper) bool {
+	var want Interface = new(Concrete)
+	got := d.IDup(want)
+	return got == want
+}
+
+func CallCDupper(d ConcreteDupper) bool {
+	want := new(Concrete)
+	got := d.CDup(want)
+	return got == want
+}

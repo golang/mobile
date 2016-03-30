@@ -502,8 +502,20 @@ public class SeqTest extends InstrumentationTestCase {
     Secondpkg.Ser ser = Testpkg.NewSer();
   }
 
-  public void testIDup() {
+  public void testRoundtripEquality() {
     Testpkg.I want = new AnI();
     assertTrue("java object passed through Go should not be wrapped", want == Testpkg.IDup(want));
+    Testpkg.InterfaceDupper idup = new Testpkg.InterfaceDupper.Stub(){
+      @Override public Testpkg.Interface IDup(Testpkg.Interface i) {
+        return i;
+      }
+    };
+    assertTrue("Go interface passed through Java should not be wrapped", Testpkg.CallIDupper(idup));
+    Testpkg.ConcreteDupper cdup = new Testpkg.ConcreteDupper.Stub(){
+      @Override public Testpkg.Concrete CDup(Testpkg.Concrete c) {
+        return c;
+      }
+    };
+    assertTrue("Go struct passed through Java should not be wrapped", Testpkg.CallCDupper(cdup));
   }
 }
