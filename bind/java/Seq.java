@@ -50,6 +50,11 @@ public class Seq {
 	// ctx is an android.context.Context.
 	static native void setContext(java.lang.Object ctx);
 
+	public static void incRefnum(int refnum) {
+		Ref ref = tracker.get(refnum);
+		tracker.inc(ref);
+	}
+
 	public static int incRef(Seq.Object o) {
 		Ref ref = o.ref();
 		tracker.inc(ref);
@@ -59,6 +64,9 @@ public class Seq {
 	public static Ref getRef(int refnum) {
 		return tracker.get(refnum);
 	}
+
+	// Increment the Go reference count before sending over a refnum.
+	static native void incGoRef(int refnum);
 
 	// Informs the Go ref tracker that Java is done with this ref.
 	static native void destroyRef(int refnum);
@@ -141,7 +149,11 @@ public class Seq {
 		synchronized void inc(Ref ref) {
 			int refnum = ref.refnum;
 			if (refnum <= 0) {
-				// We don't keep track of the Go object.
+				// We don't keep track of the Go object ourselves, but
+				// the Go reference count need to be bumped while the
+				// refnum is passed to Go, to avoid finalizing and
+				// invalidating it before being translated on the Go side.
+				incGoRef(refnum);
 				return;
 			}
 			if (refnum == NULL_REFNUM) {
