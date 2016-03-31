@@ -54,15 +54,15 @@ public abstract class Ignore {
         
         // skipped method I.Result with unsupported parameter or return types
         
+    }
+    
+    private static final class proxyI extends Seq.Proxy implements I {
+        proxyI(Seq.Ref ref) { super(ref); }
+    
+        // skipped method I.Argument with unsupported parameter or return types
         
-        static final class Proxy extends Seq.Proxy implements I {
-            Proxy(Seq.Ref ref) { super(ref); }
+        // skipped method I.Result with unsupported parameter or return types
         
-            // skipped method I.Argument with unsupported parameter or return types
-            
-            // skipped method I.Result with unsupported parameter or return types
-            
-        }
     }
     
     // skipped const NamedConst with unsupported type: *types.Const

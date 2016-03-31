@@ -42,11 +42,11 @@ public abstract class Vars {
     }
     
     public interface I {
-        
-        static final class Proxy extends Seq.Proxy implements I {
-            Proxy(Seq.Ref ref) { super(ref); }
-        
-        }
+    }
+    
+    private static final class proxyI extends Seq.Proxy implements I {
+        proxyI(Seq.Ref ref) { super(ref); }
+    
     }
     
     

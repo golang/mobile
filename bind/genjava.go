@@ -165,6 +165,9 @@ func (g *javaGen) genInterface(iface interfaceInfo) {
 		g.genFuncSignature(m, false, true)
 	}
 
+	g.Outdent()
+	g.Printf("}\n")
+
 	g.Printf("\n")
 	g.Printf(javaProxyPreamble, iface.obj.Name())
 	g.Indent()
@@ -176,9 +179,6 @@ func (g *javaGen) genInterface(iface interfaceInfo) {
 		}
 		g.genFuncSignature(m, false, false)
 	}
-
-	g.Outdent()
-	g.Printf("}\n")
 
 	g.Outdent()
 	g.Printf("}\n\n")
@@ -346,10 +346,11 @@ func (g *javaGen) genJNIFuncSignature(o *types.Func, sName string, proxy bool) {
 	g.Printf("Java_%s_%s", g.jniPkgName(), g.className())
 	if sName != "" {
 		// 0024 is the mangled form of $, for naming inner classes.
-		g.Printf("_00024%s", sName)
+		g.Printf("_00024")
 		if proxy {
-			g.Printf("_00024Proxy")
+			g.Printf("proxy")
 		}
+		g.Printf("%s", sName)
 	}
 	g.Printf("_%s(JNIEnv* env, ", o.Name())
 	if sName != "" {
@@ -891,8 +892,8 @@ func (g *javaGen) jniCallType(t types.Type) string {
 	return "TODO"
 }
 
-func (g *javaGen) jniClassSigType(obj *types.TypeName) string {
-	return strings.Replace(g.javaPkgName(obj.Pkg()), ".", "/", -1) + "/" + className(obj.Pkg()) + "$" + obj.Name()
+func (g *javaGen) jniClassSigPrefix(pkg *types.Package) string {
+	return strings.Replace(g.javaPkgName(pkg), ".", "/", -1) + "/" + className(pkg) + "$"
 }
 
 func (g *javaGen) jniSigType(T types.Type) string {
@@ -934,7 +935,7 @@ func (g *javaGen) jniSigType(T types.Type) string {
 		}
 		g.errorf("unsupported pointer to type: %s", T)
 	case *types.Named:
-		return "L" + g.jniClassSigType(T.Obj()) + ";"
+		return "L" + g.jniClassSigPrefix(T.Obj().Pkg()) + T.Obj().Name() + ";"
 	default:
 		g.errorf("unsupported jniType: %#+v, %s\n", T, T)
 	}
@@ -972,15 +973,15 @@ func (g *javaGen) genC() error {
 	g.Indent()
 	g.Printf("jclass clazz;\n")
 	for _, s := range g.structs {
-		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigType(s.obj))
+		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigPrefix(s.obj.Pkg())+s.obj.Name())
 		g.Printf("proxy_class_%s_%s = (*env)->NewGlobalRef(env, clazz);\n", g.pkgPrefix, s.obj.Name())
 		g.Printf("proxy_class_%s_%s_cons = (*env)->GetMethodID(env, clazz, \"<init>\", \"(Lgo/Seq$Ref;)V\");\n", g.pkgPrefix, s.obj.Name())
 	}
 	for _, iface := range g.interfaces {
-		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigType(iface.obj)+"$Proxy")
+		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigPrefix(iface.obj.Pkg())+"proxy"+iface.obj.Name())
 		g.Printf("proxy_class_%s_%s = (*env)->NewGlobalRef(env, clazz);\n", g.pkgPrefix, iface.obj.Name())
 		g.Printf("proxy_class_%s_%s_cons = (*env)->GetMethodID(env, clazz, \"<init>\", \"(Lgo/Seq$Ref;)V\");\n", g.pkgPrefix, iface.obj.Name())
-		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigType(iface.obj))
+		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigPrefix(iface.obj.Pkg())+iface.obj.Name())
 		for _, m := range iface.summary.callable {
 			if !g.isSigSupported(m.Type()) {
 				g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", iface.obj.Name(), m.Name())
@@ -1085,8 +1086,8 @@ func (g *javaGen) genJava() error {
 }
 
 const (
-	javaProxyPreamble = `static final class Proxy extends Seq.Proxy implements %s {
-    Proxy(Seq.Ref ref) { super(ref); }
+	javaProxyPreamble = `private static final class proxy%[1]s extends Seq.Proxy implements %[1]s {
+    proxy%[1]s(Seq.Ref ref) { super(ref); }
 
 `
 	javaPreamble = `// Java class %[1]s.%[2]s is a proxy for talking to a Go program.

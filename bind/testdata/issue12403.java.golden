@@ -22,13 +22,13 @@ public abstract class Issue12403 {
     public interface Parsable {
         public String FromJSON(String jstr);
         public String ToJSON() throws Exception;
-        
-        static final class Proxy extends Seq.Proxy implements Parsable {
-            Proxy(Seq.Ref ref) { super(ref); }
-        
-            public native String FromJSON(String jstr);
-            public native String ToJSON() throws Exception;
-        }
+    }
+    
+    private static final class proxyParsable extends Seq.Proxy implements Parsable {
+        proxyParsable(Seq.Ref ref) { super(ref); }
+    
+        public native String FromJSON(String jstr);
+        public native String ToJSON() throws Exception;
     }
     
     
