@@ -85,12 +85,12 @@ public abstract class Structs {
     
     public interface I {
         public void M();
-        
-        static final class Proxy extends Seq.Proxy implements I {
-            Proxy(Seq.Ref ref) { super(ref); }
-        
-            public native void M();
-        }
+    }
+    
+    private static final class proxyI extends Seq.Proxy implements I {
+        proxyI(Seq.Ref ref) { super(ref); }
+    
+        public native void M();
     }
     
     
