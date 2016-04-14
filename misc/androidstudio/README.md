@@ -23,6 +23,9 @@ gobind {
 
   // Absolute path to the go binary
   GO "/usr/local/go/bin/go"
+
+  // Pass extra parameters to command line
+  // GOMOBILEFLAGS "-javapkg my.java.package"
 }
 </pre>
 
