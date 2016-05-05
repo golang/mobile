@@ -97,6 +97,13 @@ func runBind(cmd *command) error {
 		return err
 	}
 
+	// check if any of the package is main
+	for _, pkg := range pkgs {
+		if pkg.Name == "main" {
+			return fmt.Errorf("binding 'main' package (%s) is not supported", pkg.ImportComment)
+		}
+	}
+
 	switch targetOS {
 	case "android":
 		return goAndroidBind(pkgs, targetArchs)
