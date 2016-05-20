@@ -106,7 +106,17 @@ func goIOSBuild(pkg *build.Package) (map[string]bool, error) {
 
 	// TODO(jbd): Fallback to copying if renaming fails.
 	if buildO == "" {
-		buildO = path.Base(pkg.ImportPath) + ".app"
+		n := pkg.ImportPath
+		if n == "." {
+			// use cwd name
+			cwd, err := os.Getwd()
+			if err != nil {
+				return nil, fmt.Errorf("cannot create .app; cannot get the current working dir: %v", err)
+			}
+			n = cwd
+		}
+		n = path.Base(n)
+		buildO = n + ".app"
 	}
 	if buildX {
 		printcmd("mv %s %s", tmpdir+"/build/Release-iphoneos/main.app", buildO)
