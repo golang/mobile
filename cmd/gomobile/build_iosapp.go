@@ -20,7 +20,7 @@ import (
 func goIOSBuild(pkg *build.Package) (map[string]bool, error) {
 	src := pkg.ImportPath
 	if buildO != "" && !strings.HasSuffix(buildO, ".app") {
-		return nil, fmt.Errorf("-o must have an .app for target=ios")
+		return nil, fmt.Errorf("-o must have an .app for -target=ios")
 	}
 
 	productName := rfc1034Label(path.Base(pkg.ImportPath))
