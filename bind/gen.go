@@ -78,46 +78,59 @@ type generator struct {
 // with the same name. Perhaps use the index from the order the package is
 // generated.
 func pkgPrefix(pkg *types.Package) string {
+	// The error type has no package
+	if pkg == nil {
+		return ""
+	}
 	return pkg.Name()
 }
 
 func (g *generator) init() {
-	g.pkgName = g.pkg.Name()
+	if g.pkg != nil {
+		g.pkgName = g.pkg.Name()
+	}
 	g.pkgPrefix = pkgPrefix(g.pkg)
 
-	scope := g.pkg.Scope()
-	hasExported := false
-	for _, name := range scope.Names() {
-		obj := scope.Lookup(name)
-		if !obj.Exported() {
-			continue
-		}
-		hasExported = true
-		switch obj := obj.(type) {
-		case *types.Func:
-			if isCallable(obj) {
-				g.funcs = append(g.funcs, obj)
+	if g.pkg != nil {
+		scope := g.pkg.Scope()
+		hasExported := false
+		for _, name := range scope.Names() {
+			obj := scope.Lookup(name)
+			if !obj.Exported() {
+				continue
 			}
-		case *types.TypeName:
-			named := obj.Type().(*types.Named)
-			switch t := named.Underlying().(type) {
-			case *types.Struct:
-				g.structs = append(g.structs, structInfo{obj, t})
-			case *types.Interface:
-				g.interfaces = append(g.interfaces, interfaceInfo{obj, t, makeIfaceSummary(t)})
+			hasExported = true
+			switch obj := obj.(type) {
+			case *types.Func:
+				if isCallable(obj) {
+					g.funcs = append(g.funcs, obj)
+				}
+			case *types.TypeName:
+				named := obj.Type().(*types.Named)
+				switch t := named.Underlying().(type) {
+				case *types.Struct:
+					g.structs = append(g.structs, structInfo{obj, t})
+				case *types.Interface:
+					g.interfaces = append(g.interfaces, interfaceInfo{obj, t, makeIfaceSummary(t)})
+				default:
+					g.otherNames = append(g.otherNames, obj)
+				}
+			case *types.Const:
+				g.constants = append(g.constants, obj)
+			case *types.Var:
+				g.vars = append(g.vars, obj)
 			default:
-				g.otherNames = append(g.otherNames, obj)
+				g.errorf("unsupported exported type for %s: %T", obj.Name(), obj)
 			}
-		case *types.Const:
-			g.constants = append(g.constants, obj)
-		case *types.Var:
-			g.vars = append(g.vars, obj)
-		default:
-			g.errorf("unsupported exported type for %s: %T", obj.Name(), obj)
 		}
-	}
-	if !hasExported {
-		g.errorf("no exported names in the package %q", g.pkg.Path())
+		if !hasExported {
+			g.errorf("no exported names in the package %q", g.pkg.Path())
+		}
+	} else {
+		// Bind the single supported type from the universe scope, error.
+		errType := types.Universe.Lookup("error").(*types.TypeName)
+		t := errType.Type().Underlying().(*types.Interface)
+		g.interfaces = append(g.interfaces, interfaceInfo{errType, t, makeIfaceSummary(t)})
 	}
 	for _, p := range g.allPkg {
 		scope := p.Scope()
@@ -150,9 +163,6 @@ func (g *generator) errorf(format string, args ...interface{}) {
 // cgoType returns the name of a Cgo type suitable for converting a value of
 // the given type.
 func (g *generator) cgoType(t types.Type) string {
-	if isErrorType(t) {
-		return g.cgoType(types.Typ[types.String])
-	}
 	switch t := t.(type) {
 	case *types.Basic:
 		switch t.Kind() {

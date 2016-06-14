@@ -8,7 +8,7 @@
 
 #include <stdint.h>
 #include <objc/objc.h>
-nstring cproxyinterfaces_Error_Err(int32_t refnum);
+int32_t cproxyinterfaces_Error_Err(int32_t refnum);
 
 int32_t cproxyinterfaces_I_Rand(int32_t refnum);
 

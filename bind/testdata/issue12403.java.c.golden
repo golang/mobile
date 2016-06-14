@@ -50,7 +50,7 @@ Java_go_issue12403_Issue12403_00024proxyParsable_ToJSON(JNIEnv* env, jobject thi
     int32_t o = go_seq_to_refnum(env, this);
     struct proxyissue12403_Parsable_ToJSON_return res = proxyissue12403_Parsable_ToJSON(o);
     jstring _r0 = go_seq_to_java_string(env, res.r0);
-    jstring _r1 = go_seq_to_java_string(env, res.r1);
+    jobject _r1 = go_seq_from_refnum(env, res.r1, proxy_class__error, proxy_class__error_cons);
     go_seq_maybe_throw_exception(env, _r1);
     return _r0;
 }
@@ -60,8 +60,8 @@ struct cproxyissue12403_Parsable_ToJSON_return cproxyissue12403_Parsable_ToJSON(
     jobject o = go_seq_from_refnum(env, refnum, proxy_class_issue12403_Parsable, proxy_class_issue12403_Parsable_cons);
     jstring res = (*env)->CallObjectMethod(env, o, mid_Parsable_ToJSON);
     nstring _res = go_seq_from_java_string(env, res);
-    jstring exc = go_seq_get_exception_message(env);
-    nstring _exc = go_seq_from_java_string(env, exc);
+    jobject exc = go_seq_wrap_exception(env);
+    int32_t _exc = go_seq_to_refnum(env, exc);
     cproxyissue12403_Parsable_ToJSON_return sres = {
     	_res, _exc
     };

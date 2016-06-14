@@ -182,7 +182,7 @@ static NSString* errDomain = @"go.vars";
 
 + (id<GoVarsI>) anInterface {
 	int32_t r0 = var_getvars_AnInterface();
-	id<GoVarsI> _r0 = nil;
+	GoVarsI* _r0 = nil;
 	GoSeqRef* _r0_ref = go_seq_from_refnum(r0);
 	if (_r0_ref != NULL) {
 		_r0 = _r0_ref.obj;

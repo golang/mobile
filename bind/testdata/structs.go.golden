@@ -52,7 +52,7 @@ func proxystructs_S_Y_Get(refnum C.int32_t) C.double {
 }
 
 //export proxystructs_S_Identity
-func proxystructs_S_Identity(refnum C.int32_t) (C.int32_t, C.nstring) {
+func proxystructs_S_Identity(refnum C.int32_t) (C.int32_t, C.int32_t) {
 	ref := _seq.FromRefNum(int32(refnum))
 	v := ref.Get().(*structs.S)
 	res_0, res_1 := v.Identity()
@@ -60,13 +60,10 @@ func proxystructs_S_Identity(refnum C.int32_t) (C.int32_t, C.nstring) {
 	if res_0 != nil {
 		_res_0 = C.int32_t(_seq.ToRefNum(res_0))
 	}
-	var _res_1_str string
-	if res_1 == nil {
-		_res_1_str = ""
-	} else {
-		_res_1_str = res_1.Error()
+	var _res_1 C.int32_t = _seq.NullRefNum
+	if res_1 != nil {
+		_res_1 = C.int32_t(_seq.ToRefNum(res_1))
 	}
-	_res_1 := encodeString(_res_1_str)
 	return _res_0, _res_1
 }
 
@@ -124,7 +121,7 @@ func proxystructs__Identity(param_s C.int32_t) C.int32_t {
 }
 
 //export proxystructs__IdentityWithError
-func proxystructs__IdentityWithError(param_s C.int32_t) (C.int32_t, C.nstring) {
+func proxystructs__IdentityWithError(param_s C.int32_t) (C.int32_t, C.int32_t) {
 	// Must be a Go object
 	_param_s_ref := _seq.FromRefNum(int32(param_s))
 	_param_s := _param_s_ref.Get().(*structs.S)
@@ -133,12 +130,9 @@ func proxystructs__IdentityWithError(param_s C.int32_t) (C.int32_t, C.nstring) {
 	if res_0 != nil {
 		_res_0 = C.int32_t(_seq.ToRefNum(res_0))
 	}
-	var _res_1_str string
-	if res_1 == nil {
-		_res_1_str = ""
-	} else {
-		_res_1_str = res_1.Error()
+	var _res_1 C.int32_t = _seq.NullRefNum
+	if res_1 != nil {
+		_res_1 = C.int32_t(_seq.ToRefNum(res_1))
 	}
-	_res_1 := encodeString(_res_1_str)
 	return _res_0, _res_1
 }

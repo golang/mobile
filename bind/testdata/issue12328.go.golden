@@ -22,23 +22,27 @@ import (
 var _ = _seq.FromRefNum
 
 //export proxyissue12328_T_Err_Set
-func proxyissue12328_T_Err_Set(refnum C.int32_t, v C.nstring) {
+func proxyissue12328_T_Err_Set(refnum C.int32_t, v C.int32_t) {
 	ref := _seq.FromRefNum(int32(refnum))
-	_v_str := decodeString(v)
-	_v := toError(_v_str)
+	var _v error
+	_v_ref := _seq.FromRefNum(int32(v))
+	if _v_ref != nil {
+		if v < 0 { // go object
+			_v = _v_ref.Get().(error)
+		} else { // foreign object
+			_v = (*proxy_error)(_v_ref)
+		}
+	}
 	ref.Get().(*issue12328.T).Err = _v
 }
 
 //export proxyissue12328_T_Err_Get
-func proxyissue12328_T_Err_Get(refnum C.int32_t) C.nstring {
+func proxyissue12328_T_Err_Get(refnum C.int32_t) C.int32_t {
 	ref := _seq.FromRefNum(int32(refnum))
 	v := ref.Get().(*issue12328.T).Err
-	var _v_str string
-	if v == nil {
-		_v_str = ""
-	} else {
-		_v_str = v.Error()
+	var _v C.int32_t = _seq.NullRefNum
+	if v != nil {
+		_v = C.int32_t(_seq.ToRefNum(v))
 	}
-	_v := encodeString(_v_str)
 	return _v
 }

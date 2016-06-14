@@ -12,7 +12,7 @@ nstring cproxyissue12403_Parsable_FromJSON(int32_t refnum, nstring jstr);
 
 typedef struct cproxyissue12403_Parsable_ToJSON_return {
 	nstring r0;
-	nstring r1;
+	int32_t r1;
 } cproxyissue12403_Parsable_ToJSON_return;
 struct cproxyissue12403_Parsable_ToJSON_return cproxyissue12403_Parsable_ToJSON(int32_t refnum);
 

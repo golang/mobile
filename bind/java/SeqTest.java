@@ -518,4 +518,22 @@ public class SeqTest extends InstrumentationTestCase {
     };
     assertTrue("Go struct passed through Java should not be wrapped", Testpkg.CallCDupper(cdup));
   }
+
+  public void testEmptyError() {
+    try {
+      Testpkg.EmptyError();
+      fail("Empty error wasn't caught");
+    } catch (Exception e) {
+    }
+    Testpkg.EmptyErrorer empty = new Testpkg.EmptyErrorer() {
+      @Override public void EmptyError() throws Exception {
+        throw new Exception("");
+      }
+    };
+    try {
+      Testpkg.CallEmptyError(empty);
+      fail("Empty exception wasn't caught");
+    } catch (Exception e) {
+    }
+  }
 }

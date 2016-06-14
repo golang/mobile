@@ -174,19 +174,26 @@ func (b *binder) GenObjcSupport(outdir string) error {
 
 func (b *binder) GenObjc(pkg *types.Package, allPkg []*types.Package, outdir string) (string, error) {
 	const bindPrefixDefault = "Go"
-	if bindPrefix == "" {
+	if bindPrefix == "" || pkg == nil {
 		bindPrefix = bindPrefixDefault
 	}
-	name := strings.Title(pkg.Name())
+	pkgName := ""
+	pkgPath := ""
+	if pkg != nil {
+		pkgName = pkg.Name()
+		pkgPath = pkg.Path()
+	} else {
+		pkgName = "universe"
+	}
 	bindOption := "-lang=objc"
 	if bindPrefix != bindPrefixDefault {
 		bindOption += " -prefix=" + bindPrefix
 	}
 
-	fileBase := bindPrefix + name
+	fileBase := bindPrefix + strings.Title(pkgName)
 	mfile := filepath.Join(outdir, fileBase+".m")
 	hfile := filepath.Join(outdir, fileBase+".h")
-	gohfile := filepath.Join(outdir, pkg.Name()+".h")
+	gohfile := filepath.Join(outdir, pkgName+".h")
 
 	conf := &bind.GeneratorConfig{
 		Fset:   b.fset,
@@ -195,7 +202,7 @@ func (b *binder) GenObjc(pkg *types.Package, allPkg []*types.Package, outdir str
 	}
 	generate := func(w io.Writer) error {
 		if buildX {
-			printcmd("gobind %s -outdir=%s %s", bindOption, outdir, pkg.Path())
+			printcmd("gobind %s -outdir=%s %s", bindOption, outdir, pkgPath)
 		}
 		if buildN {
 			return nil
@@ -245,13 +252,25 @@ func (b *binder) GenJavaSupport(outdir string) error {
 }
 
 func (b *binder) GenJava(pkg *types.Package, allPkg []*types.Package, outdir, javadir string) error {
-	className := strings.Title(pkg.Name())
+	var className string
+	pkgName := ""
+	pkgPath := ""
+	javaPkg := ""
+	if pkg != nil {
+		className = strings.Title(pkg.Name())
+		pkgName = pkg.Name()
+		pkgPath = pkg.Path()
+		javaPkg = bindJavaPkg
+	} else {
+		pkgName = "universe"
+		className = "Universe"
+	}
 	javaFile := filepath.Join(javadir, className+".java")
-	cFile := filepath.Join(outdir, "java_"+pkg.Name()+".c")
-	hFile := filepath.Join(outdir, pkg.Name()+".h")
+	cFile := filepath.Join(outdir, "java_"+pkgName+".c")
+	hFile := filepath.Join(outdir, pkgName+".h")
 	bindOption := "-lang=java"
-	if bindJavaPkg != "" {
-		bindOption += " -javapkg=" + bindJavaPkg
+	if javaPkg != "" {
+		bindOption += " -javapkg=" + javaPkg
 	}
 
 	conf := &bind.GeneratorConfig{
@@ -261,13 +280,13 @@ func (b *binder) GenJava(pkg *types.Package, allPkg []*types.Package, outdir, ja
 	}
 	generate := func(w io.Writer) error {
 		if buildX {
-			printcmd("gobind %s -outdir=%s %s", bindOption, javadir, pkg.Path())
+			printcmd("gobind %s -outdir=%s %s", bindOption, javadir, pkgPath)
 		}
 		if buildN {
 			return nil
 		}
 		conf.Writer = w
-		return bind.GenJava(conf, bindJavaPkg, bind.Java)
+		return bind.GenJava(conf, javaPkg, bind.Java)
 	}
 	if err := writeFile(javaFile, generate); err != nil {
 		return err
@@ -293,12 +312,17 @@ func (b *binder) GenJava(pkg *types.Package, allPkg []*types.Package, outdir, ja
 }
 
 func (b *binder) GenGo(pkg *types.Package, allPkg []*types.Package, outdir string) error {
-	pkgName := "go_" + pkg.Name()
+	pkgName := "go_"
+	pkgPath := ""
+	if pkg != nil {
+		pkgName += pkg.Name()
+		pkgPath = pkg.Path()
+	}
 	goFile := filepath.Join(outdir, pkgName+"main.go")
 
 	generate := func(w io.Writer) error {
 		if buildX {
-			printcmd("gobind -lang=go -outdir=%s %s", outdir, pkg.Path())
+			printcmd("gobind -lang=go -outdir=%s %s", outdir, pkgPath)
 		}
 		if buildN {
 			return nil

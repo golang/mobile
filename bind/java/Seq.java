@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.logging.Logger;
 
+import go.Universe;
+
 // Seq is a sequence of machine-dependent encoded values.
 // Used by automatically generated language bindings to talk to Go.
 public class Seq {
@@ -34,6 +36,7 @@ public class Seq {
 			log.severe("LoadJNI class bad field: " + e);
 		}
 		init();
+		Universe.touch();
 	}
 
 	private static native void init();
@@ -44,8 +47,16 @@ public class Seq {
 	private Seq() {
 	}
 
-	private static void throwException(String msg) throws Exception { // JNI helper
-		throw new Exception(msg);
+	private static void throwException(Universe.error err) throws Exception {
+		throw new Exception(err.Error());
+	}
+
+	private static Universe.error wrapThrowable(final Throwable t) {
+		return new Universe.error() {
+			@Override public String Error() {
+				return t.getMessage();
+			}
+		};
 	}
 
 	// ctx is an android.context.Context.

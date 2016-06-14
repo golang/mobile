@@ -7,6 +7,7 @@
 #define __GoIssue12403_H__
 
 #include <Foundation/Foundation.h>
+#include "GoUniverse.h"
 
 @protocol GoIssue12403Parsable;
 @class GoIssue12403Parsable;

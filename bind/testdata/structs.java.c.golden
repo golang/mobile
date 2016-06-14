@@ -47,7 +47,7 @@ Java_go_structs_Structs_IdentityWithError(JNIEnv* env, jclass clazz, jobject s) 
     int32_t _s = go_seq_to_refnum(env, s);
     struct proxystructs__IdentityWithError_return res = proxystructs__IdentityWithError(_s);
     jobject _r0 = go_seq_from_refnum(env, res.r0, proxy_class_structs_S, proxy_class_structs_S_cons);
-    jstring _r1 = go_seq_to_java_string(env, res.r1);
+    jobject _r1 = go_seq_from_refnum(env, res.r1, proxy_class__error, proxy_class__error_cons);
     go_seq_maybe_throw_exception(env, _r1);
     return _r0;
 }
@@ -57,7 +57,7 @@ Java_go_structs_Structs_00024S_Identity(JNIEnv* env, jobject this) {
     int32_t o = go_seq_to_refnum(env, this);
     struct proxystructs_S_Identity_return res = proxystructs_S_Identity(o);
     jobject _r0 = go_seq_from_refnum(env, res.r0, proxy_class_structs_S, proxy_class_structs_S_cons);
-    jstring _r1 = go_seq_to_java_string(env, res.r1);
+    jobject _r1 = go_seq_from_refnum(env, res.r1, proxy_class__error, proxy_class__error_cons);
     go_seq_maybe_throw_exception(env, _r1);
     return _r0;
 }

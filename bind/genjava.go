@@ -199,12 +199,6 @@ func isJavaPrimitive(T types.Type) bool {
 
 // jniType returns a string that can be used as a JNI type.
 func (g *javaGen) jniType(T types.Type) string {
-	if isErrorType(T) {
-		// The error type is usually translated into an exception in
-		// Java, however the type can be exposed in other ways, such
-		// as an exported field.
-		return g.jniType(types.Typ[types.String])
-	}
 	switch T := T.(type) {
 	case *types.Basic:
 		switch T.Kind() {
@@ -305,7 +299,7 @@ func (g *javaGen) javaType(T types.Type) string {
 	case *types.Named:
 		n := T.Obj()
 		nPkg := n.Pkg()
-		if !g.validPkg(nPkg) {
+		if !isErrorType(T) && !g.validPkg(nPkg) {
 			g.errorf("type %s is in %s, which is not bound", n.Name(), nPkg)
 			break
 		}
@@ -442,10 +436,6 @@ func (g *javaGen) genVar(o *types.Var) {
 }
 
 func (g *javaGen) genJavaToC(varName string, t types.Type, mode varMode) {
-	if isErrorType(t) {
-		g.genJavaToC(varName, types.Typ[types.String], mode)
-		return
-	}
 	switch t := t.(type) {
 	case *types.Basic:
 		switch t.Kind() {
@@ -481,10 +471,6 @@ func (g *javaGen) genJavaToC(varName string, t types.Type, mode varMode) {
 }
 
 func (g *javaGen) genCToJava(toName, fromName string, t types.Type, mode varMode) {
-	if isErrorType(t) {
-		g.genCToJava(toName, fromName, types.Typ[types.String], mode)
-		return
-	}
 	switch t := t.(type) {
 	case *types.Basic:
 		switch t.Kind() {
@@ -530,7 +516,7 @@ func (g *javaGen) genCToJava(toName, fromName string, t types.Type, mode varMode
 
 func (g *javaGen) genFromRefnum(toName, fromName string, t types.Type, o *types.TypeName) {
 	oPkg := o.Pkg()
-	if !g.validPkg(oPkg) {
+	if !isErrorType(o.Type()) && !g.validPkg(oPkg) {
 		g.errorf("type %s is defined in package %s, which is not bound", t, oPkg)
 		return
 	}
@@ -554,6 +540,9 @@ var javaNameReplacer = strings.NewReplacer(
 func (g *javaGen) javaPkgName(pkg *types.Package) string {
 	if g.javaPkg != "" {
 		return g.javaPkg
+	}
+	if pkg == nil {
+		return "go"
 	}
 	s := javaNameReplacer.Replace(pkg.Name())
 	// Look for Java keywords that are not Go keywords, and avoid using
@@ -581,6 +570,9 @@ func (g *javaGen) className() string {
 }
 
 func className(pkg *types.Package) string {
+	if pkg == nil {
+		return "Universe"
+	}
 	return strings.Title(javaNameReplacer.Replace(pkg.Name()))
 }
 
@@ -741,10 +733,6 @@ func (g *javaGen) genJNIFunc(o *types.Func, sName string, proxy bool) {
 
 // genRelease cleans up arguments that weren't copied in genJavaToC.
 func (g *javaGen) genRelease(varName string, t types.Type, mode varMode) {
-	if isErrorType(t) {
-		g.genRelease(varName, types.Typ[types.String], mode)
-		return
-	}
 	switch t := t.(type) {
 	case *types.Basic:
 	case *types.Slice:
@@ -801,9 +789,9 @@ func (g *javaGen) genMethodInterfaceProxy(oName string, m *types.Func) {
 			rets = append(rets, retName)
 		}
 		if res.Len() == 2 || isErrorType(t) {
-			g.Printf("jstring exc = go_seq_get_exception_message(env);\n")
-			st := types.Typ[types.String]
-			g.genJavaToC("exc", st, modeRetained)
+			g.Printf("jobject exc = go_seq_wrap_exception(env);\n")
+			errType := types.Universe.Lookup("error").Type()
+			g.genJavaToC("exc", errType, modeRetained)
 			retName = "_exc"
 			rets = append(rets, "_exc")
 		}
@@ -824,7 +812,11 @@ func (g *javaGen) genMethodInterfaceProxy(oName string, m *types.Func) {
 }
 
 func (g *javaGen) genH() error {
-	g.Printf(hPreamble, g.gobindOpts(), g.pkg.Path(), g.className())
+	pkgPath := ""
+	if g.pkg != nil {
+		pkgPath = g.pkg.Path()
+	}
+	g.Printf(hPreamble, g.gobindOpts(), pkgPath, g.className())
 	for _, iface := range g.interfaces {
 		g.Printf("extern jclass proxy_class_%s_%s;\n", g.pkgPrefix, iface.obj.Name())
 		g.Printf("extern jmethodID proxy_class_%s_%s_cons;\n", g.pkgPrefix, iface.obj.Name())
@@ -850,9 +842,6 @@ func (g *javaGen) genH() error {
 }
 
 func (g *javaGen) jniCallType(t types.Type) string {
-	if isErrorType(t) {
-		return g.jniCallType(types.Typ[types.String])
-	}
 	switch t := t.(type) {
 	case *types.Basic:
 		switch t.Kind() {
@@ -897,9 +886,6 @@ func (g *javaGen) jniClassSigPrefix(pkg *types.Package) string {
 }
 
 func (g *javaGen) jniSigType(T types.Type) string {
-	if isErrorType(T) {
-		return g.jniSigType(types.Typ[types.String])
-	}
 	switch T := T.(type) {
 	case *types.Basic:
 		switch T.Kind() {
@@ -943,11 +929,20 @@ func (g *javaGen) jniSigType(T types.Type) string {
 }
 
 func (g *javaGen) genC() error {
-	g.Printf(cPreamble, g.gobindOpts(), g.pkg.Path(), g.pkg.Name())
-	g.Printf("#include %q\n", g.pkg.Name()+".h")
-	for _, pkg := range g.pkg.Imports() {
-		if g.validPkg(pkg) {
-			g.Printf("#include \"%s.h\"\n", pkg.Name())
+	var pkgName, pkgPath string
+	if g.pkg != nil {
+		pkgName = g.pkg.Name()
+		pkgPath = g.pkg.Path()
+	} else {
+		pkgName = "universe"
+	}
+	g.Printf(cPreamble, g.gobindOpts(), pkgPath)
+	g.Printf("#include %q\n", pkgName+".h")
+	if g.pkg != nil {
+		for _, pkg := range g.pkg.Imports() {
+			if g.validPkg(pkg) {
+				g.Printf("#include \"%s.h\"\n", pkg.Name())
+			}
 		}
 	}
 	g.Printf("\n")
@@ -1035,16 +1030,22 @@ func (g *javaGen) genC() error {
 }
 
 func (g *javaGen) genJava() error {
-	g.Printf(javaPreamble, g.javaPkgName(g.pkg), g.className(), g.gobindOpts(), g.pkg.Path())
+	pkgPath := ""
+	if g.pkg != nil {
+		pkgPath = g.pkg.Path()
+	}
+	g.Printf(javaPreamble, g.javaPkgName(g.pkg), g.className(), g.gobindOpts(), pkgPath)
 
 	g.Printf("public abstract class %s {\n", g.className())
 	g.Indent()
 	g.Printf("static {\n")
 	g.Indent()
 	g.Printf("Seq.touch(); // for loading the native library\n")
-	for _, p := range g.pkg.Imports() {
-		if g.validPkg(p) {
-			g.Printf("%s.%s.touch();\n", g.javaPkgName(p), className(p))
+	if g.pkg != nil {
+		for _, p := range g.pkg.Imports() {
+			if g.validPkg(p) {
+				g.Printf("%s.%s.touch();\n", g.javaPkgName(p), className(p))
+			}
 		}
 	}
 	g.Printf("init();\n")
