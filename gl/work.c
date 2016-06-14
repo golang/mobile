@@ -11,10 +11,25 @@
 #if defined(GL_ES_VERSION_3_0) && GL_ES_VERSION_3_0
 #else
 #include <stdio.h>
-void glBlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter) {
+static void gles3missing() {
 	printf("GLES3 function is missing\n");
 	exit(2);
 }
+static void glUniformMatrix2x3fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value) { gles3missing(); }
+static void glUniformMatrix3x2fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value) { gles3missing(); }
+static void glUniformMatrix2x4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value) { gles3missing(); }
+static void glUniformMatrix4x2fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value) { gles3missing(); }
+static void glUniformMatrix3x4fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value) { gles3missing(); }
+static void glUniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value) { gles3missing(); }
+static void glBlitFramebuffer(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter) { gles3missing(); }
+static void glUniform1ui(GLint location, GLuint v0) { gles3missing(); }
+static void glUniform2ui(GLint location, GLuint v0, GLuint v1) { gles3missing(); }
+static void glUniform3ui(GLint location, GLuint v0, GLuint v1, GLuint v2) { gles3missing(); }
+static void glUniform4ui(GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3) { gles3missing(); }
+static void glUniform1uiv(GLint location, GLsizei count, const GLuint *value) { gles3missing(); }
+static void glUniform2uiv(GLint location, GLsizei count, const GLuint *value) { gles3missing(); }
+static void glUniform3uiv(GLint location, GLsizei count, const GLuint *value) { gles3missing(); }
+static void glUniform4uiv(GLint location, GLsizei count, const GLuint *value) { gles3missing(); }
 #endif
 
 uintptr_t processFn(struct fnargs* args, char* parg) {
@@ -398,6 +413,9 @@ uintptr_t processFn(struct fnargs* args, char* parg) {
 	case glfnUniform1i:
 		glUniform1i((GLint)args->a0, (GLint)args->a1);
 		break;
+	case glfnUniform1ui:
+		glUniform1ui((GLint)args->a0, (GLuint)args->a1);
+		break;
 	case glfnUniform1iv:
 		glUniform1iv((GLint)args->a0, (GLsizeiptr)args->a1, (GLvoid*)parg);
 		break;
@@ -409,6 +427,9 @@ uintptr_t processFn(struct fnargs* args, char* parg) {
 		break;
 	case glfnUniform2i:
 		glUniform2i((GLint)args->a0, (GLint)args->a1, (GLint)args->a2);
+		break;
+	case glfnUniform2ui:
+		glUniform2ui((GLint)args->a0, (GLuint)args->a1, (GLuint)args->a2);
 		break;
 	case glfnUniform2iv:
 		glUniform2iv((GLint)args->a0, (GLsizeiptr)args->a1, (GLvoid*)parg);
@@ -422,6 +443,9 @@ uintptr_t processFn(struct fnargs* args, char* parg) {
 	case glfnUniform3i:
 		glUniform3i((GLint)args->a0, (GLint)args->a1, (GLint)args->a2, (GLint)args->a3);
 		break;
+	case glfnUniform3ui:
+		glUniform3ui((GLint)args->a0, (GLuint)args->a1, (GLuint)args->a2, (GLuint)args->a3);
+		break;
 	case glfnUniform3iv:
 		glUniform3iv((GLint)args->a0, (GLsizeiptr)args->a1, (GLvoid*)parg);
 		break;
@@ -434,6 +458,9 @@ uintptr_t processFn(struct fnargs* args, char* parg) {
 	case glfnUniform4i:
 		glUniform4i((GLint)args->a0, (GLint)args->a1, (GLint)args->a2, (GLint)args->a3, (GLint)args->a4);
 		break;
+	case glfnUniform4ui:
+		glUniform4ui((GLint)args->a0, (GLuint)args->a1, (GLuint)args->a2, (GLuint)args->a3, (GLuint)args->a4);
+		break;
 	case glfnUniform4iv:
 		glUniform4iv((GLint)args->a0, (GLsizeiptr)args->a1, (GLvoid*)parg);
 		break;
@@ -445,6 +472,24 @@ uintptr_t processFn(struct fnargs* args, char* parg) {
 		break;
 	case glfnUniformMatrix4fv:
 		glUniformMatrix4fv((GLint)args->a0, (GLsizeiptr)args->a1, 0, (GLvoid*)parg);
+		break;
+	case glfnUniformMatrix2x3fv:
+		glUniformMatrix2x3fv((GLint)args->a0, (GLsizeiptr)args->a1, 0, (GLvoid*)parg);
+		break;
+	case glfnUniformMatrix3x2fv:
+		glUniformMatrix3x2fv((GLint)args->a0, (GLsizeiptr)args->a1, 0, (GLvoid*)parg);
+		break;
+	case glfnUniformMatrix2x4fv:
+		glUniformMatrix2x4fv((GLint)args->a0, (GLsizeiptr)args->a1, 0, (GLvoid*)parg);
+		break;
+	case glfnUniformMatrix4x2fv:
+		glUniformMatrix4x2fv((GLint)args->a0, (GLsizeiptr)args->a1, 0, (GLvoid*)parg);
+		break;
+	case glfnUniformMatrix3x4fv:
+		glUniformMatrix3x4fv((GLint)args->a0, (GLsizeiptr)args->a1, 0, (GLvoid*)parg);
+		break;
+	case glfnUniformMatrix4x3fv:
+		glUniformMatrix4x3fv((GLint)args->a0, (GLsizeiptr)args->a1, 0, (GLvoid*)parg);
 		break;
 	case glfnUseProgram:
 		glUseProgram((GLint)args->a0);
