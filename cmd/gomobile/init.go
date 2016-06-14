@@ -566,7 +566,7 @@ func fetch(url string) (dst string, err error) {
 	}
 	hash := hex.EncodeToString(hashw.Sum(nil))
 	if fetchHashes[name] != hash {
-		return "", fmt.Errorf("sha256 for %q: %v, want %v", name, hash, fetchHashes[name])
+		return "", fmt.Errorf("sha256 for %q: %v, want %v. Try 'gomobile clean'", name, hash, fetchHashes[name])
 	}
 	if err = os.Rename(f.Name(), dst); err != nil {
 		return "", err
