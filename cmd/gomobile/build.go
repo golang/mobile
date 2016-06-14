@@ -253,6 +253,8 @@ func init() {
 
 	addBuildFlags(cmdBind)
 	addBuildFlagsNVXWork(cmdBind)
+
+	addBuildFlagsNVXWork(cmdClean)
 }
 
 func goBuild(src string, env []string, args ...string) error {
