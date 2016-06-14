@@ -714,7 +714,7 @@ func (g *objcGen) genInterfaceInterface(obj *types.TypeName, summary ifaceSummar
 	for _, m := range summary.callable {
 		if !g.isSigSupported(m.Type()) {
 			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", obj.Name(), m.Name())
-			return
+			continue
 		}
 		s := g.funcSummary(m)
 		g.Printf("- %s;\n", s.asMethod(g))
