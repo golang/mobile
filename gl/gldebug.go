@@ -3455,6 +3455,102 @@ func (ctx *context) Viewport(x, y, width, height int) {
 		blocking: true})
 }
 
+func (ctx context3) UniformMatrix2x3fv(dst Uniform, src []float32) {
+	defer func() {
+		errstr := ctx.errDrain()
+		log.Printf("gl.UniformMatrix2x3fv(%v, len(%d)) %v", dst, len(src), errstr)
+	}()
+	ctx.enqueueDebug(call{
+		args: fnargs{
+			fn: glfnUniformMatrix2x3fv,
+			a0: dst.c(),
+			a1: uintptr(len(src) / 6),
+		},
+		parg:     unsafe.Pointer(&src[0]),
+		blocking: true,
+	})
+}
+
+func (ctx context3) UniformMatrix3x2fv(dst Uniform, src []float32) {
+	defer func() {
+		errstr := ctx.errDrain()
+		log.Printf("gl.UniformMatrix3x2fv(%v, len(%d)) %v", dst, len(src), errstr)
+	}()
+	ctx.enqueueDebug(call{
+		args: fnargs{
+			fn: glfnUniformMatrix3x2fv,
+			a0: dst.c(),
+			a1: uintptr(len(src) / 6),
+		},
+		parg:     unsafe.Pointer(&src[0]),
+		blocking: true,
+	})
+}
+
+func (ctx context3) UniformMatrix2x4fv(dst Uniform, src []float32) {
+	defer func() {
+		errstr := ctx.errDrain()
+		log.Printf("gl.UniformMatrix2x4fv(%v, len(%d)) %v", dst, len(src), errstr)
+	}()
+	ctx.enqueueDebug(call{
+		args: fnargs{
+			fn: glfnUniformMatrix2x4fv,
+			a0: dst.c(),
+			a1: uintptr(len(src) / 8),
+		},
+		parg:     unsafe.Pointer(&src[0]),
+		blocking: true,
+	})
+}
+
+func (ctx context3) UniformMatrix4x2fv(dst Uniform, src []float32) {
+	defer func() {
+		errstr := ctx.errDrain()
+		log.Printf("gl.UniformMatrix4x2fv(%v, len(%d)) %v", dst, len(src), errstr)
+	}()
+	ctx.enqueueDebug(call{
+		args: fnargs{
+			fn: glfnUniformMatrix4x2fv,
+			a0: dst.c(),
+			a1: uintptr(len(src) / 8),
+		},
+		parg:     unsafe.Pointer(&src[0]),
+		blocking: true,
+	})
+}
+
+func (ctx context3) UniformMatrix3x4fv(dst Uniform, src []float32) {
+	defer func() {
+		errstr := ctx.errDrain()
+		log.Printf("gl.UniformMatrix3x4fv(%v, len(%d)) %v", dst, len(src), errstr)
+	}()
+	ctx.enqueueDebug(call{
+		args: fnargs{
+			fn: glfnUniformMatrix3x4fv,
+			a0: dst.c(),
+			a1: uintptr(len(src) / 12),
+		},
+		parg:     unsafe.Pointer(&src[0]),
+		blocking: true,
+	})
+}
+
+func (ctx context3) UniformMatrix4x3fv(dst Uniform, src []float32) {
+	defer func() {
+		errstr := ctx.errDrain()
+		log.Printf("gl.UniformMatrix4x3fv(%v, len(%d)) %v", dst, len(src), errstr)
+	}()
+	ctx.enqueueDebug(call{
+		args: fnargs{
+			fn: glfnUniformMatrix4x3fv,
+			a0: dst.c(),
+			a1: uintptr(len(src) / 12),
+		},
+		parg:     unsafe.Pointer(&src[0]),
+		blocking: true,
+	})
+}
+
 func (ctx context3) BlitFramebuffer(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1 int, mask uint, filter Enum) {
 	defer func() {
 		errstr := ctx.errDrain()
@@ -3473,6 +3569,68 @@ func (ctx context3) BlitFramebuffer(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, ds
 			a7: uintptr(dstY1),
 			a8: uintptr(mask),
 			a9: filter.c(),
+		},
+		blocking: true})
+}
+
+func (ctx context3) Uniform1ui(dst Uniform, v uint32) {
+	defer func() {
+		errstr := ctx.errDrain()
+		log.Printf("gl.Uniform1ui(%v, %v) %v", dst, v, errstr)
+	}()
+	ctx.enqueueDebug(call{
+		args: fnargs{
+			fn: glfnUniform1ui,
+			a0: dst.c(),
+			a1: uintptr(v),
+		},
+		blocking: true})
+}
+
+func (ctx context3) Uniform2ui(dst Uniform, v0, v1 uint32) {
+	defer func() {
+		errstr := ctx.errDrain()
+		log.Printf("gl.Uniform2ui(%v, %v, %v) %v", dst, v0, v1, errstr)
+	}()
+	ctx.enqueueDebug(call{
+		args: fnargs{
+			fn: glfnUniform2ui,
+			a0: dst.c(),
+			a1: uintptr(v0),
+			a2: uintptr(v1),
+		},
+		blocking: true})
+}
+
+func (ctx context3) Uniform3ui(dst Uniform, v0, v1, v2 uint) {
+	defer func() {
+		errstr := ctx.errDrain()
+		log.Printf("gl.Uniform3ui(%v, %v, %v, %v) %v", dst, v0, v1, v2, errstr)
+	}()
+	ctx.enqueueDebug(call{
+		args: fnargs{
+			fn: glfnUniform3ui,
+			a0: dst.c(),
+			a1: uintptr(v0),
+			a2: uintptr(v1),
+			a3: uintptr(v2),
+		},
+		blocking: true})
+}
+
+func (ctx context3) Uniform4ui(dst Uniform, v0, v1, v2, v3 uint32) {
+	defer func() {
+		errstr := ctx.errDrain()
+		log.Printf("gl.Uniform4ui(%v, %v, %v, %v, %v) %v", dst, v0, v1, v2, v3, errstr)
+	}()
+	ctx.enqueueDebug(call{
+		args: fnargs{
+			fn: glfnUniform4ui,
+			a0: dst.c(),
+			a1: uintptr(v0),
+			a2: uintptr(v1),
+			a3: uintptr(v2),
+			a4: uintptr(v3),
 		},
 		blocking: true})
 }
