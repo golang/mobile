@@ -31,14 +31,19 @@ static NSString* errDomain = @"go.issue12403";
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	struct proxyissue12403_Parsable_ToJSON_return res = proxyissue12403_Parsable_ToJSON(refnum);
 	NSString *_ret0_ = go_seq_to_objc_string(res.r0);
-	NSString *_error = go_seq_to_objc_string(res.r1);
-	*ret0_ = _ret0_;
-	if ([_error length] != 0 && error != nil) {
-		NSMutableDictionary* details = [NSMutableDictionary dictionary];
-		[details setValue:_error forKey:NSLocalizedDescriptionKey];
-		*error = [NSError errorWithDomain:errDomain code:1 userInfo:details];
+	GoUniverseerror* _error = nil;
+	GoSeqRef* _error_ref = go_seq_from_refnum(res.r1);
+	if (_error_ref != NULL) {
+		_error = _error_ref.obj;
+		if (_error == nil) {
+			_error = [[GoUniverseerror alloc] initWithRef:_error_ref];
+		}
 	}
-	return ([_error length] == 0);
+	*ret0_ = _ret0_;
+	if (_error != nil && error != nil) {
+		*error = go_seq_to_nserror(_error, errDomain);
+	}
+	return (_error == nil);
 }
 
 @end
@@ -47,7 +52,7 @@ static NSString* errDomain = @"go.issue12403";
 
 nstring cproxyissue12403_Parsable_FromJSON(int32_t refnum, nstring jstr) {
 	@autoreleasepool {
-		id<GoIssue12403Parsable> o = go_seq_objc_from_refnum(refnum);
+		GoIssue12403Parsable* o = go_seq_objc_from_refnum(refnum);
 		NSString *_jstr = go_seq_to_objc_string(jstr);
 		NSString* returnVal = [o fromJSON:_jstr];
 		nstring _returnVal = go_seq_from_objc_string(returnVal);
@@ -57,21 +62,24 @@ nstring cproxyissue12403_Parsable_FromJSON(int32_t refnum, nstring jstr) {
 
 struct cproxyissue12403_Parsable_ToJSON_return cproxyissue12403_Parsable_ToJSON(int32_t refnum) {
 	@autoreleasepool {
-		id<GoIssue12403Parsable> o = go_seq_objc_from_refnum(refnum);
+		GoIssue12403Parsable* o = go_seq_objc_from_refnum(refnum);
 		NSString* ret0_;
 		NSError* error = nil;
 		BOOL returnVal = [o toJSON:&ret0_ error:&error];
 		nstring _ret0_ = go_seq_from_objc_string(ret0_);
-		NSString *error_str = nil;
+		GoUniverseerror* _error = nil;
 		if (!returnVal) {
-			error_str = [error localizedDescription];
-			if (error_str == nil || error_str.length == 0) {
-				error_str = @"gobind: unknown error";
-			}
+			_error = [[goSeqErrorWrapper alloc] initWithError:error];
 		}
-		nstring _error_str = go_seq_from_objc_string(error_str);
+		int32_t __error;
+		if ([(id<NSObject>)(_error) isKindOfClass:[GoUniverseerror class]]) {
+			id<goSeqRefInterface> _error_proxy = (id<goSeqRefInterface>)(_error);
+			__error = go_seq_go_to_refnum(_error_proxy._ref);
+		} else {
+			__error = go_seq_to_refnum(_error);
+		}
 		cproxyissue12403_Parsable_ToJSON_return _sres = {
-		  _ret0_, _error_str
+		  _ret0_, __error
 		};
 		return _sres;
 	}

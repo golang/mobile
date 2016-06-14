@@ -47,6 +47,9 @@ func (g *objcGen) init() {
 }
 
 func (g *objcGen) namePrefixOf(pkg *types.Package) string {
+	if pkg == nil {
+		return "GoUniverse"
+	}
 	p := g.prefix
 	if p == "" {
 		p = "Go"
@@ -55,7 +58,11 @@ func (g *objcGen) namePrefixOf(pkg *types.Package) string {
 }
 
 func (g *objcGen) genGoH() error {
-	g.Printf(objcPreamble, g.pkg.Path(), g.gobindOpts(), g.pkg.Path())
+	var pkgPath string
+	if g.pkg != nil {
+		pkgPath = g.pkg.Path()
+	}
+	g.Printf(objcPreamble, pkgPath, g.gobindOpts(), pkgPath)
 	g.Printf("#ifndef __%s_H__\n", g.pkgName)
 	g.Printf("#define __%s_H__\n\n", g.pkgName)
 	g.Printf("#include <stdint.h>\n")
@@ -84,14 +91,21 @@ func (g *objcGen) genGoH() error {
 }
 
 func (g *objcGen) genH() error {
-	g.Printf(objcPreamble, g.pkg.Path(), g.gobindOpts(), g.pkg.Path())
+	var pkgPath string
+	if g.pkg != nil {
+		pkgPath = g.pkg.Path()
+	}
+	g.Printf(objcPreamble, pkgPath, g.gobindOpts(), pkgPath)
 	g.Printf("#ifndef __%s_H__\n", g.namePrefix)
 	g.Printf("#define __%s_H__\n", g.namePrefix)
 	g.Printf("\n")
 	g.Printf("#include <Foundation/Foundation.h>\n")
-	for _, pkg := range g.pkg.Imports() {
-		if g.validPkg(pkg) {
-			g.Printf("#include %q\n", g.namePrefixOf(pkg)+".h")
+	g.Printf("#include \"GoUniverse.h\"\n")
+	if g.pkg != nil {
+		for _, pkg := range g.pkg.Imports() {
+			if g.validPkg(pkg) {
+				g.Printf("#include %q\n", g.namePrefixOf(pkg)+".h")
+			}
 		}
 	}
 	g.Printf("\n")
@@ -191,13 +205,21 @@ func (g *objcGen) gobindOpts() string {
 }
 
 func (g *objcGen) genM() error {
-	g.Printf(objcPreamble, g.pkg.Path(), g.gobindOpts(), g.pkg.Path())
+	var pkgPath string
+	var errDomain string
+	if g.pkg != nil {
+		pkgPath = g.pkg.Path()
+		errDomain = "go." + pkgPath
+	} else {
+		errDomain = "go"
+	}
+	g.Printf(objcPreamble, pkgPath, g.gobindOpts(), pkgPath)
 	g.Printf("#include <Foundation/Foundation.h>\n")
 	g.Printf("#include \"seq.h\"\n")
 	g.Printf("#include \"_cgo_export.h\"\n")
 	g.Printf("#include %q\n", g.namePrefix+".h")
 	g.Printf("\n")
-	g.Printf("static NSString* errDomain = @\"go.%s\";\n", g.pkg.Path())
+	g.Printf("static NSString* errDomain = @%q;\n", errDomain)
 	g.Printf("\n")
 
 	// struct
@@ -500,9 +522,6 @@ func (g *objcGen) genFuncM(obj *types.Func) {
 
 func (g *objcGen) genGetter(oName string, f *types.Var) {
 	t := f.Type()
-	if isErrorType(t) {
-		t = types.Typ[types.String]
-	}
 	g.Printf("- (%s)%s {\n", g.objcType(t), lowerFirst(f.Name()))
 	g.Indent()
 	g.Printf("int32_t refnum = go_seq_go_to_refnum(self._ref);\n")
@@ -516,9 +535,6 @@ func (g *objcGen) genGetter(oName string, f *types.Var) {
 
 func (g *objcGen) genSetter(oName string, f *types.Var) {
 	t := f.Type()
-	if isErrorType(t) {
-		t = types.Typ[types.String]
-	}
 
 	g.Printf("- (void)set%s:(%s)v {\n", f.Name(), g.objcType(t))
 	g.Indent()
@@ -531,10 +547,6 @@ func (g *objcGen) genSetter(oName string, f *types.Var) {
 }
 
 func (g *objcGen) genWrite(varName string, t types.Type, mode varMode) {
-	if isErrorType(t) {
-		g.genWrite(varName, types.Typ[types.String], mode)
-		return
-	}
 	switch t := t.(type) {
 	case *types.Basic:
 		switch t.Kind() {
@@ -584,22 +596,18 @@ func (g *objcGen) genRefWrite(varName string, t types.Type) {
 }
 
 func (g *objcGen) genRefRead(toName, fromName string, t types.Type) {
-	ptype := g.objcType(t)
-	g.Printf("%s %s = nil;\n", ptype, toName)
+	ptype := g.refTypeBase(t)
+	g.Printf("%s* %s = nil;\n", ptype, toName)
 	g.Printf("GoSeqRef* %s_ref = go_seq_from_refnum(%s);\n", toName, fromName)
 	g.Printf("if (%s_ref != NULL) {\n", toName)
 	g.Printf("	%s = %s_ref.obj;\n", toName, toName)
 	g.Printf("	if (%s == nil) {\n", toName)
-	g.Printf("		%s = [[%s alloc] initWithRef:%s_ref];\n", toName, g.refTypeBase(t), toName)
+	g.Printf("		%s = [[%s alloc] initWithRef:%s_ref];\n", toName, ptype, toName)
 	g.Printf("	}\n")
 	g.Printf("}\n")
 }
 
 func (g *objcGen) genRead(toName, fromName string, t types.Type, mode varMode) {
-	if isErrorType(t) {
-		g.genRead(toName, fromName, types.Typ[types.String], mode)
-		return
-	}
 	switch t := t.(type) {
 	case *types.Basic:
 		switch t.Kind() {
@@ -679,11 +687,9 @@ func (g *objcGen) genFunc(s *funcSummary, objName string) {
 	if !s.returnsVal() {
 		for _, p := range s.retParams {
 			if isErrorType(p.typ) {
-				g.Printf("if ([_%s length] != 0 && %s != nil) {\n", p.name, p.name)
+				g.Printf("if (_%s != nil && %s != nil) {\n", p.name, p.name)
 				g.Indent()
-				g.Printf("NSMutableDictionary* details = [NSMutableDictionary dictionary];\n")
-				g.Printf("[details setValue:_%s forKey:NSLocalizedDescriptionKey];\n", p.name)
-				g.Printf("*%s = [NSError errorWithDomain:errDomain code:1 userInfo:details];\n", p.name)
+				g.Printf("*%s = go_seq_to_nserror(_%s, errDomain);\n", p.name, p.name)
 				g.Outdent()
 				g.Printf("}\n")
 			} else {
@@ -695,7 +701,7 @@ func (g *objcGen) genFunc(s *funcSummary, objName string) {
 	if n := len(s.retParams); n > 0 {
 		p := s.retParams[n-1]
 		if isErrorType(p.typ) {
-			g.Printf("return ([_%s length] == 0);\n", p.name)
+			g.Printf("return (_%s == nil);\n", p.name)
 		} else {
 			g.Printf("return _%s;\n", p.name)
 		}
@@ -781,7 +787,7 @@ func (g *objcGen) genInterfaceMethodProxy(obj *types.TypeName, m *types.Func) {
 	g.Indent()
 	g.Printf("@autoreleasepool {\n")
 	g.Indent()
-	g.Printf("%s o = go_seq_objc_from_refnum(refnum);\n", g.objcType(obj.Type()))
+	g.Printf("%s* o = go_seq_objc_from_refnum(refnum);\n", g.refTypeBase(obj.Type()))
 	for _, p := range s.params {
 		g.genRead("_"+p.name, p.name, p.typ, modeTransient)
 	}
@@ -812,23 +818,18 @@ func (g *objcGen) genInterfaceMethodProxy(obj *types.TypeName, m *types.Func) {
 			var rets []string
 			for i, p := range s.retParams {
 				if isErrorType(p.typ) {
-					g.Printf("NSString *%s_str = nil;\n", p.name)
+					g.Printf("GoUniverseerror* _%s = nil;\n", p.name)
 					if i == len(s.retParams)-1 { // last param.
 						g.Printf("if (!returnVal) {\n")
 					} else {
 						g.Printf("if (%s != nil) {\n", p.name)
 					}
 					g.Indent()
-					g.Printf("%[1]s_str = [%[1]s localizedDescription];\n", p.name)
-					g.Printf("if (%[1]s_str == nil || %[1]s_str.length == 0) {\n", p.name)
-					g.Indent()
-					g.Printf("%[1]s_str = @\"gobind: unknown error\";\n", p.name)
+					g.Printf("_%[1]s = [[goSeqErrorWrapper alloc] initWithError:%[1]s];\n", p.name)
 					g.Outdent()
 					g.Printf("}\n")
-					g.Outdent()
-					g.Printf("}\n")
-					g.genWrite(p.name+"_str", p.typ, modeRetained)
-					rets = append(rets, fmt.Sprintf("_%s_str", p.name))
+					g.genWrite("_"+p.name, p.typ, modeRetained)
+					rets = append(rets, "__"+p.name)
 				} else {
 					g.genWrite(p.name, p.typ, modeRetained)
 					rets = append(rets, "_"+p.name)
@@ -852,10 +853,6 @@ func (g *objcGen) genInterfaceMethodProxy(obj *types.TypeName, m *types.Func) {
 
 // genRelease cleans up arguments that weren't copied in genWrite.
 func (g *objcGen) genRelease(varName string, t types.Type, mode varMode) {
-	if isErrorType(t) {
-		g.genRelease(varName, types.Typ[types.String], mode)
-		return
-	}
 	switch t := t.(type) {
 	case *types.Slice:
 		switch e := t.Elem().(type) {
@@ -955,7 +952,7 @@ func (g *objcGen) refTypeBase(typ types.Type) string {
 		}
 	case *types.Named:
 		n := typ.Obj()
-		if g.validPkg(n.Pkg()) {
+		if isErrorType(typ) || g.validPkg(n.Pkg()) {
 			switch typ.Underlying().(type) {
 			case *types.Interface, *types.Struct:
 				return g.namePrefixOf(n.Pkg()) + n.Name()
@@ -1031,7 +1028,7 @@ func (g *objcGen) objcType(typ types.Type) string {
 		return "TODO"
 	case *types.Named:
 		n := typ.Obj()
-		if !g.validPkg(n.Pkg()) {
+		if !isErrorType(typ) && !g.validPkg(n.Pkg()) {
 			g.errorf("type %s is in package %s, which is not bound", n.Name(), n.Pkg().Name())
 			return "TODO"
 		}

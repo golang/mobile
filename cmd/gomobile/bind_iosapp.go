@@ -41,6 +41,10 @@ func goIOSBind(pkgs []*build.Package) error {
 			return err
 		}
 	}
+	// Generate the error type.
+	if err := binder.GenGo(nil, binder.pkgs, srcDir); err != nil {
+		return err
+	}
 	mainFile := filepath.Join(tmpdir, "src/iosbin/main.go")
 	err = writeFile(mainFile, func(w io.Writer) error {
 		_, err := w.Write(iosBindFile)
@@ -50,11 +54,14 @@ func goIOSBind(pkgs []*build.Package) error {
 		return fmt.Errorf("failed to create the binding package for iOS: %v", err)
 	}
 
-	fileBases := make([]string, len(typesPkgs))
+	fileBases := make([]string, len(typesPkgs)+1)
 	for i, pkg := range binder.pkgs {
 		if fileBases[i], err = binder.GenObjc(pkg, binder.pkgs, srcDir); err != nil {
 			return err
 		}
+	}
+	if fileBases[len(fileBases)-1], err = binder.GenObjc(nil, binder.pkgs, srcDir); err != nil {
+		return err
 	}
 	if err := binder.GenObjcSupport(srcDir); err != nil {
 		return err

@@ -76,6 +76,10 @@ func goAndroidBind(pkgs []*build.Package, androidArchs []string) error {
 				return err
 			}
 		}
+		// Generate the error type.
+		if err := binder.GenGo(nil, binder.pkgs, srcDir); err != nil {
+			return err
+		}
 
 		err = writeFile(mainFile, func(w io.Writer) error {
 			_, err := w.Write(androidMainFile)
@@ -99,6 +103,9 @@ func goAndroidBind(pkgs []*build.Package, androidArchs []string) error {
 			if err := binder.GenJava(pkg, binder.pkgs, srcDir, filepath.Join(androidDir, "src/main/java/"+pkgpath)); err != nil {
 				return err
 			}
+		}
+		if err := binder.GenJava(nil, binder.pkgs, srcDir, filepath.Join(androidDir, "src/main/java/go")); err != nil {
+			return err
 		}
 		if err := binder.GenJavaSupport(srcDir); err != nil {
 			return err

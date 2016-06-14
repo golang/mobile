@@ -108,9 +108,15 @@ cp $GOMOBILE/pkg_android_arm/golang.org/x/mobile/asset.a $WORK/fakegopath/pkg/an
 mkdir -p $WORK/fakegopath/pkg/android_arm/golang.org/x/mobile
 mkdir -p $WORK/gomobile_bind
 gobind -lang=go -outdir=$WORK/gomobile_bind golang.org/x/mobile/asset
+mkdir -p $WORK/gomobile_bind
+gobind -lang=go -outdir=$WORK/gomobile_bind 
 mkdir -p $WORK/androidlib
 mkdir -p $WORK/android/src/main/java/{{.JavaPkgDir}}
 {{.GobindJavaCmd}} -outdir=$WORK/android/src/main/java/{{.JavaPkgDir}} golang.org/x/mobile/asset
+mkdir -p $WORK/gomobile_bind
+mkdir -p $WORK/gomobile_bind
+mkdir -p $WORK/android/src/main/java/go
+gobind -lang=java -outdir=$WORK/android/src/main/java/go 
 mkdir -p $WORK/gomobile_bind
 mkdir -p $WORK/gomobile_bind
 cp $GOPATH/src/golang.org/x/mobile/bind/java/seq_android.go.support $WORK/gomobile_bind/seq_android.go

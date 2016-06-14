@@ -102,6 +102,21 @@ static int numI = 0;
 }
 @end
 
+// Objective-C implementation of testpkg.EmptyThrower.
+@interface EmptyErrorer: NSObject <GoTestpkgEmptyErrorer> {
+}
+
+@end
+
+@implementation EmptyErrorer {
+}
+
+- (BOOL)emptyError:(NSError **)error {
+    *error = [NSError errorWithDomain:@"SeqTest" code:1 userInfo:NULL];
+    return NO;
+}
+@end
+
 @interface tests : XCTestCase
 
 @end
@@ -406,4 +421,12 @@ static int numI = 0;
 	XCTAssertTrue(GoTestpkgCallCDupper(cdup), @"Go struct passed through ObjC should not be wrapped");
 }
 
+- (void)testEmptyError {
+    NSError *error;
+    XCTAssertFalse(GoTestpkgEmptyError(&error), @"GoTestpkgEmptyError succeeded; want error");
+    XCTAssertNotNil(error, @"GoTestpkgEmptyError returned nil error");
+    id<GoTestpkgEmptyErrorer> empty = [[EmptyErrorer alloc] init];
+    XCTAssertFalse(GoTestpkgCallEmptyError(empty, &error), @"GoTestpkgCallEmptyError succeeded; want error");
+    XCTAssertNotNil(error, @"GoTestpkgCallEmptyError returned nil error");
+}
 @end

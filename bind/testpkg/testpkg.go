@@ -511,3 +511,15 @@ func CallCDupper(d ConcreteDupper) bool {
 	got := d.CDup(want)
 	return got == want
 }
+
+type EmptyErrorer interface {
+	EmptyError() error
+}
+
+func EmptyError() error {
+	return errors.New("")
+}
+
+func CallEmptyError(c EmptyErrorer) error {
+	return c.EmptyError()
+}

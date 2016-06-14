@@ -41,29 +41,23 @@ func proxybasictypes__ByteArrays(param_x C.nbyteslice) C.nbyteslice {
 }
 
 //export proxybasictypes__Error
-func proxybasictypes__Error() C.nstring {
+func proxybasictypes__Error() C.int32_t {
 	res_0 := basictypes.Error()
-	var _res_0_str string
-	if res_0 == nil {
-		_res_0_str = ""
-	} else {
-		_res_0_str = res_0.Error()
+	var _res_0 C.int32_t = _seq.NullRefNum
+	if res_0 != nil {
+		_res_0 = C.int32_t(_seq.ToRefNum(res_0))
 	}
-	_res_0 := encodeString(_res_0_str)
 	return _res_0
 }
 
 //export proxybasictypes__ErrorPair
-func proxybasictypes__ErrorPair() (C.nint, C.nstring) {
+func proxybasictypes__ErrorPair() (C.nint, C.int32_t) {
 	res_0, res_1 := basictypes.ErrorPair()
 	_res_0 := C.nint(res_0)
-	var _res_1_str string
-	if res_1 == nil {
-		_res_1_str = ""
-	} else {
-		_res_1_str = res_1.Error()
+	var _res_1 C.int32_t = _seq.NullRefNum
+	if res_1 != nil {
+		_res_1 = C.int32_t(_seq.ToRefNum(res_1))
 	}
-	_res_1 := encodeString(_res_1_str)
 	return _res_0, _res_1
 }
 

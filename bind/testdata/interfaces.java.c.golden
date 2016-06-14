@@ -100,8 +100,8 @@ Java_go_interfaces_Interfaces_Add3(JNIEnv* env, jclass clazz, jobject r) {
 JNIEXPORT void JNICALL
 Java_go_interfaces_Interfaces_CallErr(JNIEnv* env, jclass clazz, jobject e) {
     int32_t _e = go_seq_to_refnum(env, e);
-    nstring r0 = proxyinterfaces__CallErr(_e);
-    jstring _r0 = go_seq_to_java_string(env, r0);
+    int32_t r0 = proxyinterfaces__CallErr(_e);
+    jobject _r0 = go_seq_from_refnum(env, r0, proxy_class__error, proxy_class__error_cons);
     go_seq_maybe_throw_exception(env, _r0);
 }
 
@@ -115,17 +115,17 @@ Java_go_interfaces_Interfaces_Seven(JNIEnv* env, jclass clazz) {
 JNIEXPORT void JNICALL
 Java_go_interfaces_Interfaces_00024proxyError_Err(JNIEnv* env, jobject this) {
     int32_t o = go_seq_to_refnum(env, this);
-    nstring r0 = proxyinterfaces_Error_Err(o);
-    jstring _r0 = go_seq_to_java_string(env, r0);
+    int32_t r0 = proxyinterfaces_Error_Err(o);
+    jobject _r0 = go_seq_from_refnum(env, r0, proxy_class__error, proxy_class__error_cons);
     go_seq_maybe_throw_exception(env, _r0);
 }
 
-nstring cproxyinterfaces_Error_Err(int32_t refnum) {
+int32_t cproxyinterfaces_Error_Err(int32_t refnum) {
     JNIEnv *env = go_seq_push_local_frame(10);
     jobject o = go_seq_from_refnum(env, refnum, proxy_class_interfaces_Error, proxy_class_interfaces_Error_cons);
     (*env)->CallVoidMethod(env, o, mid_Error_Err);
-    jstring exc = go_seq_get_exception_message(env);
-    nstring _exc = go_seq_from_java_string(env, exc);
+    jobject exc = go_seq_wrap_exception(env);
+    int32_t _exc = go_seq_to_refnum(env, exc);
     go_seq_pop_local_frame(env);
     return _exc;
 }

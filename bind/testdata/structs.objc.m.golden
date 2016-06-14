@@ -57,14 +57,19 @@ static NSString* errDomain = @"go.structs";
 			_ret0_ = [[GoStructsS alloc] initWithRef:_ret0__ref];
 		}
 	}
-	NSString *_error = go_seq_to_objc_string(res.r1);
-	*ret0_ = _ret0_;
-	if ([_error length] != 0 && error != nil) {
-		NSMutableDictionary* details = [NSMutableDictionary dictionary];
-		[details setValue:_error forKey:NSLocalizedDescriptionKey];
-		*error = [NSError errorWithDomain:errDomain code:1 userInfo:details];
+	GoUniverseerror* _error = nil;
+	GoSeqRef* _error_ref = go_seq_from_refnum(res.r1);
+	if (_error_ref != NULL) {
+		_error = _error_ref.obj;
+		if (_error == nil) {
+			_error = [[GoUniverseerror alloc] initWithRef:_error_ref];
+		}
 	}
-	return ([_error length] == 0);
+	*ret0_ = _ret0_;
+	if (_error != nil && error != nil) {
+		*error = go_seq_to_nserror(_error, errDomain);
+	}
+	return (_error == nil);
 }
 
 - (double)sum {
@@ -155,19 +160,24 @@ BOOL GoStructsIdentityWithError(GoStructsS* s, GoStructsS** ret0_, NSError** err
 			_ret0_ = [[GoStructsS alloc] initWithRef:_ret0__ref];
 		}
 	}
-	NSString *_error = go_seq_to_objc_string(res.r1);
-	*ret0_ = _ret0_;
-	if ([_error length] != 0 && error != nil) {
-		NSMutableDictionary* details = [NSMutableDictionary dictionary];
-		[details setValue:_error forKey:NSLocalizedDescriptionKey];
-		*error = [NSError errorWithDomain:errDomain code:1 userInfo:details];
+	GoUniverseerror* _error = nil;
+	GoSeqRef* _error_ref = go_seq_from_refnum(res.r1);
+	if (_error_ref != NULL) {
+		_error = _error_ref.obj;
+		if (_error == nil) {
+			_error = [[GoUniverseerror alloc] initWithRef:_error_ref];
+		}
 	}
-	return ([_error length] == 0);
+	*ret0_ = _ret0_;
+	if (_error != nil && error != nil) {
+		*error = go_seq_to_nserror(_error, errDomain);
+	}
+	return (_error == nil);
 }
 
 void cproxystructs_I_M(int32_t refnum) {
 	@autoreleasepool {
-		id<GoStructsI> o = go_seq_objc_from_refnum(refnum);
+		GoStructsI* o = go_seq_objc_from_refnum(refnum);
 		[o m];
 	}
 }

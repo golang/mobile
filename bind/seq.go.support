@@ -13,18 +13,10 @@ package gomobile_bind
 import "C"
 
 import (
-	"errors"
 	"fmt"
 
 	_seq "golang.org/x/mobile/bind/seq"
 )
-
-func toError(s string) error {
-	if s == "" {
-		return nil
-	}
-	return errors.New(s)
-}
 
 func init() {
 	_seq.FinalizeRef = func(ref *_seq.Ref) {

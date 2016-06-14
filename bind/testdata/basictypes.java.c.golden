@@ -36,8 +36,8 @@ Java_go_basictypes_Basictypes_ByteArrays(JNIEnv* env, jclass clazz, jbyteArray x
 
 JNIEXPORT void JNICALL
 Java_go_basictypes_Basictypes_Error(JNIEnv* env, jclass clazz) {
-    nstring r0 = proxybasictypes__Error();
-    jstring _r0 = go_seq_to_java_string(env, r0);
+    int32_t r0 = proxybasictypes__Error();
+    jobject _r0 = go_seq_from_refnum(env, r0, proxy_class__error, proxy_class__error_cons);
     go_seq_maybe_throw_exception(env, _r0);
 }
 
@@ -45,7 +45,7 @@ JNIEXPORT jlong JNICALL
 Java_go_basictypes_Basictypes_ErrorPair(JNIEnv* env, jclass clazz) {
     struct proxybasictypes__ErrorPair_return res = proxybasictypes__ErrorPair();
     jlong _r0 = (jlong)res.r0;
-    jstring _r1 = go_seq_to_java_string(env, res.r1);
+    jobject _r1 = go_seq_from_refnum(env, res.r1, proxy_class__error, proxy_class__error_cons);
     go_seq_maybe_throw_exception(env, _r1);
     return _r0;
 }

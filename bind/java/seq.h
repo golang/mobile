@@ -38,7 +38,9 @@ extern int32_t go_seq_to_refnum(JNIEnv *env, jobject o);
 extern jobject go_seq_from_refnum(JNIEnv *env, int32_t refnum, jclass proxy_class, jmethodID proxy_cons);
 
 extern void go_seq_maybe_throw_exception(JNIEnv *env, jobject msg);
-extern jstring go_seq_get_exception_message(JNIEnv *env);
+// go_seq_wrap_exception wraps a pending exception in a Java object implementing the
+// golang/x/mobile/bind/errors.Error interface. If there is no pending exception, it returns NULL.
+extern jobject go_seq_wrap_exception(JNIEnv *env);
 
 extern jbyteArray go_seq_to_java_bytearray(JNIEnv *env, nbyteslice s, int copy);
 extern nbyteslice go_seq_from_java_bytearray(JNIEnv *env, jbyteArray s, int copy);

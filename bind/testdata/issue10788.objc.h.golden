@@ -7,6 +7,7 @@
 #define __GoIssue10788_H__
 
 #include <Foundation/Foundation.h>
+#include "GoUniverse.h"
 
 @class GoIssue10788TestStruct;
 @protocol GoIssue10788TestInterface;

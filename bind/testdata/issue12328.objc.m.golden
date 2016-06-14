@@ -20,16 +20,29 @@ static NSString* errDomain = @"go.issue12328";
 	return self;
 }
 
-- (NSString*)err {
+- (NSError*)err {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
-	nstring r0 = proxyissue12328_T_Err_Get(refnum);
-	NSString *_r0 = go_seq_to_objc_string(r0);
+	int32_t r0 = proxyissue12328_T_Err_Get(refnum);
+	GoUniverseerror* _r0 = nil;
+	GoSeqRef* _r0_ref = go_seq_from_refnum(r0);
+	if (_r0_ref != NULL) {
+		_r0 = _r0_ref.obj;
+		if (_r0 == nil) {
+			_r0 = [[GoUniverseerror alloc] initWithRef:_r0_ref];
+		}
+	}
 	return _r0;
 }
 
-- (void)setErr:(NSString*)v {
+- (void)setErr:(NSError*)v {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
-	nstring _v = go_seq_from_objc_string(v);
+	int32_t _v;
+	if ([(id<NSObject>)(v) isKindOfClass:[GoUniverseerror class]]) {
+		id<goSeqRefInterface> v_proxy = (id<goSeqRefInterface>)(v);
+		_v = go_seq_go_to_refnum(v_proxy._ref);
+	} else {
+		_v = go_seq_to_refnum(v);
+	}
 	proxyissue12328_T_Err_Set(refnum, _v);
 }
 

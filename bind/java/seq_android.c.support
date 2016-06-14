@@ -30,6 +30,7 @@ static jmethodID seq_getRef;
 static jmethodID seq_decRef;
 static jmethodID seq_incRef;
 static jmethodID seq_incRefnum;
+static jmethodID seq_wrapThrowable;
 
 static jmethodID throwable_getMessage;
 
@@ -59,18 +60,18 @@ static JNIEnv *go_seq_get_thread_env(void) {
 }
 
 void go_seq_maybe_throw_exception(JNIEnv *env, jobject msg) {
-	if (msg != NULL && (*env)->GetStringLength(env, msg) > 0) {
+	if (msg != NULL) {
 		(*env)->CallStaticVoidMethod(env, seq_class, seq_throw_exc, msg);
 	}
 }
 
-jstring go_seq_get_exception_message(JNIEnv *env) {
+jobject go_seq_wrap_exception(JNIEnv *env) {
 	jthrowable exc = (*env)->ExceptionOccurred(env);
 	if (!exc) {
 		return NULL;
 	}
 	(*env)->ExceptionClear(env);
-	return (*env)->CallObjectMethod(env, exc, throwable_getMessage);
+	return (*env)->CallStaticObjectMethod(env, seq_class, seq_wrapThrowable, exc);
 }
 
 jbyteArray go_seq_to_java_bytearray(JNIEnv *env, nbyteslice s, int copy) {
@@ -290,7 +291,7 @@ Java_go_Seq_init(JNIEnv *env, jclass clazz) {
 	}
 
 	seq_class = (*env)->NewGlobalRef(env, clazz);
-	seq_throw_exc = (*env)->GetStaticMethodID(env, seq_class, "throwException", "(Ljava/lang/String;)V");
+	seq_throw_exc = (*env)->GetStaticMethodID(env, seq_class, "throwException", "(Lgo/Universe$error;)V");
 	if (seq_throw_exc == NULL) {
 		LOG_FATAL("failed to find method Seq.throwException");
 	}
@@ -310,6 +311,10 @@ Java_go_Seq_init(JNIEnv *env, jclass clazz) {
 	seq_incRef = (*env)->GetStaticMethodID(env, seq_class, "incRef", "(Ljava/lang/Object;)I");
 	if (seq_incRef == NULL) {
 		LOG_FATAL("failed to find method Seq.incRef");
+	}
+	seq_wrapThrowable = (*env)->GetStaticMethodID(env, seq_class, "wrapThrowable", "(Ljava/lang/Throwable;)Lgo/Universe$error;");
+	if (seq_wrapThrowable == NULL) {
+		LOG_FATAL("failed to find method Seq.wrapThrowable");
 	}
 	jclass throwable_class = (*env)->FindClass(env, "java/lang/Throwable");
 	if (throwable_class == NULL) {
