@@ -7,16 +7,18 @@
 package gl
 
 /*
-#cgo darwin,amd64  LDFLAGS: -framework OpenGL
-#cgo darwin,arm    LDFLAGS: -framework OpenGLES
-#cgo darwin,arm64  LDFLAGS: -framework OpenGLES
-#cgo linux         LDFLAGS: -lGLESv2
+#cgo ios                LDFLAGS: -framework OpenGLES
+#cgo darwin,amd64,!ios  LDFLAGS: -framework OpenGL
+#cgo darwin,arm         LDFLAGS: -framework OpenGLES
+#cgo darwin,arm64       LDFLAGS: -framework OpenGLES
+#cgo linux              LDFLAGS: -lGLESv2
 
-#cgo android       CFLAGS: -Dos_android
-#cgo darwin,amd64  CFLAGS: -Dos_osx
-#cgo darwin,arm    CFLAGS: -Dos_ios
-#cgo darwin,arm64  CFLAGS: -Dos_ios
-#cgo linux         CFLAGS: -Dos_linux
+#cgo android            CFLAGS: -Dos_android
+#cgo ios                CFLAGS: -Dos_ios
+#cgo darwin,amd64,!ios  CFLAGS: -Dos_osx
+#cgo darwin,arm         CFLAGS: -Dos_ios
+#cgo darwin,arm64       CFLAGS: -Dos_ios
+#cgo linux              CFLAGS: -Dos_linux
 
 #include <stdint.h>
 #include "work.h"
