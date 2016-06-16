@@ -416,6 +416,9 @@ uintptr_t processFn(struct fnargs* args, char* parg) {
 	case glfnUniform1ui:
 		glUniform1ui((GLint)args->a0, (GLuint)args->a1);
 		break;
+	case glfnUniform1uiv:
+		glUniform1uiv((GLint)args->a0, (GLsizeiptr)args->a1, (GLuint*)parg);
+		break;
 	case glfnUniform1iv:
 		glUniform1iv((GLint)args->a0, (GLsizeiptr)args->a1, (GLvoid*)parg);
 		break;
@@ -430,6 +433,9 @@ uintptr_t processFn(struct fnargs* args, char* parg) {
 		break;
 	case glfnUniform2ui:
 		glUniform2ui((GLint)args->a0, (GLuint)args->a1, (GLuint)args->a2);
+		break;
+	case glfnUniform2uiv:
+		glUniform2uiv((GLint)args->a0, (GLsizeiptr)args->a1, (GLuint*)parg);
 		break;
 	case glfnUniform2iv:
 		glUniform2iv((GLint)args->a0, (GLsizeiptr)args->a1, (GLvoid*)parg);
@@ -446,6 +452,9 @@ uintptr_t processFn(struct fnargs* args, char* parg) {
 	case glfnUniform3ui:
 		glUniform3ui((GLint)args->a0, (GLuint)args->a1, (GLuint)args->a2, (GLuint)args->a3);
 		break;
+	case glfnUniform3uiv:
+		glUniform3uiv((GLint)args->a0, (GLsizeiptr)args->a1, (GLuint*)parg);
+		break;
 	case glfnUniform3iv:
 		glUniform3iv((GLint)args->a0, (GLsizeiptr)args->a1, (GLvoid*)parg);
 		break;
@@ -460,6 +469,9 @@ uintptr_t processFn(struct fnargs* args, char* parg) {
 		break;
 	case glfnUniform4ui:
 		glUniform4ui((GLint)args->a0, (GLuint)args->a1, (GLuint)args->a2, (GLuint)args->a3, (GLuint)args->a4);
+		break;
+	case glfnUniform4uiv:
+		glUniform4uiv((GLint)args->a0, (GLsizeiptr)args->a1, (GLuint*)parg);
 		break;
 	case glfnUniform4iv:
 		glUniform4iv((GLint)args->a0, (GLsizeiptr)args->a1, (GLvoid*)parg);
