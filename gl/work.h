@@ -18,6 +18,7 @@
 
 #ifdef os_osx
 #include <OpenGL/gl3.h>
+#define GL_ES_VERSION_3_0 1
 #endif
 
 #if defined(GL_ES_VERSION_3_0) && GL_ES_VERSION_3_0
