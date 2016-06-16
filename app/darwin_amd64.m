@@ -205,7 +205,7 @@ runApp(void) {
 	[menu addItem:quitMenuItem];
 	[menuItem setSubmenu:menu];
 
-	NSRect rect = NSMakeRect(0, 0, 400, 400);
+	NSRect rect = NSMakeRect(0, 0, 600, 800);
 
 	NSWindow* window = [[[NSWindow alloc] initWithContentRect:rect
 			styleMask:NSTitledWindowMask
