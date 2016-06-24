@@ -23,15 +23,15 @@ import (
 	"time"
 )
 
-// useStrippedNDK determines whether the init subcommand fetches the GCC
+// useStrippedNDK determines whether the init subcommand fetches the clang
 // toolchain from the original Android NDK, or from the stripped-down NDK
 // hosted specifically for the gomobile tool.
 //
 // There is a significant size different (400MB compared to 30MB).
 var useStrippedNDK = true
 
-const ndkVersion = "ndk-r11c"
-const openALVersion = "openal-soft-1.16.0.1"
+const ndkVersion = "ndk-r12"
+const openALVersion = "openal-soft-1.16.0.1-" + ndkVersion
 
 var (
 	goos    = runtime.GOOS
@@ -399,6 +399,26 @@ func fetchNDK() error {
 		resetReadOnlyFlagAll(filepath.Join(tmpdir, "android-"+ndkVersion))
 	}
 
+	// Copy the cross compiling clang and clang++ compilers
+	llvmsrc := filepath.Join(tmpdir, fmt.Sprintf(
+		"android-%s/toolchains/llvm/prebuilt", ndkVersion))
+	if goos == "windows" && ndkarch == "x86" {
+		llvmsrc = filepath.Join(llvmsrc, "windows")
+	} else {
+		llvmsrc = filepath.Join(llvmsrc, goos+"-"+ndkarch)
+	}
+	llvmdst := filepath.Join(ndk.Root(), "llvm")
+	llvmbin := filepath.Join(llvmdst, "bin")
+	if err := mkdir(llvmbin); err != nil {
+		return err
+	}
+	if err := move(llvmbin, filepath.Join(llvmsrc, "bin"), "clang", "clang++"); err != nil {
+		return err
+	}
+	if err := move(llvmdst, llvmsrc, "lib64"); err != nil {
+		return err
+	}
+
 	for arch := range androidEnv {
 		toolchain := ndk.Toolchain(arch)
 		dst := filepath.Join(ndk.Root(), toolchain.arch)
@@ -420,27 +440,8 @@ func fetchNDK() error {
 		} else {
 			ndkpath = filepath.Join(ndkpath, goos+"-"+ndkarch)
 		}
-		if err := move(dst, ndkpath, "bin", "lib", "libexec"); err != nil {
+		if err := move(dst, ndkpath, "bin", "lib"); err != nil {
 			return err
-		}
-
-		// ndk-r10e arm64 toolchain has a bug in ld.bfd and for aarch64
-		// ld.bfd is the default linker. Workaround by switching the
-		// default to ld.gold.
-		// TODO(hyangah): remove this when using the new version of ndk.
-		if toolchain.arch == "arm64" {
-			ld := filepath.Join(dst, "bin/aarch64-linux-android-ld")
-			ldgold := ld + ".gold"
-			if goos == "windows" {
-				ld += ".exe"
-				ldgold += ".exe"
-			}
-			if err := rm(ld); err != nil {
-				return err
-			}
-			if err := symlink(ldgold, ld); err != nil {
-				return err
-			}
 		}
 
 		linkpath := filepath.Join(dst, toolchain.toolPrefix+"/bin")
@@ -448,11 +449,19 @@ func fetchNDK() error {
 			return err
 		}
 
-		for _, name := range []string{"ld", "as", "gcc", "g++"} {
+		for _, name := range []string{"ld", "as"} {
 			if goos == "windows" {
 				name += ".exe"
 			}
 			if err := symlink(filepath.Join(dst, "bin", toolchain.toolPrefix+"-"+name), filepath.Join(linkpath, name)); err != nil {
+				return err
+			}
+		}
+		for _, name := range []string{"clang", "clang++"} {
+			if goos == "windows" {
+				name += ".exe"
+			}
+			if err := symlink(filepath.Join(llvmbin, name), filepath.Join(dst, "bin", toolchain.toolPrefix+"-"+name)); err != nil {
 				return err
 			}
 		}
@@ -470,35 +479,16 @@ func fetchStrippedNDK() error {
 }
 
 func fetchFullNDK() error {
-	url := "https://dl.google.com/android/ndk/android-" + ndkVersion + "-" + goos + "-" + ndkarch + "."
-	if goos == "windows" {
-		url += "exe"
-	} else {
-		url += "bin"
-	}
+	url := "https://dl.google.com/android/repository/android-" + ndkVersion + "-" + goos + "-" + ndkarch + ".zip"
 	archive, err := fetch(url)
 	if err != nil {
 		return err
 	}
-
-	// The self-extracting ndk dist file for Windows terminates
-	// with an error (error code 2 - corrupted or incomplete file)
-	// but there are no details on what caused this.
-	//
-	// Strangely, if the file is launched from file browser or
-	// unzipped with 7z.exe no error is reported.
-	//
-	// In general we use the stripped NDK, so this code path
-	// is not used, and 7z.exe is not a normal dependency.
 	var inflate *exec.Cmd
 	if goos != "windows" {
-		// The downloaded archive is executed on linux and os x to unarchive.
-		// To do this execute permissions are needed.
-		os.Chmod(archive, 0755)
-
-		inflate = exec.Command(archive)
+		inflate = exec.Command("unzip", archive)
 	} else {
-		inflate = exec.Command("7z.exe", "x", archive)
+		inflate = exec.Command("unzip.exe", archive)
 	}
 	inflate.Dir = tmpdir
 	return runCmd(inflate)

@@ -98,11 +98,24 @@ func envInit() (err error) {
 			continue
 		}
 
+		// Emulate the flags in the clang wrapper scripts generated
+		// by make_standalone_toolchain.py
+		s := strings.SplitN(toolchain.toolPrefix, "-", 3)
+		a, os, env := s[0], s[1], s[2]
+		if a == "arm" {
+			a = "armv7a"
+		}
+		target := strings.Join([]string{a, "none", os, env}, "-")
+		sysroot := filepath.Join(ndk.Root(), toolchain.arch, "sysroot")
+		flags := fmt.Sprintf("-target %s --sysroot %s", target, sysroot)
 		androidEnv[arch] = []string{
 			"GOOS=android",
 			"GOARCH=" + arch,
-			"CC=" + toolchain.Path("gcc"),
-			"CXX=" + toolchain.Path("g++"),
+			"CC=" + toolchain.Path("clang"),
+			"CXX=" + toolchain.Path("clang++"),
+			"CGO_CFLAGS=" + flags,
+			"CGO_CPPFLAGS=" + flags,
+			"CGO_LDFLAGS=" + flags,
 			"CGO_ENABLED=1",
 		}
 		if arch == "arm" {

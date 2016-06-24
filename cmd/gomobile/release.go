@@ -28,9 +28,10 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 )
 
-const ndkVersion = "ndk-r11c"
+const ndkVersion = "ndk-r12"
 
 type version struct {
 	os   string
@@ -46,16 +47,16 @@ var hosts = []version{
 
 type target struct {
 	arch       string
-	platform   string
+	platform   int
 	gcc        string
 	toolPrefix string
 }
 
 var targets = []target{
-	{"arm", "android-15", "arm-linux-androideabi-4.9", "arm-linux-androideabi"},
-	{"arm64", "android-21", "aarch64-linux-android-4.9", "aarch64-linux-android"},
-	{"x86", "android-15", "x86-4.9", "i686-linux-android"},
-	{"x86_64", "android-21", "x86_64-4.9", "x86_64-linux-android"},
+	{"arm", 15, "arm-linux-androideabi-4.9", "arm-linux-androideabi"},
+	{"arm64", 21, "aarch64-linux-android-4.9", "aarch64-linux-android"},
+	{"x86", 15, "x86-4.9", "i686-linux-android"},
+	{"x86_64", 21, "x86_64-4.9", "x86_64-linux-android"},
 }
 
 var (
@@ -132,16 +133,13 @@ func mkALPkg() (err error) {
 		}
 		buildDir := alTmpDir + "/build/" + abi
 		toolchain := buildDir + "/toolchain"
-		if err := os.MkdirAll(toolchain, 0755); err != nil {
-			return err
-		}
 		// standalone ndk toolchains make openal-soft's build config easier.
 		if err := run(ndkRoot, "env",
-			"build/tools/make-standalone-toolchain.sh",
+			"build/tools/make_standalone_toolchain.py",
 			"--arch="+t.arch,
-			"--platform="+t.platform,
+			"--api="+strconv.Itoa(t.platform),
 			"--install-dir="+toolchain); err != nil {
-			return fmt.Errorf("make-standalone-toolchain.sh failed: %v", err)
+			return fmt.Errorf("make_standalone_toolchain.py failed: %v", err)
 		}
 
 		orgPath := os.Getenv("PATH")
@@ -162,7 +160,7 @@ func mkALPkg() (err error) {
 	}
 
 	// Build the tarball.
-	aw := newArchiveWriter("gomobile-openal-soft-1.16.0.1.tar.gz")
+	aw := newArchiveWriter("gomobile-openal-soft-1.16.0.1-" + ndkVersion + ".tar.gz")
 	defer func() {
 		err2 := aw.Close()
 		if err == nil {
@@ -239,7 +237,7 @@ func mkpkg(host version) error {
 	// We preserve the same file layout to make the full NDK interchangable
 	// with the cut down file.
 	for _, t := range targets {
-		usr := fmt.Sprintf("android-%s/platforms/%s/arch-%s/usr/", ndkVersion, t.platform, t.arch)
+		usr := fmt.Sprintf("android-%s/platforms/android-%d/arch-%s/usr/", ndkVersion, t.platform, t.arch)
 		gcc := fmt.Sprintf("android-%s/toolchains/%s/prebuilt/", ndkVersion, t.gcc)
 
 		if host.os == "windows" && host.arch == "x86" {
@@ -251,7 +249,7 @@ func mkpkg(host version) error {
 		if err := os.MkdirAll(dst+"/"+usr, 0755); err != nil {
 			return err
 		}
-		if err := os.MkdirAll(dst+"/"+gcc, 0755); err != nil {
+		if err := os.MkdirAll(dst+"/"+gcc+"/bin", 0755); err != nil {
 			return err
 		}
 
@@ -264,9 +262,34 @@ func mkpkg(host version) error {
 			return err
 		}
 
-		if err := move(dst+"/"+gcc, src+"/"+gcc, "bin", "lib", "libexec", "COPYING", "COPYING.LIB"); err != nil {
+		if err := move(dst+"/"+gcc, src+"/"+gcc, "lib", "COPYING", "COPYING.LIB"); err != nil {
 			return err
 		}
+		for _, exe := range []string{"as", "ld"} {
+			if host.os == "windows" {
+				exe += ".exe"
+			}
+			if err := move(dst+"/"+gcc+"/bin", src+"/"+gcc+"/bin", t.toolPrefix+"-"+exe); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Copy the LLVM clang and clang++ compilers
+	llvm := fmt.Sprintf("android-%s/toolchains/llvm/prebuilt/", ndkVersion)
+
+	if host.os == "windows" && host.arch == "x86" {
+		llvm += "windows"
+	} else {
+		llvm += host.os + "-" + host.arch
+	}
+
+	if err := os.MkdirAll(dst+"/"+llvm, 0755); err != nil {
+		return err
+	}
+
+	if err := move(dst+"/"+llvm, src+"/"+llvm, "bin", "lib64", "NOTICE"); err != nil {
+		return err
 	}
 
 	// Build the tarball.
