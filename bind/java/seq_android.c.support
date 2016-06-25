@@ -170,7 +170,7 @@ static nstring utf16_decode(jchar *chars, jsize len) {
 		}
 		ndst += encode_rune(buf + ndst, r);
 	}
-	struct nstring res = {chars: buf, len: ndst};
+	struct nstring res = {.chars = buf, .len = ndst};
 	return res;
 }
 
