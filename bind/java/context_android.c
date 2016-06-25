@@ -4,6 +4,7 @@
 
 #include <jni.h>
 #include "seq.h"
+#include "_cgo_export.h"
 
 JNIEXPORT void JNICALL
 Java_go_Seq_setContext(JNIEnv* env, jclass clazz, jobject ctx) {
