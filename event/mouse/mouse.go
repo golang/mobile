@@ -40,16 +40,24 @@ type Event struct {
 // Button is a mouse button.
 type Button int32
 
+// IsWheel returns whether the button is for a scroll wheel.
+func (b Button) IsWheel() bool {
+	return b < 0
+}
+
 // TODO: have a separate axis concept for wheel up/down? How does that relate
 // to joystick events?
 
 const (
-	ButtonNone      Button = +0
-	ButtonLeft      Button = +1
-	ButtonMiddle    Button = +2
-	ButtonRight     Button = +3
-	ButtonWheelUp   Button = -1
-	ButtonWheelDown Button = -2
+	ButtonNone   Button = +0
+	ButtonLeft   Button = +1
+	ButtonMiddle Button = +2
+	ButtonRight  Button = +3
+
+	ButtonWheelUp    Button = -1
+	ButtonWheelDown  Button = -2
+	ButtonWheelLeft  Button = -3
+	ButtonWheelRight Button = -4
 )
 
 // Direction is the direction of the mouse event.
