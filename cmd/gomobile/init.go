@@ -408,14 +408,10 @@ func fetchNDK() error {
 		llvmsrc = filepath.Join(llvmsrc, goos+"-"+ndkarch)
 	}
 	llvmdst := filepath.Join(ndk.Root(), "llvm")
-	llvmbin := filepath.Join(llvmdst, "bin")
-	if err := mkdir(llvmbin); err != nil {
+	if err := mkdir(llvmdst); err != nil {
 		return err
 	}
-	if err := move(llvmbin, filepath.Join(llvmsrc, "bin"), "clang", "clang++"); err != nil {
-		return err
-	}
-	if err := move(llvmdst, llvmsrc, "lib64"); err != nil {
+	if err := move(llvmdst, llvmsrc, "lib64", "bin"); err != nil {
 		return err
 	}
 
@@ -461,9 +457,12 @@ func fetchNDK() error {
 			if goos == "windows" {
 				name += ".exe"
 			}
-			if err := symlink(filepath.Join(llvmbin, name), filepath.Join(dst, "bin", toolchain.toolPrefix+"-"+name)); err != nil {
+			if err := symlink(filepath.Join(llvmdst, "bin", name), filepath.Join(dst, "bin", toolchain.toolPrefix+"-"+name)); err != nil {
 				return err
 			}
+		}
+		if err := symlink(filepath.Join(llvmdst, "lib64"), filepath.Join(dst, "lib64")); err != nil {
+			return err
 		}
 	}
 	return nil
