@@ -30,7 +30,7 @@ import (
 // There is a significant size different (400MB compared to 30MB).
 var useStrippedNDK = true
 
-const ndkVersion = "ndk-r12"
+const ndkVersion = "ndk-r12b"
 const openALVersion = "openal-soft-1.16.0.1-" + ndkVersion
 
 var (
@@ -445,7 +445,7 @@ func fetchNDK() error {
 			return err
 		}
 
-		for _, name := range []string{"ld", "as"} {
+		for _, name := range []string{"ld", "as", "nm"} {
 			if goos == "windows" {
 				name += ".exe"
 			}
