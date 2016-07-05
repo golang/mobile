@@ -7,13 +7,13 @@ package main
 // Hashes were computed with 'go run release.go'
 
 var fetchHashes = map[string]string{
-	"android-ndk-r12-darwin-x86_64.zip":            "fe10b64a65f3e818b852862975ea7b5896295cd1301d1acdbeb1294d9592fb19",
-	"gomobile-ndk-r12-darwin-x86_64.tar.gz":        "861c5b6d464923f4bac16f47999d838a6a15184b17f5482049e52949dfece44c",
-	"android-ndk-r12-linux-x86_64.zip":             "7876e3b99f3596a3215ecf4e9f152d24b82dfdf2bbe7d3a38c423ae6a3edee79",
-	"gomobile-ndk-r12-linux-x86_64.tar.gz":         "ffa4b99736b8df22f26027167ab5e6e3d1d74aaf838622009134cd022b9bc9e2",
-	"android-ndk-r12-windows-x86.zip":              "72a18b670086601e827f6fe4f49e31239f969138ddc9468800e64d6a4fc5bd81",
-	"gomobile-ndk-r12-windows-x86.tar.gz":          "ed201197b87bb1ed830d5ac5cdbccf65b1833d8b338a82804e7d6a3dc8da80cd",
-	"android-ndk-r12-windows-x86_64.zip":           "85c5d6d43a04b43cd004771394db37e8f7a7a074ce4c7db7476880cc1a41607f",
-	"gomobile-ndk-r12-windows-x86_64.tar.gz":       "f9ccdf1687a41a4dddf221c451f43fb8cd5729d8a40d9c61da3d8c86b352b1b0",
-	"gomobile-openal-soft-1.16.0.1-ndk-r12.tar.gz": "ede844ee14491a45686657998a12ccb591e7958332fb099581018a11697ffbb2",
+	"android-ndk-r12b-darwin-x86_64.zip":            "2bdef9143a2c7680fcb7c9fd54fe85013d591f106aea43831eba5e13e10db77e",
+	"gomobile-ndk-r12b-darwin-x86_64.tar.gz":        "2c4365d033fc3c9e1fbeeb6c2773f75116a0c76000ebf0dab7290506ba9acb07",
+	"android-ndk-r12b-linux-x86_64.zip":             "eafae2d614e5475a3bcfd7c5f201db5b963cc1290ee3e8ae791ff0c66757781e",
+	"gomobile-ndk-r12b-linux-x86_64.tar.gz":         "3eaeb237f89fa7ca44dbc760085a79a1efe9c6e830f3bedf68e5473bbd716fed",
+	"android-ndk-r12b-windows-x86.zip":              "4b3b522775858bdf4e5e8f7365e06fdabb9913fb7b9f45d7010232f8271fb42c",
+	"gomobile-ndk-r12b-windows-x86.tar.gz":          "2108256dac7fe7499c139915672c0f68eca1bcfe3d9660b1ef0f9c3e776459ee",
+	"android-ndk-r12b-windows-x86_64.zip":           "a201b9dad71802464823dcfc77f61445ec1bbd8a29baa154d0a6ed84f50298ae",
+	"gomobile-ndk-r12b-windows-x86_64.tar.gz":       "558b124266add3bced8591596911862fdf7949f689a79f612c3f9e48ef8a2199",
+	"gomobile-openal-soft-1.16.0.1-ndk-r12b.tar.gz": "848307aa48311a2d4f6cd05661724b121c8f8663d616dfc8c573f9e5d926cf1d",
 }

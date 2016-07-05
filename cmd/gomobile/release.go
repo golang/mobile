@@ -31,7 +31,7 @@ import (
 	"strconv"
 )
 
-const ndkVersion = "ndk-r12"
+const ndkVersion = "ndk-r12b"
 
 type version struct {
 	os   string
@@ -265,7 +265,7 @@ func mkpkg(host version) error {
 		if err := move(dst+"/"+gcc, src+"/"+gcc, "lib", "COPYING", "COPYING.LIB"); err != nil {
 			return err
 		}
-		for _, exe := range []string{"as", "ld"} {
+		for _, exe := range []string{"as", "ld", "nm"} {
 			if host.os == "windows" {
 				exe += ".exe"
 			}
