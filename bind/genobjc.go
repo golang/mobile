@@ -982,7 +982,7 @@ func (g *objcGen) objcType(typ types.Type) string {
 		case types.Bool, types.UntypedBool:
 			return "BOOL"
 		case types.Int:
-			return "int"
+			return "long"
 		case types.Int8:
 			return "int8_t"
 		case types.Int16:
