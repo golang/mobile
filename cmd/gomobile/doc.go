@@ -23,6 +23,7 @@ Commands:
 
 	bind        build a library for Android and iOS
 	build       compile android APK and iOS app
+	clean       remove object files and cached gomobile files
 	init        install android compiler toolchain
 	install     compile android APK and install on device
 	version     print version
@@ -52,7 +53,7 @@ example, in Android Studio (1.2+), an AAR file can be imported using
 the module import wizard (File > New > New Module > Import .JAR or
 .AAR package), and setting it as a new dependency
 (File > Project Structure > Dependencies).  This requires 'javac'
-(version 1.7+) and Android SDK (API level 9 or newer) to build the
+(version 1.7+) and Android SDK (API level 15 or newer) to build the
 library for Android. The environment variable ANDROID_HOME must be set
 to the path to Android SDK. The generated Java class is in the java
 package 'go.<package_name>' unless -javapkg flag is specified.
@@ -105,6 +106,15 @@ The -v flag provides verbose output, including the list of packages built.
 
 The build flags -a, -i, -n, -x, -gcflags, -ldflags, -tags, and -work are
 shared with the build command. For documentation, see 'go help build'.
+
+
+Remove object files and cached gomobile files
+
+Usage:
+
+	gomobile clean
+
+Clean removes object files and cached NDK files downloaded by gomobile init
 
 
 Install android compiler toolchain
