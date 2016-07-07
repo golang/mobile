@@ -24,7 +24,7 @@
 
 @protocol GoIssue10788TestInterface
 - (void)doSomeWork:(GoIssue10788TestStruct*)s;
-- (void)multipleUnnamedParams:(int)p0 p1:(NSString*)p1 p2:(int64_t)p2;
+- (void)multipleUnnamedParams:(long)p0 p1:(NSString*)p1 p2:(int64_t)p2;
 @end
 
 @class GoIssue10788TestInterface;
@@ -35,7 +35,7 @@
 
 - (id)initWithRef:(id)ref;
 - (void)doSomeWork:(GoIssue10788TestStruct*)s;
-- (void)multipleUnnamedParams:(int)p0 p1:(NSString*)p1 p2:(int64_t)p2;
+- (void)multipleUnnamedParams:(long)p0 p1:(NSString*)p1 p2:(int64_t)p2;
 @end
 
 #endif

@@ -114,14 +114,14 @@ static NSString* errDomain = @"go.vars";
 	return _r0;
 }
 
-+ (void) setAnInt:(int)v {
++ (void) setAnInt:(long)v {
 	nint _v = (nint)v;
 	var_setvars_AnInt(_v);
 }
 
-+ (int) anInt {
++ (long) anInt {
 	nint r0 = var_getvars_AnInt();
-	int _r0 = (int)r0;
+	long _r0 = (long)r0;
 	return _r0;
 }
 

@@ -52,9 +52,9 @@ BOOL GoBasictypesError(NSError** error) {
 	return (_error == nil);
 }
 
-BOOL GoBasictypesErrorPair(int* ret0_, NSError** error) {
+BOOL GoBasictypesErrorPair(long* ret0_, NSError** error) {
 	struct proxybasictypes__ErrorPair_return res = proxybasictypes__ErrorPair();
-	int _ret0_ = (int)res.r0;
+	long _ret0_ = (long)res.r0;
 	GoUniverseerror* _error = nil;
 	GoSeqRef* _error_ref = go_seq_from_refnum(res.r1);
 	if (_error_ref != NULL) {
@@ -70,7 +70,7 @@ BOOL GoBasictypesErrorPair(int* ret0_, NSError** error) {
 	return (_error == nil);
 }
 
-void GoBasictypesInts(int8_t x, int16_t y, int32_t z, int64_t t, int u) {
+void GoBasictypesInts(int8_t x, int16_t y, int32_t z, int64_t t, long u) {
 	int8_t _x = (int8_t)x;
 	int16_t _y = (int16_t)y;
 	int32_t _z = (int32_t)z;
