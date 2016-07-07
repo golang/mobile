@@ -16,15 +16,18 @@ import (
 	"time"
 )
 
-// TestJavaSeqTest runs java test SeqTest.java.
-// This requires the gradle command in PATH and
-// the Android SDK whose path is available through ANDROID_HOME environment variable.
+func TestCustomPkg(t *testing.T) {
+	runTest(t, []string{
+		"golang.org/x/mobile/bind/testpkg",
+	}, "org.golang.custompkg", "CustomPkgTest")
+}
+
 func TestJavaSeqTest(t *testing.T) {
 	runTest(t, []string{
 		"golang.org/x/mobile/bind/testpkg",
 		"golang.org/x/mobile/bind/testpkg/secondpkg",
 		"golang.org/x/mobile/bind/testpkg/simplepkg",
-	}, "SeqTest")
+	}, "", "SeqTest")
 }
 
 // TestJavaSeqBench runs java test SeqBench.java, with the same
@@ -38,10 +41,15 @@ func TestJavaSeqTest(t *testing.T) {
 //
 // while running the benchmark to see the results.
 func TestJavaSeqBench(t *testing.T) {
-	runTest(t, []string{"golang.org/x/mobile/bind/benchmark"}, "SeqBench")
+	runTest(t, []string{"golang.org/x/mobile/bind/benchmark"}, "", "SeqBench")
 }
 
-func runTest(t *testing.T, pkgNames []string, javaCls string) {
+// runTest runs the Android java test class specified with javaCls. If javaPkg is
+// set, it is passed with the -javapkg flag to gomobile. The pkgNames lists the Go
+// packages to bind for the test.
+// This requires the gradle command in PATH and
+// the Android SDK whose path is available through ANDROID_HOME environment variable.
+func runTest(t *testing.T, pkgNames []string, javaPkg, javaCls string) {
 	if _, err := run("which gradle"); err != nil {
 		t.Skip("command gradle not found, skipping")
 	}
@@ -84,7 +92,12 @@ func runTest(t *testing.T, pkgNames []string, javaCls string) {
 		}
 	}
 
-	buf, err := run("gomobile bind -o pkg.aar " + strings.Join(pkgNames, " "))
+	cmd := []string{"gomobile", "bind", "-o", "pkg.aar"}
+	if javaPkg != "" {
+		cmd = append(cmd, "-javapkg", javaPkg)
+	}
+	cmd = append(cmd, pkgNames...)
+	buf, err := run(strings.Join(cmd, " "))
 	if err != nil {
 		t.Logf("%s", buf)
 		t.Fatalf("failed to run gomobile bind: %v", err)
