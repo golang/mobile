@@ -538,11 +538,11 @@ var javaNameReplacer = strings.NewReplacer(
 )
 
 func (g *javaGen) javaPkgName(pkg *types.Package) string {
-	if g.javaPkg != "" {
-		return g.javaPkg
-	}
 	if pkg == nil {
 		return "go"
+	}
+	if g.javaPkg != "" {
+		return g.javaPkg
 	}
 	s := javaNameReplacer.Replace(pkg.Name())
 	// Look for Java keywords that are not Go keywords, and avoid using
