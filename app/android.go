@@ -183,6 +183,16 @@ func windowConfigRead(activity *C.ANativeActivity) windowConfig {
 	density := C.AConfiguration_getDensity(aconfig)
 	C.AConfiguration_delete(aconfig)
 
+	// Calculate the screen resolution. This value is approximate. For example,
+	// a physical resolution of 200 DPI may be quantized to one of the
+	// ACONFIGURATION_DENSITY_XXX values such as 160 or 240.
+	//
+	// A more accurate DPI could possibly be calculated from
+	// https://developer.android.com/reference/android/util/DisplayMetrics.html#xdpi
+	// but this does not appear to be accessible via the NDK. In any case, the
+	// hardware might not even provide a more accurate number, as the system
+	// does not apparently use the reported value. See golang.org/issue/13366
+	// for a discussion.
 	var dpi int
 	switch density {
 	case C.ACONFIGURATION_DENSITY_DEFAULT:
