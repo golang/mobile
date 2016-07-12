@@ -218,6 +218,17 @@ const (
 	CodeRightShift   Code = 229
 	CodeRightAlt     Code = 230
 	CodeRightGUI     Code = 231
+
+	// The following codes are not part of the standard USB HID Usage IDs for
+	// keyboards. See http://www.usb.org/developers/hidpage/Hut1_12v2.pdf
+	//
+	// Usage IDs are uint16s, so these non-standard values start at 0x10000.
+
+	// CodeCompose is the Code for a compose key, sometimes called a multi key,
+	// used to input non-ASCII characters such as ñ being composed of n and ~.
+	//
+	// See https://en.wikipedia.org/wiki/Compose_key
+	CodeCompose Code = 0x10000
 )
 
 // TODO: Given we use runes outside the unicode space, should we provide a
