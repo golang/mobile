@@ -19,7 +19,7 @@ package al
 
 #ifdef GOOS_linux
 #include <stdlib.h>
-#include <AL/al.h>
+#include <AL/al.h>  // install on Ubuntu with: sudo apt-get install libopenal-dev
 #endif
 */
 import "C"
