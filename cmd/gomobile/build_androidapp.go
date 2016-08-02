@@ -9,6 +9,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"go/build"
@@ -19,6 +20,8 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/mobile/internal/binres"
 )
 
 func goAndroidBuild(pkg *build.Package, androidArchs []string) (map[string]bool, error) {
@@ -143,15 +146,7 @@ func goAndroidBuild(pkg *build.Package, androidArchs []string) (map[string]bool,
 		return nil
 	}
 
-	w, err := apkwCreate("AndroidManifest.xml")
-	if err != nil {
-		return nil, err
-	}
-	if _, err := w.Write(manifestData); err != nil {
-		return nil, err
-	}
-
-	w, err = apkwCreate("classes.dex")
+	w, err := apkwCreate("classes.dex")
 	if err != nil {
 		return nil, err
 	}
@@ -184,6 +179,9 @@ func goAndroidBuild(pkg *build.Package, androidArchs []string) (map[string]bool,
 	}
 
 	// Add any assets.
+	var arsc struct {
+		iconPath string
+	}
 	assetsDir := filepath.Join(pkg.Dir, "assets")
 	assetsDirExists := true
 	fi, err := os.Stat(assetsDir)
@@ -213,12 +211,61 @@ func goAndroidBuild(pkg *build.Package, androidArchs []string) (map[string]bool,
 			if info.IsDir() {
 				return nil
 			}
+
+			if rel, err := filepath.Rel(assetsDir, path); rel == "icon.png" && err == nil {
+				arsc.iconPath = path
+				// TODO returning here does not write the assets/icon.png to the final assets output,
+				// making it unavailable via the assets API. Should the file be duplicated into assets
+				// or should assets API be able to retrieve files from the generated resource table?
+				return nil
+			}
+
 			name := "assets/" + path[len(assetsDir)+1:]
 			return apkwWriteFile(name, path)
 		})
 		if err != nil {
 			return nil, fmt.Errorf("asset %v", err)
 		}
+	}
+
+	bxml, err := binres.UnmarshalXML(bytes.NewReader(manifestData), arsc.iconPath != "")
+	if err != nil {
+		return nil, err
+	}
+
+	// generate resources.arsc identifying single xxxhdpi icon resource.
+	if arsc.iconPath != "" {
+		pkgname, err := bxml.RawValueByName("manifest", xml.Name{Local: "package"})
+		if err != nil {
+			return nil, err
+		}
+		tbl, name := binres.NewMipmapTable(pkgname)
+		if err := apkwWriteFile(name, arsc.iconPath); err != nil {
+			return nil, err
+		}
+		w, err := apkwCreate("resources.arsc")
+		if err != nil {
+			return nil, err
+		}
+		bin, err := tbl.MarshalBinary()
+		if err != nil {
+			return nil, err
+		}
+		if _, err := w.Write(bin); err != nil {
+			return nil, err
+		}
+	}
+
+	w, err = apkwCreate("AndroidManifest.xml")
+	if err != nil {
+		return nil, err
+	}
+	bin, err := bxml.MarshalBinary()
+	if err != nil {
+		return nil, err
+	}
+	if _, err := w.Write(bin); err != nil {
+		return nil, err
 	}
 
 	// TODO: add gdbserver to apk?
