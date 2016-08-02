@@ -7,6 +7,7 @@ package binres
 import (
 	"bytes"
 	"encoding"
+	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -209,7 +210,7 @@ func TestEncode(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	bx, err := UnmarshalXML(f)
+	bx, err := UnmarshalXML(f, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -236,7 +237,7 @@ func TestEncode(t *testing.T) {
 	}
 
 	if err := compareElements(bx, bxml); err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
 
 	// Current output byte-for-byte of pkg binres is close, but not exact, to output of aapt.
@@ -251,6 +252,23 @@ func TestEncode(t *testing.T) {
 	// if err := compareBytes(bin, have); err != nil {
 	// t.Fatal(err)
 	// }
+}
+
+func TestRawValueByName(t *testing.T) {
+	f, err := os.Open("testdata/bootstrap.xml")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	bx, err := UnmarshalXML(f, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pkgname, err := bx.RawValueByName("manifest", xml.Name{Local: "package"})
+	if want := "com.zentus.balloon"; err != nil || pkgname != want {
+		t.Fatalf("have (%q, %v), want (%q, nil)", pkgname, err, want)
+	}
 }
 
 type byAttrName []*Attribute

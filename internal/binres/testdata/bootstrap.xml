@@ -17,6 +17,7 @@ license that can be found in the LICENSE file.
 			android:label="Balloon世界"
 			android:allowBackup="true"
 			android:hasCode="false"
+			android:icon="@mipmap/icon"
 			foo="bar"
 			android:debuggable="true"
 			baz="bar"
