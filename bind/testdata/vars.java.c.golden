@@ -17,13 +17,13 @@ jmethodID proxy_class_vars_S_cons;
 JNIEXPORT void JNICALL
 Java_go_vars_Vars_init(JNIEnv *env, jclass _unused) {
     jclass clazz;
-    clazz = (*env)->FindClass(env, "go/vars/Vars$S");
+    clazz = (*env)->FindClass(env, "go/vars/S");
     proxy_class_vars_S = (*env)->NewGlobalRef(env, clazz);
     proxy_class_vars_S_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
     clazz = (*env)->FindClass(env, "go/vars/Vars$proxyI");
     proxy_class_vars_I = (*env)->NewGlobalRef(env, clazz);
     proxy_class_vars_I_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
-    clazz = (*env)->FindClass(env, "go/vars/Vars$I");
+    clazz = (*env)->FindClass(env, "go/vars/I");
     
 }
 

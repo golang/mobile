@@ -10,7 +10,7 @@ import android.test.MoreAsserts;
 import java.util.Arrays;
 import java.util.Random;
 
-import go.testpkg.Testpkg;
+import go.testpkg.*;
 import go.secondpkg.Secondpkg;
 
 public class SeqTest extends InstrumentationTestCase {
@@ -63,9 +63,9 @@ public class SeqTest extends InstrumentationTestCase {
     Testpkg.setIntVar(newIntVar);
     assertEquals("var IntVar", newIntVar, Testpkg.getIntVar());
 
-    Testpkg.S s0 = Testpkg.getStructVar();
+    S s0 = Testpkg.getStructVar();
     assertEquals("var StructVar", "a struct var", s0.String());
-    Testpkg.S s1 = Testpkg.New();
+    S s1 = Testpkg.New();
     Testpkg.setStructVar(s1);
     assertEquals("var StructVar", s1.String(), Testpkg.getStructVar().String());
 
@@ -205,7 +205,7 @@ public class SeqTest extends InstrumentationTestCase {
   }
 
   public void testGoRefGC() {
-    Testpkg.S s = Testpkg.New();
+    S s = Testpkg.New();
     runGC();
     long collected = Testpkg.NumSCollected();
     assertEquals("Only S should be pinned", 0, collected);
@@ -216,7 +216,7 @@ public class SeqTest extends InstrumentationTestCase {
     assertEquals("S should be collected", 1, collected);
   }
 
-  private class AnI implements Testpkg.I {
+  private class AnI implements I {
     public void E() throws Exception {
       throw new Exception("my exception from E");
     }
@@ -226,15 +226,15 @@ public class SeqTest extends InstrumentationTestCase {
       calledF = true;
     }
 
-    public Testpkg.I I() {
+    public I I() {
       return this;
     }
 
-    public Testpkg.S S() {
+    public S S() {
       return Testpkg.New();
     }
 
-    public String StoString(Testpkg.S s) {
+    public String StoString(S s) {
       return s.String();
     }
 
@@ -275,7 +275,7 @@ public class SeqTest extends InstrumentationTestCase {
   public void testInterfaceMethodReturnsInterface() {
     AnI obj = new AnI();
     obj.name = "testing AnI.I";
-    Testpkg.I i = Testpkg.CallI(obj);
+    I i = Testpkg.CallI(obj);
     assertEquals("Want AnI.I to return itself", i.String(), obj.String());
 
     runGC();
@@ -287,14 +287,14 @@ public class SeqTest extends InstrumentationTestCase {
   public void testInterfaceMethodReturnsStructPointer() {
     final AnI obj = new AnI();
     for (int i = 0; i < 5; i++) {
-    	Testpkg.S s = Testpkg.CallS(obj);
+    	S s = Testpkg.CallS(obj);
 	runGC();
     }
   }
 
   public void testInterfaceMethodTakesStructPointer() {
     final AnI obj = new AnI();
-    Testpkg.S s = Testpkg.CallS(obj);
+    S s = Testpkg.CallS(obj);
     String got = obj.StoString(s);
     String want = s.String();
     assertEquals("Want AnI.StoString(s) to call s's String", want, got);
@@ -355,13 +355,13 @@ public class SeqTest extends InstrumentationTestCase {
 
   private int countI = 0;
 
-  private class CountI implements Testpkg.I {
+  private class CountI implements I {
     public void F() { countI++; }
 
     public void E() throws Exception {}
-    public Testpkg.I I() { return null; }
-    public Testpkg.S S() { return null; }
-    public String StoString(Testpkg.S s) { return ""; }
+    public I I() { return null; }
+    public S S() { return null; }
+    public String StoString(S s) { return ""; }
     public long V() { return 0; }
     public long VE() throws Exception { return 0; }
     public String String() { return ""; }
@@ -404,20 +404,20 @@ public class SeqTest extends InstrumentationTestCase {
   }
 
   public void testPointerToStructAsField() {
-    Testpkg.Node a = Testpkg.NewNode("A");
-    Testpkg.Node b = Testpkg.NewNode("B");
+    Node a = Testpkg.NewNode("A");
+    Node b = Testpkg.NewNode("B");
     a.setNext(b);
     String got = a.String();
     assertEquals("want Node A points to Node B", "A:B:<end>", got);
   }
 
   public void testImplementsInterface() {
-    Testpkg.Interface intf = Testpkg.NewConcrete();
+    Interface intf = Testpkg.NewConcrete();
   }
 
   public void testErrorField() {
     final String want = "an error message";
-    Testpkg.Node n = Testpkg.NewNode("ErrTest");
+    Node n = Testpkg.NewNode("ErrTest");
     n.setErr(want);
     String got = n.getErr();
     assertEquals("want back the error message we set", want, got);
@@ -425,7 +425,7 @@ public class SeqTest extends InstrumentationTestCase {
 
   //test if we have JNI local reference table overflow error
   public void testLocalReferenceOverflow() {
-    Testpkg.CallWithCallback(new Testpkg.GoCallback() {
+    Testpkg.CallWithCallback(new GoCallback() {
 
       @Override
       public void VarUpdate() {
@@ -435,8 +435,8 @@ public class SeqTest extends InstrumentationTestCase {
   }
 
   public void testNullReferences() {
-    assertTrue(Testpkg.CallWithNull(null, new Testpkg.NullTest() {
-      public Testpkg.NullTest Null() {
+    assertTrue(Testpkg.CallWithNull(null, new NullTest() {
+      public NullTest Null() {
         return null;
       }
     }));
@@ -445,7 +445,7 @@ public class SeqTest extends InstrumentationTestCase {
   }
 
   public void testPassByteArray() {
-    Testpkg.PassByteArray(new Testpkg.B() {
+    Testpkg.PassByteArray(new B() {
       @Override public void B(byte[] b) {
         byte[] want = new byte[]{1, 2, 3, 4};
         MoreAsserts.assertEquals("bytes should match", want, b);
@@ -468,28 +468,28 @@ public class SeqTest extends InstrumentationTestCase {
   }
 
   public void testGoroutineCallback() {
-    Testpkg.GoroutineCallback(new Testpkg.Receiver() {
+    Testpkg.GoroutineCallback(new Receiver() {
       @Override public void Hello(String msg) {
       }
     });
   }
 
   public void testImportedPkg() {
-    Testpkg.CallImportedI(new Secondpkg.I() {
+    Testpkg.CallImportedI(new go.secondpkg.I() {
       @Override public long F(long i) {
         return i;
       }
     });
     assertEquals("imported string should match", Secondpkg.HelloString, Secondpkg.Hello());
-    Secondpkg.I i = Testpkg.NewImportedI();
-    Secondpkg.S s = Testpkg.NewImportedS();
+    go.secondpkg.I i = Testpkg.NewImportedI();
+    go.secondpkg.S s = Testpkg.NewImportedS();
     i = Testpkg.getImportedVarI();
     s = Testpkg.getImportedVarS();
     assertEquals("numbers should match", 8, i.F(8));
     assertEquals("numbers should match", 8, s.F(8));
     Testpkg.setImportedVarI(i);
     Testpkg.setImportedVarS(s);
-    Testpkg.ImportedFields fields = Testpkg.NewImportedFields();
+    ImportedFields fields = Testpkg.NewImportedFields();
     i = fields.getI();
     s = fields.getS();
     fields.setI(i);
@@ -497,22 +497,22 @@ public class SeqTest extends InstrumentationTestCase {
     Testpkg.WithImportedI(i);
     Testpkg.WithImportedS(s);
 
-    Secondpkg.IF f = new AnI();
+    go.secondpkg.IF f = new AnI();
     f = Testpkg.New();
-    Secondpkg.Ser ser = Testpkg.NewSer();
+    go.secondpkg.Ser ser = Testpkg.NewSer();
   }
 
   public void testRoundtripEquality() {
-    Testpkg.I want = new AnI();
+    I want = new AnI();
     assertTrue("java object passed through Go should not be wrapped", want == Testpkg.IDup(want));
-    Testpkg.InterfaceDupper idup = new Testpkg.InterfaceDupper(){
-      @Override public Testpkg.Interface IDup(Testpkg.Interface i) {
+    InterfaceDupper idup = new InterfaceDupper(){
+      @Override public Interface IDup(Interface i) {
         return i;
       }
     };
     assertTrue("Go interface passed through Java should not be wrapped", Testpkg.CallIDupper(idup));
-    Testpkg.ConcreteDupper cdup = new Testpkg.ConcreteDupper(){
-      @Override public Testpkg.Concrete CDup(Testpkg.Concrete c) {
+    ConcreteDupper cdup = new ConcreteDupper(){
+      @Override public Concrete CDup(Concrete c) {
         return c;
       }
     };
@@ -525,7 +525,7 @@ public class SeqTest extends InstrumentationTestCase {
       fail("Empty error wasn't caught");
     } catch (Exception e) {
     }
-    Testpkg.EmptyErrorer empty = new Testpkg.EmptyErrorer() {
+    EmptyErrorer empty = new EmptyErrorer() {
       @Override public void EmptyError() throws Exception {
         throw new Exception("");
       }

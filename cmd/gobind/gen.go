@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bytes"
 	"go/token"
 	"go/types"
 	"io"
@@ -25,19 +26,41 @@ func genPkg(p *types.Package, allPkg []*types.Package) {
 	}
 	switch *lang {
 	case "java":
+		var buf bytes.Buffer
+		g := &bind.JavaGen{
+			JavaPkg: *javaPkg,
+			Generator: &bind.Generator{
+				Printer: &bind.Printer{Buf: &buf, IndentEach: []byte("    ")},
+				Fset:    conf.Fset,
+				AllPkg:  conf.AllPkg,
+				Pkg:     conf.Pkg,
+			},
+		}
+		g.Init()
+
+		buf.Reset()
 		w, closer := writer(fname)
-		conf.Writer = w
-		processErr(bind.GenJava(conf, *javaPkg, bind.Java))
+		processErr(g.GenJava())
+		io.Copy(w, &buf)
 		closer()
+		for i, name := range g.ClassNames() {
+			buf.Reset()
+			w, closer := writer(name + ".java")
+			processErr(g.GenClass(i))
+			io.Copy(w, &buf)
+			closer()
+		}
+		buf.Reset()
 		cname := "java_" + p.Name() + ".c"
 		w, closer = writer(cname)
-		conf.Writer = w
-		processErr(bind.GenJava(conf, *javaPkg, bind.JavaC))
+		processErr(g.GenC())
+		io.Copy(w, &buf)
 		closer()
+		buf.Reset()
 		hname := p.Name() + ".h"
 		w, closer = writer(hname)
-		conf.Writer = w
-		processErr(bind.GenJava(conf, *javaPkg, bind.JavaH))
+		processErr(g.GenH())
+		io.Copy(w, &buf)
 		closer()
 	case "go":
 		w, closer := writer(fname)

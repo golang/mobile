@@ -20,16 +20,16 @@ jmethodID proxy_class_structs_S2_cons;
 JNIEXPORT void JNICALL
 Java_go_structs_Structs_init(JNIEnv *env, jclass _unused) {
     jclass clazz;
-    clazz = (*env)->FindClass(env, "go/structs/Structs$S");
+    clazz = (*env)->FindClass(env, "go/structs/S");
     proxy_class_structs_S = (*env)->NewGlobalRef(env, clazz);
     proxy_class_structs_S_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
-    clazz = (*env)->FindClass(env, "go/structs/Structs$S2");
+    clazz = (*env)->FindClass(env, "go/structs/S2");
     proxy_class_structs_S2 = (*env)->NewGlobalRef(env, clazz);
     proxy_class_structs_S2_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
     clazz = (*env)->FindClass(env, "go/structs/Structs$proxyI");
     proxy_class_structs_I = (*env)->NewGlobalRef(env, clazz);
     proxy_class_structs_I_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
-    clazz = (*env)->FindClass(env, "go/structs/Structs$I");
+    clazz = (*env)->FindClass(env, "go/structs/I");
     mid_I_M = (*env)->GetMethodID(env, clazz, "M", "()V");
     
 }
@@ -53,7 +53,7 @@ Java_go_structs_Structs_IdentityWithError(JNIEnv* env, jclass clazz, jobject s) 
 }
 
 JNIEXPORT jobject JNICALL
-Java_go_structs_Structs_00024S_Identity(JNIEnv* env, jobject this) {
+Java_go_structs_S_Identity(JNIEnv* env, jobject this) {
     int32_t o = go_seq_to_refnum(env, this);
     struct proxystructs_S_Identity_return res = proxystructs_S_Identity(o);
     jobject _r0 = go_seq_from_refnum(env, res.r0, proxy_class_structs_S, proxy_class_structs_S_cons);
@@ -63,7 +63,7 @@ Java_go_structs_Structs_00024S_Identity(JNIEnv* env, jobject this) {
 }
 
 JNIEXPORT jdouble JNICALL
-Java_go_structs_Structs_00024S_Sum(JNIEnv* env, jobject this) {
+Java_go_structs_S_Sum(JNIEnv* env, jobject this) {
     int32_t o = go_seq_to_refnum(env, this);
     double r0 = proxystructs_S_Sum(o);
     jdouble _r0 = (jdouble)r0;
@@ -71,14 +71,14 @@ Java_go_structs_Structs_00024S_Sum(JNIEnv* env, jobject this) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_structs_Structs_00024S_setX(JNIEnv *env, jobject this, jdouble v) {
+Java_go_structs_S_setX(JNIEnv *env, jobject this, jdouble v) {
     int32_t o = go_seq_to_refnum(env, this);
     double _v = (double)v;
     proxystructs_S_X_Set(o, _v);
 }
 
 JNIEXPORT jdouble JNICALL
-Java_go_structs_Structs_00024S_getX(JNIEnv *env, jobject this) {
+Java_go_structs_S_getX(JNIEnv *env, jobject this) {
     int32_t o = go_seq_to_refnum(env, this);
     double r0 = proxystructs_S_X_Get(o);
     jdouble _r0 = (jdouble)r0;
@@ -86,14 +86,14 @@ Java_go_structs_Structs_00024S_getX(JNIEnv *env, jobject this) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_structs_Structs_00024S_setY(JNIEnv *env, jobject this, jdouble v) {
+Java_go_structs_S_setY(JNIEnv *env, jobject this, jdouble v) {
     int32_t o = go_seq_to_refnum(env, this);
     double _v = (double)v;
     proxystructs_S_Y_Set(o, _v);
 }
 
 JNIEXPORT jdouble JNICALL
-Java_go_structs_Structs_00024S_getY(JNIEnv *env, jobject this) {
+Java_go_structs_S_getY(JNIEnv *env, jobject this) {
     int32_t o = go_seq_to_refnum(env, this);
     double r0 = proxystructs_S_Y_Get(o);
     jdouble _r0 = (jdouble)r0;
@@ -101,13 +101,13 @@ Java_go_structs_Structs_00024S_getY(JNIEnv *env, jobject this) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_structs_Structs_00024S2_M(JNIEnv* env, jobject this) {
+Java_go_structs_S2_M(JNIEnv* env, jobject this) {
     int32_t o = go_seq_to_refnum(env, this);
     proxystructs_S2_M(o);
 }
 
 JNIEXPORT jstring JNICALL
-Java_go_structs_Structs_00024S2_String(JNIEnv* env, jobject this) {
+Java_go_structs_S2_String(JNIEnv* env, jobject this) {
     int32_t o = go_seq_to_refnum(env, this);
     nstring r0 = proxystructs_S2_String(o);
     jstring _r0 = go_seq_to_java_string(env, r0);

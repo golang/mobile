@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"go/ast"
 	"go/build"
@@ -139,7 +140,7 @@ var (
 func init() {
 	// bind command specific commands.
 	cmdBind.flag.StringVar(&bindJavaPkg, "javapkg", "",
-		"specifies custom Java package path used instead of the default 'go.<go package name>'. Valid only with -target=android.")
+		"specifies custom Java package path prefix used instead of the default 'go'. Valid only with -target=android.")
 	cmdBind.flag.StringVar(&bindPrefix, "prefix", "",
 		"custom Objective-C name prefix used instead of the default 'Go'. Valid only with -lang=ios.")
 }
@@ -273,11 +274,18 @@ func (b *binder) GenJava(pkg *types.Package, allPkg []*types.Package, outdir, ja
 		bindOption += " -javapkg=" + javaPkg
 	}
 
-	conf := &bind.GeneratorConfig{
-		Fset:   b.fset,
-		Pkg:    pkg,
-		AllPkg: allPkg,
+	var buf bytes.Buffer
+	g := &bind.JavaGen{
+		JavaPkg: javaPkg,
+		Generator: &bind.Generator{
+			Printer: &bind.Printer{Buf: &buf, IndentEach: []byte("    ")},
+			Fset:    b.fset,
+			AllPkg:  allPkg,
+			Pkg:     pkg,
+		},
 	}
+	g.Init()
+
 	generate := func(w io.Writer) error {
 		if buildX {
 			printcmd("gobind %s -outdir=%s %s", bindOption, javadir, pkgPath)
@@ -285,18 +293,43 @@ func (b *binder) GenJava(pkg *types.Package, allPkg []*types.Package, outdir, ja
 		if buildN {
 			return nil
 		}
-		conf.Writer = w
-		return bind.GenJava(conf, javaPkg, bind.Java)
+		buf.Reset()
+		if err := g.GenJava(); err != nil {
+			return err
+		}
+		_, err := io.Copy(w, &buf)
+		return err
 	}
 	if err := writeFile(javaFile, generate); err != nil {
 		return err
+	}
+	for i, name := range g.ClassNames() {
+		generate := func(w io.Writer) error {
+			if buildN {
+				return nil
+			}
+			buf.Reset()
+			if err := g.GenClass(i); err != nil {
+				return err
+			}
+			_, err := io.Copy(w, &buf)
+			return err
+		}
+		classFile := filepath.Join(javadir, name+".java")
+		if err := writeFile(classFile, generate); err != nil {
+			return err
+		}
 	}
 	generate = func(w io.Writer) error {
 		if buildN {
 			return nil
 		}
-		conf.Writer = w
-		return bind.GenJava(conf, bindJavaPkg, bind.JavaC)
+		buf.Reset()
+		if err := g.GenC(); err != nil {
+			return err
+		}
+		_, err := io.Copy(w, &buf)
+		return err
 	}
 	if err := writeFile(cFile, generate); err != nil {
 		return err
@@ -305,8 +338,12 @@ func (b *binder) GenJava(pkg *types.Package, allPkg []*types.Package, outdir, ja
 		if buildN {
 			return nil
 		}
-		conf.Writer = w
-		return bind.GenJava(conf, bindJavaPkg, bind.JavaH)
+		buf.Reset()
+		if err := g.GenH(); err != nil {
+			return err
+		}
+		_, err := io.Copy(w, &buf)
+		return err
 	}
 	return writeFile(hFile, generate)
 }

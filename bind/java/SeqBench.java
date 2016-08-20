@@ -13,16 +13,16 @@ import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 
-import go.benchmark.Benchmark;
+import go.benchmark.*;
 
 public class SeqBench extends InstrumentationTestCase {
 
-  public static class AnI implements Benchmark.I {
+  public static class AnI implements I {
     @Override public void F() {
     }
   }
 
-  private static class Benchmarks implements Benchmark.Benchmarks {
+  private static class Benchmarks implements go.benchmark.Benchmarks {
     private static Map<String, Runnable> benchmarks;
     private static ExecutorService executor = Executors.newSingleThreadExecutor();
 
@@ -52,13 +52,13 @@ public class SeqBench extends InstrumentationTestCase {
           Benchmark.Oneret();
         }
       });
-      final Benchmark.I javaRef = new AnI();
+      final I javaRef = new AnI();
       benchmarks.put("Refforeign", new Runnable() {
         @Override public void run() {
           Benchmark.Ref(javaRef);
         }
       });
-      final Benchmark.I goRef = Benchmark.NewI();
+      final I goRef = Benchmark.NewI();
       benchmarks.put("Refgo", new Runnable() {
         @Override public void run() {
           Benchmark.Ref(goRef);
@@ -130,10 +130,10 @@ public class SeqBench extends InstrumentationTestCase {
       }
     }
 
-    @Override public Benchmark.I NewI() {
+    @Override public I NewI() {
       return new AnI();
     }
-    @Override public void Ref(Benchmark.I i) {
+    @Override public void Ref(I i) {
     }
     @Override public void Noargs() {
     }

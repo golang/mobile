@@ -50,14 +50,20 @@ func (list ErrorList) Error() string {
 	return buf.String()
 }
 
-type generator struct {
-	*printer
-	fset   *token.FileSet
-	allPkg []*types.Package
-	pkg    *types.Package
+// Generator contains the common Go package information
+// needed for the specific Go, Java, ObjC generators.
+//
+// After setting Printer, Fset, AllPkg, Pkg, the Init
+// method is used to initialize the auxiliary information
+// about the package to be generated, Pkg.
+type Generator struct {
+	*Printer
+	Fset   *token.FileSet
+	AllPkg []*types.Package
+	Pkg    *types.Package
 	err    ErrorList
 
-	// fields set by init.
+	// fields set by Init.
 	pkgName   string
 	pkgPrefix string
 	funcs     []*types.Func
@@ -85,14 +91,14 @@ func pkgPrefix(pkg *types.Package) string {
 	return pkg.Name()
 }
 
-func (g *generator) init() {
-	if g.pkg != nil {
-		g.pkgName = g.pkg.Name()
+func (g *Generator) Init() {
+	if g.Pkg != nil {
+		g.pkgName = g.Pkg.Name()
 	}
-	g.pkgPrefix = pkgPrefix(g.pkg)
+	g.pkgPrefix = pkgPrefix(g.Pkg)
 
-	if g.pkg != nil {
-		scope := g.pkg.Scope()
+	if g.Pkg != nil {
+		scope := g.Pkg.Scope()
 		hasExported := false
 		for _, name := range scope.Names() {
 			obj := scope.Lookup(name)
@@ -124,7 +130,7 @@ func (g *generator) init() {
 			}
 		}
 		if !hasExported {
-			g.errorf("no exported names in the package %q", g.pkg.Path())
+			g.errorf("no exported names in the package %q", g.Pkg.Path())
 		}
 	} else {
 		// Bind the single supported type from the universe scope, error.
@@ -132,7 +138,7 @@ func (g *generator) init() {
 		t := errType.Type().Underlying().(*types.Interface)
 		g.interfaces = append(g.interfaces, interfaceInfo{errType, t, makeIfaceSummary(t)})
 	}
-	for _, p := range g.allPkg {
+	for _, p := range g.AllPkg {
 		scope := p.Scope()
 		for _, name := range scope.Names() {
 			obj := scope.Lookup(name)
@@ -149,20 +155,20 @@ func (g *generator) init() {
 	}
 }
 
-func (_ *generator) toCFlag(v bool) int {
+func (_ *Generator) toCFlag(v bool) int {
 	if v {
 		return 1
 	}
 	return 0
 }
 
-func (g *generator) errorf(format string, args ...interface{}) {
+func (g *Generator) errorf(format string, args ...interface{}) {
 	g.err = append(g.err, fmt.Errorf(format, args...))
 }
 
 // cgoType returns the name of a Cgo type suitable for converting a value of
 // the given type.
-func (g *generator) cgoType(t types.Type) string {
+func (g *Generator) cgoType(t types.Type) string {
 	switch t := t.(type) {
 	case *types.Basic:
 		switch t.Kind() {
@@ -215,7 +221,7 @@ func (g *generator) cgoType(t types.Type) string {
 	return "TODO"
 }
 
-func (g *generator) genInterfaceMethodSignature(m *types.Func, iName string, header bool) {
+func (g *Generator) genInterfaceMethodSignature(m *types.Func, iName string, header bool) {
 	sig := m.Type().(*types.Signature)
 	params := sig.Params()
 	res := sig.Results()
@@ -252,8 +258,8 @@ func (g *generator) genInterfaceMethodSignature(m *types.Func, iName string, hea
 	}
 }
 
-func (g *generator) validPkg(pkg *types.Package) bool {
-	for _, p := range g.allPkg {
+func (g *Generator) validPkg(pkg *types.Package) bool {
+	for _, p := range g.AllPkg {
 		if p == pkg {
 			return true
 		}
@@ -263,7 +269,7 @@ func (g *generator) validPkg(pkg *types.Package) bool {
 
 // isSigSupported returns whether the generators can handle a given
 // function signature
-func (g *generator) isSigSupported(t types.Type) bool {
+func (g *Generator) isSigSupported(t types.Type) bool {
 	sig := t.(*types.Signature)
 	params := sig.Params()
 	for i := 0; i < params.Len(); i++ {
@@ -281,7 +287,7 @@ func (g *generator) isSigSupported(t types.Type) bool {
 }
 
 // isSupported returns whether the generators can handle the type.
-func (g *generator) isSupported(t types.Type) bool {
+func (g *Generator) isSupported(t types.Type) bool {
 	if isErrorType(t) {
 		return true
 	}
