@@ -32,58 +32,23 @@ type (
 )
 
 const (
-	Java fileType = iota
-	JavaC
-	JavaH
-
-	ObjcM
+	ObjcM = iota
 	ObjcH
 	ObjcGoH
 )
-
-// GenJava generates a Java API from a Go package.
-func GenJava(conf *GeneratorConfig, javaPkg string, ft fileType) error {
-	buf := new(bytes.Buffer)
-	g := &javaGen{
-		javaPkg: javaPkg,
-		generator: &generator{
-			printer: &printer{buf: buf, indentEach: []byte("    ")},
-			fset:    conf.Fset,
-			allPkg:  conf.AllPkg,
-			pkg:     conf.Pkg,
-		},
-	}
-	g.init()
-	var err error
-	switch ft {
-	case Java:
-		err = g.genJava()
-	case JavaC:
-		err = g.genC()
-	case JavaH:
-		err = g.genH()
-	default:
-		panic("invalid fileType")
-	}
-	if err != nil {
-		return err
-	}
-	_, err = io.Copy(conf.Writer, buf)
-	return err
-}
 
 // GenGo generates a Go stub to support foreign language APIs.
 func GenGo(conf *GeneratorConfig) error {
 	buf := new(bytes.Buffer)
 	g := &goGen{
-		generator: &generator{
-			printer: &printer{buf: buf, indentEach: []byte("\t")},
-			fset:    conf.Fset,
-			allPkg:  conf.AllPkg,
-			pkg:     conf.Pkg,
+		Generator: &Generator{
+			Printer: &Printer{Buf: buf, IndentEach: []byte("\t")},
+			Fset:    conf.Fset,
+			AllPkg:  conf.AllPkg,
+			Pkg:     conf.Pkg,
 		},
 	}
-	g.init()
+	g.Init()
 	if err := g.gen(); err != nil {
 		return err
 	}
@@ -101,11 +66,11 @@ func GenGo(conf *GeneratorConfig) error {
 func GenObjc(conf *GeneratorConfig, prefix string, ft fileType) error {
 	buf := new(bytes.Buffer)
 	g := &objcGen{
-		generator: &generator{
-			printer: &printer{buf: buf, indentEach: []byte("\t")},
-			fset:    conf.Fset,
-			allPkg:  conf.AllPkg,
-			pkg:     conf.Pkg,
+		Generator: &Generator{
+			Printer: &Printer{Buf: buf, IndentEach: []byte("\t")},
+			Fset:    conf.Fset,
+			AllPkg:  conf.AllPkg,
+			Pkg:     conf.Pkg,
 		},
 		prefix: prefix,
 	}

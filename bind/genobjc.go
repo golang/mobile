@@ -27,7 +27,7 @@ type objcGen struct {
 	// fields set by init.
 	namePrefix string
 
-	*generator
+	*Generator
 }
 
 type interfaceInfo struct {
@@ -42,8 +42,8 @@ type structInfo struct {
 }
 
 func (g *objcGen) init() {
-	g.generator.init()
-	g.namePrefix = g.namePrefixOf(g.pkg)
+	g.Generator.Init()
+	g.namePrefix = g.namePrefixOf(g.Pkg)
 }
 
 func (g *objcGen) namePrefixOf(pkg *types.Package) string {
@@ -59,8 +59,8 @@ func (g *objcGen) namePrefixOf(pkg *types.Package) string {
 
 func (g *objcGen) genGoH() error {
 	var pkgPath string
-	if g.pkg != nil {
-		pkgPath = g.pkg.Path()
+	if g.Pkg != nil {
+		pkgPath = g.Pkg.Path()
 	}
 	g.Printf(objcPreamble, pkgPath, g.gobindOpts(), pkgPath)
 	g.Printf("#ifndef __%s_H__\n", g.pkgName)
@@ -92,8 +92,8 @@ func (g *objcGen) genGoH() error {
 
 func (g *objcGen) genH() error {
 	var pkgPath string
-	if g.pkg != nil {
-		pkgPath = g.pkg.Path()
+	if g.Pkg != nil {
+		pkgPath = g.Pkg.Path()
 	}
 	g.Printf(objcPreamble, pkgPath, g.gobindOpts(), pkgPath)
 	g.Printf("#ifndef __%s_H__\n", g.namePrefix)
@@ -101,8 +101,8 @@ func (g *objcGen) genH() error {
 	g.Printf("\n")
 	g.Printf("#include <Foundation/Foundation.h>\n")
 	g.Printf("#include \"GoUniverse.h\"\n")
-	if g.pkg != nil {
-		for _, pkg := range g.pkg.Imports() {
+	if g.Pkg != nil {
+		for _, pkg := range g.Pkg.Imports() {
 			if g.validPkg(pkg) {
 				g.Printf("#include %q\n", g.namePrefixOf(pkg)+".h")
 			}
@@ -207,8 +207,8 @@ func (g *objcGen) gobindOpts() string {
 func (g *objcGen) genM() error {
 	var pkgPath string
 	var errDomain string
-	if g.pkg != nil {
-		pkgPath = g.pkg.Path()
+	if g.Pkg != nil {
+		pkgPath = g.Pkg.Path()
 		errDomain = "go." + pkgPath
 	} else {
 		errDomain = "go"

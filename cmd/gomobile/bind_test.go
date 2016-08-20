@@ -117,6 +117,7 @@ mkdir -p $WORK/gomobile_bind
 mkdir -p $WORK/gomobile_bind
 mkdir -p $WORK/android/src/main/java/go
 gobind -lang=java -outdir=$WORK/android/src/main/java/go 
+mkdir -p $WORK/android/src/main/java/go
 mkdir -p $WORK/gomobile_bind
 mkdir -p $WORK/gomobile_bind
 cp $GOPATH/src/golang.org/x/mobile/bind/java/seq_android.go.support $WORK/gomobile_bind/seq_android.go

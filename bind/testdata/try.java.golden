@@ -20,5 +20,6 @@ public abstract class Try {
     private static native void init();
     
     
+    
     public static native String This();
 }

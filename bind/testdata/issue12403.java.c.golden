@@ -20,7 +20,7 @@ Java_go_issue12403_Issue12403_init(JNIEnv *env, jclass _unused) {
     clazz = (*env)->FindClass(env, "go/issue12403/Issue12403$proxyParsable");
     proxy_class_issue12403_Parsable = (*env)->NewGlobalRef(env, clazz);
     proxy_class_issue12403_Parsable_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
-    clazz = (*env)->FindClass(env, "go/issue12403/Issue12403$Parsable");
+    clazz = (*env)->FindClass(env, "go/issue12403/Parsable");
     mid_Parsable_FromJSON = (*env)->GetMethodID(env, clazz, "FromJSON", "(Ljava/lang/String;)Ljava/lang/String;");
     mid_Parsable_ToJSON = (*env)->GetMethodID(env, clazz, "ToJSON", "()Ljava/lang/String;");
     

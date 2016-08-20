@@ -291,7 +291,7 @@ Java_go_Seq_init(JNIEnv *env, jclass clazz) {
 	}
 
 	seq_class = (*env)->NewGlobalRef(env, clazz);
-	seq_throw_exc = (*env)->GetStaticMethodID(env, seq_class, "throwException", "(Lgo/Universe$error;)V");
+	seq_throw_exc = (*env)->GetStaticMethodID(env, seq_class, "throwException", "(Lgo/error;)V");
 	if (seq_throw_exc == NULL) {
 		LOG_FATAL("failed to find method Seq.throwException");
 	}
@@ -312,7 +312,7 @@ Java_go_Seq_init(JNIEnv *env, jclass clazz) {
 	if (seq_incRef == NULL) {
 		LOG_FATAL("failed to find method Seq.incRef");
 	}
-	seq_wrapThrowable = (*env)->GetStaticMethodID(env, seq_class, "wrapThrowable", "(Ljava/lang/Throwable;)Lgo/Universe$error;");
+	seq_wrapThrowable = (*env)->GetStaticMethodID(env, seq_class, "wrapThrowable", "(Ljava/lang/Throwable;)Lgo/error;");
 	if (seq_wrapThrowable == NULL) {
 		LOG_FATAL("failed to find method Seq.wrapThrowable");
 	}

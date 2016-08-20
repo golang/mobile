@@ -9,6 +9,7 @@ import java.util.IdentityHashMap;
 import java.util.logging.Logger;
 
 import go.Universe;
+import go.error;
 
 // Seq is a sequence of machine-dependent encoded values.
 // Used by automatically generated language bindings to talk to Go.
@@ -47,12 +48,12 @@ public class Seq {
 	private Seq() {
 	}
 
-	private static void throwException(Universe.error err) throws Exception {
+	private static void throwException(error err) throws Exception {
 		throw new Exception(err.Error());
 	}
 
-	private static Universe.error wrapThrowable(final Throwable t) {
-		return new Universe.error() {
+	private static error wrapThrowable(final Throwable t) {
+		return new error() {
 			@Override public String Error() {
 				return t.getMessage();
 			}

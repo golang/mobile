@@ -129,29 +129,52 @@ func TestGenObjc(t *testing.T) {
 }
 
 func TestGenJava(t *testing.T) {
-	var suffixes = map[fileType]string{
-		Java:  ".java.golden",
-		JavaC: ".java.c.golden",
-		JavaH: ".java.h.golden",
-	}
-
 	for _, filename := range tests {
 		pkg := typeCheck(t, filename)
-		for typ, suffix := range suffixes {
-			var buf bytes.Buffer
-			conf := &GeneratorConfig{
-				Writer: &buf,
-				Fset:   fset,
-				Pkg:    pkg,
-				AllPkg: []*types.Package{pkg},
-			}
-			if err := GenJava(conf, "", typ); err != nil {
+		var buf bytes.Buffer
+		g := &JavaGen{
+			Generator: &Generator{
+				Printer: &Printer{Buf: &buf, IndentEach: []byte("    ")},
+				Fset:    fset,
+				AllPkg:  []*types.Package{pkg},
+				Pkg:     pkg,
+			},
+		}
+		g.Init()
+		testCases := []struct {
+			suffix string
+			gen    func() error
+		}{
+			{
+				".java.golden",
+				func() error {
+					for i := range g.ClassNames() {
+						if err := g.GenClass(i); err != nil {
+							return err
+						}
+					}
+					return g.GenJava()
+				},
+			},
+			{
+				".java.c.golden",
+				func() error { return g.GenC() },
+			},
+			{
+				".java.h.golden",
+				func() error { return g.GenH() },
+			},
+		}
+
+		for _, tc := range testCases {
+			buf.Reset()
+			if err := tc.gen(); err != nil {
 				t.Errorf("%s: %v", filename, err)
 				continue
 			}
-			out := writeTempFile(t, "generated"+suffix, buf.Bytes())
+			out := writeTempFile(t, "generated"+tc.suffix, buf.Bytes())
 			defer os.Remove(out)
-			golden := filename[:len(filename)-len(".go")] + suffix
+			golden := filename[:len(filename)-len(".go")] + tc.suffix
 			if diffstr := diff(golden, out); diffstr != "" {
 				t.Errorf("%s: does not match Java golden:\n%s", filename, diffstr)
 
@@ -207,21 +230,58 @@ func TestCustomPrefix(t *testing.T) {
 		Pkg:    pkg,
 		AllPkg: []*types.Package{pkg},
 	}
+	var buf bytes.Buffer
+	g := &JavaGen{
+		JavaPkg: "com.example",
+		Generator: &Generator{
+			Printer: &Printer{Buf: &buf, IndentEach: []byte("    ")},
+			Fset:    fset,
+			AllPkg:  []*types.Package{pkg},
+			Pkg:     pkg,
+		},
+	}
+	g.Init()
 	testCases := []struct {
 		golden string
 		gen    func(w io.Writer) error
 	}{
 		{
 			"testdata/customprefix.java.golden",
-			func(w io.Writer) error { conf.Writer = w; return GenJava(conf, "com.example", Java) },
+			func(w io.Writer) error {
+				buf.Reset()
+				for i := range g.ClassNames() {
+					if err := g.GenClass(i); err != nil {
+						return err
+					}
+				}
+				if err := g.GenJava(); err != nil {
+					return err
+				}
+				_, err := io.Copy(w, &buf)
+				return err
+			},
 		},
 		{
 			"testdata/customprefix.java.h.golden",
-			func(w io.Writer) error { conf.Writer = w; return GenJava(conf, "com.example", JavaH) },
+			func(w io.Writer) error {
+				buf.Reset()
+				if err := g.GenH(); err != nil {
+					return err
+				}
+				_, err := io.Copy(w, &buf)
+				return err
+			},
 		},
 		{
 			"testdata/customprefix.java.c.golden",
-			func(w io.Writer) error { conf.Writer = w; return GenJava(conf, "com.example", JavaC) },
+			func(w io.Writer) error {
+				buf.Reset()
+				if err := g.GenC(); err != nil {
+					return err
+				}
+				_, err := io.Copy(w, &buf)
+				return err
+			},
 		},
 		{
 			"testdata/customprefix.objc.go.h.golden",

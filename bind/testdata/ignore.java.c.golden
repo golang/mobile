@@ -21,13 +21,13 @@ jmethodID proxy_class_ignore_S_cons;
 JNIEXPORT void JNICALL
 Java_go_ignore_Ignore_init(JNIEnv *env, jclass _unused) {
     jclass clazz;
-    clazz = (*env)->FindClass(env, "go/ignore/Ignore$S");
+    clazz = (*env)->FindClass(env, "go/ignore/S");
     proxy_class_ignore_S = (*env)->NewGlobalRef(env, clazz);
     proxy_class_ignore_S_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
     clazz = (*env)->FindClass(env, "go/ignore/Ignore$proxyI");
     proxy_class_ignore_I = (*env)->NewGlobalRef(env, clazz);
     proxy_class_ignore_I_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
-    clazz = (*env)->FindClass(env, "go/ignore/Ignore$I");
+    clazz = (*env)->FindClass(env, "go/ignore/I");
     // skipped method I.Argument with unsupported parameter or return types
     
     // skipped method I.Result with unsupported parameter or return types

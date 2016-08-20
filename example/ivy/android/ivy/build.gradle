@@ -10,7 +10,7 @@ gobind {
     pkg = "robpike.io/ivy/mobile"
 
     // -javapkg flag puts the generated java class into the specified package.
-    GOMOBILEFLAGS="-javapkg=org.golang.ivy"
+    GOMOBILEFLAGS="-javapkg=org.golang"
 
     /* Set the following variable(s):
 
