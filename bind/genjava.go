@@ -16,8 +16,8 @@ import (
 // TODO(crawshaw): consider introducing Java functions for casting to and from interfaces at runtime.
 
 type JavaGen struct {
-	// javaPkg is the custom name of the Java pkg that contains the generated classes. If empty,
-	// use a package name generated from the Go package name.
+	// JavaPkg is the Java package prefix for the generated classes. The prefix is prepended to the Go
+	// package name to create the full Java package name. If JavaPkg is empty, 'go' is used as prefix.
 	JavaPkg string
 
 	*Generator
