@@ -147,7 +147,7 @@ func (g *JavaGen) genStruct(obj *types.TypeName, T *types.Struct) {
 	g.Printf("@Override public String toString() {\n")
 	g.Indent()
 	if isStringer {
-		g.Printf("return String();\n")
+		g.Printf("return string();\n")
 	} else {
 		g.Printf("StringBuilder b = new StringBuilder();\n")
 		g.Printf(`b.append("%s").append("{");`, obj.Name())
@@ -375,7 +375,11 @@ func (g *JavaGen) genJNIFuncSignature(o *types.Func, sName string, proxy bool) {
 	} else {
 		g.Printf(g.className())
 	}
-	g.Printf("_%s(JNIEnv* env, ", o.Name())
+	oName := javaNameReplacer.Replace(lowerFirst(o.Name()))
+	if strings.HasSuffix(oName, "_") {
+		oName += "1" // JNI doesn't like methods ending with underscore, needs the _1 suffixing
+	}
+	g.Printf("_%s(JNIEnv* env, ", oName)
 	if sName != "" {
 		g.Printf("jobject this")
 	} else {
@@ -431,8 +435,7 @@ func (g *JavaGen) genFuncSignature(o *types.Func, static, header bool) {
 	if !header {
 		g.Printf("native ")
 	}
-	oName := o.Name()
-	g.Printf("%s %s(", ret, oName)
+	g.Printf("%s %s(", ret, javaNameReplacer.Replace(lowerFirst(o.Name())))
 	params := sig.Params()
 	for i := 0; i < params.Len(); i++ {
 		if i > 0 {
@@ -561,33 +564,51 @@ func (g *JavaGen) gobindOpts() string {
 	return strings.Join(opts, " ")
 }
 
-var javaNameReplacer = strings.NewReplacer(
-	"-", "_",
-	".", "_",
-)
+var javaKeywordsAndReserves = []string{
+	"abstract", "assert", "boolean", "break", "byte", "case", "catch", "char",
+	"class", "const", "continue", "default", "do", "double", "else", "enum",
+	"extends", "final", "finally", "float", "for", "goto", "if", "implements",
+	"import", "instanceof", "int", "interface", "long", "native", "new", "package",
+	"private", "protected", "public", "return", "short", "static", "strictfp",
+	"super", "switch", "synchronized", "this", "throw", "throws", "transient",
+	"try", "void", "volatile", "while", "false", "null", "true"}
+
+// javaNameSanitizer replaces all dashes and dots with underscores, as well as
+// avoiding all keywords and reserved words by suffixing such identifier with
+// an underscore.
+type javaNameSanitizer struct {
+	symbols  *strings.Replacer
+	reserved map[string]bool
+}
+
+func newJavaNameSanitizer() *javaNameSanitizer {
+	reserved := make(map[string]bool)
+	for _, word := range javaKeywordsAndReserves {
+		reserved[word] = true
+	}
+	return &javaNameSanitizer{
+		symbols: strings.NewReplacer(
+			"-", "_",
+			".", "_",
+		),
+		reserved: reserved,
+	}
+}
+
+func (r *javaNameSanitizer) Replace(s string) string {
+	if r.reserved[s] {
+		return s + "_"
+	}
+	return r.symbols.Replace(s)
+}
+
+var javaNameReplacer = newJavaNameSanitizer()
 
 func (g *JavaGen) javaPkgName(pkg *types.Package) string {
 	if pkg == nil {
 		return "go"
 	}
 	s := javaNameReplacer.Replace(pkg.Name())
-	// Look for Java keywords that are not Go keywords, and avoid using
-	// them as a package name.
-	//
-	// This is not a problem for normal Go identifiers as we only expose
-	// exported symbols. The upper case first letter saves everything
-	// from accidentally matching except for the package name.
-	//
-	// Note that basic type names (like int) are not keywords in Go.
-	switch s {
-	case "abstract", "assert", "boolean", "byte", "catch", "char", "class",
-		"do", "double", "enum", "extends", "final", "finally", "float",
-		"implements", "instanceof", "int", "long", "native", "private",
-		"protected", "public", "short", "static", "strictfp", "super",
-		"synchronized", "this", "throw", "throws", "transient", "try",
-		"void", "volatile", "while":
-		s += "_"
-	}
 	if g.JavaPkg != "" {
 		return g.JavaPkg + "." + s
 	} else {
@@ -603,7 +624,7 @@ func className(pkg *types.Package) string {
 	if pkg == nil {
 		return "Universe"
 	}
-	return strings.Title(javaNameReplacer.Replace(pkg.Name()))
+	return javaNameReplacer.Replace(strings.Title(pkg.Name()))
 }
 
 func (g *JavaGen) genConst(o *types.Const) {
@@ -994,7 +1015,7 @@ func (g *JavaGen) GenC() error {
 	}
 	g.Printf("\n")
 	g.Printf("JNIEXPORT void JNICALL\n")
-	g.Printf("Java_%s_%s_init(JNIEnv *env, jclass _unused) {\n", g.jniPkgName(), g.className())
+	g.Printf("Java_%s_%s__1init(JNIEnv *env, jclass _unused) {\n", g.jniPkgName(), g.className())
 	g.Indent()
 	g.Printf("jclass clazz;\n")
 	for _, s := range g.structs {
@@ -1027,7 +1048,7 @@ func (g *JavaGen) GenC() error {
 				jniParams += g.jniSigType(params.At(i).Type())
 			}
 			g.Printf("mid_%s_%s = (*env)->GetMethodID(env, clazz, %q, \"(%s)%s\");\n",
-				iface.obj.Name(), m.Name(), m.Name(), jniParams, retSig)
+				iface.obj.Name(), m.Name(), javaNameReplacer.Replace(lowerFirst(m.Name())), jniParams, retSig)
 		}
 		g.Printf("\n")
 	}
@@ -1079,13 +1100,13 @@ func (g *JavaGen) GenJava() error {
 			}
 		}
 	}
-	g.Printf("init();\n")
+	g.Printf("_init();\n")
 	g.Outdent()
 	g.Printf("}\n\n")
 	g.Printf("private %s() {} // uninstantiable\n\n", g.className())
 	g.Printf("// touch is called from other bound packages to initialize this package\n")
 	g.Printf("public static void touch() {}\n\n")
-	g.Printf("private static native void init();\n\n")
+	g.Printf("private static native void _init();\n\n")
 
 	for _, iface := range g.interfaces {
 		g.Printf(javaProxyPreamble, iface.obj.Name())

@@ -51,7 +51,7 @@ import go.Seq;
 public abstract class Vars {
     static {
         Seq.touch(); // for loading the native library
-        init();
+        _init();
     }
     
     private Vars() {} // uninstantiable
@@ -59,7 +59,7 @@ public abstract class Vars {
     // touch is called from other bound packages to initialize this package
     public static void touch() {}
     
-    private static native void init();
+    private static native void _init();
     
     private static final class proxyI extends Seq.Proxy implements I {
         proxyI(Seq.Ref ref) { super(ref); }

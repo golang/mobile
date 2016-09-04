@@ -18,7 +18,7 @@ import go.benchmark.*;
 public class SeqBench extends InstrumentationTestCase {
 
   public static class AnI implements I {
-    @Override public void F() {
+    @Override public void f() {
     }
   }
 
@@ -34,81 +34,81 @@ public class SeqBench extends InstrumentationTestCase {
       });
       benchmarks.put("Noargs", new Runnable() {
         @Override public void run() {
-          Benchmark.Noargs();
+          Benchmark.noargs();
         }
       });
       benchmarks.put("Onearg", new Runnable() {
         @Override public void run() {
-          Benchmark.Onearg(0);
+          Benchmark.onearg(0);
         }
       });
       benchmarks.put("Manyargs", new Runnable() {
         @Override public void run() {
-          Benchmark.Manyargs(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+          Benchmark.manyargs(0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
         }
       });
       benchmarks.put("Oneret", new Runnable() {
         @Override public void run() {
-          Benchmark.Oneret();
+          Benchmark.oneret();
         }
       });
       final I javaRef = new AnI();
       benchmarks.put("Refforeign", new Runnable() {
         @Override public void run() {
-          Benchmark.Ref(javaRef);
+          Benchmark.ref(javaRef);
         }
       });
-      final I goRef = Benchmark.NewI();
+      final I goRef = Benchmark.newI();
       benchmarks.put("Refgo", new Runnable() {
         @Override public void run() {
-          Benchmark.Ref(goRef);
+          Benchmark.ref(goRef);
         }
       });
       benchmarks.put("StringShort", new Runnable() {
         @Override public void run() {
-          Benchmark.String(Benchmark.ShortString);
+          Benchmark.string(Benchmark.ShortString);
         }
       });
       benchmarks.put("StringLong", new Runnable() {
         @Override public void run() {
-          Benchmark.String(Benchmark.LongString);
+          Benchmark.string(Benchmark.LongString);
         }
       });
       benchmarks.put("StringShortUnicode", new Runnable() {
         @Override public void run() {
-          Benchmark.String(Benchmark.ShortStringUnicode);
+          Benchmark.string(Benchmark.ShortStringUnicode);
         }
       });
       benchmarks.put("StringLongUnicode", new Runnable() {
         @Override public void run() {
-          Benchmark.String(Benchmark.LongStringUnicode);
+          Benchmark.string(Benchmark.LongStringUnicode);
         }
       });
       benchmarks.put("StringRetShort", new Runnable() {
         @Override public void run() {
-          Benchmark.StringRetShort();
+          Benchmark.stringRetShort();
         }
       });
       benchmarks.put("StringRetLong", new Runnable() {
         @Override public void run() {
-          Benchmark.StringRetLong();
+          Benchmark.stringRetLong();
         }
       });
       final byte[] shortSlice = Benchmark.getShortSlice();
       benchmarks.put("SliceShort", new Runnable() {
         @Override public void run() {
-          Benchmark.Slice(shortSlice);
+          Benchmark.slice(shortSlice);
         }
       });
       final byte[] longSlice = Benchmark.getLongSlice();
       benchmarks.put("SliceLong", new Runnable() {
         @Override public void run() {
-          Benchmark.Slice(longSlice);
+          Benchmark.slice(longSlice);
         }
       });
     }
 
-    public void RunDirect(String name, final long n) {
+    public void runDirect(String name, final long n) {
       final Runnable r = benchmarks.get(name);
       try {
         executor.submit(new Runnable() {
@@ -123,40 +123,40 @@ public class SeqBench extends InstrumentationTestCase {
       }
     }
 
-    public void Run(String name, long n) {
+    public void run(String name, long n) {
       final Runnable r = benchmarks.get(name);
       for (int i = 0; i < n; i++) {
         r.run();
       }
     }
 
-    @Override public I NewI() {
+    @Override public I newI() {
       return new AnI();
     }
-    @Override public void Ref(I i) {
+    @Override public void ref(I i) {
     }
-    @Override public void Noargs() {
+    @Override public void noargs() {
     }
-    @Override public void Onearg(long i) {
+    @Override public void onearg(long i) {
     }
-    @Override public long Oneret() {
+    @Override public long oneret() {
       return 0;
     }
-    @Override public void Manyargs(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long gp8, long p9) {
+    @Override public void manyargs(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long gp8, long p9) {
     }
-    @Override public void String(String s) {
+    @Override public void string(String s) {
     }
-    @Override public void Slice(byte[] s) {
+    @Override public void slice(byte[] s) {
     }
-	@Override public String StringRetShort() {
+	@Override public String stringRetShort() {
 		return Benchmark.ShortString;
 	}
-	@Override public String StringRetLong() {
+	@Override public String stringRetLong() {
 		return Benchmark.LongString;
 	}
   }
 
   public void testBenchmark() {
-    Benchmark.RunBenchmarks(new Benchmarks());
+    Benchmark.runBenchmarks(new Benchmarks());
   }
 }

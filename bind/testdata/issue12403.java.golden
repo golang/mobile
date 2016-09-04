@@ -7,8 +7,8 @@ package go.issue12403;
 import go.Seq;
 
 public interface Parsable {
-    public String FromJSON(String jstr);
-    public String ToJSON() throws Exception;
+    public String fromJSON(String jstr);
+    public String toJSON() throws Exception;
     
 }
 
@@ -23,7 +23,7 @@ import go.Seq;
 public abstract class Issue12403 {
     static {
         Seq.touch(); // for loading the native library
-        init();
+        _init();
     }
     
     private Issue12403() {} // uninstantiable
@@ -31,13 +31,13 @@ public abstract class Issue12403 {
     // touch is called from other bound packages to initialize this package
     public static void touch() {}
     
-    private static native void init();
+    private static native void _init();
     
     private static final class proxyParsable extends Seq.Proxy implements Parsable {
         proxyParsable(Seq.Ref ref) { super(ref); }
     
-        public native String FromJSON(String jstr);
-        public native String ToJSON() throws Exception;
+        public native String fromJSON(String jstr);
+        public native String toJSON() throws Exception;
     }
     
     

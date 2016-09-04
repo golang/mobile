@@ -52,7 +52,7 @@ import go.Seq;
 public abstract class Issue12328 {
     static {
         Seq.touch(); // for loading the native library
-        init();
+        _init();
     }
     
     private Issue12328() {} // uninstantiable
@@ -60,7 +60,7 @@ public abstract class Issue12328 {
     // touch is called from other bound packages to initialize this package
     public static void touch() {}
     
-    private static native void init();
+    private static native void _init();
     
     
     

@@ -49,12 +49,12 @@ public class Seq {
 	}
 
 	private static void throwException(error err) throws Exception {
-		throw new Exception(err.Error());
+		throw new Exception(err.error());
 	}
 
 	private static error wrapThrowable(final Throwable t) {
 		return new error() {
-			@Override public String Error() {
+			@Override public String error() {
 				return t.getMessage();
 			}
 		};

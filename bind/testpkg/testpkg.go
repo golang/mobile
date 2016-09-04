@@ -523,3 +523,13 @@ func EmptyError() error {
 func CallEmptyError(c EmptyErrorer) error {
 	return c.EmptyError()
 }
+
+func Init() {}
+
+type InitCaller struct{}
+
+func NewInitCaller() *InitCaller {
+	return new(InitCaller)
+}
+
+func (ic *InitCaller) Init() {}

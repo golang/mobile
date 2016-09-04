@@ -13,7 +13,7 @@ jclass proxy_class_issue12328_T;
 jmethodID proxy_class_issue12328_T_cons;
 
 JNIEXPORT void JNICALL
-Java_go_issue12328_Issue12328_init(JNIEnv *env, jclass _unused) {
+Java_go_issue12328_Issue12328__1init(JNIEnv *env, jclass _unused) {
     jclass clazz;
     clazz = (*env)->FindClass(env, "go/issue12328/T");
     proxy_class_issue12328_T = (*env)->NewGlobalRef(env, clazz);
