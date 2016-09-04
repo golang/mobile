@@ -15,8 +15,8 @@ public final class S extends Seq.Proxy {
     public final native double getY();
     public final native void setY(double v);
     
-    public native S Identity() throws Exception;
-    public native double Sum();
+    public native S identity() throws Exception;
+    public native double sum();
     @Override public boolean equals(Object o) {
         if (o == null || !(o instanceof S)) {
             return false;
@@ -59,8 +59,8 @@ import go.Seq;
 public final class S2 extends Seq.Proxy implements I {
     private S2(go.Seq.Ref ref) { super(ref); }
     
-    public native void M();
-    public native String String();
+    public native void m();
+    public native String string();
     @Override public boolean equals(Object o) {
         if (o == null || !(o instanceof S2)) {
             return false;
@@ -74,7 +74,7 @@ public final class S2 extends Seq.Proxy implements I {
     }
     
     @Override public String toString() {
-        return String();
+        return string();
     }
 }
 
@@ -87,7 +87,7 @@ package go.structs;
 import go.Seq;
 
 public interface I {
-    public void M();
+    public void m();
     
 }
 
@@ -102,7 +102,7 @@ import go.Seq;
 public abstract class Structs {
     static {
         Seq.touch(); // for loading the native library
-        init();
+        _init();
     }
     
     private Structs() {} // uninstantiable
@@ -110,15 +110,15 @@ public abstract class Structs {
     // touch is called from other bound packages to initialize this package
     public static void touch() {}
     
-    private static native void init();
+    private static native void _init();
     
     private static final class proxyI extends Seq.Proxy implements I {
         proxyI(Seq.Ref ref) { super(ref); }
     
-        public native void M();
+        public native void m();
     }
     
     
-    public static native S Identity(S s);
-    public static native S IdentityWithError(S s) throws Exception;
+    public static native S identity(S s);
+    public static native S identityWithError(S s) throws Exception;
 }

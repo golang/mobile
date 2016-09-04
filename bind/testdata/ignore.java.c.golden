@@ -19,7 +19,7 @@ jclass proxy_class_ignore_S;
 jmethodID proxy_class_ignore_S_cons;
 
 JNIEXPORT void JNICALL
-Java_go_ignore_Ignore_init(JNIEnv *env, jclass _unused) {
+Java_go_ignore_Ignore__1init(JNIEnv *env, jclass _unused) {
     jclass clazz;
     clazz = (*env)->FindClass(env, "go/ignore/S");
     proxy_class_ignore_S = (*env)->NewGlobalRef(env, clazz);
