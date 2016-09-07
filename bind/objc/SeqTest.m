@@ -202,9 +202,9 @@ static int numI = 0;
     }
 
     GoTestpkgGC();
-    int numS = GoTestpkgCollectS2(
+    long numS = GoTestpkgCollectS2(
             1, 10); // within 10 seconds, collect the S used in testStruct.
-    XCTAssertEqual(numS, 1, @"%d S objects were collected; S used in testStruct is supposed to "
+    XCTAssertEqual(numS, 1, @"%ld S objects were collected; S used in testStruct is supposed to "
                 @"be collected.",
                 numS);
 }
@@ -352,9 +352,9 @@ static int numI = 0;
 
 - (void)testByteArrayRead {
 	NSData *arr = [NSMutableData dataWithLength:8];
-	int n;
+	long n;
 	XCTAssertTrue(GoTestpkgReadIntoByteArray(arr, &n, nil), @"ReadIntoByteArray failed");
-	XCTAssertEqual(n, 8, @"ReadIntoByteArray wrote %d bytes, expected %d", n, 8);
+	XCTAssertEqual(n, 8, @"ReadIntoByteArray wrote %ld bytes, expected %d", n, 8);
 	const uint8_t *b = [arr bytes];
 	for (int i = 0; i < [arr length]; i++) {
 		XCTAssertEqual(b[i], i, @"ReadIntoByteArray wrote %d at %d; expected %d", b[i], i, i);
@@ -363,7 +363,7 @@ static int numI = 0;
 	const uint8_t buf[] = {42};
 	arr = [NSData dataWithBytes:buf length:1];
 	XCTAssertTrue(GoTestpkgReadIntoByteArray(arr, &n, nil), @"ReadIntoByteArray failed");
-	XCTAssertEqual(n, 1, @"ReadIntoByteArray wrote %d bytes, expected %d", n, 8);
+	XCTAssertEqual(n, 1, @"ReadIntoByteArray wrote %ld bytes, expected %d", n, 8);
 	b = [arr bytes];
 	XCTAssertEqual(b[0], 42, @"ReadIntoByteArray wrote to an immutable NSData; expected no change");
 }
