@@ -54,4 +54,9 @@ extern JNIEnv *go_seq_push_local_frame(jint cap);
 // Pop the current local frame, releasing all JNI local references in it
 extern void go_seq_pop_local_frame(JNIEnv *env);
 
+// Return a global reference to the given class. Return NULL and clear exception if not found.
+extern jclass go_seq_find_class(const char *name);
+extern jmethodID go_seq_get_static_method_id(jclass clazz, const char *name, const char *sig);
+extern jmethodID go_seq_get_method_id(jclass clazz, const char *name, const char *sig);
+
 #endif // __GO_SEQ_HDR__

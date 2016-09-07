@@ -165,6 +165,13 @@ func (_ *Generator) toCFlag(v bool) int {
 	return 0
 }
 
+func toCFlag(v bool) int {
+	if v {
+		return 1
+	}
+	return 0
+}
+
 func (g *Generator) errorf(format string, args ...interface{}) {
 	g.err = append(g.err, fmt.Errorf(format, args...))
 }

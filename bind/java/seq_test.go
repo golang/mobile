@@ -14,7 +14,18 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"golang.org/x/mobile/internal/importers/java"
 )
+
+func TestClasses(t *testing.T) {
+	if !java.IsAvailable() {
+		t.Skipf("java importer is not available")
+	}
+	runTest(t, []string{
+		"golang.org/x/mobile/bind/testpkg/javapkg",
+	}, "", "ClassesTest")
+}
 
 func TestCustomPkg(t *testing.T) {
 	runTest(t, []string{

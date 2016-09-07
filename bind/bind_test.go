@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"flag"
 	"go/ast"
+	"go/build"
+	"go/importer"
 	"go/parser"
 	"go/token"
 	"go/types"
@@ -16,6 +18,9 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"golang.org/x/mobile/internal/importers"
+	"golang.org/x/mobile/internal/importers/java"
 )
 
 func init() {
@@ -37,9 +42,25 @@ var tests = []string{
 	"testdata/ignore.go",
 }
 
+var javaTests = []string{
+	"testdata/java.go",
+}
+
 var fset = token.NewFileSet()
 
-func typeCheck(t *testing.T, filename string) *types.Package {
+func fileRefs(t *testing.T, filename string) *importers.References {
+	f, err := parser.ParseFile(fset, filename, nil, parser.AllErrors)
+	if err != nil {
+		t.Fatalf("%s: %v", filename, err)
+	}
+	refs, err := importers.AnalyzeFile(f, "Java/")
+	if err != nil {
+		t.Fatalf("%s: %v", filename, err)
+	}
+	return refs
+}
+
+func typeCheck(t *testing.T, filename string, gopath string) *types.Package {
 	f, err := parser.ParseFile(fset, filename, nil, parser.AllErrors)
 	if err != nil {
 		t.Fatalf("%s: %v", filename, err)
@@ -52,6 +73,12 @@ func typeCheck(t *testing.T, filename string) *types.Package {
 	var conf types.Config
 	conf.Error = func(err error) {
 		t.Error(err)
+	}
+	if gopath != "" {
+		conf.Importer = importer.Default()
+		oldDefault := build.Default
+		defer func() { build.Default = oldDefault }()
+		build.Default.GOPATH = gopath
 	}
 	pkg, err := conf.Check(pkgName, fset, []*ast.File{f}, nil)
 	if err != nil {
@@ -98,7 +125,7 @@ func TestGenObjc(t *testing.T) {
 	}
 
 	for _, filename := range tests {
-		pkg := typeCheck(t, filename)
+		pkg := typeCheck(t, filename, "")
 
 		for typ, suffix := range suffixes {
 			var buf bytes.Buffer
@@ -129,10 +156,74 @@ func TestGenObjc(t *testing.T) {
 	}
 }
 
+func genJavaPackages(t *testing.T, dir string, classes []*java.Class, buf *bytes.Buffer) *ClassGen {
+	cg := &ClassGen{
+		Printer: &Printer{
+			IndentEach: []byte("\t"),
+			Buf:        buf,
+		},
+	}
+	cg.Init(classes)
+	pkgBase := filepath.Join(dir, "src", "Java")
+	if err := os.MkdirAll(pkgBase, 0700); err != nil {
+		t.Fatal(err)
+	}
+	for i, jpkg := range cg.Packages() {
+		pkgDir := filepath.Join(pkgBase, jpkg)
+		if err := os.MkdirAll(pkgDir, 0700); err != nil {
+			t.Fatal(err)
+		}
+		pkgFile := filepath.Join(pkgDir, "package.go")
+		buf.Reset()
+		cg.GenPackage(i)
+		if err := ioutil.WriteFile(pkgFile, buf.Bytes(), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	buf.Reset()
+	cg.GenInterfaces()
+	clsFile := filepath.Join(pkgBase, "interfaces.go")
+	if err := ioutil.WriteFile(clsFile, buf.Bytes(), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	cmd := exec.Command(
+		"go",
+		"install",
+		"-pkgdir="+filepath.Join(dir, "pkg", build.Default.GOOS+"_"+build.Default.GOARCH),
+		"Java/...",
+	)
+	cmd.Env = append(cmd.Env, "GOPATH="+dir)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("failed to go install the generated Java wrappers: %v: %s", err, string(out))
+	}
+	return cg
+}
+
 func TestGenJava(t *testing.T) {
-	for _, filename := range tests {
-		pkg := typeCheck(t, filename)
+	allTests := tests
+	if java.IsAvailable() {
+		allTests = append(append([]string{}, allTests...), javaTests...)
+	}
+	for _, filename := range allTests {
+		refs := fileRefs(t, filename)
+		classes, err := java.Import("", refs)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var cg *ClassGen
+		tmpGopath := ""
 		var buf bytes.Buffer
+		if len(classes) > 0 {
+			tmpGopath, err = ioutil.TempDir(os.TempDir(), "gomobile-bind-test-")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer os.RemoveAll(tmpGopath)
+			cg = genJavaPackages(t, tmpGopath, classes, new(bytes.Buffer))
+			cg.Buf = &buf
+		}
+		pkg := typeCheck(t, filename, tmpGopath)
 		g := &JavaGen{
 			Generator: &Generator{
 				Printer: &Printer{Buf: &buf, IndentEach: []byte("    ")},
@@ -159,11 +250,21 @@ func TestGenJava(t *testing.T) {
 			},
 			{
 				".java.c.golden",
-				func() error { return g.GenC() },
+				func() error {
+					if cg != nil {
+						cg.GenC()
+					}
+					return g.GenC()
+				},
 			},
 			{
 				".java.h.golden",
-				func() error { return g.GenH() },
+				func() error {
+					if cg != nil {
+						cg.GenH()
+					}
+					return g.GenH()
+				},
 			},
 		}
 
@@ -192,14 +293,36 @@ func TestGenJava(t *testing.T) {
 }
 
 func TestGenGo(t *testing.T) {
-	for _, filename := range tests {
+	allTests := tests
+	if java.IsAvailable() {
+		allTests = append(append([]string{}, allTests...), javaTests...)
+	}
+	for _, filename := range allTests {
 		var buf bytes.Buffer
-		pkg := typeCheck(t, filename)
+		refs := fileRefs(t, filename)
+		classes, err := java.Import("", refs)
+		if err != nil {
+			t.Fatal(err)
+		}
+		tmpGopath := ""
+		var cg *ClassGen
+		if len(classes) > 0 {
+			tmpGopath, err = ioutil.TempDir(os.TempDir(), "gomobile-bind-test-")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer os.RemoveAll(tmpGopath)
+			cg = genJavaPackages(t, tmpGopath, classes, &buf)
+		}
+		pkg := typeCheck(t, filename, tmpGopath)
 		conf := &GeneratorConfig{
 			Writer: &buf,
 			Fset:   fset,
 			Pkg:    pkg,
 			AllPkg: []*types.Package{pkg},
+		}
+		if cg != nil {
+			cg.GenGo()
 		}
 		if err := GenGo(conf); err != nil {
 			t.Errorf("%s: %v", filename, err)
@@ -224,7 +347,7 @@ func TestGenGo(t *testing.T) {
 func TestCustomPrefix(t *testing.T) {
 	const datafile = "testdata/customprefix.go"
 	const isHeader = true
-	pkg := typeCheck(t, datafile)
+	pkg := typeCheck(t, datafile, "")
 
 	conf := &GeneratorConfig{
 		Fset:   fset,
