@@ -54,7 +54,7 @@ static NSString* errDomain = @"go.keywords";
 	proxykeywords_KeywordCaller_Catch(refnum);
 }
 
-- (void)char {
+- (void)char_ {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	proxykeywords_KeywordCaller_Char(refnum);
 }
@@ -64,7 +64,7 @@ static NSString* errDomain = @"go.keywords";
 	proxykeywords_KeywordCaller_Class(refnum);
 }
 
-- (void)const {
+- (void)const_ {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	proxykeywords_KeywordCaller_Const(refnum);
 }
@@ -84,7 +84,7 @@ static NSString* errDomain = @"go.keywords";
 	proxykeywords_KeywordCaller_Do(refnum);
 }
 
-- (void)double {
+- (void)double_ {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	proxykeywords_KeywordCaller_Double(refnum);
 }
@@ -119,7 +119,7 @@ static NSString* errDomain = @"go.keywords";
 	proxykeywords_KeywordCaller_Finally(refnum);
 }
 
-- (void)float {
+- (void)float_ {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	proxykeywords_KeywordCaller_Float(refnum);
 }
@@ -154,7 +154,7 @@ static NSString* errDomain = @"go.keywords";
 	proxykeywords_KeywordCaller_Instanceof(refnum);
 }
 
-- (void)int {
+- (void)int_ {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	proxykeywords_KeywordCaller_Int(refnum);
 }
@@ -164,7 +164,7 @@ static NSString* errDomain = @"go.keywords";
 	proxykeywords_KeywordCaller_Interface(refnum);
 }
 
-- (void)long {
+- (void)long_ {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	proxykeywords_KeywordCaller_Long(refnum);
 }
@@ -209,7 +209,7 @@ static NSString* errDomain = @"go.keywords";
 	proxykeywords_KeywordCaller_Return(refnum);
 }
 
-- (void)short {
+- (void)short_ {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	proxykeywords_KeywordCaller_Short(refnum);
 }
@@ -224,7 +224,7 @@ static NSString* errDomain = @"go.keywords";
 	proxykeywords_KeywordCaller_Strictfp(refnum);
 }
 
-- (void)super {
+- (void)super_ {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	proxykeywords_KeywordCaller_Super(refnum);
 }
@@ -269,12 +269,12 @@ static NSString* errDomain = @"go.keywords";
 	proxykeywords_KeywordCaller_Try(refnum);
 }
 
-- (void)void {
+- (void)void_ {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	proxykeywords_KeywordCaller_Void(refnum);
 }
 
-- (void)volatile {
+- (void)volatile_ {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	proxykeywords_KeywordCaller_Volatile(refnum);
 }
@@ -340,7 +340,7 @@ void cproxykeywords_KeywordCaller_Catch(int32_t refnum) {
 void cproxykeywords_KeywordCaller_Char(int32_t refnum) {
 	@autoreleasepool {
 		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
-		[o char];
+		[o char_];
 	}
 }
 
@@ -354,7 +354,7 @@ void cproxykeywords_KeywordCaller_Class(int32_t refnum) {
 void cproxykeywords_KeywordCaller_Const(int32_t refnum) {
 	@autoreleasepool {
 		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
-		[o const];
+		[o const_];
 	}
 }
 
@@ -382,7 +382,7 @@ void cproxykeywords_KeywordCaller_Do(int32_t refnum) {
 void cproxykeywords_KeywordCaller_Double(int32_t refnum) {
 	@autoreleasepool {
 		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
-		[o double];
+		[o double_];
 	}
 }
 
@@ -431,7 +431,7 @@ void cproxykeywords_KeywordCaller_Finally(int32_t refnum) {
 void cproxykeywords_KeywordCaller_Float(int32_t refnum) {
 	@autoreleasepool {
 		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
-		[o float];
+		[o float_];
 	}
 }
 
@@ -480,7 +480,7 @@ void cproxykeywords_KeywordCaller_Instanceof(int32_t refnum) {
 void cproxykeywords_KeywordCaller_Int(int32_t refnum) {
 	@autoreleasepool {
 		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
-		[o int];
+		[o int_];
 	}
 }
 
@@ -494,7 +494,7 @@ void cproxykeywords_KeywordCaller_Interface(int32_t refnum) {
 void cproxykeywords_KeywordCaller_Long(int32_t refnum) {
 	@autoreleasepool {
 		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
-		[o long];
+		[o long_];
 	}
 }
 
@@ -557,7 +557,7 @@ void cproxykeywords_KeywordCaller_Return(int32_t refnum) {
 void cproxykeywords_KeywordCaller_Short(int32_t refnum) {
 	@autoreleasepool {
 		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
-		[o short];
+		[o short_];
 	}
 }
 
@@ -578,7 +578,7 @@ void cproxykeywords_KeywordCaller_Strictfp(int32_t refnum) {
 void cproxykeywords_KeywordCaller_Super(int32_t refnum) {
 	@autoreleasepool {
 		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
-		[o super];
+		[o super_];
 	}
 }
 
@@ -641,14 +641,14 @@ void cproxykeywords_KeywordCaller_Try(int32_t refnum) {
 void cproxykeywords_KeywordCaller_Void(int32_t refnum) {
 	@autoreleasepool {
 		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
-		[o void];
+		[o void_];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Volatile(int32_t refnum) {
 	@autoreleasepool {
 		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
-		[o volatile];
+		[o volatile_];
 	}
 }
 

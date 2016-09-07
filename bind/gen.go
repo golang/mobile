@@ -11,6 +11,9 @@ import (
 	"go/types"
 	"io"
 	"regexp"
+	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 type (
@@ -339,4 +342,44 @@ func constExactString(o *types.Const) string {
 	}
 	// TODO: warning?
 	return v.String()
+}
+
+func lowerFirst(s string) string {
+	if s == "" {
+		return ""
+	}
+
+	var conv []rune
+	for len(s) > 0 {
+		r, n := utf8.DecodeRuneInString(s)
+		if !unicode.IsUpper(r) {
+			if l := len(conv); l > 1 {
+				conv[l-1] = unicode.ToUpper(conv[l-1])
+			}
+			return string(conv) + s
+		}
+		conv = append(conv, unicode.ToLower(r))
+		s = s[n:]
+	}
+	return string(conv)
+}
+
+// newNameSanitizer returns a functions that replaces all dashes and dots
+// with underscores, as well as avoiding reserved words by suffixing such
+// identifiers with underscores.
+func newNameSanitizer(res []string) func(s string) string {
+	reserved := make(map[string]bool)
+	for _, word := range res {
+		reserved[word] = true
+	}
+	symbols := strings.NewReplacer(
+		"-", "_",
+		".", "_",
+	)
+	return func(s string) string {
+		if reserved[s] {
+			return s + "_"
+		}
+		return symbols.Replace(s)
+	}
 }

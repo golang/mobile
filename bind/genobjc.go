@@ -10,8 +10,6 @@ import (
 	"go/types"
 	"math"
 	"strings"
-	"unicode"
-	"unicode/utf8"
 )
 
 // TODO(hyangah): handle method name conflicts.
@@ -162,7 +160,7 @@ func (g *objcGen) genH() error {
 				continue
 			}
 			objcType := g.objcType(obj.Type())
-			g.Printf("+ (%s) %s;\n", objcType, lowerFirst(obj.Name()))
+			g.Printf("+ (%s) %s;\n", objcType, objcNameReplacer(lowerFirst(obj.Name())))
 			g.Printf("+ (void) set%s:(%s)v;\n", obj.Name(), objcType)
 			g.Printf("\n")
 		}
@@ -305,7 +303,7 @@ func (g *objcGen) genVarM(o *types.Var) {
 	g.Printf("}\n\n")
 
 	// getter
-	g.Printf("+ (%s) %s {\n", objcType, lowerFirst(o.Name()))
+	g.Printf("+ (%s) %s {\n", objcType, objcNameReplacer(lowerFirst(o.Name())))
 	g.Indent()
 	g.Printf("%s r0 = ", g.cgoType(o.Type()))
 	g.Printf("var_get%s_%s();\n", g.pkgPrefix, o.Name())
@@ -470,7 +468,7 @@ func (s *funcSummary) asMethod(g *objcGen) string {
 			params = append(params, fmt.Sprintf("%s:(%s)%s", key, g.objcType(p.typ)+"*", p.name))
 		}
 	}
-	return fmt.Sprintf("(%s)%s%s", s.ret, lowerFirst(s.name), strings.Join(params, " "))
+	return fmt.Sprintf("(%s)%s%s", s.ret, objcNameReplacer(lowerFirst(s.name)), strings.Join(params, " "))
 }
 
 func (s *funcSummary) callMethod(g *objcGen) string {
@@ -491,7 +489,7 @@ func (s *funcSummary) callMethod(g *objcGen) string {
 			params = append(params, fmt.Sprintf("%s:&%s", key, p.name))
 		}
 	}
-	return fmt.Sprintf("%s%s", lowerFirst(s.name), strings.Join(params, " "))
+	return fmt.Sprintf("%s%s", objcNameReplacer(lowerFirst(s.name)), strings.Join(params, " "))
 }
 
 func (s *funcSummary) returnsVal() bool {
@@ -522,7 +520,7 @@ func (g *objcGen) genFuncM(obj *types.Func) {
 
 func (g *objcGen) genGetter(oName string, f *types.Var) {
 	t := f.Type()
-	g.Printf("- (%s)%s {\n", g.objcType(t), lowerFirst(f.Name()))
+	g.Printf("- (%s)%s {\n", g.objcType(t), objcNameReplacer(lowerFirst(f.Name())))
 	g.Indent()
 	g.Printf("int32_t refnum = go_seq_go_to_refnum(self._ref);\n")
 	g.Printf("%s r0 = ", g.cgoType(f.Type()))
@@ -885,7 +883,7 @@ func (g *objcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 			continue
 		}
 		name, typ := f.Name(), g.objcFieldType(f.Type())
-		g.Printf("- (%s)%s;\n", typ, lowerFirst(name))
+		g.Printf("- (%s)%s;\n", typ, objcNameReplacer(lowerFirst(name)))
 		g.Printf("- (void)set%s:(%s)v;\n", name, typ)
 	}
 
@@ -896,7 +894,7 @@ func (g *objcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 			continue
 		}
 		s := g.funcSummary(m)
-		g.Printf("- %s;\n", lowerFirst(s.asMethod(g)))
+		g.Printf("- %s;\n", objcNameReplacer(lowerFirst(s.asMethod(g))))
 	}
 	g.Printf("@end\n")
 }
@@ -1050,25 +1048,10 @@ func (g *objcGen) objcType(typ types.Type) string {
 	}
 }
 
-func lowerFirst(s string) string {
-	if s == "" {
-		return ""
-	}
-
-	var conv []rune
-	for len(s) > 0 {
-		r, n := utf8.DecodeRuneInString(s)
-		if !unicode.IsUpper(r) {
-			if l := len(conv); l > 1 {
-				conv[l-1] = unicode.ToUpper(conv[l-1])
-			}
-			return string(conv) + s
-		}
-		conv = append(conv, unicode.ToLower(r))
-		s = s[n:]
-	}
-	return string(conv)
-}
+var objcNameReplacer = newNameSanitizer([]string{
+	"void", "char", "short", "int", "long", "float", "double", "signed",
+	"unsigned", "id", "const", "volatile", "in", "out", "inout", "bycopy",
+	"byref", "oneway", "self", "super", "init"})
 
 const (
 	objcPreamble = `// Objective-C API for talking to %[1]s Go package.

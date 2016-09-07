@@ -375,7 +375,7 @@ func (g *JavaGen) genJNIFuncSignature(o *types.Func, sName string, proxy bool) {
 	} else {
 		g.Printf(g.className())
 	}
-	oName := javaNameReplacer.Replace(lowerFirst(o.Name()))
+	oName := javaNameReplacer(lowerFirst(o.Name()))
 	if strings.HasSuffix(oName, "_") {
 		oName += "1" // JNI doesn't like methods ending with underscore, needs the _1 suffixing
 	}
@@ -435,7 +435,7 @@ func (g *JavaGen) genFuncSignature(o *types.Func, static, header bool) {
 	if !header {
 		g.Printf("native ")
 	}
-	g.Printf("%s %s(", ret, javaNameReplacer.Replace(lowerFirst(o.Name())))
+	g.Printf("%s %s(", ret, javaNameReplacer(lowerFirst(o.Name())))
 	params := sig.Params()
 	for i := 0; i < params.Len(); i++ {
 		if i > 0 {
@@ -564,51 +564,20 @@ func (g *JavaGen) gobindOpts() string {
 	return strings.Join(opts, " ")
 }
 
-var javaKeywordsAndReserves = []string{
+var javaNameReplacer = newNameSanitizer([]string{
 	"abstract", "assert", "boolean", "break", "byte", "case", "catch", "char",
 	"class", "const", "continue", "default", "do", "double", "else", "enum",
 	"extends", "final", "finally", "float", "for", "goto", "if", "implements",
 	"import", "instanceof", "int", "interface", "long", "native", "new", "package",
 	"private", "protected", "public", "return", "short", "static", "strictfp",
 	"super", "switch", "synchronized", "this", "throw", "throws", "transient",
-	"try", "void", "volatile", "while", "false", "null", "true"}
-
-// javaNameSanitizer replaces all dashes and dots with underscores, as well as
-// avoiding all keywords and reserved words by suffixing such identifier with
-// an underscore.
-type javaNameSanitizer struct {
-	symbols  *strings.Replacer
-	reserved map[string]bool
-}
-
-func newJavaNameSanitizer() *javaNameSanitizer {
-	reserved := make(map[string]bool)
-	for _, word := range javaKeywordsAndReserves {
-		reserved[word] = true
-	}
-	return &javaNameSanitizer{
-		symbols: strings.NewReplacer(
-			"-", "_",
-			".", "_",
-		),
-		reserved: reserved,
-	}
-}
-
-func (r *javaNameSanitizer) Replace(s string) string {
-	if r.reserved[s] {
-		return s + "_"
-	}
-	return r.symbols.Replace(s)
-}
-
-var javaNameReplacer = newJavaNameSanitizer()
+	"try", "void", "volatile", "while", "false", "null", "true"})
 
 func (g *JavaGen) javaPkgName(pkg *types.Package) string {
 	if pkg == nil {
 		return "go"
 	}
-	s := javaNameReplacer.Replace(pkg.Name())
+	s := javaNameReplacer(pkg.Name())
 	if g.JavaPkg != "" {
 		return g.JavaPkg + "." + s
 	} else {
@@ -624,7 +593,7 @@ func className(pkg *types.Package) string {
 	if pkg == nil {
 		return "Universe"
 	}
-	return javaNameReplacer.Replace(strings.Title(pkg.Name()))
+	return javaNameReplacer(strings.Title(pkg.Name()))
 }
 
 func (g *JavaGen) genConst(o *types.Const) {
@@ -1048,7 +1017,7 @@ func (g *JavaGen) GenC() error {
 				jniParams += g.jniSigType(params.At(i).Type())
 			}
 			g.Printf("mid_%s_%s = (*env)->GetMethodID(env, clazz, %q, \"(%s)%s\");\n",
-				iface.obj.Name(), m.Name(), javaNameReplacer.Replace(lowerFirst(m.Name())), jniParams, retSig)
+				iface.obj.Name(), m.Name(), javaNameReplacer(lowerFirst(m.Name())), jniParams, retSig)
 		}
 		g.Printf("\n")
 	}
