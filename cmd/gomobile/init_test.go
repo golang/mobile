@@ -110,8 +110,8 @@ mkdir -p $GOMOBILE/dl
 curl -o$GOMOBILE/dl/gomobile-{{.NDK}}-{{.GOOS}}-{{.NDKARCH}}.tar.gz https://dl.google.com/go/mobile/gomobile-{{.NDK}}-{{.GOOS}}-{{.NDKARCH}}.tar.gz
 tar xfz $GOMOBILE/dl/gomobile-{{.NDK}}-{{.GOOS}}-{{.NDKARCH}}.tar.gz
 mkdir -p $GOMOBILE/android-{{.NDK}}/llvm
-mv $WORK/android-{{.NDK}}/toolchains/llvm/prebuilt/linux-x86_64/lib64 $GOMOBILE/android-{{.NDK}}/llvm/lib64
-mv $WORK/android-{{.NDK}}/toolchains/llvm/prebuilt/linux-x86_64/bin $GOMOBILE/android-{{.NDK}}/llvm/bin
+mv $WORK/android-{{.NDK}}/toolchains/llvm/prebuilt/{{.GOOS}}-{{.NDKARCH}}/lib64 $GOMOBILE/android-{{.NDK}}/llvm/lib64
+mv $WORK/android-{{.NDK}}/toolchains/llvm/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin $GOMOBILE/android-{{.NDK}}/llvm/bin
 mkdir -p $GOMOBILE/android-{{.NDK}}/arm/sysroot
 mv $WORK/android-{{.NDK}}/platforms/android-15/arch-arm/usr $GOMOBILE/android-{{.NDK}}/arm/sysroot/usr
 mv $WORK/android-{{.NDK}}/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin $GOMOBILE/android-{{.NDK}}/arm/bin
