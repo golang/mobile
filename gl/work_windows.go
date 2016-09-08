@@ -23,6 +23,10 @@ type context struct {
 
 func (ctx *context) WorkAvailable() <-chan struct{} { return ctx.workAvailable }
 
+type context3 struct {
+	*context
+}
+
 func NewContext() (Context, Worker) {
 	if err := findDLLs(); err != nil {
 		panic(err)
@@ -400,9 +404,12 @@ func (ctx *context) doWork(c call) (ret uintptr) {
 //
 // LibEGL is not used directly by the gl package, but is needed by any
 // driver hoping to use OpenGL ES.
+//
+// LibD3DCompiler is needed by libglesv2.dll for compiling shaders.
 var (
-	LibGLESv2 = syscall.NewLazyDLL("libglesv2.dll")
-	LibEGL    = syscall.NewLazyDLL("libegl.dll")
+	LibGLESv2      = syscall.NewLazyDLL("libglesv2.dll")
+	LibEGL         = syscall.NewLazyDLL("libegl.dll")
+	LibD3DCompiler = syscall.NewLazyDLL("d3dcompiler_47.dll")
 )
 
 var (
