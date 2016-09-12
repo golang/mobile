@@ -67,7 +67,7 @@ struct cproxyissue12403_Parsable_ToJSON_return cproxyissue12403_Parsable_ToJSON(
 		NSError* error = nil;
 		BOOL returnVal = [o toJSON:&ret0_ error:&error];
 		nstring _ret0_ = go_seq_from_objc_string(ret0_);
-		GoUniverseerror* _error = nil;
+		id<GoUniverseerror> _error = nil;
 		if (!returnVal) {
 			_error = [[goSeqErrorWrapper alloc] initWithError:error];
 		}
