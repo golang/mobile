@@ -1490,6 +1490,10 @@ func classNameFor(t types.Type) string {
 	return strings.Replace(pkg.Path()[len("Java/"):], "/", ".", -1) + "." + obj.Name()
 }
 
+func isJavaType(t types.Type) bool {
+	return typePkgFirstElem(t) == "Java"
+}
+
 const (
 	javaPreamble = `// Java class %[1]s.%[2]s is a proxy for talking to a Go program.
 //   gobind %[3]s %[4]s

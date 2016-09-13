@@ -6,14 +6,15 @@
 #ifndef __GoIgnore_H__
 #define __GoIgnore_H__
 
-#include <Foundation/Foundation.h>
+@import Foundation;
 #include "GoUniverse.h"
+
 
 @class GoIgnoreS;
 @protocol GoIgnoreI;
 @class GoIgnoreI;
 
-@interface GoIgnoreS : NSObject {
+@interface GoIgnoreS : NSObject <goSeqRefInterface> {
 }
 @property(strong, readonly) id _ref;
 
@@ -26,7 +27,7 @@
 
 @end
 
-@protocol GoIgnoreI
+@protocol GoIgnoreI <NSObject>
 // skipped method I.Argument with unsupported parameter or return types
 
 // skipped method I.Result with unsupported parameter or return types
@@ -51,7 +52,7 @@
 
 @class GoIgnoreI;
 
-@interface GoIgnoreI : NSObject <GoIgnoreI> {
+@interface GoIgnoreI : NSObject <goSeqRefInterface, GoIgnoreI> {
 }
 @property(strong, readonly) id _ref;
 

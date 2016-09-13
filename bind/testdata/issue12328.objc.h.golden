@@ -6,12 +6,13 @@
 #ifndef __GoIssue12328_H__
 #define __GoIssue12328_H__
 
-#include <Foundation/Foundation.h>
+@import Foundation;
 #include "GoUniverse.h"
+
 
 @class GoIssue12328T;
 
-@interface GoIssue12328T : NSObject {
+@interface GoIssue12328T : NSObject <goSeqRefInterface> {
 }
 @property(strong, readonly) id _ref;
 

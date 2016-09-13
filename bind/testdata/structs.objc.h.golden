@@ -6,15 +6,16 @@
 #ifndef __GoStructs_H__
 #define __GoStructs_H__
 
-#include <Foundation/Foundation.h>
+@import Foundation;
 #include "GoUniverse.h"
+
 
 @class GoStructsS;
 @class GoStructsS2;
 @protocol GoStructsI;
 @class GoStructsI;
 
-@interface GoStructsS : NSObject {
+@interface GoStructsS : NSObject <goSeqRefInterface> {
 }
 @property(strong, readonly) id _ref;
 
@@ -27,7 +28,7 @@
 - (double)sum;
 @end
 
-@interface GoStructsS2 : NSObject {
+@interface GoStructsS2 : NSObject <goSeqRefInterface> {
 }
 @property(strong, readonly) id _ref;
 
@@ -36,7 +37,7 @@
 - (NSString*)string;
 @end
 
-@protocol GoStructsI
+@protocol GoStructsI <NSObject>
 - (void)m;
 @end
 
@@ -46,7 +47,7 @@ FOUNDATION_EXPORT BOOL GoStructsIdentityWithError(GoStructsS* s, GoStructsS** re
 
 @class GoStructsI;
 
-@interface GoStructsI : NSObject <GoStructsI> {
+@interface GoStructsI : NSObject <goSeqRefInterface, GoStructsI> {
 }
 @property(strong, readonly) id _ref;
 

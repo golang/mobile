@@ -76,9 +76,9 @@ func exportedMethodSet(T types.Type) []*types.Func {
 		if !obj.Exported() {
 			continue
 		}
-		// Skip methods from the embedded java classes, so that
+		// Skip methods from the embedded classes, so that
 		// only methods that are implemented in Go are included.
-		if isJavaPkg(obj.Pkg()) {
+		if pref := pkgFirstElem(obj.Pkg()); pref == "Java" || pref == "ObjC" {
 			continue
 		}
 		switch obj := obj.(type) {
@@ -142,14 +142,27 @@ func isRefType(t types.Type) bool {
 	}
 }
 
-func isJavaType(t types.Type) bool {
+func typePkgFirstElem(t types.Type) string {
 	nt, ok := t.(*types.Named)
 	if !ok {
-		return false
+		return ""
 	}
-	return isJavaPkg(nt.Obj().Pkg())
+	return pkgFirstElem(nt.Obj().Pkg())
 }
 
-func isJavaPkg(p *types.Package) bool {
-	return p != nil && strings.HasPrefix(p.Path(), "Java/")
+func pkgFirstElem(p *types.Package) string {
+	if p == nil {
+		return ""
+	}
+	path := p.Path()
+	idx := strings.Index(path, "/")
+	if idx == -1 {
+		return ""
+	}
+	return path[:idx]
+}
+
+func isWrapperType(t types.Type) bool {
+	e := typePkgFirstElem(t)
+	return e == "Java" || e == "ObjC"
 }

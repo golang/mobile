@@ -220,7 +220,7 @@ func (b *binder) GenObjc(pkg *types.Package, allPkg []*types.Package, outdir str
 		},
 		Prefix: bindPrefix,
 	}
-	g.Init()
+	g.Init(wrappers)
 
 	generate := func(w io.Writer) error {
 		if buildX {

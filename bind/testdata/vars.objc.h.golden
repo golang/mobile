@@ -6,21 +6,22 @@
 #ifndef __GoVars_H__
 #define __GoVars_H__
 
-#include <Foundation/Foundation.h>
+@import Foundation;
 #include "GoUniverse.h"
+
 
 @class GoVarsS;
 @protocol GoVarsI;
 @class GoVarsI;
 
-@interface GoVarsS : NSObject {
+@interface GoVarsS : NSObject <goSeqRefInterface> {
 }
 @property(strong, readonly) id _ref;
 
 - (id)initWithRef:(id)ref;
 @end
 
-@protocol GoVarsI
+@protocol GoVarsI <NSObject>
 @end
 
 @interface GoVars : NSObject
@@ -64,7 +65,7 @@
 
 @class GoVarsI;
 
-@interface GoVarsI : NSObject <GoVarsI> {
+@interface GoVarsI : NSObject <goSeqRefInterface, GoVarsI> {
 }
 @property(strong, readonly) id _ref;
 

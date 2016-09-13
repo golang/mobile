@@ -410,10 +410,11 @@ func (g *goGen) genRead(toVar, fromVar string, typ types.Type, mode varMode) {
 			if iface, ok := t.Underlying().(*types.Interface); ok {
 				hasProxy = makeIfaceSummary(iface).implementable
 			}
-			isJava := isJavaType(t)
+			pkgFirst := typePkgFirstElem(t)
+			isWrapper := pkgFirst == "Java" || pkgFirst == "ObjC"
 			o := t.Obj()
 			oPkg := o.Pkg()
-			if !isErrorType(t) && !g.validPkg(oPkg) && !isJava {
+			if !isErrorType(t) && !g.validPkg(oPkg) && !isWrapper {
 				g.errorf("type %s is defined in %s, which is not bound", t, oPkg)
 				return
 			}
@@ -424,8 +425,14 @@ func (g *goGen) genRead(toVar, fromVar string, typ types.Type, mode varMode) {
 			g.Printf("  	 %s = %s_ref.Get().(%s%s)\n", toVar, toVar, g.pkgName(oPkg), o.Name())
 			if hasProxy {
 				g.Printf("	} else { // foreign object \n")
-				if isJava {
-					clsName := flattenName(classNameFor(t))
+				if isWrapper {
+					var clsName string
+					switch pkgFirst {
+					case "Java":
+						clsName = flattenName(classNameFor(t))
+					case "ObjC":
+						clsName = t.Obj().Name()
+					}
 					g.Printf("	   %s = (*proxy_class_%s)(%s_ref)\n", toVar, clsName, toVar)
 				} else {
 					g.Printf("	   %s = (*proxy%s_%s)(%s_ref)\n", toVar, pkgPrefix(oPkg), o.Name(), toVar)
@@ -451,7 +458,7 @@ func (g *goGen) typeString(typ types.Type) string {
 			return types.TypeString(typ, types.RelativeTo(pkg))
 		}
 		oPkg := obj.Pkg()
-		if !g.validPkg(oPkg) && !isJavaType(t) {
+		if !g.validPkg(oPkg) && !isWrapperType(t) {
 			g.errorf("type %s is defined in %s, which is not bound", t, oPkg)
 			return "TODO"
 		}

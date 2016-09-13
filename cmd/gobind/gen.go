@@ -119,7 +119,7 @@ func genPkg(p *types.Package, allPkg []*types.Package, classes []*java.Class) {
 			},
 			Prefix: *prefix,
 		}
-		g.Init()
+		g.Init(nil)
 
 		w, closer := writer(gohname)
 		processErr(g.GenGoH())

@@ -6,8 +6,9 @@
 #ifndef __EXCustomprefix_H__
 #define __EXCustomprefix_H__
 
-#include <Foundation/Foundation.h>
+@import Foundation;
 #include "GoUniverse.h"
+
 
 FOUNDATION_EXPORT void EXCustomprefixF();
 

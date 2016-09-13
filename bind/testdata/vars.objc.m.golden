@@ -20,6 +20,7 @@
 
 @end
 
+
 @implementation GoVarsI {
 }
 
@@ -90,7 +91,7 @@
 
 + (void) setAStructPtr:(GoVarsS*)v {
 	int32_t _v;
-	if ([(id<NSObject>)(v) isKindOfClass:[GoVarsS class]]) {
+	if ([v conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> v_proxy = (id<goSeqRefInterface>)(v);
 		_v = go_seq_go_to_refnum(v_proxy._ref);
 	} else {
@@ -169,7 +170,7 @@
 
 + (void) setAnInterface:(id<GoVarsI>)v {
 	int32_t _v;
-	if ([(id<NSObject>)(v) isKindOfClass:[GoVarsI class]]) {
+	if ([v conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> v_proxy = (id<goSeqRefInterface>)(v);
 		_v = go_seq_go_to_refnum(v_proxy._ref);
 	} else {

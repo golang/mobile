@@ -333,7 +333,7 @@ func (g *Generator) isSigSupported(t types.Type) bool {
 
 // isSupported returns whether the generators can handle the type.
 func (g *Generator) isSupported(t types.Type) bool {
-	if isErrorType(t) || isJavaType(t) {
+	if isErrorType(t) || isWrapperType(t) {
 		return true
 	}
 	switch t := t.(type) {

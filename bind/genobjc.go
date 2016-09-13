@@ -10,6 +10,8 @@ import (
 	"go/types"
 	"math"
 	"strings"
+
+	"golang.org/x/mobile/internal/importers/objc"
 )
 
 // TODO(hyangah): handle method name conflicts.
@@ -22,15 +24,64 @@ import (
 type ObjcGen struct {
 	Prefix string // prefix arg passed by flag.
 
+	*Generator
+
 	// fields set by init.
 	namePrefix string
-
-	*Generator
+	// Map of all wrapped Objc types
+	wrapMap map[string]*objc.Named
+	// Structs that embeds Objc wrapper types.
+	ostructs map[*types.TypeName]*objcClassInfo
+	modules  []string
 }
 
-func (g *ObjcGen) Init() {
+type objcClassInfo struct {
+	// The Objc class this class extends.
+	extends *objc.Named
+	// All classes and protocols this class extends and conforms to.
+	supers  []*objc.Named
+	methods map[string]*objc.Func
+}
+
+func (g *ObjcGen) Init(wrappers []*objc.Named) {
 	g.Generator.Init()
 	g.namePrefix = g.namePrefixOf(g.Pkg)
+	g.wrapMap = make(map[string]*objc.Named)
+	modMap := make(map[string]struct{})
+	for _, w := range wrappers {
+		g.wrapMap[w.GoName] = w
+		if _, exists := modMap[w.Module]; !exists {
+			g.modules = append(g.modules, w.Module)
+			modMap[w.Module] = struct{}{}
+		}
+	}
+	if _, exists := modMap["Foundation"]; !exists {
+		g.modules = append(g.modules, "Foundation")
+	}
+	g.ostructs = make(map[*types.TypeName]*objcClassInfo)
+	for _, s := range g.structs {
+		embds := embeddedObjcTypes(s.t)
+		if len(embds) == 0 {
+			continue
+		}
+		inf := &objcClassInfo{
+			methods: make(map[string]*objc.Func),
+		}
+		for _, n := range embds {
+			t := g.wrapMap[n]
+			for _, f := range t.AllMethods {
+				inf.methods[f.GoName] = f
+			}
+			inf.supers = append(inf.supers, t)
+			if !t.Protocol {
+				if inf.extends != nil {
+					g.errorf("%s embeds more than one ObjC class; only one is allowed.", s.obj)
+				}
+				inf.extends = t
+			}
+		}
+		g.ostructs[s.obj] = inf
+	}
 }
 
 func (g *ObjcGen) namePrefixOf(pkg *types.Package) string {
@@ -86,8 +137,11 @@ func (g *ObjcGen) GenH() error {
 	g.Printf("#ifndef __%s_H__\n", g.namePrefix)
 	g.Printf("#define __%s_H__\n", g.namePrefix)
 	g.Printf("\n")
-	g.Printf("#include <Foundation/Foundation.h>\n")
-	g.Printf("#include \"GoUniverse.h\"\n")
+	for _, m := range g.modules {
+		g.Printf("@import %s;\n", m)
+	}
+	g.Printf("#include \"GoUniverse.h\"\n\n")
+
 	if g.Pkg != nil {
 		for _, pkg := range g.Pkg.Imports() {
 			if g.validPkg(pkg) {
@@ -347,9 +401,11 @@ func (g *ObjcGen) genConstM(o *types.Const) {
 
 type funcSummary struct {
 	name              string
+	goname            string
 	ret               string
 	sig               *types.Signature
 	params, retParams []paramInfo
+	hasthis           bool
 }
 
 type paramInfo struct {
@@ -357,20 +413,63 @@ type paramInfo struct {
 	name string
 }
 
-func (g *ObjcGen) funcSummary(obj *types.Func) *funcSummary {
+func (g *ObjcGen) funcSummary(oinf *objcClassInfo, obj *types.Func) *funcSummary {
 	sig := obj.Type().(*types.Signature)
-	s := &funcSummary{name: obj.Name(), sig: sig}
-
+	s := &funcSummary{goname: obj.Name(), sig: sig}
+	var om *objc.Func
+	var sigElems []string
+	if oinf != nil {
+		om = oinf.methods[obj.Name()]
+	}
+	if om != nil {
+		sigElems = strings.Split(om.Sig, ":")
+		s.name = sigElems[0]
+	} else {
+		s.name = obj.Name()
+	}
 	params := sig.Params()
-	for i := 0; i < params.Len(); i++ {
+	first := 0
+	if om != nil {
+		// Check the implicit this argument and the argument count of the overridden method
+		excess := params.Len() - len(om.Params)
+		if excess < 0 {
+			g.errorf("method %s has fewer arguments than the method it overrides", obj.Name())
+		} else if excess > 1 {
+			g.errorf("overriding method %s has more arguments than the method it overrides", obj.Name())
+		} else if excess == 1 {
+			s.hasthis = true
+			first = 1
+			t := params.At(0).Type()
+			if !isObjcType(t) {
+				g.errorf("the `this` argument to method %s is not a ObjC type", obj.Name())
+				return s
+			} else {
+				ot := g.wrapMap[t.(*types.Named).Obj().Name()]
+				found := false
+				for _, sup := range oinf.supers {
+					if ot == sup {
+						found = true
+						break
+					}
+				}
+				if !found {
+					g.errorf("the type %s of the `this` argument to method %s is not a super class of the enclosing struct", ot.Name, obj.Name())
+				}
+			}
+		}
+	}
+	for i := first; i < params.Len(); i++ {
 		p := params.At(i)
 		v := paramInfo{
-			typ:  p.Type(),
-			name: g.paramName(params, i),
+			typ: p.Type(),
+		}
+		if om != nil {
+			v.name = sigElems[i-first]
+		} else {
+			v.name = g.paramName(params, i)
 		}
 		s.params = append(s.params, v)
 	}
-
 	res := sig.Results()
 	switch res.Len() {
 	case 0:
@@ -488,13 +587,13 @@ func (g *ObjcGen) genFuncH(obj *types.Func) {
 		g.Printf("// skipped function %s with unsupported parameter or return types\n\n", obj.Name())
 		return
 	}
-	if s := g.funcSummary(obj); s != nil {
+	if s := g.funcSummary(nil, obj); s != nil {
 		g.Printf("FOUNDATION_EXPORT %s;\n", s.asFunc(g))
 	}
 }
 
 func (g *ObjcGen) genFuncM(obj *types.Func) {
-	s := g.funcSummary(obj)
+	s := g.funcSummary(nil, obj)
 	if s == nil {
 		return
 	}
@@ -555,20 +654,20 @@ func (g *ObjcGen) genWrite(varName string, t types.Type, mode varMode) {
 	case *types.Named:
 		switch u := t.Underlying().(type) {
 		case *types.Interface:
-			g.genRefWrite(varName, t)
+			g.genRefWrite(varName)
 		default:
 			g.errorf("unsupported named type: %s / %T", u, u)
 		}
 	case *types.Pointer:
-		g.genRefWrite(varName, t)
+		g.genRefWrite(varName)
 	default:
 		g.Printf("%s _%s = (%s)%s;\n", g.cgoType(t), varName, g.cgoType(t), varName)
 	}
 }
 
-func (g *ObjcGen) genRefWrite(varName string, t types.Type) {
+func (g *ObjcGen) genRefWrite(varName string) {
 	g.Printf("int32_t _%s;\n", varName)
-	g.Printf("if ([(id<NSObject>)(%s) isKindOfClass:[%s class]]) {\n", varName, g.refTypeBase(t))
+	g.Printf("if ([%s conformsToProtocol:@protocol(goSeqRefInterface)]) {\n", varName)
 	g.Indent()
 	g.Printf("id<goSeqRefInterface> %[1]s_proxy = (id<goSeqRefInterface>)(%[1]s);\n", varName)
 	g.Printf("_%s = go_seq_go_to_refnum(%s_proxy._ref);\n", varName, varName)
@@ -587,7 +686,11 @@ func (g *ObjcGen) genRefRead(toName, fromName string, t types.Type) {
 	g.Printf("if (%s_ref != NULL) {\n", toName)
 	g.Printf("	%s = %s_ref.obj;\n", toName, toName)
 	g.Printf("	if (%s == nil) {\n", toName)
-	g.Printf("		%s = [[%s alloc] initWithRef:%s_ref];\n", toName, ptype, toName)
+	if isObjcType(t) {
+		g.Printf("		LOG_FATAL(@\"unexpected NULL reference\");\n")
+	} else {
+		g.Printf("		%s = [[%s alloc] initWithRef:%s_ref];\n", toName, ptype, toName)
+	}
 	g.Printf("	}\n")
 	g.Printf("}\n")
 }
@@ -637,6 +740,9 @@ func (g *ObjcGen) genRead(toName, fromName string, t types.Type, mode varMode) {
 func (g *ObjcGen) genFunc(s *funcSummary, objName string) {
 	if objName != "" {
 		g.Printf("int32_t refnum = go_seq_go_to_refnum(self._ref);\n")
+		if s.hasthis {
+			g.genRefWrite("self")
+		}
 	}
 	for _, p := range s.params {
 		g.genWrite(p.name, p.typ, modeTransient)
@@ -647,12 +753,15 @@ func (g *ObjcGen) genFunc(s *funcSummary, objName string) {
 			g.Printf("%s r0 = ", g.cgoType(s.retParams[0].typ))
 		} else {
 			resPrefix = "res."
-			g.Printf("struct proxy%s_%s_%s_return res = ", g.pkgPrefix, objName, s.name)
+			g.Printf("struct proxy%s_%s_%s_return res = ", g.pkgPrefix, objName, s.goname)
 		}
 	}
-	g.Printf("proxy%s_%s_%s(", g.pkgPrefix, objName, s.name)
+	g.Printf("proxy%s_%s_%s(", g.pkgPrefix, objName, s.goname)
 	if objName != "" {
 		g.Printf("refnum")
+		if s.hasthis {
+			g.Printf(", _self")
+		}
 	}
 	for i, p := range s.params {
 		if i > 0 || objName != "" {
@@ -700,9 +809,11 @@ func (g *ObjcGen) genInterfaceInterface(obj *types.TypeName, summary ifaceSummar
 	} else {
 		g.Printf("NSObject")
 	}
+	prots := []string{"goSeqRefInterface"}
 	if isProtocol {
-		g.Printf(" <%[1]s%[2]s>", g.namePrefix, obj.Name())
+		prots = append(prots, fmt.Sprintf("%[1]s%[2]s", g.namePrefix, obj.Name()))
 	}
+	g.Printf(" <%s>", strings.Join(prots, ", "))
 	g.Printf(" {\n}\n")
 	g.Printf("@property(strong, readonly) id _ref;\n")
 	g.Printf("\n")
@@ -712,7 +823,7 @@ func (g *ObjcGen) genInterfaceInterface(obj *types.TypeName, summary ifaceSummar
 			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", obj.Name(), m.Name())
 			continue
 		}
-		s := g.funcSummary(m)
+		s := g.funcSummary(nil, m)
 		g.Printf("- %s;\n", s.asMethod(g))
 	}
 	g.Printf("@end\n")
@@ -724,13 +835,13 @@ func (g *ObjcGen) genInterfaceH(obj *types.TypeName, t *types.Interface) {
 		g.genInterfaceInterface(obj, summary, false)
 		return
 	}
-	g.Printf("@protocol %s%s\n", g.namePrefix, obj.Name())
+	g.Printf("@protocol %s%s <NSObject>\n", g.namePrefix, obj.Name())
 	for _, m := range makeIfaceSummary(t).callable {
 		if !g.isSigSupported(m.Type()) {
 			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", obj.Name(), m.Name())
 			continue
 		}
-		s := g.funcSummary(m)
+		s := g.funcSummary(nil, m)
 		g.Printf("- %s;\n", s.asMethod(g))
 	}
 	g.Printf("@end\n")
@@ -764,7 +875,7 @@ func (g *ObjcGen) genInterfaceM(obj *types.TypeName, t *types.Interface) bool {
 			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", obj.Name(), m.Name())
 			continue
 		}
-		s := g.funcSummary(m)
+		s := g.funcSummary(nil, m)
 		g.Printf("- %s {\n", s.asMethod(g))
 		g.Indent()
 		g.genFunc(s, obj.Name())
@@ -779,7 +890,7 @@ func (g *ObjcGen) genInterfaceM(obj *types.TypeName, t *types.Interface) bool {
 
 func (g *ObjcGen) genInterfaceMethodProxy(obj *types.TypeName, m *types.Func) {
 	oName := obj.Name()
-	s := g.funcSummary(m)
+	s := g.funcSummary(nil, m)
 	g.genInterfaceMethodSignature(m, oName, false, g.paramName)
 	g.Indent()
 	g.Printf("@autoreleasepool {\n")
@@ -875,11 +986,31 @@ func (g *ObjcGen) genRelease(varName string, t types.Type, mode varMode) {
 }
 
 func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
-	g.Printf("@interface %s%s : NSObject {\n", g.namePrefix, obj.Name())
+	g.Printf("@interface %s%s : ", g.namePrefix, obj.Name())
+	oinf := g.ostructs[obj]
+	if oinf != nil {
+		var prots []string
+		for _, sup := range oinf.supers {
+			if !sup.Protocol {
+				g.Printf(sup.Name)
+			} else {
+				prots = append(prots, sup.Name)
+			}
+		}
+		if len(prots) > 0 {
+			g.Printf(" <%s>", strings.Join(prots, ", "))
+		}
+	} else {
+		g.Printf("NSObject <goSeqRefInterface>")
+	}
+	g.Printf(" {\n")
 	g.Printf("}\n")
 	g.Printf("@property(strong, readonly) id _ref;\n")
 	g.Printf("\n")
 	g.Printf("- (id)initWithRef:(id)ref;\n")
+	if oinf != nil {
+		g.Printf("- (id)init;\n")
+	}
 
 	// accessors to exported fields.
 	for _, f := range exportedFields(t) {
@@ -898,7 +1029,7 @@ func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", obj.Name(), m.Name())
 			continue
 		}
-		s := g.funcSummary(m)
+		s := g.funcSummary(g.ostructs[obj], m)
 		g.Printf("- %s;\n", objcNameReplacer(lowerFirst(s.asMethod(g))))
 	}
 	g.Printf("@end\n")
@@ -909,6 +1040,7 @@ func (g *ObjcGen) genStructM(obj *types.TypeName, t *types.Struct) {
 	methods := exportedMethodSet(types.NewPointer(obj.Type()))
 
 	g.Printf("\n")
+	oinf := g.ostructs[obj]
 	g.Printf("@implementation %s%s {\n", g.namePrefix, obj.Name())
 	g.Printf("}\n\n")
 	g.Printf("- (id)initWithRef:(id)ref {\n")
@@ -918,6 +1050,19 @@ func (g *ObjcGen) genStructM(obj *types.TypeName, t *types.Struct) {
 	g.Printf("return self;\n")
 	g.Outdent()
 	g.Printf("}\n\n")
+	if oinf != nil {
+		g.Printf("- (id)init {\n")
+		g.Indent()
+		g.Printf("self = [super init];\n")
+		g.Printf("if (self) {\n")
+		g.Indent()
+		g.Printf("__ref = go_seq_from_refnum(new_%s_%s());\n", g.pkgPrefix, obj.Name())
+		g.Outdent()
+		g.Printf("}\n")
+		g.Printf("return self;\n")
+		g.Outdent()
+		g.Printf("}\n\n")
+	}
 
 	for _, f := range fields {
 		if !g.isSupported(f.Type()) {
@@ -933,14 +1078,14 @@ func (g *ObjcGen) genStructM(obj *types.TypeName, t *types.Struct) {
 			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", obj.Name(), m.Name())
 			continue
 		}
-		s := g.funcSummary(m)
+		s := g.funcSummary(g.ostructs[obj], m)
 		g.Printf("- %s {\n", s.asMethod(g))
 		g.Indent()
 		g.genFunc(s, obj.Name())
 		g.Outdent()
 		g.Printf("}\n\n")
 	}
-	g.Printf("@end\n")
+	g.Printf("@end\n\n")
 }
 
 func (g *ObjcGen) errorf(format string, args ...interface{}) {
@@ -955,6 +1100,9 @@ func (g *ObjcGen) refTypeBase(typ types.Type) string {
 		}
 	case *types.Named:
 		n := typ.Obj()
+		if isObjcType(typ) {
+			return g.wrapMap[n.Name()].Name
+		}
 		if isErrorType(typ) || g.validPkg(n.Pkg()) {
 			switch typ.Underlying().(type) {
 			case *types.Interface, *types.Struct:
@@ -1031,6 +1179,10 @@ func (g *ObjcGen) objcType(typ types.Type) string {
 		return "TODO"
 	case *types.Named:
 		n := typ.Obj()
+		if isObjcType(typ) {
+			w := g.wrapMap[n.Name()]
+			return w.ObjcType()
+		}
 		if !isErrorType(typ) && !g.validPkg(n.Pkg()) {
 			g.errorf("type %s is in package %s, which is not bound", n.Name(), n.Pkg().Name())
 			return "TODO"
@@ -1051,6 +1203,31 @@ func (g *ObjcGen) objcType(typ types.Type) string {
 		g.errorf("unsupported type: %#+v, %s", typ, typ)
 		return "TODO"
 	}
+}
+
+// embeddedObjcTypes returns the possible empty list of Objc types embedded
+// in the given struct type.
+func embeddedObjcTypes(t *types.Struct) []string {
+	typeSet := make(map[string]struct{})
+	var typs []string
+	for i := 0; i < t.NumFields(); i++ {
+		f := t.Field(i)
+		if !f.Exported() {
+			continue
+		}
+		if ft := f.Type(); isObjcType(ft) {
+			name := ft.(*types.Named).Obj().Name()
+			if _, exists := typeSet[name]; !exists {
+				typeSet[name] = struct{}{}
+				typs = append(typs, name)
+			}
+		}
+	}
+	return typs
+}
+
+func isObjcType(t types.Type) bool {
+	return typePkgFirstElem(t) == "ObjC"
 }
 
 var objcNameReplacer = newNameSanitizer([]string{
