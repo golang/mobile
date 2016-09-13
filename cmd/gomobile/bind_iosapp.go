@@ -9,6 +9,7 @@ import (
 	"go/build"
 	"io"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -16,7 +17,16 @@ import (
 )
 
 func goIOSBind(pkgs []*build.Package) error {
-	typesPkgs, err := loadExportData(pkgs, darwinArmEnv)
+	srcDir := filepath.Join(tmpdir, "src", "gomobile_bind")
+	genDir := filepath.Join(tmpdir, "gen")
+	wrappers, err := GenObjcWrappers(pkgs, srcDir, genDir)
+	if err != nil {
+		return err
+	}
+	env := darwinArmEnv
+	gopath := fmt.Sprintf("GOPATH=%s%c%s", genDir, filepath.ListSeparator, os.Getenv("GOPATH"))
+	env = append(env, gopath)
+	typesPkgs, err := loadExportData(pkgs, env)
 	if err != nil {
 		return err
 	}
@@ -35,7 +45,6 @@ func goIOSBind(pkgs []*build.Package) error {
 		buildO = title + ".framework"
 	}
 
-	srcDir := filepath.Join(tmpdir, "src", "gomobile_bind")
 	for _, pkg := range binder.pkgs {
 		if err := binder.GenGo(pkg, binder.pkgs, srcDir); err != nil {
 			return err
@@ -56,11 +65,11 @@ func goIOSBind(pkgs []*build.Package) error {
 
 	fileBases := make([]string, len(typesPkgs)+1)
 	for i, pkg := range binder.pkgs {
-		if fileBases[i], err = binder.GenObjc(pkg, binder.pkgs, srcDir); err != nil {
+		if fileBases[i], err = binder.GenObjc(pkg, binder.pkgs, srcDir, wrappers); err != nil {
 			return err
 		}
 	}
-	if fileBases[len(fileBases)-1], err = binder.GenObjc(nil, binder.pkgs, srcDir); err != nil {
+	if fileBases[len(fileBases)-1], err = binder.GenObjc(nil, binder.pkgs, srcDir, wrappers); err != nil {
 		return err
 	}
 	if err := binder.GenObjcSupport(srcDir); err != nil {
@@ -73,6 +82,7 @@ func goIOSBind(pkgs []*build.Package) error {
 	cmd := exec.Command("xcrun", "lipo", "-create")
 
 	for _, env := range [][]string{darwinArmEnv, darwinArm64Env, darwinAmd64Env} {
+		env = append(env, gopath)
 		arch := archClang(getenv(env, "GOARCH"))
 		path, err := goIOSBindArchive(name, mainFile, env, fileBases)
 		if err != nil {
@@ -125,6 +135,12 @@ func goIOSBind(pkgs []*build.Package) error {
 				return err
 			}
 		}
+		err = copyFile(
+			headers+"/ref.h",
+			srcDir+"/ref.h")
+		if err != nil {
+			return err
+		}
 		headerFiles = append(headerFiles, title+".h")
 		err = writeFile(headers+"/"+title+".h", func(w io.Writer) error {
 			return iosBindHeaderTmpl.Execute(w, map[string]interface{}{
@@ -172,6 +188,7 @@ const iosBindInfoPlist = `<?xml version="1.0" encoding="UTF-8"?>
 `
 
 var iosModuleMapTmpl = template.Must(template.New("iosmmap").Parse(`framework module "{{.Module}}" {
+	header "ref.h"
 {{range .Headers}}    header "{{.}}"
 {{end}}
     export *

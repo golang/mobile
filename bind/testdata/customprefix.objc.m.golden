@@ -10,9 +10,9 @@
 
 
 void EXCustomprefixF() {
-	proxycustomprefix__F();
+    proxycustomprefix__F();
 }
 
 __attribute__((constructor)) static void init() {
-	init_seq();
+    init_seq();
 }

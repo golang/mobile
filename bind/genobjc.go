@@ -19,8 +19,8 @@ import (
 
 // TODO(hyangah): error code/domain propagation
 
-type objcGen struct {
-	prefix string // prefix arg passed by flag.
+type ObjcGen struct {
+	Prefix string // prefix arg passed by flag.
 
 	// fields set by init.
 	namePrefix string
@@ -28,23 +28,23 @@ type objcGen struct {
 	*Generator
 }
 
-func (g *objcGen) init() {
+func (g *ObjcGen) Init() {
 	g.Generator.Init()
 	g.namePrefix = g.namePrefixOf(g.Pkg)
 }
 
-func (g *objcGen) namePrefixOf(pkg *types.Package) string {
+func (g *ObjcGen) namePrefixOf(pkg *types.Package) string {
 	if pkg == nil {
 		return "GoUniverse"
 	}
-	p := g.prefix
+	p := g.Prefix
 	if p == "" {
 		p = "Go"
 	}
 	return p + strings.Title(pkg.Name())
 }
 
-func (g *objcGen) genGoH() error {
+func (g *ObjcGen) GenGoH() error {
 	var pkgPath string
 	if g.Pkg != nil {
 		pkgPath = g.Pkg.Path()
@@ -77,7 +77,7 @@ func (g *objcGen) genGoH() error {
 	return nil
 }
 
-func (g *objcGen) genH() error {
+func (g *ObjcGen) GenH() error {
 	var pkgPath string
 	if g.Pkg != nil {
 		pkgPath = g.Pkg.Path()
@@ -105,7 +105,7 @@ func (g *objcGen) genH() error {
 		g.Printf("@protocol %s%s;\n", g.namePrefix, i.obj.Name())
 		if i.summary.implementable {
 			g.Printf("@class %s%s;\n", g.namePrefix, i.obj.Name())
-			// Forward declaration for other cases will be handled at the beginning of genM.
+			// Forward declaration for other cases will be handled at the beginning of GenM.
 		}
 	}
 	if len(g.structs) > 0 || len(g.interfaces) > 0 {
@@ -183,15 +183,15 @@ func (g *objcGen) genH() error {
 	return nil
 }
 
-func (g *objcGen) gobindOpts() string {
+func (g *ObjcGen) gobindOpts() string {
 	opts := []string{"-lang=objc"}
-	if g.prefix != "" {
-		opts = append(opts, "-prefix="+g.prefix)
+	if g.Prefix != "" {
+		opts = append(opts, "-prefix="+g.Prefix)
 	}
 	return strings.Join(opts, " ")
 }
 
-func (g *objcGen) genM() error {
+func (g *ObjcGen) GenM() error {
 	var pkgPath string
 	if g.Pkg != nil {
 		pkgPath = g.Pkg.Path()
@@ -269,7 +269,7 @@ func (g *objcGen) genM() error {
 	return nil
 }
 
-func (g *objcGen) genVarM(o *types.Var) {
+func (g *ObjcGen) genVarM(o *types.Var) {
 	if t := o.Type(); !g.isSupported(t) {
 		g.Printf("// skipped variable %s with unsupported type: %T\n\n", o.Name(), t)
 		return
@@ -296,7 +296,7 @@ func (g *objcGen) genVarM(o *types.Var) {
 	g.Printf("}\n\n")
 }
 
-func (g *objcGen) genConstM(o *types.Const) {
+func (g *ObjcGen) genConstM(o *types.Const) {
 	if _, ok := o.Type().(*types.Basic); !ok {
 		g.Printf("// skipped const %s with unsupported type: %T\n\n", o.Name(), o)
 		return
@@ -357,7 +357,7 @@ type paramInfo struct {
 	name string
 }
 
-func (g *objcGen) funcSummary(obj *types.Func) *funcSummary {
+func (g *ObjcGen) funcSummary(obj *types.Func) *funcSummary {
 	sig := obj.Type().(*types.Signature)
 	s := &funcSummary{name: obj.Name(), sig: sig}
 
@@ -420,7 +420,7 @@ func (g *objcGen) funcSummary(obj *types.Func) *funcSummary {
 	return s
 }
 
-func (s *funcSummary) asFunc(g *objcGen) string {
+func (s *funcSummary) asFunc(g *ObjcGen) string {
 	var params []string
 	for _, p := range s.params {
 		params = append(params, g.objcType(p.typ)+" "+p.name)
@@ -433,7 +433,7 @@ func (s *funcSummary) asFunc(g *objcGen) string {
 	return fmt.Sprintf("%s %s%s(%s)", s.ret, g.namePrefix, s.name, strings.Join(params, ", "))
 }
 
-func (s *funcSummary) asMethod(g *objcGen) string {
+func (s *funcSummary) asMethod(g *ObjcGen) string {
 	var params []string
 	for i, p := range s.params {
 		var key string
@@ -454,7 +454,7 @@ func (s *funcSummary) asMethod(g *objcGen) string {
 	return fmt.Sprintf("(%s)%s%s", s.ret, objcNameReplacer(lowerFirst(s.name)), strings.Join(params, " "))
 }
 
-func (s *funcSummary) callMethod(g *objcGen) string {
+func (s *funcSummary) callMethod(g *ObjcGen) string {
 	var params []string
 	for i, p := range s.params {
 		var key string
@@ -479,11 +479,11 @@ func (s *funcSummary) returnsVal() bool {
 	return len(s.retParams) == 1 && !isErrorType(s.retParams[0].typ)
 }
 
-func (g *objcGen) paramName(params *types.Tuple, pos int) string {
+func (g *ObjcGen) paramName(params *types.Tuple, pos int) string {
 	return basicParamName(params, pos)
 }
 
-func (g *objcGen) genFuncH(obj *types.Func) {
+func (g *ObjcGen) genFuncH(obj *types.Func) {
 	if !g.isSigSupported(obj.Type()) {
 		g.Printf("// skipped function %s with unsupported parameter or return types\n\n", obj.Name())
 		return
@@ -493,7 +493,7 @@ func (g *objcGen) genFuncH(obj *types.Func) {
 	}
 }
 
-func (g *objcGen) genFuncM(obj *types.Func) {
+func (g *ObjcGen) genFuncM(obj *types.Func) {
 	s := g.funcSummary(obj)
 	if s == nil {
 		return
@@ -505,7 +505,7 @@ func (g *objcGen) genFuncM(obj *types.Func) {
 	g.Printf("}\n")
 }
 
-func (g *objcGen) genGetter(oName string, f *types.Var) {
+func (g *ObjcGen) genGetter(oName string, f *types.Var) {
 	t := f.Type()
 	g.Printf("- (%s)%s {\n", g.objcType(t), objcNameReplacer(lowerFirst(f.Name())))
 	g.Indent()
@@ -518,7 +518,7 @@ func (g *objcGen) genGetter(oName string, f *types.Var) {
 	g.Printf("}\n\n")
 }
 
-func (g *objcGen) genSetter(oName string, f *types.Var) {
+func (g *ObjcGen) genSetter(oName string, f *types.Var) {
 	t := f.Type()
 
 	g.Printf("- (void)set%s:(%s)v {\n", f.Name(), g.objcType(t))
@@ -531,7 +531,7 @@ func (g *objcGen) genSetter(oName string, f *types.Var) {
 	g.Printf("}\n\n")
 }
 
-func (g *objcGen) genWrite(varName string, t types.Type, mode varMode) {
+func (g *ObjcGen) genWrite(varName string, t types.Type, mode varMode) {
 	switch t := t.(type) {
 	case *types.Basic:
 		switch t.Kind() {
@@ -566,7 +566,7 @@ func (g *objcGen) genWrite(varName string, t types.Type, mode varMode) {
 	}
 }
 
-func (g *objcGen) genRefWrite(varName string, t types.Type) {
+func (g *ObjcGen) genRefWrite(varName string, t types.Type) {
 	g.Printf("int32_t _%s;\n", varName)
 	g.Printf("if ([(id<NSObject>)(%s) isKindOfClass:[%s class]]) {\n", varName, g.refTypeBase(t))
 	g.Indent()
@@ -580,7 +580,7 @@ func (g *objcGen) genRefWrite(varName string, t types.Type) {
 	g.Printf("}\n")
 }
 
-func (g *objcGen) genRefRead(toName, fromName string, t types.Type) {
+func (g *ObjcGen) genRefRead(toName, fromName string, t types.Type) {
 	ptype := g.refTypeBase(t)
 	g.Printf("%s* %s = nil;\n", ptype, toName)
 	g.Printf("GoSeqRef* %s_ref = go_seq_from_refnum(%s);\n", toName, fromName)
@@ -592,7 +592,7 @@ func (g *objcGen) genRefRead(toName, fromName string, t types.Type) {
 	g.Printf("}\n")
 }
 
-func (g *objcGen) genRead(toName, fromName string, t types.Type, mode varMode) {
+func (g *ObjcGen) genRead(toName, fromName string, t types.Type, mode varMode) {
 	switch t := t.(type) {
 	case *types.Basic:
 		switch t.Kind() {
@@ -634,7 +634,7 @@ func (g *objcGen) genRead(toName, fromName string, t types.Type, mode varMode) {
 	}
 }
 
-func (g *objcGen) genFunc(s *funcSummary, objName string) {
+func (g *ObjcGen) genFunc(s *funcSummary, objName string) {
 	if objName != "" {
 		g.Printf("int32_t refnum = go_seq_go_to_refnum(self._ref);\n")
 	}
@@ -693,7 +693,7 @@ func (g *objcGen) genFunc(s *funcSummary, objName string) {
 	}
 }
 
-func (g *objcGen) genInterfaceInterface(obj *types.TypeName, summary ifaceSummary, isProtocol bool) {
+func (g *ObjcGen) genInterfaceInterface(obj *types.TypeName, summary ifaceSummary, isProtocol bool) {
 	g.Printf("@interface %[1]s%[2]s : ", g.namePrefix, obj.Name())
 	if isErrorType(obj.Type()) {
 		g.Printf("NSError")
@@ -718,7 +718,7 @@ func (g *objcGen) genInterfaceInterface(obj *types.TypeName, summary ifaceSummar
 	g.Printf("@end\n")
 }
 
-func (g *objcGen) genInterfaceH(obj *types.TypeName, t *types.Interface) {
+func (g *ObjcGen) genInterfaceH(obj *types.TypeName, t *types.Interface) {
 	summary := makeIfaceSummary(t)
 	if !summary.implementable {
 		g.genInterfaceInterface(obj, summary, false)
@@ -736,7 +736,7 @@ func (g *objcGen) genInterfaceH(obj *types.TypeName, t *types.Interface) {
 	g.Printf("@end\n")
 }
 
-func (g *objcGen) genInterfaceM(obj *types.TypeName, t *types.Interface) bool {
+func (g *ObjcGen) genInterfaceM(obj *types.TypeName, t *types.Interface) bool {
 	summary := makeIfaceSummary(t)
 
 	// @implementation Interface -- similar to what genStructM does.
@@ -777,7 +777,7 @@ func (g *objcGen) genInterfaceM(obj *types.TypeName, t *types.Interface) bool {
 	return summary.implementable
 }
 
-func (g *objcGen) genInterfaceMethodProxy(obj *types.TypeName, m *types.Func) {
+func (g *ObjcGen) genInterfaceMethodProxy(obj *types.TypeName, m *types.Func) {
 	oName := obj.Name()
 	s := g.funcSummary(m)
 	g.genInterfaceMethodSignature(m, oName, false, g.paramName)
@@ -855,7 +855,7 @@ func (g *objcGen) genInterfaceMethodProxy(obj *types.TypeName, m *types.Func) {
 }
 
 // genRelease cleans up arguments that weren't copied in genWrite.
-func (g *objcGen) genRelease(varName string, t types.Type, mode varMode) {
+func (g *ObjcGen) genRelease(varName string, t types.Type, mode varMode) {
 	switch t := t.(type) {
 	case *types.Slice:
 		switch e := t.Elem().(type) {
@@ -874,7 +874,7 @@ func (g *objcGen) genRelease(varName string, t types.Type, mode varMode) {
 	}
 }
 
-func (g *objcGen) genStructH(obj *types.TypeName, t *types.Struct) {
+func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 	g.Printf("@interface %s%s : NSObject {\n", g.namePrefix, obj.Name())
 	g.Printf("}\n")
 	g.Printf("@property(strong, readonly) id _ref;\n")
@@ -904,7 +904,7 @@ func (g *objcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 	g.Printf("@end\n")
 }
 
-func (g *objcGen) genStructM(obj *types.TypeName, t *types.Struct) {
+func (g *ObjcGen) genStructM(obj *types.TypeName, t *types.Struct) {
 	fields := exportedFields(t)
 	methods := exportedMethodSet(types.NewPointer(obj.Type()))
 
@@ -943,11 +943,11 @@ func (g *objcGen) genStructM(obj *types.TypeName, t *types.Struct) {
 	g.Printf("@end\n")
 }
 
-func (g *objcGen) errorf(format string, args ...interface{}) {
+func (g *ObjcGen) errorf(format string, args ...interface{}) {
 	g.err = append(g.err, fmt.Errorf(format, args...))
 }
 
-func (g *objcGen) refTypeBase(typ types.Type) string {
+func (g *ObjcGen) refTypeBase(typ types.Type) string {
 	switch typ := typ.(type) {
 	case *types.Pointer:
 		if _, ok := typ.Elem().(*types.Named); ok {
@@ -967,14 +967,14 @@ func (g *objcGen) refTypeBase(typ types.Type) string {
 	return g.objcType(typ)
 }
 
-func (g *objcGen) objcFieldType(t types.Type) string {
+func (g *ObjcGen) objcFieldType(t types.Type) string {
 	if isErrorType(t) {
 		return "NSError*"
 	}
 	return g.objcType(t)
 }
 
-func (g *objcGen) objcType(typ types.Type) string {
+func (g *ObjcGen) objcType(typ types.Type) string {
 	if isErrorType(typ) {
 		return "NSError*"
 	}

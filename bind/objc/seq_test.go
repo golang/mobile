@@ -51,6 +51,12 @@ func TestObjcSeqBench(t *testing.T) {
 	runTest(t, []string{"golang.org/x/mobile/bind/benchmark"}, "xcodebench", "SeqBench.m", true)
 }
 
+// TestObjcSeqWrappers runs ObjC test SeqWrappers.m.
+// This requires the xcode command lines tools.
+func TestObjcSeqWrappers(t *testing.T) {
+	runTest(t, []string{"golang.org/x/mobile/bind/testpkg/objcpkg"}, "xcodewrappers", "SeqWrappers.m", false)
+}
+
 func runTest(t *testing.T, pkgNames []string, project, testfile string, dumpOutput bool) {
 	if _, err := run("which xcodebuild"); err != nil {
 		t.Skip("command xcodebuild not found, skipping")
