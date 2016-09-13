@@ -6,13 +6,14 @@
 #ifndef __GoKeywords_H__
 #define __GoKeywords_H__
 
-#include <Foundation/Foundation.h>
+@import Foundation;
 #include "GoUniverse.h"
+
 
 @protocol GoKeywordsKeywordCaller;
 @class GoKeywordsKeywordCaller;
 
-@protocol GoKeywordsKeywordCaller
+@protocol GoKeywordsKeywordCaller <NSObject>
 - (void)abstract;
 - (void)assert;
 - (void)boolean;
@@ -70,7 +71,7 @@
 
 @class GoKeywordsKeywordCaller;
 
-@interface GoKeywordsKeywordCaller : NSObject <GoKeywordsKeywordCaller> {
+@interface GoKeywordsKeywordCaller : NSObject <goSeqRefInterface, GoKeywordsKeywordCaller> {
 }
 @property(strong, readonly) id _ref;
 

@@ -35,7 +35,7 @@
 - (void)setErr:(NSError*)v {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	int32_t _v;
-	if ([(id<NSObject>)(v) isKindOfClass:[GoUniverseerror class]]) {
+	if ([v conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> v_proxy = (id<goSeqRefInterface>)(v);
 		_v = go_seq_go_to_refnum(v_proxy._ref);
 	} else {
@@ -45,6 +45,7 @@
 }
 
 @end
+
 
 
 __attribute__((constructor)) static void init() {

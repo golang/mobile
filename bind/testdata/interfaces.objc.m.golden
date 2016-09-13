@@ -180,7 +180,7 @@
 
 int32_t GoInterfacesAdd3(id<GoInterfacesI> r) {
 	int32_t _r;
-	if ([(id<NSObject>)(r) isKindOfClass:[GoInterfacesI class]]) {
+	if ([r conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> r_proxy = (id<goSeqRefInterface>)(r);
 		_r = go_seq_go_to_refnum(r_proxy._ref);
 	} else {
@@ -193,7 +193,7 @@ int32_t GoInterfacesAdd3(id<GoInterfacesI> r) {
 
 BOOL GoInterfacesCallErr(id<GoInterfacesError> e, NSError** error) {
 	int32_t _e;
-	if ([(id<NSObject>)(e) isKindOfClass:[GoInterfacesError class]]) {
+	if ([e conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> e_proxy = (id<goSeqRefInterface>)(e);
 		_e = go_seq_go_to_refnum(e_proxy._ref);
 	} else {
@@ -237,7 +237,7 @@ int32_t cproxyinterfaces_Error_Err(int32_t refnum) {
 			_error = error;
 		}
 		int32_t __error;
-		if ([(id<NSObject>)(_error) isKindOfClass:[GoUniverseerror class]]) {
+		if ([_error conformsToProtocol:@protocol(goSeqRefInterface)]) {
 			id<goSeqRefInterface> _error_proxy = (id<goSeqRefInterface>)(_error);
 			__error = go_seq_go_to_refnum(_error_proxy._ref);
 		} else {
@@ -275,7 +275,7 @@ int32_t cproxyinterfaces_I3_F(int32_t refnum) {
 		GoInterfacesI3* o = go_seq_objc_from_refnum(refnum);
 		GoInterfacesI1* returnVal = [o f];
 		int32_t _returnVal;
-		if ([(id<NSObject>)(returnVal) isKindOfClass:[GoInterfacesI1 class]]) {
+		if ([returnVal conformsToProtocol:@protocol(goSeqRefInterface)]) {
 			id<goSeqRefInterface> returnVal_proxy = (id<goSeqRefInterface>)(returnVal);
 			_returnVal = go_seq_go_to_refnum(returnVal_proxy._ref);
 		} else {

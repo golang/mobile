@@ -70,7 +70,7 @@ struct cproxyissue12403_Parsable_ToJSON_return cproxyissue12403_Parsable_ToJSON(
 			_error = error;
 		}
 		int32_t __error;
-		if ([(id<NSObject>)(_error) isKindOfClass:[GoUniverseerror class]]) {
+		if ([_error conformsToProtocol:@protocol(goSeqRefInterface)]) {
 			id<goSeqRefInterface> _error_proxy = (id<goSeqRefInterface>)(_error);
 			__error = go_seq_go_to_refnum(_error_proxy._ref);
 		} else {

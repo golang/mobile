@@ -80,6 +80,7 @@
 @end
 
 
+
 @implementation GoStructsS2 {
 }
 
@@ -103,6 +104,7 @@
 
 @end
 
+
 @implementation GoStructsI {
 }
 
@@ -123,7 +125,7 @@
 
 GoStructsS* GoStructsIdentity(GoStructsS* s) {
 	int32_t _s;
-	if ([(id<NSObject>)(s) isKindOfClass:[GoStructsS class]]) {
+	if ([s conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> s_proxy = (id<goSeqRefInterface>)(s);
 		_s = go_seq_go_to_refnum(s_proxy._ref);
 	} else {
@@ -143,7 +145,7 @@ GoStructsS* GoStructsIdentity(GoStructsS* s) {
 
 BOOL GoStructsIdentityWithError(GoStructsS* s, GoStructsS** ret0_, NSError** error) {
 	int32_t _s;
-	if ([(id<NSObject>)(s) isKindOfClass:[GoStructsS class]]) {
+	if ([s conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> s_proxy = (id<goSeqRefInterface>)(s);
 		_s = go_seq_go_to_refnum(s_proxy._ref);
 	} else {

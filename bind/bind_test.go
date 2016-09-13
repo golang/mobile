@@ -50,6 +50,7 @@ var javaTests = []string{
 
 var objcTests = []string{
 	"testdata/objc.go",
+	"testdata/objcw.go",
 }
 
 var fset = token.NewFileSet()
@@ -136,7 +137,7 @@ func TestGenObjc(t *testing.T) {
 				Pkg:     pkg,
 			},
 		}
-		g.Init()
+		g.Init(nil)
 
 		testcases := []struct {
 			suffix string
@@ -463,7 +464,7 @@ func TestCustomPrefix(t *testing.T) {
 			Pkg:     pkg,
 		},
 	}
-	og.Init()
+	og.Init(nil)
 	testCases := []struct {
 		golden string
 		gen    func(w io.Writer) error

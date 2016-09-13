@@ -6,8 +6,9 @@
 #ifndef __GoBasictypes_H__
 #define __GoBasictypes_H__
 
-#include <Foundation/Foundation.h>
+@import Foundation;
 #include "GoUniverse.h"
+
 
 FOUNDATION_EXPORT const BOOL GoBasictypesABool;
 FOUNDATION_EXPORT const double GoBasictypesAFloat;

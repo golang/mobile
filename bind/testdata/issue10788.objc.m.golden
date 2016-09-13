@@ -33,6 +33,7 @@
 
 @end
 
+
 @implementation GoIssue10788TestInterface {
 }
 
@@ -45,7 +46,7 @@
 - (void)doSomeWork:(GoIssue10788TestStruct*)s {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	int32_t _s;
-	if ([(id<NSObject>)(s) isKindOfClass:[GoIssue10788TestStruct class]]) {
+	if ([s conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> s_proxy = (id<goSeqRefInterface>)(s);
 		_s = go_seq_go_to_refnum(s_proxy._ref);
 	} else {
