@@ -109,18 +109,31 @@ func genPkg(p *types.Package, allPkg []*types.Package, classes []*java.Class) {
 		} else {
 			gohname = "GoUniverse.h"
 		}
+		var buf bytes.Buffer
+		g := &bind.ObjcGen{
+			Generator: &bind.Generator{
+				Printer: &bind.Printer{Buf: &buf, IndentEach: []byte("\t")},
+				Fset:    conf.Fset,
+				AllPkg:  conf.AllPkg,
+				Pkg:     conf.Pkg,
+			},
+			Prefix: *prefix,
+		}
+		g.Init()
+
 		w, closer := writer(gohname)
-		conf.Writer = w
-		processErr(bind.GenObjc(conf, *prefix, bind.ObjcGoH))
+		processErr(g.GenGoH())
+		io.Copy(w, &buf)
 		closer()
 		hname := fname[:len(fname)-2] + ".h"
 		w, closer = writer(hname)
-		conf.Writer = w
-		processErr(bind.GenObjc(conf, *prefix, bind.ObjcH))
+		processErr(g.GenH())
+		io.Copy(w, &buf)
 		closer()
 		w, closer = writer(fname)
 		conf.Writer = w
-		processErr(bind.GenObjc(conf, *prefix, bind.ObjcM))
+		processErr(g.GenM())
+		io.Copy(w, &buf)
 		closer()
 	default:
 		errorf("unknown target language: %q", *lang)
