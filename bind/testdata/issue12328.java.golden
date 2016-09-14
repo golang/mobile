@@ -9,16 +9,16 @@ import go.Seq;
 public final class T extends Seq.Proxy {
     private T(go.Seq.Ref ref) { super(ref); }
     
-    public final native String getErr();
-    public final native void setErr(String v);
+    public final native java.lang.Exception getErr();
+    public final native void setErr(java.lang.Exception v);
     
     @Override public boolean equals(Object o) {
         if (o == null || !(o instanceof T)) {
             return false;
         }
         T that = (T)o;
-        String thisErr = getErr();
-        String thatErr = that.getErr();
+        java.lang.Exception thisErr = getErr();
+        java.lang.Exception thatErr = that.getErr();
         if (thisErr == null) {
             if (thatErr != null) {
                 return false;

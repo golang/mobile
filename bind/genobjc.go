@@ -964,7 +964,7 @@ func (g *objcGen) refTypeBase(typ types.Type) string {
 
 func (g *objcGen) objcFieldType(t types.Type) string {
 	if isErrorType(t) {
-		return "NSString*"
+		return "NSError*"
 	}
 	return g.objcType(t)
 }

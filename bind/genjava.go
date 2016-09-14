@@ -308,7 +308,7 @@ func (g *JavaGen) javaType(T types.Type) string {
 		// The error type is usually translated into an exception in
 		// Java, however the type can be exposed in other ways, such
 		// as an exported field.
-		return "String"
+		return "java.lang.Exception"
 	}
 	switch T := T.(type) {
 	case *types.Basic:
@@ -906,6 +906,9 @@ func (g *JavaGen) jniClassSigPrefix(pkg *types.Package) string {
 }
 
 func (g *JavaGen) jniSigType(T types.Type) string {
+	if isErrorType(T) {
+		return "Ljava/lang/Exception;"
+	}
 	switch T := T.(type) {
 	case *types.Basic:
 		switch T.Kind() {
