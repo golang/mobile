@@ -418,9 +418,9 @@ public class SeqTest extends InstrumentationTestCase {
   public void testErrorField() {
     final String want = "an error message";
     Node n = Testpkg.newNode("ErrTest");
-    n.setErr(want);
-    String got = n.getErr();
-    assertEquals("want back the error message we set", want, got);
+    n.setErr(new Exception(want));
+    Exception got = n.getErr();
+    assertEquals("want back the error message we set", want, got.getMessage());
   }
 
   //test if we have JNI local reference table overflow error

@@ -294,6 +294,15 @@ static int numI = 0;
 	XCTAssertTrue(GoTestpkgCallIError(num, NO, &error2), @"GoTestpkgCallIError(Number, NO) failed(%@); want success", error2);
 }
 
+- (void)testErrorField {
+	NSString *want = @"an error message";
+	GoTestpkgNode *n = GoTestpkgNewNode(@"ErrTest");
+	n.err = [NSError errorWithDomain:@"SeqTest" code:1 userInfo:@{NSLocalizedDescriptionKey: want}];
+	NSError *got = n.err;
+	NSString *gotMsg = [got.userInfo valueForKey:NSLocalizedDescriptionKey];
+	XCTAssertEqualObjects(gotMsg, want, @"err = %@, want %@", gotMsg, want);
+}
+
 - (void)testVar {
 	NSString *s = GoTestpkg.stringVar;
 	XCTAssertEqualObjects(s, @"a string var", @"GoTestpkg.StringVar = %@, want 'a string var'", s);

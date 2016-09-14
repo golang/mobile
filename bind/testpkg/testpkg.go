@@ -533,3 +533,7 @@ func NewInitCaller() *InitCaller {
 }
 
 func (ic *InitCaller) Init() {}
+
+type Issue17073 interface {
+	OnError(err error)
+}
