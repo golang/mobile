@@ -15,6 +15,7 @@ import "C"
 
 import (
 	_seq "golang.org/x/mobile/bind/seq"
+	"ignore"
 )
 
 // suppress the error if seq ends up unused
@@ -25,6 +26,11 @@ var _ = _seq.FromRefNum
 // skipped method S.Argument with unsupported parameter or return types
 
 // skipped method S.Result with unsupported parameter or return types
+
+//export new_ignore_S
+func new_ignore_S() C.int32_t {
+	return C.int32_t(_seq.ToRefNum(new(ignore.S)))
+}
 
 // skipped method I.Argument with unsupported parameter or return types
 

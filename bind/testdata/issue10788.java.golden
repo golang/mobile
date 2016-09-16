@@ -7,7 +7,9 @@ package go.issue10788;
 import go.Seq;
 
 public final class TestStruct extends Seq.Proxy {
-    private TestStruct(go.Seq.Ref ref) { super(ref); }
+    { Seq.touch(); }
+    
+    TestStruct(Seq.Ref ref) { super(ref); }
     
     public final native String getValue();
     public final native void setValue(String v);
@@ -77,7 +79,7 @@ public abstract class Issue10788 {
     private static native void _init();
     
     private static final class proxyTestInterface extends Seq.Proxy implements TestInterface {
-        proxyTestInterface(Seq.Ref ref) { super(ref); }
+    	proxyTestInterface(Seq.Ref ref) { super(ref); }
     
         public native void doSomeWork(TestStruct s);
         public native void multipleUnnamedParams(long p0, String p1, long p2);

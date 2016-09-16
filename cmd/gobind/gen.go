@@ -36,7 +36,7 @@ func genPkg(p *types.Package, allPkg []*types.Package) {
 				Pkg:     conf.Pkg,
 			},
 		}
-		g.Init()
+		g.Init(nil)
 
 		buf.Reset()
 		w, closer := writer(fname)

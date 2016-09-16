@@ -7,7 +7,9 @@ package go.structs;
 import go.Seq;
 
 public final class S extends Seq.Proxy {
-    private S(go.Seq.Ref ref) { super(ref); }
+    { Seq.touch(); }
+    
+    S(Seq.Ref ref) { super(ref); }
     
     public final native double getX();
     public final native void setX(double v);
@@ -57,7 +59,9 @@ package go.structs;
 import go.Seq;
 
 public final class S2 extends Seq.Proxy implements I {
-    private S2(go.Seq.Ref ref) { super(ref); }
+    { Seq.touch(); }
+    
+    S2(Seq.Ref ref) { super(ref); }
     
     public native void m();
     public native String string();
@@ -113,7 +117,7 @@ public abstract class Structs {
     private static native void _init();
     
     private static final class proxyI extends Seq.Proxy implements I {
-        proxyI(Seq.Ref ref) { super(ref); }
+    	proxyI(Seq.Ref ref) { super(ref); }
     
         public native void m();
     }

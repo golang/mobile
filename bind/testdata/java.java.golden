@@ -72,21 +72,21 @@ public abstract class Java {
     private static native void _init();
     
     private static final class proxyF extends Seq.Proxy implements F {
-        proxyF(Seq.Ref ref) { super(ref); }
+    	proxyF(Seq.Ref ref) { super(ref); }
     
     }
     private static final class proxyO extends Seq.Proxy implements O {
-        proxyO(Seq.Ref ref) { super(ref); }
+    	proxyO(Seq.Ref ref) { super(ref); }
     
         // skipped method O.Super with unsupported parameter or return types
         
     }
     private static final class proxyR extends Seq.Proxy implements R {
-        proxyR(Seq.Ref ref) { super(ref); }
+    	proxyR(Seq.Ref ref) { super(ref); }
     
     }
     private static final class proxyS extends Seq.Proxy implements S {
-        proxyS(Seq.Ref ref) { super(ref); }
+    	proxyS(Seq.Ref ref) { super(ref); }
     
         // skipped method S.Super with unsupported parameter or return types
         

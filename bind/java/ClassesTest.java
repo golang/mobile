@@ -13,6 +13,10 @@ import java.util.Arrays;
 import java.util.Random;
 
 import go.javapkg.Javapkg;
+import go.javapkg.GoObject;
+import go.javapkg.GoRunnable;
+import go.javapkg.GoSubset;
+import go.javapkg.GoInputStream;
 
 public class ClassesTest extends InstrumentationTestCase {
 	public void testConst() {
@@ -64,5 +68,57 @@ public class ClassesTest extends InstrumentationTestCase {
 			exc = e;
 		}
 		assertNotNull("RuntimeException", exc);
+	}
+
+	public void testGoObject() {
+		Runnable r = new GoRunnable();
+		r.run();
+		assertTrue("GoRunnable.toString", r.toString().equals(Javapkg.ToStringPrefix));
+		Runnable r2 = ((GoRunnable)r).getThis();
+		assertTrue("GoObject.this", r == r2);
+		Object o = new GoObject();
+		assertEquals("GoObject hashCode", 42, o.hashCode());
+		Object o2 = Javapkg.constructGoObject();
+		assertEquals("GoObject hashCode", 42, o2.hashCode());
+		assertTrue("GoObject.toString", o.toString().startsWith(Javapkg.ToStringPrefix));
+		Javapkg.runRunnable(r);
+		final boolean[] ran = new boolean[1];
+		Runnable r3 = new Runnable(){
+			@Override public void run() {
+				ran[0] = true;
+			}
+		};
+		Javapkg.runRunnable(r3);
+		assertTrue("RunRunnable", ran[0]);
+		assertTrue("RunnableRoundtrip Java", r3 == Javapkg.runnableRoundtrip(r3));
+		assertTrue("RunnableRoundtrip Go", r == Javapkg.runnableRoundtrip(r));
+		Runnable r5 = Javapkg.constructGoRunnable();
+		r5.run();
+	}
+
+	public void testTypedException() {
+		InputStream is = new GoInputStream();
+		Exception exc = null;
+		try {
+			is.read();
+		} catch (IOException e) {
+			exc = e;
+		}
+		assertNotNull("IOException", exc);
+		assertEquals("IOException message", Javapkg.IOExceptionMessage, exc.getMessage());
+	}
+
+	public void testInnerClass() {
+		Character.Subset s = new Character.Subset(""){};
+		Character.Subset s2 = new GoSubset("");
+		Javapkg.callSubset(s);
+		Javapkg.callSubset(s2);
+	}
+
+	public void testNew() {
+		Object o = Javapkg.newJavaObject();
+		assertTrue("new Object()", o != null);
+		Integer i = Javapkg.newJavaInteger();
+		assertEquals("new Integer(42)", 42, i.intValue());
 	}
 }

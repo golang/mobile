@@ -7,7 +7,9 @@ package go.issue12328;
 import go.Seq;
 
 public final class T extends Seq.Proxy {
-    private T(go.Seq.Ref ref) { super(ref); }
+    { Seq.touch(); }
+    
+    T(Seq.Ref ref) { super(ref); }
     
     public final native java.lang.Exception getErr();
     public final native void setErr(java.lang.Exception v);

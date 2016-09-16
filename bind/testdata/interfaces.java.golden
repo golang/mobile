@@ -125,43 +125,43 @@ public abstract class Interfaces {
     private static native void _init();
     
     private static final class proxyError extends Seq.Proxy implements Error {
-        proxyError(Seq.Ref ref) { super(ref); }
+    	proxyError(Seq.Ref ref) { super(ref); }
     
         public native void err() throws Exception;
     }
     private static final class proxyI extends Seq.Proxy implements I {
-        proxyI(Seq.Ref ref) { super(ref); }
+    	proxyI(Seq.Ref ref) { super(ref); }
     
         public native int rand();
     }
     private static final class proxyI1 extends Seq.Proxy implements I1 {
-        proxyI1(Seq.Ref ref) { super(ref); }
+    	proxyI1(Seq.Ref ref) { super(ref); }
     
         public native void j();
     }
     private static final class proxyI2 extends Seq.Proxy implements I2 {
-        proxyI2(Seq.Ref ref) { super(ref); }
+    	proxyI2(Seq.Ref ref) { super(ref); }
     
         public native void g();
     }
     private static final class proxyI3 extends Seq.Proxy implements I3 {
-        proxyI3(Seq.Ref ref) { super(ref); }
+    	proxyI3(Seq.Ref ref) { super(ref); }
     
         public native I1 f();
     }
     private static final class proxyLargerI extends Seq.Proxy implements LargerI {
-        proxyLargerI(Seq.Ref ref) { super(ref); }
+    	proxyLargerI(Seq.Ref ref) { super(ref); }
     
         public native void anotherFunc();
         public native int rand();
     }
     private static final class proxySameI extends Seq.Proxy implements SameI {
-        proxySameI(Seq.Ref ref) { super(ref); }
+    	proxySameI(Seq.Ref ref) { super(ref); }
     
         public native int rand();
     }
     private static final class proxyWithParam extends Seq.Proxy implements WithParam {
-        proxyWithParam(Seq.Ref ref) { super(ref); }
+    	proxyWithParam(Seq.Ref ref) { super(ref); }
     
         public native void hasParam(boolean p0);
     }

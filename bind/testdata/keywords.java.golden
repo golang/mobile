@@ -85,7 +85,7 @@ public abstract class Keywords {
     private static native void _init();
     
     private static final class proxyKeywordCaller extends Seq.Proxy implements KeywordCaller {
-        proxyKeywordCaller(Seq.Ref ref) { super(ref); }
+    	proxyKeywordCaller(Seq.Ref ref) { super(ref); }
     
         public native void abstract_();
         public native void assert_();

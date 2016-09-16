@@ -28,17 +28,6 @@ type objcGen struct {
 	*Generator
 }
 
-type interfaceInfo struct {
-	obj     *types.TypeName
-	t       *types.Interface
-	summary ifaceSummary
-}
-
-type structInfo struct {
-	obj *types.TypeName
-	t   *types.Struct
-}
-
 func (g *objcGen) init() {
 	g.Generator.Init()
 	g.namePrefix = g.namePrefixOf(g.Pkg)
@@ -558,7 +547,7 @@ func (g *objcGen) genWrite(varName string, t types.Type, mode varMode) {
 		case *types.Basic:
 			switch e.Kind() {
 			case types.Uint8: // Byte.
-				g.Printf("nbyteslice _%s = go_seq_from_objc_bytearray(%s, %d);\n", varName, varName, g.toCFlag(mode == modeRetained))
+				g.Printf("nbyteslice _%s = go_seq_from_objc_bytearray(%s, %d);\n", varName, varName, toCFlag(mode == modeRetained))
 			default:
 				g.errorf("unsupported type: %s", t)
 			}
@@ -621,7 +610,7 @@ func (g *objcGen) genRead(toName, fromName string, t types.Type, mode varMode) {
 		case *types.Basic:
 			switch e.Kind() {
 			case types.Uint8: // Byte.
-				g.Printf("NSData *%s = go_seq_to_objc_bytearray(%s, %d);\n", toName, fromName, g.toCFlag(mode == modeRetained))
+				g.Printf("NSData *%s = go_seq_to_objc_bytearray(%s, %d);\n", toName, fromName, toCFlag(mode == modeRetained))
 			default:
 				g.errorf("unsupported type: %s", t)
 			}

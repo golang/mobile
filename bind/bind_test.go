@@ -44,6 +44,7 @@ var tests = []string{
 
 var javaTests = []string{
 	"testdata/java.go",
+	"testdata/classes.go",
 }
 
 var fset = token.NewFileSet()
@@ -232,7 +233,7 @@ func TestGenJava(t *testing.T) {
 				Pkg:     pkg,
 			},
 		}
-		g.Init()
+		g.Init(classes)
 		testCases := []struct {
 			suffix string
 			gen    func() error
@@ -364,7 +365,7 @@ func TestCustomPrefix(t *testing.T) {
 			Pkg:     pkg,
 		},
 	}
-	g.Init()
+	g.Init(nil)
 	testCases := []struct {
 		golden string
 		gen    func(w io.Writer) error

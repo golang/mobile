@@ -39,17 +39,17 @@ Java_go_ignore_Ignore__1init(JNIEnv *env, jclass _unused) {
 
 // skipped function Result with unsupported parameter or return types
 
-// skipped function Argument with unsupported parameter or return types
+// skipped function S.Argument with unsupported parameter or return types
 
-// skipped function Result with unsupported parameter or return types
+// skipped function S.Result with unsupported parameter or return types
 
 // skipped field S with unsupported type: *types.Interface
 
-// skipped function Argument with unsupported parameter or return types
+// skipped function I.Argument with unsupported parameter or return types
 
 // skipped method I with unsupported parameter or return types
 
-// skipped function Result with unsupported parameter or return types
+// skipped function I.Result with unsupported parameter or return types
 
 // skipped method I with unsupported parameter or return types
 
