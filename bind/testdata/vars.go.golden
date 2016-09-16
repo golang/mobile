@@ -21,6 +21,11 @@ import (
 // suppress the error if seq ends up unused
 var _ = _seq.FromRefNum
 
+//export new_vars_S
+func new_vars_S() C.int32_t {
+	return C.int32_t(_seq.ToRefNum(new(vars.S)))
+}
+
 type proxyvars_I _seq.Ref
 
 func (p *proxyvars_I) Bind_proxy_refnum__() int32 { return (*_seq.Ref)(p).Bind_IncNum() }

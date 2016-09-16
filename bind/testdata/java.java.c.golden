@@ -79,11 +79,11 @@ Java_go_java_Java__1init(JNIEnv *env, jclass _unused) {
     
 }
 
-// skipped function Super with unsupported parameter or return types
+// skipped function O.Super with unsupported parameter or return types
 
 // skipped method O with unsupported parameter or return types
 
-// skipped function Super with unsupported parameter or return types
+// skipped function S.Super with unsupported parameter or return types
 
 // skipped method S with unsupported parameter or return types
 

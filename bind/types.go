@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"go/types"
 	"log"
+	"strings"
 )
 
 type ifaceSummary struct {
@@ -75,6 +76,11 @@ func exportedMethodSet(T types.Type) []*types.Func {
 		if !obj.Exported() {
 			continue
 		}
+		// Skip methods from the embedded java classes, so that
+		// only methods that are implemented in Go are included.
+		if isJavaPkg(obj.Pkg()) {
+			continue
+		}
 		switch obj := obj.(type) {
 		case *types.Func:
 			methods = append(methods, obj)
@@ -134,4 +140,16 @@ func isRefType(t types.Type) bool {
 	default:
 		return false
 	}
+}
+
+func isJavaType(t types.Type) bool {
+	nt, ok := t.(*types.Named)
+	if !ok {
+		return false
+	}
+	return isJavaPkg(nt.Obj().Pkg())
+}
+
+func isJavaPkg(p *types.Package) bool {
+	return p != nil && strings.HasPrefix(p.Path(), "Java/")
 }

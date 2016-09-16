@@ -53,6 +53,23 @@ func (list ErrorList) Error() string {
 	return buf.String()
 }
 
+// interfaceInfo comes from Init and collects the auxillary information
+// needed to generate bindings for an exported Go interface in a bound
+// package.
+type interfaceInfo struct {
+	obj     *types.TypeName
+	t       *types.Interface
+	summary ifaceSummary
+}
+
+// structInfo comes from Init and collects the auxillary information
+// needed to generate bindings for an exported Go struct in a bound
+// package.
+type structInfo struct {
+	obj *types.TypeName
+	t   *types.Struct
+}
+
 // Generator contains the common Go package information
 // needed for the specific Go, Java, ObjC generators.
 //
@@ -66,7 +83,7 @@ type Generator struct {
 	Pkg    *types.Package
 	err    ErrorList
 
-	// fields set by Init.
+	// fields set by init.
 	pkgName   string
 	pkgPrefix string
 	funcs     []*types.Func
@@ -158,11 +175,29 @@ func (g *Generator) Init() {
 	}
 }
 
-func (_ *Generator) toCFlag(v bool) int {
-	if v {
-		return 1
+// constructorType returns the type T for a function on the form
+//
+// func NewT(...) *T
+func (g *Generator) constructorType(f *types.Func) *types.TypeName {
+	sig := f.Type().(*types.Signature)
+	res := sig.Results()
+	if res.Len() != 1 {
+		return nil
 	}
-	return 0
+	rt := res.At(0).Type()
+	pt, ok := rt.(*types.Pointer)
+	if !ok {
+		return nil
+	}
+	nt, ok := pt.Elem().(*types.Named)
+	if !ok {
+		return nil
+	}
+	obj := nt.Obj()
+	if !strings.HasPrefix(f.Name(), "New"+obj.Name()) {
+		return nil
+	}
+	return obj
 }
 
 func toCFlag(v bool) int {
@@ -298,7 +333,7 @@ func (g *Generator) isSigSupported(t types.Type) bool {
 
 // isSupported returns whether the generators can handle the type.
 func (g *Generator) isSupported(t types.Type) bool {
-	if isErrorType(t) {
+	if isErrorType(t) || isJavaType(t) {
 		return true
 	}
 	switch t := t.(type) {

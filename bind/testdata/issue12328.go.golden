@@ -46,3 +46,8 @@ func proxyissue12328_T_Err_Get(refnum C.int32_t) C.int32_t {
 	}
 	return _v
 }
+
+//export new_issue12328_T
+func new_issue12328_T() C.int32_t {
+	return C.int32_t(_seq.ToRefNum(new(issue12328.T)))
+}

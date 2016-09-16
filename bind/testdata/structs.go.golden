@@ -76,6 +76,11 @@ func proxystructs_S_Sum(refnum C.int32_t) C.double {
 	return _res_0
 }
 
+//export new_structs_S
+func new_structs_S() C.int32_t {
+	return C.int32_t(_seq.ToRefNum(new(structs.S)))
+}
+
 //export proxystructs_S2_M
 func proxystructs_S2_M(refnum C.int32_t) {
 	ref := _seq.FromRefNum(int32(refnum))
@@ -90,6 +95,11 @@ func proxystructs_S2_String(refnum C.int32_t) C.nstring {
 	res_0 := v.String()
 	_res_0 := encodeString(res_0)
 	return _res_0
+}
+
+//export new_structs_S2
+func new_structs_S2() C.int32_t {
+	return C.int32_t(_seq.ToRefNum(new(structs.S2)))
 }
 
 //export proxystructs_I_M

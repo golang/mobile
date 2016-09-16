@@ -36,6 +36,11 @@ func proxyissue10788_TestStruct_Value_Get(refnum C.int32_t) C.nstring {
 	return _v
 }
 
+//export new_issue10788_TestStruct
+func new_issue10788_TestStruct() C.int32_t {
+	return C.int32_t(_seq.ToRefNum(new(issue10788.TestStruct)))
+}
+
 //export proxyissue10788_TestInterface_DoSomeWork
 func proxyissue10788_TestInterface_DoSomeWork(refnum C.int32_t, param_s C.int32_t) {
 	ref := _seq.FromRefNum(int32(refnum))

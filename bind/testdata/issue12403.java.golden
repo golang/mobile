@@ -34,7 +34,7 @@ public abstract class Issue12403 {
     private static native void _init();
     
     private static final class proxyParsable extends Seq.Proxy implements Parsable {
-        proxyParsable(Seq.Ref ref) { super(ref); }
+    	proxyParsable(Seq.Ref ref) { super(ref); }
     
         public native String fromJSON(String jstr);
         public native String toJSON() throws Exception;

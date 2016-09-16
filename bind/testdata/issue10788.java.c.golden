@@ -47,14 +47,14 @@ Java_go_issue10788_TestStruct_getValue(JNIEnv *env, jobject this) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_issue10788_Issue10788_00024proxyTestInterface_doSomeWork(JNIEnv* env, jobject this, jobject s) {
-    int32_t o = go_seq_to_refnum(env, this);
+Java_go_issue10788_Issue10788_00024proxyTestInterface_doSomeWork(JNIEnv* env, jobject __this__, jobject s) {
+    int32_t o = go_seq_to_refnum(env, __this__);
     int32_t _s = go_seq_to_refnum(env, s);
     proxyissue10788_TestInterface_DoSomeWork(o, _s);
 }
 
 void cproxyissue10788_TestInterface_DoSomeWork(int32_t refnum, int32_t s) {
-    JNIEnv *env = go_seq_push_local_frame(12);
+    JNIEnv *env = go_seq_push_local_frame(1);
     jobject o = go_seq_from_refnum(env, refnum, proxy_class_issue10788_TestInterface, proxy_class_issue10788_TestInterface_cons);
     jobject _s = go_seq_from_refnum(env, s, proxy_class_issue10788_TestStruct, proxy_class_issue10788_TestStruct_cons);
     (*env)->CallVoidMethod(env, o, mid_TestInterface_DoSomeWork, _s);
@@ -62,8 +62,8 @@ void cproxyissue10788_TestInterface_DoSomeWork(int32_t refnum, int32_t s) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_issue10788_Issue10788_00024proxyTestInterface_multipleUnnamedParams(JNIEnv* env, jobject this, jlong p0, jstring p1, jlong p2) {
-    int32_t o = go_seq_to_refnum(env, this);
+Java_go_issue10788_Issue10788_00024proxyTestInterface_multipleUnnamedParams(JNIEnv* env, jobject __this__, jlong p0, jstring p1, jlong p2) {
+    int32_t o = go_seq_to_refnum(env, __this__);
     nint _p0 = (nint)p0;
     nstring _p1 = go_seq_from_java_string(env, p1);
     int64_t _p2 = (int64_t)p2;
@@ -71,7 +71,7 @@ Java_go_issue10788_Issue10788_00024proxyTestInterface_multipleUnnamedParams(JNIE
 }
 
 void cproxyissue10788_TestInterface_MultipleUnnamedParams(int32_t refnum, nint p0, nstring p1, int64_t p2) {
-    JNIEnv *env = go_seq_push_local_frame(16);
+    JNIEnv *env = go_seq_push_local_frame(3);
     jobject o = go_seq_from_refnum(env, refnum, proxy_class_issue10788_TestInterface, proxy_class_issue10788_TestInterface_cons);
     jlong _p0 = (jlong)p0;
     jstring _p1 = go_seq_to_java_string(env, p1);

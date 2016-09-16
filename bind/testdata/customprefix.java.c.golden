@@ -16,7 +16,7 @@ Java_com_example_customprefix_Customprefix__1init(JNIEnv *env, jclass _unused) {
 }
 
 JNIEXPORT void JNICALL
-Java_com_example_customprefix_Customprefix_f(JNIEnv* env, jclass clazz) {
+Java_com_example_customprefix_Customprefix_f(JNIEnv* env, jclass _clazz) {
     proxycustomprefix__F();
 }
 

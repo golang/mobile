@@ -7,7 +7,9 @@ package go.vars;
 import go.Seq;
 
 public final class S extends Seq.Proxy implements I {
-    private S(go.Seq.Ref ref) { super(ref); }
+    { Seq.touch(); }
+    
+    S(Seq.Ref ref) { super(ref); }
     
     @Override public boolean equals(Object o) {
         if (o == null || !(o instanceof S)) {
@@ -62,7 +64,7 @@ public abstract class Vars {
     private static native void _init();
     
     private static final class proxyI extends Seq.Proxy implements I {
-        proxyI(Seq.Ref ref) { super(ref); }
+    	proxyI(Seq.Ref ref) { super(ref); }
     
     }
     

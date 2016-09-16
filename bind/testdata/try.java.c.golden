@@ -16,7 +16,7 @@ Java_go_try__Try__1init(JNIEnv *env, jclass _unused) {
 }
 
 JNIEXPORT jstring JNICALL
-Java_go_try__Try_this_1(JNIEnv* env, jclass clazz) {
+Java_go_try__Try_this_1(JNIEnv* env, jclass _clazz) {
     nstring r0 = proxytry__This();
     jstring _r0 = go_seq_to_java_string(env, r0);
     return _r0;

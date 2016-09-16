@@ -223,6 +223,13 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 		g.Outdent()
 		g.Printf("}\n\n")
 	}
+	// Export constructor for ObjC and Java default no-arg constructors
+	g.Printf("//export new_%s_%s\n", g.Pkg.Name(), obj.Name())
+	g.Printf("func new_%s_%s() C.int32_t {\n", g.Pkg.Name(), obj.Name())
+	g.Indent()
+	g.Printf("return C.int32_t(_seq.ToRefNum(new(%s%s)))\n", g.pkgName(g.Pkg), obj.Name())
+	g.Outdent()
+	g.Printf("}\n")
 }
 
 func (g *goGen) genVar(o *types.Var) {
@@ -399,9 +406,10 @@ func (g *goGen) genRead(toVar, fromVar string, typ types.Type, mode varMode) {
 			if iface, ok := t.Underlying().(*types.Interface); ok {
 				hasProxy = makeIfaceSummary(iface).implementable
 			}
+			isJava := isJavaType(t)
 			o := t.Obj()
 			oPkg := o.Pkg()
-			if !isErrorType(t) && !g.validPkg(oPkg) {
+			if !isErrorType(t) && !g.validPkg(oPkg) && !isJava {
 				g.errorf("type %s is defined in %s, which is not bound", t, oPkg)
 				return
 			}
@@ -412,7 +420,12 @@ func (g *goGen) genRead(toVar, fromVar string, typ types.Type, mode varMode) {
 			g.Printf("  	 %s = %s_ref.Get().(%s%s)\n", toVar, toVar, g.pkgName(oPkg), o.Name())
 			if hasProxy {
 				g.Printf("	} else { // foreign object \n")
-				g.Printf("	   %s = (*proxy%s_%s)(%s_ref)\n", toVar, pkgPrefix(oPkg), o.Name(), toVar)
+				if isJava {
+					clsName := flattenName(classNameFor(t))
+					g.Printf("	   %s = (*proxy_class_%s)(%s_ref)\n", toVar, clsName, toVar)
+				} else {
+					g.Printf("	   %s = (*proxy%s_%s)(%s_ref)\n", toVar, pkgPrefix(oPkg), o.Name(), toVar)
+				}
 			}
 			g.Printf("	}\n")
 			g.Printf("}\n")
@@ -434,7 +447,7 @@ func (g *goGen) typeString(typ types.Type) string {
 			return types.TypeString(typ, types.RelativeTo(pkg))
 		}
 		oPkg := obj.Pkg()
-		if !g.validPkg(oPkg) {
+		if !g.validPkg(oPkg) && !isJavaType(t) {
 			g.errorf("type %s is defined in %s, which is not bound", t, oPkg)
 			return "TODO"
 		}

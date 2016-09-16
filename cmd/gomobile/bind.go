@@ -377,7 +377,7 @@ func (b *binder) GenJava(pkg *types.Package, allPkg []*types.Package, classes []
 			Pkg:     pkg,
 		},
 	}
-	g.Init()
+	g.Init(classes)
 
 	generate := func(w io.Writer) error {
 		if buildX {
