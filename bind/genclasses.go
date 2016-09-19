@@ -302,7 +302,7 @@ func (g *ClassGen) genCMethodBody(cls *java.Class, f *java.Func, virtual bool) {
 		g.Printf(", _a%d", i)
 	}
 	g.Printf(");\n")
-	g.Printf("jobject _exc = go_seq_wrap_exception(env);\n")
+	g.Printf("jobject _exc = go_seq_get_exception(env);\n")
 	g.Printf("int32_t _exc_ref = go_seq_to_refnum(env, _exc);\n")
 	if f.Ret != nil {
 		g.genJavaToC("res", f.Ret)
@@ -370,7 +370,7 @@ func (g *ClassGen) genC(cls *java.Class) {
 			g.Printf(", _a%d", i)
 		}
 		g.Printf(");\n")
-		g.Printf("jobject _exc = go_seq_wrap_exception(env);\n")
+		g.Printf("jobject _exc = go_seq_get_exception(env);\n")
 		g.Printf("int32_t _exc_ref = go_seq_to_refnum(env, _exc);\n")
 		if f.Ret != nil {
 			g.genJavaToC("res", f.Ret)

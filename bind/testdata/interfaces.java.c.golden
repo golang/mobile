@@ -124,7 +124,7 @@ int32_t cproxyinterfaces_Error_Err(int32_t refnum) {
     JNIEnv *env = go_seq_push_local_frame(0);
     jobject o = go_seq_from_refnum(env, refnum, proxy_class_interfaces_Error, proxy_class_interfaces_Error_cons);
     (*env)->CallVoidMethod(env, o, mid_Error_Err);
-    jobject exc = go_seq_wrap_exception(env);
+    jobject exc = go_seq_get_exception(env);
     int32_t _exc = go_seq_to_refnum(env, exc);
     go_seq_pop_local_frame(env);
     return _exc;

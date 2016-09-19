@@ -416,11 +416,19 @@ public class SeqTest extends InstrumentationTestCase {
   }
 
   public void testErrorField() {
-    final String want = "an error message";
     Node n = Testpkg.newNode("ErrTest");
-    n.setErr(new Exception(want));
+    Exception want = new Exception("an error message");
+    n.setErr(want);
     Exception got = n.getErr();
-    assertEquals("want back the error message we set", want, got.getMessage());
+    assertTrue("want back the error we set", want == got);
+    String msg = Testpkg.errorMessage(want);
+    assertEquals("the error message must match", want.getMessage(), msg);
+  }
+
+  public void testErrorDup() {
+    Exception err = Testpkg.getGlobalErr();
+    assertTrue("the Go error instance must preserve its identity", Testpkg.isGlobalErr(err));
+    assertEquals("the Go error message must be preserved", "global err", err.getMessage());
   }
 
   //test if we have JNI local reference table overflow error

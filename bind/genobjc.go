@@ -193,20 +193,14 @@ func (g *objcGen) gobindOpts() string {
 
 func (g *objcGen) genM() error {
 	var pkgPath string
-	var errDomain string
 	if g.Pkg != nil {
 		pkgPath = g.Pkg.Path()
-		errDomain = "go." + pkgPath
-	} else {
-		errDomain = "go"
 	}
 	g.Printf(objcPreamble, pkgPath, g.gobindOpts(), pkgPath)
 	g.Printf("#include <Foundation/Foundation.h>\n")
 	g.Printf("#include \"seq.h\"\n")
 	g.Printf("#include \"_cgo_export.h\"\n")
 	g.Printf("#include %q\n", g.namePrefix+".h")
-	g.Printf("\n")
-	g.Printf("static NSString* errDomain = @%q;\n", errDomain)
 	g.Printf("\n")
 
 	// struct
@@ -676,7 +670,7 @@ func (g *objcGen) genFunc(s *funcSummary, objName string) {
 			if isErrorType(p.typ) {
 				g.Printf("if (_%s != nil && %s != nil) {\n", p.name, p.name)
 				g.Indent()
-				g.Printf("*%s = go_seq_to_nserror(_%s, errDomain);\n", p.name, p.name)
+				g.Printf("*%s = _%s;\n", p.name, p.name)
 				g.Outdent()
 				g.Printf("}\n")
 			} else {
@@ -696,14 +690,19 @@ func (g *objcGen) genFunc(s *funcSummary, objName string) {
 }
 
 func (g *objcGen) genInterfaceInterface(obj *types.TypeName, summary ifaceSummary, isProtocol bool) {
-	g.Printf("@interface %[1]s%[2]s : NSObject", g.namePrefix, obj.Name())
+	g.Printf("@interface %[1]s%[2]s : ", g.namePrefix, obj.Name())
+	if isErrorType(obj.Type()) {
+		g.Printf("NSError")
+	} else {
+		g.Printf("NSObject")
+	}
 	if isProtocol {
 		g.Printf(" <%[1]s%[2]s>", g.namePrefix, obj.Name())
 	}
 	g.Printf(" {\n}\n")
 	g.Printf("@property(strong, readonly) id _ref;\n")
 	g.Printf("\n")
-	g.Printf("- (id)initWithRef:(id)ref;\n")
+	g.Printf("- (instancetype)initWithRef:(id)ref;\n")
 	for _, m := range summary.callable {
 		if !g.isSigSupported(m.Type()) {
 			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", obj.Name(), m.Name())
@@ -740,10 +739,17 @@ func (g *objcGen) genInterfaceM(obj *types.TypeName, t *types.Interface) bool {
 	g.Printf("@implementation %s%s {\n", g.namePrefix, obj.Name())
 	g.Printf("}\n")
 	g.Printf("\n")
-	g.Printf("- (id)initWithRef:(id)ref {\n")
+	g.Printf("- (instancetype)initWithRef:(id)ref {\n")
 	g.Indent()
-	g.Printf("self = [super init];\n")
-	g.Printf("if (self) { __ref = ref; }\n")
+	if isErrorType(obj.Type()) {
+		g.Printf("if (self) {\n")
+		g.Printf("	__ref = ref;\n")
+		g.Printf("	self = [super initWithDomain:@\"go\" code:1 userInfo:@{NSLocalizedDescriptionKey: [self error]}];\n")
+		g.Printf("}\n")
+	} else {
+		g.Printf("self = [super init];\n")
+		g.Printf("if (self) { __ref = ref; }\n")
+	}
 	g.Printf("return self;\n")
 	g.Outdent()
 	g.Printf("}\n")
@@ -790,10 +796,16 @@ func (g *objcGen) genInterfaceMethodProxy(obj *types.TypeName, m *types.Func) {
 		}
 	}
 
-	if s.ret == "void" {
-		g.Printf("[o %s];\n", s.callMethod(g))
+	if isErrorType(obj.Type()) && m.Name() == "Error" {
+		// As a special case, ObjC NSErrors are passed to Go pretending to implement the Go error interface.
+		// They don't actually have an Error method, so calls to to it needs to be rerouted.
+		g.Printf("NSString *returnVal = [o localizedDescription];\n")
 	} else {
-		g.Printf("%s returnVal = [o %s];\n", s.ret, s.callMethod(g))
+		if s.ret == "void" {
+			g.Printf("[o %s];\n", s.callMethod(g))
+		} else {
+			g.Printf("%s returnVal = [o %s];\n", s.ret, s.callMethod(g))
+		}
 	}
 
 	if len(s.retParams) > 0 {
@@ -812,7 +824,7 @@ func (g *objcGen) genInterfaceMethodProxy(obj *types.TypeName, m *types.Func) {
 						g.Printf("if (%s != nil) {\n", p.name)
 					}
 					g.Indent()
-					g.Printf("_%[1]s = [[goSeqErrorWrapper alloc] initWithError:%[1]s];\n", p.name)
+					g.Printf("_%[1]s = %[1]s;\n", p.name)
 					g.Outdent()
 					g.Printf("}\n")
 					g.genWrite("_"+p.name, p.typ, modeRetained)

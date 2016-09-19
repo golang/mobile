@@ -124,45 +124,109 @@ public abstract class Interfaces {
     
     private static native void _init();
     
-    private static final class proxyError extends Seq.Proxy implements Error {
-    	proxyError(Seq.Ref ref) { super(ref); }
-    
+    private static final class proxyError implements Seq.Proxy, Error {
+        private final Seq.Ref ref;
+        
+        @Override public final int incRefnum() {
+              int refnum = ref.refnum;
+              Seq.incGoRef(refnum);
+              return refnum;
+        }
+        
+        proxyError(Seq.Ref ref) { this.ref = ref; }
+        
         public native void err() throws Exception;
     }
-    private static final class proxyI extends Seq.Proxy implements I {
-    	proxyI(Seq.Ref ref) { super(ref); }
-    
+    private static final class proxyI implements Seq.Proxy, I {
+        private final Seq.Ref ref;
+        
+        @Override public final int incRefnum() {
+              int refnum = ref.refnum;
+              Seq.incGoRef(refnum);
+              return refnum;
+        }
+        
+        proxyI(Seq.Ref ref) { this.ref = ref; }
+        
         public native int rand();
     }
-    private static final class proxyI1 extends Seq.Proxy implements I1 {
-    	proxyI1(Seq.Ref ref) { super(ref); }
-    
+    private static final class proxyI1 implements Seq.Proxy, I1 {
+        private final Seq.Ref ref;
+        
+        @Override public final int incRefnum() {
+              int refnum = ref.refnum;
+              Seq.incGoRef(refnum);
+              return refnum;
+        }
+        
+        proxyI1(Seq.Ref ref) { this.ref = ref; }
+        
         public native void j();
     }
-    private static final class proxyI2 extends Seq.Proxy implements I2 {
-    	proxyI2(Seq.Ref ref) { super(ref); }
-    
+    private static final class proxyI2 implements Seq.Proxy, I2 {
+        private final Seq.Ref ref;
+        
+        @Override public final int incRefnum() {
+              int refnum = ref.refnum;
+              Seq.incGoRef(refnum);
+              return refnum;
+        }
+        
+        proxyI2(Seq.Ref ref) { this.ref = ref; }
+        
         public native void g();
     }
-    private static final class proxyI3 extends Seq.Proxy implements I3 {
-    	proxyI3(Seq.Ref ref) { super(ref); }
-    
+    private static final class proxyI3 implements Seq.Proxy, I3 {
+        private final Seq.Ref ref;
+        
+        @Override public final int incRefnum() {
+              int refnum = ref.refnum;
+              Seq.incGoRef(refnum);
+              return refnum;
+        }
+        
+        proxyI3(Seq.Ref ref) { this.ref = ref; }
+        
         public native I1 f();
     }
-    private static final class proxyLargerI extends Seq.Proxy implements LargerI {
-    	proxyLargerI(Seq.Ref ref) { super(ref); }
-    
+    private static final class proxyLargerI implements Seq.Proxy, LargerI {
+        private final Seq.Ref ref;
+        
+        @Override public final int incRefnum() {
+              int refnum = ref.refnum;
+              Seq.incGoRef(refnum);
+              return refnum;
+        }
+        
+        proxyLargerI(Seq.Ref ref) { this.ref = ref; }
+        
         public native void anotherFunc();
         public native int rand();
     }
-    private static final class proxySameI extends Seq.Proxy implements SameI {
-    	proxySameI(Seq.Ref ref) { super(ref); }
-    
+    private static final class proxySameI implements Seq.Proxy, SameI {
+        private final Seq.Ref ref;
+        
+        @Override public final int incRefnum() {
+              int refnum = ref.refnum;
+              Seq.incGoRef(refnum);
+              return refnum;
+        }
+        
+        proxySameI(Seq.Ref ref) { this.ref = ref; }
+        
         public native int rand();
     }
-    private static final class proxyWithParam extends Seq.Proxy implements WithParam {
-    	proxyWithParam(Seq.Ref ref) { super(ref); }
-    
+    private static final class proxyWithParam implements Seq.Proxy, WithParam {
+        private final Seq.Ref ref;
+        
+        @Override public final int incRefnum() {
+              int refnum = ref.refnum;
+              Seq.incGoRef(refnum);
+              return refnum;
+        }
+        
+        proxyWithParam(Seq.Ref ref) { this.ref = ref; }
+        
         public native void hasParam(boolean p0);
     }
     

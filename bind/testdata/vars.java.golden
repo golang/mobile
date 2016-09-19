@@ -6,10 +6,18 @@ package go.vars;
 
 import go.Seq;
 
-public final class S extends Seq.Proxy implements I {
+public final class S implements Seq.Proxy, I {
     static { Vars.touch(); }
     
-    S(Seq.Ref ref) { super(ref); }
+    private final Seq.Ref ref;
+    
+    @Override public final int incRefnum() {
+          int refnum = ref.refnum;
+          Seq.incGoRef(refnum);
+          return refnum;
+    }
+    
+    S(Seq.Ref ref) { this.ref = ref; }
     
     @Override public boolean equals(Object o) {
         if (o == null || !(o instanceof S)) {
@@ -63,9 +71,17 @@ public abstract class Vars {
     
     private static native void _init();
     
-    private static final class proxyI extends Seq.Proxy implements I {
-    	proxyI(Seq.Ref ref) { super(ref); }
-    
+    private static final class proxyI implements Seq.Proxy, I {
+        private final Seq.Ref ref;
+        
+        @Override public final int incRefnum() {
+              int refnum = ref.refnum;
+              Seq.incGoRef(refnum);
+              return refnum;
+        }
+        
+        proxyI(Seq.Ref ref) { this.ref = ref; }
+        
     }
     
     

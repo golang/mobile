@@ -537,3 +537,13 @@ func (ic *InitCaller) Init() {}
 type Issue17073 interface {
 	OnError(err error)
 }
+
+func ErrorMessage(err error) string {
+	return err.Error()
+}
+
+var GlobalErr error = errors.New("global err")
+
+func IsGlobalErr(err error) bool {
+	return GlobalErr == err
+}

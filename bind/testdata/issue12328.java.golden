@@ -6,10 +6,18 @@ package go.issue12328;
 
 import go.Seq;
 
-public final class T extends Seq.Proxy {
+public final class T implements Seq.Proxy {
     static { Issue12328.touch(); }
     
-    T(Seq.Ref ref) { super(ref); }
+    private final Seq.Ref ref;
+    
+    @Override public final int incRefnum() {
+          int refnum = ref.refnum;
+          Seq.incGoRef(refnum);
+          return refnum;
+    }
+    
+    T(Seq.Ref ref) { this.ref = ref; }
     
     public final native java.lang.Exception getErr();
     public final native void setErr(java.lang.Exception v);

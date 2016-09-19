@@ -8,12 +8,10 @@
 #include "_cgo_export.h"
 #include "GoInterfaces.h"
 
-static NSString* errDomain = @"go.interfaces";
-
 @implementation GoInterfacesError {
 }
 
-- (id)initWithRef:(id)ref {
+- (instancetype)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;
@@ -31,7 +29,7 @@ static NSString* errDomain = @"go.interfaces";
 		}
 	}
 	if (_error != nil && error != nil) {
-		*error = go_seq_to_nserror(_error, errDomain);
+		*error = _error;
 	}
 	return (_error == nil);
 }
@@ -42,7 +40,7 @@ static NSString* errDomain = @"go.interfaces";
 @implementation GoInterfacesI {
 }
 
-- (id)initWithRef:(id)ref {
+- (instancetype)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;
@@ -61,7 +59,7 @@ static NSString* errDomain = @"go.interfaces";
 @implementation GoInterfacesI1 {
 }
 
-- (id)initWithRef:(id)ref {
+- (instancetype)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;
@@ -78,7 +76,7 @@ static NSString* errDomain = @"go.interfaces";
 @implementation GoInterfacesI2 {
 }
 
-- (id)initWithRef:(id)ref {
+- (instancetype)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;
@@ -95,7 +93,7 @@ static NSString* errDomain = @"go.interfaces";
 @implementation GoInterfacesI3 {
 }
 
-- (id)initWithRef:(id)ref {
+- (instancetype)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;
@@ -121,7 +119,7 @@ static NSString* errDomain = @"go.interfaces";
 @implementation GoInterfacesLargerI {
 }
 
-- (id)initWithRef:(id)ref {
+- (instancetype)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;
@@ -145,7 +143,7 @@ static NSString* errDomain = @"go.interfaces";
 @implementation GoInterfacesSameI {
 }
 
-- (id)initWithRef:(id)ref {
+- (instancetype)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;
@@ -164,7 +162,7 @@ static NSString* errDomain = @"go.interfaces";
 @implementation GoInterfacesWithParam {
 }
 
-- (id)initWithRef:(id)ref {
+- (instancetype)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;
@@ -211,7 +209,7 @@ BOOL GoInterfacesCallErr(id<GoInterfacesError> e, NSError** error) {
 		}
 	}
 	if (_error != nil && error != nil) {
-		*error = go_seq_to_nserror(_error, errDomain);
+		*error = _error;
 	}
 	return (_error == nil);
 }
@@ -236,7 +234,7 @@ int32_t cproxyinterfaces_Error_Err(int32_t refnum) {
 		BOOL returnVal = [o err:&error];
 		id<GoUniverseerror> _error = nil;
 		if (!returnVal) {
-			_error = [[goSeqErrorWrapper alloc] initWithError:error];
+			_error = error;
 		}
 		int32_t __error;
 		if ([(id<NSObject>)(_error) isKindOfClass:[GoUniverseerror class]]) {

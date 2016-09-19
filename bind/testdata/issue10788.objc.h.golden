@@ -33,7 +33,7 @@
 }
 @property(strong, readonly) id _ref;
 
-- (id)initWithRef:(id)ref;
+- (instancetype)initWithRef:(id)ref;
 - (void)doSomeWork:(GoIssue10788TestStruct*)s;
 - (void)multipleUnnamedParams:(long)p0 p1:(NSString*)p1 p2:(int64_t)p2;
 @end

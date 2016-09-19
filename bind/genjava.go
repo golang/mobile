@@ -120,6 +120,15 @@ func (g *JavaGen) GenClass(idx int) error {
 	return nil
 }
 
+func (g *JavaGen) genProxyImpl(name string) {
+	g.Printf("private final Seq.Ref ref;\n\n")
+	g.Printf("@Override public final int incRefnum() {\n")
+	g.Printf("      int refnum = ref.refnum;\n")
+	g.Printf("      Seq.incGoRef(refnum);\n")
+	g.Printf("      return refnum;\n")
+	g.Printf("}\n\n")
+}
+
 func (g *JavaGen) genStruct(s structInfo) {
 	pkgPath := ""
 	if g.Pkg != nil {
@@ -140,6 +149,8 @@ func (g *JavaGen) genStruct(s structInfo) {
 				impls = append(impls, cls.Name)
 			}
 		}
+	} else {
+		impls = append(impls, "Seq.Proxy")
 	}
 
 	pT := types.NewPointer(s.obj.Type())
@@ -158,8 +169,6 @@ func (g *JavaGen) genStruct(s structInfo) {
 		if jinf.extends != nil {
 			g.Printf(" extends %s", jinf.extends.Name)
 		}
-	} else {
-		g.Printf(" extends Seq.Proxy")
 	}
 	if len(impls) > 0 {
 		g.Printf(" implements %s", strings.Join(impls, ", "))
@@ -168,8 +177,8 @@ func (g *JavaGen) genStruct(s structInfo) {
 	g.Indent()
 
 	g.Printf("static { %s.touch(); }\n\n", g.className())
+	g.genProxyImpl(n)
 	if jinf != nil {
-		g.Printf("private final Seq.Ref ref;\n\n")
 		for _, f := range jinf.cons {
 			if !g.isSigSupported(f.Type()) {
 				g.Printf("// skipped constructor %s.%s with unsupported parameter or return types\n\n", n, f.Name())
@@ -184,13 +193,8 @@ func (g *JavaGen) genStruct(s structInfo) {
 			g.Printf("public %s() { this.ref = __New(); }\n\n", n)
 			g.Printf("private static native Seq.Ref __New();\n\n")
 		}
-		g.Printf("@Override public final int incRefnum() {\n")
-		g.Printf("	int refnum = ref.refnum;\n")
-		g.Printf("	Seq.incGoRef(refnum);\n")
-		g.Printf("	return refnum;\n")
-		g.Printf("}\n\n")
 	} else {
-		g.Printf("%s(Seq.Ref ref) { super(ref); }\n\n", n)
+		g.Printf("%s(Seq.Ref ref) { this.ref = ref; }\n\n", n)
 	}
 
 	for _, f := range fields {
@@ -1090,7 +1094,7 @@ func (g *JavaGen) genMethodInterfaceProxy(oName string, m *types.Func) {
 			rets = append(rets, retName)
 		}
 		if res.Len() == 2 || isErrorType(t) {
-			g.Printf("jobject exc = go_seq_wrap_exception(env);\n")
+			g.Printf("jobject exc = go_seq_get_exception(env);\n")
 			errType := types.Universe.Lookup("error").Type()
 			g.genJavaToC("exc", errType, modeRetained)
 			retName = "_exc"
@@ -1288,6 +1292,13 @@ func (g *JavaGen) GenC() error {
 		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigPrefix(pkg)+className(pkg)+"$proxy"+iface.obj.Name())
 		g.Printf("proxy_class_%s_%s = (*env)->NewGlobalRef(env, clazz);\n", g.pkgPrefix, iface.obj.Name())
 		g.Printf("proxy_class_%s_%s_cons = (*env)->GetMethodID(env, clazz, \"<init>\", \"(Lgo/Seq$Ref;)V\");\n", g.pkgPrefix, iface.obj.Name())
+		if isErrorType(iface.obj.Type()) {
+			// As a special case, Java Exceptions are passed to Go pretending to implement the Go error interface.
+			// To complete the illusion, use the Throwable.getMessage method for proxied calls to the error.Error method.
+			g.Printf("clazz = (*env)->FindClass(env, \"java/lang/Throwable\");\n")
+			g.Printf("mid_error_Error = (*env)->GetMethodID(env, clazz, \"getMessage\", \"()Ljava/lang/String;\");\n")
+			continue
+		}
 		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigPrefix(pkg)+iface.obj.Name())
 		for _, m := range iface.summary.callable {
 			if !g.isSigSupported(m.Type()) {
@@ -1390,12 +1401,22 @@ func (g *JavaGen) GenJava() error {
 	g.Printf("private static native void _init();\n\n")
 
 	for _, iface := range g.interfaces {
-		g.Printf(javaProxyPreamble, iface.obj.Name())
+		n := iface.obj.Name()
+		g.Printf("private static final class proxy%s", n)
+		if isErrorType(iface.obj.Type()) {
+			g.Printf(" extends Exception")
+		}
+		g.Printf(" implements Seq.Proxy, %s {\n", n)
 		g.Indent()
+		g.genProxyImpl("proxy" + n)
+		g.Printf("proxy%s(Seq.Ref ref) { this.ref = ref; }\n\n", n)
 
+		if isErrorType(iface.obj.Type()) {
+			g.Printf("@Override public String getMessage() { return error(); }\n\n")
+		}
 		for _, m := range iface.summary.callable {
 			if !g.isSigSupported(m.Type()) {
-				g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", iface.obj.Name(), m.Name())
+				g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", n, m.Name())
 				continue
 			}
 			g.Printf("public native ")
@@ -1461,10 +1482,6 @@ func classNameFor(t types.Type) string {
 }
 
 const (
-	javaProxyPreamble = `private static final class proxy%[1]s extends Seq.Proxy implements %[1]s {
-	proxy%[1]s(Seq.Ref ref) { super(ref); }
-
-`
 	javaPreamble = `// Java class %[1]s.%[2]s is a proxy for talking to a Go program.
 //   gobind %[3]s %[4]s
 //

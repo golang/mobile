@@ -9,7 +9,6 @@ import java.util.IdentityHashMap;
 import java.util.logging.Logger;
 
 import go.Universe;
-import go.error;
 
 // Seq is a sequence of machine-dependent encoded values.
 // Used by automatically generated language bindings to talk to Go.
@@ -46,18 +45,6 @@ public class Seq {
 	public static void touch() {}
 
 	private Seq() {
-	}
-
-	private static void throwException(error err) throws Exception {
-		throw new Exception(err.error());
-	}
-
-	private static error wrapThrowable(final Throwable t) {
-		return new error() {
-			@Override public String error() {
-				return t.getMessage();
-			}
-		};
 	}
 
 	// ctx is an android.context.Context.
@@ -105,23 +92,10 @@ public class Seq {
 		// invalidating it before being translated on the Go side.
 		int incRefnum();
 	}
-
 	// A Proxy is a Java object that proxies a Go object. Proxies, unlike
 	// GoObjects, are unwrapped to their Go counterpart when deserialized
 	// in Go.
-	public static abstract class Proxy implements GoObject {
-		private final Ref ref;
-
-		protected Proxy(Ref ref) {
-			this.ref = ref;
-		}
-
-		@Override public final int incRefnum() {
-			int refnum = ref.refnum;
-			Seq.incGoRef(refnum);
-			return refnum;
-		}
-	}
+	public interface Proxy extends GoObject {}
 
 	// A Ref is an object tagged with an integer for passing back and
 	// forth across the language boundary.
