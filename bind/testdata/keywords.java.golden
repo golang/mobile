@@ -84,9 +84,17 @@ public abstract class Keywords {
     
     private static native void _init();
     
-    private static final class proxyKeywordCaller extends Seq.Proxy implements KeywordCaller {
-    	proxyKeywordCaller(Seq.Ref ref) { super(ref); }
-    
+    private static final class proxyKeywordCaller implements Seq.Proxy, KeywordCaller {
+        private final Seq.Ref ref;
+        
+        @Override public final int incRefnum() {
+              int refnum = ref.refnum;
+              Seq.incGoRef(refnum);
+              return refnum;
+        }
+        
+        proxyKeywordCaller(Seq.Ref ref) { this.ref = ref; }
+        
         public native void abstract_();
         public native void assert_();
         public native void boolean_();

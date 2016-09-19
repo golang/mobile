@@ -8,8 +8,6 @@
 #include "_cgo_export.h"
 #include "EXCustomprefix.h"
 
-static NSString* errDomain = @"go.customprefix";
-
 
 void EXCustomprefixF() {
 	proxycustomprefix__F();

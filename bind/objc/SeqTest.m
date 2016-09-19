@@ -35,6 +35,7 @@ static int numI = 0;
        }
        return true;
    }
+   *error = [NSError errorWithDomain:@"SeqTest" code:1 userInfo:@{NSLocalizedDescriptionKey: @"NumberError"}];
    return false;
 }
 
@@ -295,12 +296,20 @@ static int numI = 0;
 }
 
 - (void)testErrorField {
-	NSString *want = @"an error message";
+	NSString *wantMsg = @"an error message";
+	NSError *want = [NSError errorWithDomain:@"SeqTest" code:1 userInfo:@{NSLocalizedDescriptionKey: wantMsg}];
 	GoTestpkgNode *n = GoTestpkgNewNode(@"ErrTest");
-	n.err = [NSError errorWithDomain:@"SeqTest" code:1 userInfo:@{NSLocalizedDescriptionKey: want}];
+	n.err = want;
 	NSError *got = n.err;
-	NSString *gotMsg = [got.userInfo valueForKey:NSLocalizedDescriptionKey];
-	XCTAssertEqualObjects(gotMsg, want, @"err = %@, want %@", gotMsg, want);
+	XCTAssertEqual(got, want, @"got different objects efter roundtrip");
+	NSString *gotMsg = GoTestpkgErrorMessage(want);
+	XCTAssertEqualObjects(gotMsg, wantMsg, @"err = %@, want %@", gotMsg, wantMsg);
+}
+
+- (void)testErrorDup {
+	NSError *err = GoTestpkg.globalErr;
+	XCTAssertTrue(GoTestpkgIsGlobalErr(err), @"A Go error must preserve its identity across the boundary");
+	XCTAssertEqualObjects([err localizedDescription], @"global err", "A Go error message must be preserved");
 }
 
 - (void)testVar {
@@ -343,6 +352,8 @@ static int numI = 0;
 	NSString *ret;
 	NSError *error;
 	XCTAssertFalse(GoTestpkgCallIStringError(num, @"alphabet", &ret, &error), @"GoTestpkgCallIStringError(Number, 'alphabet') succeeded; want error");
+	NSString *desc = [error localizedDescription];
+	XCTAssertEqualObjects(desc, @"NumberError", @"GoTestpkgCallIStringError(Number, 'alphabet') returned unexpected error message %@", desc);
 	NSError *error2;
 	XCTAssertTrue(GoTestpkgCallIStringError(num, @"number", &ret, &error2), @"GoTestpkgCallIStringError(Number, 'number') failed(%@); want success", error2);
 	XCTAssertEqualObjects(ret, @"OK", @"GoTestpkgCallIStringError(Number, 'number') returned unexpected results %@", ret);

@@ -8,8 +8,6 @@
 #include "_cgo_export.h"
 #include "GoStructs.h"
 
-static NSString* errDomain = @"go.structs";
-
 
 @implementation GoStructsS {
 }
@@ -67,7 +65,7 @@ static NSString* errDomain = @"go.structs";
 	}
 	*ret0_ = _ret0_;
 	if (_error != nil && error != nil) {
-		*error = go_seq_to_nserror(_error, errDomain);
+		*error = _error;
 	}
 	return (_error == nil);
 }
@@ -108,7 +106,7 @@ static NSString* errDomain = @"go.structs";
 @implementation GoStructsI {
 }
 
-- (id)initWithRef:(id)ref {
+- (instancetype)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;
@@ -170,7 +168,7 @@ BOOL GoStructsIdentityWithError(GoStructsS* s, GoStructsS** ret0_, NSError** err
 	}
 	*ret0_ = _ret0_;
 	if (_error != nil && error != nil) {
-		*error = go_seq_to_nserror(_error, errDomain);
+		*error = _error;
 	}
 	return (_error == nil);
 }

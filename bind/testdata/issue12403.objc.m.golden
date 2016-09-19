@@ -8,12 +8,10 @@
 #include "_cgo_export.h"
 #include "GoIssue12403.h"
 
-static NSString* errDomain = @"go.issue12403";
-
 @implementation GoIssue12403Parsable {
 }
 
-- (id)initWithRef:(id)ref {
+- (instancetype)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;
@@ -41,7 +39,7 @@ static NSString* errDomain = @"go.issue12403";
 	}
 	*ret0_ = _ret0_;
 	if (_error != nil && error != nil) {
-		*error = go_seq_to_nserror(_error, errDomain);
+		*error = _error;
 	}
 	return (_error == nil);
 }
@@ -69,7 +67,7 @@ struct cproxyissue12403_Parsable_ToJSON_return cproxyissue12403_Parsable_ToJSON(
 		nstring _ret0_ = go_seq_from_objc_string(ret0_);
 		id<GoUniverseerror> _error = nil;
 		if (!returnVal) {
-			_error = [[goSeqErrorWrapper alloc] initWithError:error];
+			_error = error;
 		}
 		int32_t __error;
 		if ([(id<NSObject>)(_error) isKindOfClass:[GoUniverseerror class]]) {

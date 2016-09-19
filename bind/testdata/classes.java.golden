@@ -11,17 +11,17 @@ public final class Future implements Seq.GoObject, java.util.concurrent.Future {
     
     private final Seq.Ref ref;
     
+    @Override public final int incRefnum() {
+          int refnum = ref.refnum;
+          Seq.incGoRef(refnum);
+          return refnum;
+    }
+    
     Future(Seq.Ref ref) { this.ref = ref; }
     
     public Future() { this.ref = __New(); }
     
     private static native Seq.Ref __New();
-    
-    @Override public final int incRefnum() {
-    	int refnum = ref.refnum;
-    	Seq.incGoRef(refnum);
-    	return refnum;
-    }
     
     public final native java.util.concurrent.Future getFuture();
     public final native void setFuture(java.util.concurrent.Future v);
@@ -43,18 +43,18 @@ public final class InputStream extends java.io.InputStream implements Seq.GoObje
     
     private final Seq.Ref ref;
     
+    @Override public final int incRefnum() {
+          int refnum = ref.refnum;
+          Seq.incGoRef(refnum);
+          return refnum;
+    }
+    
     public InputStream() {
         super();
         this.ref = __NewInputStream();
     }
     
     private static native Seq.Ref __NewInputStream();
-    
-    @Override public final int incRefnum() {
-    	int refnum = ref.refnum;
-    	Seq.incGoRef(refnum);
-    	return refnum;
-    }
     
     public final native java.io.InputStream getInputStream();
     public final native void setInputStream(java.io.InputStream v);
@@ -75,17 +75,17 @@ public final class Object extends java.lang.Object implements Seq.GoObject {
     
     private final Seq.Ref ref;
     
+    @Override public final int incRefnum() {
+          int refnum = ref.refnum;
+          Seq.incGoRef(refnum);
+          return refnum;
+    }
+    
     Object(Seq.Ref ref) { this.ref = ref; }
     
     public Object() { this.ref = __New(); }
     
     private static native Seq.Ref __New();
-    
-    @Override public final int incRefnum() {
-    	int refnum = ref.refnum;
-    	Seq.incGoRef(refnum);
-    	return refnum;
-    }
     
     public final native java.lang.Object getObject();
     public final native void setObject(java.lang.Object v);
@@ -105,17 +105,17 @@ public final class Runnable implements Seq.GoObject, java.lang.Runnable {
     
     private final Seq.Ref ref;
     
+    @Override public final int incRefnum() {
+          int refnum = ref.refnum;
+          Seq.incGoRef(refnum);
+          return refnum;
+    }
+    
     Runnable(Seq.Ref ref) { this.ref = ref; }
     
     public Runnable() { this.ref = __New(); }
     
     private static native Seq.Ref __New();
-    
-    @Override public final int incRefnum() {
-    	int refnum = ref.refnum;
-    	Seq.incGoRef(refnum);
-    	return refnum;
-    }
     
     public final native java.lang.Runnable getRunnable();
     public final native void setRunnable(java.lang.Runnable v);

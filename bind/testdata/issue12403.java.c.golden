@@ -60,7 +60,7 @@ struct cproxyissue12403_Parsable_ToJSON_return cproxyissue12403_Parsable_ToJSON(
     jobject o = go_seq_from_refnum(env, refnum, proxy_class_issue12403_Parsable, proxy_class_issue12403_Parsable_cons);
     jstring res = (*env)->CallObjectMethod(env, o, mid_Parsable_ToJSON);
     nstring _res = go_seq_from_java_string(env, res);
-    jobject exc = go_seq_wrap_exception(env);
+    jobject exc = go_seq_get_exception(env);
     int32_t _exc = go_seq_to_refnum(env, exc);
     cproxyissue12403_Parsable_ToJSON_return sres = {
     	_res, _exc

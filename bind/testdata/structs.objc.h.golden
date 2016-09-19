@@ -50,7 +50,7 @@ FOUNDATION_EXPORT BOOL GoStructsIdentityWithError(GoStructsS* s, GoStructsS** re
 }
 @property(strong, readonly) id _ref;
 
-- (id)initWithRef:(id)ref;
+- (instancetype)initWithRef:(id)ref;
 - (void)m;
 @end
 

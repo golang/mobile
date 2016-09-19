@@ -6,10 +6,18 @@ package go.structs;
 
 import go.Seq;
 
-public final class S extends Seq.Proxy {
+public final class S implements Seq.Proxy {
     static { Structs.touch(); }
     
-    S(Seq.Ref ref) { super(ref); }
+    private final Seq.Ref ref;
+    
+    @Override public final int incRefnum() {
+          int refnum = ref.refnum;
+          Seq.incGoRef(refnum);
+          return refnum;
+    }
+    
+    S(Seq.Ref ref) { this.ref = ref; }
     
     public final native double getX();
     public final native void setX(double v);
@@ -58,10 +66,18 @@ package go.structs;
 
 import go.Seq;
 
-public final class S2 extends Seq.Proxy implements I {
+public final class S2 implements Seq.Proxy, I {
     static { Structs.touch(); }
     
-    S2(Seq.Ref ref) { super(ref); }
+    private final Seq.Ref ref;
+    
+    @Override public final int incRefnum() {
+          int refnum = ref.refnum;
+          Seq.incGoRef(refnum);
+          return refnum;
+    }
+    
+    S2(Seq.Ref ref) { this.ref = ref; }
     
     public native void m();
     public native String string();
@@ -116,9 +132,17 @@ public abstract class Structs {
     
     private static native void _init();
     
-    private static final class proxyI extends Seq.Proxy implements I {
-    	proxyI(Seq.Ref ref) { super(ref); }
-    
+    private static final class proxyI implements Seq.Proxy, I {
+        private final Seq.Ref ref;
+        
+        @Override public final int incRefnum() {
+              int refnum = ref.refnum;
+              Seq.incGoRef(refnum);
+              return refnum;
+        }
+        
+        proxyI(Seq.Ref ref) { this.ref = ref; }
+        
         public native void m();
     }
     

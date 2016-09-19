@@ -8,12 +8,10 @@
 #include "_cgo_export.h"
 #include "GoKeywords.h"
 
-static NSString* errDomain = @"go.keywords";
-
 @implementation GoKeywordsKeywordCaller {
 }
 
-- (id)initWithRef:(id)ref {
+- (instancetype)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;

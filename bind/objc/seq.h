@@ -24,14 +24,6 @@
                               userInfo:NULL];                                  \
   }
 
-// goErrorWrapper is a adapter between an NSError * and the bind Error interface
-@interface goSeqErrorWrapper : NSObject<GoUniverseerror> {
-}
-@property NSError *err;
-
-- (id)initWithError:(NSError *)err;
-@end
-
 // GoSeqRef is an object tagged with an integer for passing back and
 // forth across the language boundary. A GoSeqRef may represent either
 // an instance of a Go object, or an Objective-C object passed to Go.
@@ -92,6 +84,5 @@ extern nstring go_seq_from_objc_string(NSString *s);
 
 extern NSData *go_seq_to_objc_bytearray(nbyteslice, int copy);
 extern NSString *go_seq_to_objc_string(nstring str);
-extern NSError *go_seq_to_nserror(id<GoUniverseerror> err, NSString *errDomain);
 
 #endif // __GO_SEQ_HDR__

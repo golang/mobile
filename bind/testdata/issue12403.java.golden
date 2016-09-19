@@ -33,9 +33,17 @@ public abstract class Issue12403 {
     
     private static native void _init();
     
-    private static final class proxyParsable extends Seq.Proxy implements Parsable {
-    	proxyParsable(Seq.Ref ref) { super(ref); }
-    
+    private static final class proxyParsable implements Seq.Proxy, Parsable {
+        private final Seq.Ref ref;
+        
+        @Override public final int incRefnum() {
+              int refnum = ref.refnum;
+              Seq.incGoRef(refnum);
+              return refnum;
+        }
+        
+        proxyParsable(Seq.Ref ref) { this.ref = ref; }
+        
         public native String fromJSON(String jstr);
         public native String toJSON() throws Exception;
     }

@@ -39,7 +39,7 @@ jint cproxy_java_lang_Runnable_run(jint this) {
 	// Must be a Java object
 	jobject _this = go_seq_from_refnum(env, this, NULL, NULL);
 	(*env)->CallVoidMethod(env, _this, m_java_lang_Runnable_run);
-	jobject _exc = go_seq_wrap_exception(env);
+	jobject _exc = go_seq_get_exception(env);
 	int32_t _exc_ref = go_seq_to_refnum(env, _exc);
 	go_seq_pop_local_frame(env);
 	return _exc_ref;
@@ -50,7 +50,7 @@ ret_jint cproxy_java_io_InputStream_read__(jint this) {
 	// Must be a Java object
 	jobject _this = go_seq_from_refnum(env, this, NULL, NULL);
 	jint res = (*env)->CallIntMethod(env, _this, m_java_io_InputStream_read__);
-	jobject _exc = go_seq_wrap_exception(env);
+	jobject _exc = go_seq_get_exception(env);
 	int32_t _exc_ref = go_seq_to_refnum(env, _exc);
 	jint _res = res;
 	go_seq_pop_local_frame(env);
@@ -63,7 +63,7 @@ ret_jint csuper_java_io_InputStream_read__(jint this) {
 	// Must be a Java object
 	jobject _this = go_seq_from_refnum(env, this, NULL, NULL);
 	jint res = (*env)->CallNonvirtualIntMethod(env, _this, class_java_io_InputStream, m_java_io_InputStream_read__);
-	jobject _exc = go_seq_wrap_exception(env);
+	jobject _exc = go_seq_get_exception(env);
 	int32_t _exc_ref = go_seq_to_refnum(env, _exc);
 	jint _res = res;
 	go_seq_pop_local_frame(env);
@@ -76,7 +76,7 @@ ret_jint cproxy_java_util_concurrent_Future_get__(jint this) {
 	// Must be a Java object
 	jobject _this = go_seq_from_refnum(env, this, NULL, NULL);
 	jobject res = (*env)->CallObjectMethod(env, _this, m_java_util_concurrent_Future_get__);
-	jobject _exc = go_seq_wrap_exception(env);
+	jobject _exc = go_seq_get_exception(env);
 	int32_t _exc_ref = go_seq_to_refnum(env, _exc);
 	jint _res = go_seq_to_refnum(env, res);
 	go_seq_pop_local_frame(env);
@@ -91,7 +91,7 @@ ret_jint cproxy_java_util_concurrent_Future_get__JLjava_util_concurrent_TimeUnit
 	jlong _a0 = a0;
 	jobject _a1 = go_seq_from_refnum(env, a1, NULL, NULL);
 	jobject res = (*env)->CallObjectMethod(env, _this, m_java_util_concurrent_Future_get__JLjava_util_concurrent_TimeUnit_2, _a0, _a1);
-	jobject _exc = go_seq_wrap_exception(env);
+	jobject _exc = go_seq_get_exception(env);
 	int32_t _exc_ref = go_seq_to_refnum(env, _exc);
 	jint _res = go_seq_to_refnum(env, res);
 	go_seq_pop_local_frame(env);

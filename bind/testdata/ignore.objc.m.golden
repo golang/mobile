@@ -8,8 +8,6 @@
 #include "_cgo_export.h"
 #include "GoIgnore.h"
 
-static NSString* errDomain = @"go.ignore";
-
 
 @implementation GoIgnoreS {
 }
@@ -31,7 +29,7 @@ static NSString* errDomain = @"go.ignore";
 @implementation GoIgnoreI {
 }
 
-- (id)initWithRef:(id)ref {
+- (instancetype)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;

@@ -55,7 +55,7 @@
 }
 @property(strong, readonly) id _ref;
 
-- (id)initWithRef:(id)ref;
+- (instancetype)initWithRef:(id)ref;
 // skipped method I.Argument with unsupported parameter or return types
 
 // skipped method I.Result with unsupported parameter or return types
