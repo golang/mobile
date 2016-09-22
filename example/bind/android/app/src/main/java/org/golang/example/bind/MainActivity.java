@@ -24,7 +24,7 @@ public class MainActivity extends Activity {
         mTextView = (TextView) findViewById(R.id.mytextview);
 
         // Call Go function.
-        String greetings = Hello.Greetings("Android and Gopher");
+        String greetings = Hello.greetings("Android and Gopher");
         mTextView.setText(greetings);
     }
 }
