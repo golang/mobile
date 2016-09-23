@@ -19,6 +19,10 @@ public final class S implements Seq.Proxy, I {
     
     S(Seq.Ref ref) { this.ref = ref; }
     
+    public S() { this.ref = __New(); }
+    
+    private static native Seq.Ref __New();
+    
     // skipped field S.F with unsupported type: *types.Interface
     
     // skipped method S.Argument with unsupported parameter or return types

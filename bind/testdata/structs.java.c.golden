@@ -53,6 +53,12 @@ Java_go_structs_Structs_identityWithError(JNIEnv* env, jclass _clazz, jobject s)
 }
 
 JNIEXPORT jobject JNICALL
+Java_go_structs_S__1_1New(JNIEnv *env, jclass clazz) {
+    int32_t refnum = new_structs_S();
+    return go_seq_from_refnum(env, refnum, NULL, NULL);
+}
+
+JNIEXPORT jobject JNICALL
 Java_go_structs_S_identity(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum(env, __this__);
     struct proxystructs_S_Identity_return res = proxystructs_S_Identity(o);
@@ -98,6 +104,12 @@ Java_go_structs_S_getY(JNIEnv *env, jobject this) {
     double r0 = proxystructs_S_Y_Get(o);
     jdouble _r0 = (jdouble)r0;
     return _r0;
+}
+
+JNIEXPORT jobject JNICALL
+Java_go_structs_S2__1_1New(JNIEnv *env, jclass clazz) {
+    int32_t refnum = new_structs_S2();
+    return go_seq_from_refnum(env, refnum, NULL, NULL);
 }
 
 JNIEXPORT void JNICALL

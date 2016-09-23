@@ -31,6 +31,12 @@ Java_go_issue10788_Issue10788__1init(JNIEnv *env, jclass _unused) {
     
 }
 
+JNIEXPORT jobject JNICALL
+Java_go_issue10788_TestStruct__1_1New(JNIEnv *env, jclass clazz) {
+    int32_t refnum = new_issue10788_TestStruct();
+    return go_seq_from_refnum(env, refnum, NULL, NULL);
+}
+
 JNIEXPORT void JNICALL
 Java_go_issue10788_TestStruct_setValue(JNIEnv *env, jobject this, jstring v) {
     int32_t o = go_seq_to_refnum(env, this);

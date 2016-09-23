@@ -19,6 +19,10 @@ public final class T implements Seq.Proxy {
     
     T(Seq.Ref ref) { this.ref = ref; }
     
+    public T() { this.ref = __New(); }
+    
+    private static native Seq.Ref __New();
+    
     public final native java.lang.Exception getErr();
     public final native void setErr(java.lang.Exception v);
     

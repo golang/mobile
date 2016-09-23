@@ -26,6 +26,10 @@ type JavaGen struct {
 
 	jstructs map[*types.TypeName]*javaClassInfo
 	clsMap   map[string]*java.Class
+	// Constructors is a map from Go struct types to a list
+	// of exported constructor functions for the type, on the form
+	// func New<Type>(...) *Type
+	constructors map[*types.TypeName][]*types.Func
 }
 
 type javaClassInfo struct {
@@ -36,9 +40,6 @@ type javaClassInfo struct {
 	methods map[string]*java.Func
 	// Does the class need a default no-arg constructor
 	genNoargCon bool
-	// Constructors for the type, on the form
-	// func New<Type>(...) *Type
-	cons []*types.Func
 }
 
 // Init intializes the embedded Generator and initializes the Java class information
@@ -50,6 +51,7 @@ func (g *JavaGen) Init(classes []*java.Class) {
 		g.clsMap[cls.Name] = cls
 	}
 	g.jstructs = make(map[*types.TypeName]*javaClassInfo)
+	g.constructors = make(map[*types.TypeName][]*types.Func)
 	for _, s := range g.structs {
 		classes := embeddedJavaClasses(s.t)
 		if len(classes) == 0 {
@@ -87,8 +89,8 @@ func (g *JavaGen) Init(classes []*java.Class) {
 			if jinf != nil {
 				sig := f.Type().(*types.Signature)
 				jinf.genNoargCon = jinf.genNoargCon && sig.Params().Len() > 0
-				jinf.cons = append(jinf.cons, f)
 			}
+			g.constructors[t] = append(g.constructors[t], f)
 		}
 	}
 }
@@ -178,23 +180,22 @@ func (g *JavaGen) genStruct(s structInfo) {
 
 	g.Printf("static { %s.touch(); }\n\n", g.className())
 	g.genProxyImpl(n)
-	if jinf != nil {
-		for _, f := range jinf.cons {
-			if !g.isSigSupported(f.Type()) {
-				g.Printf("// skipped constructor %s.%s with unsupported parameter or return types\n\n", n, f.Name())
-				continue
-			}
-			g.genConstructor(f, n)
+	cons := g.constructors[s.obj]
+	for _, f := range cons {
+		if !g.isSigSupported(f.Type()) {
+			g.Printf("// skipped constructor %s.%s with unsupported parameter or return types\n\n", n, f.Name())
+			continue
 		}
-		if jinf.genNoargCon {
-			// Generate constructor for Go instantiated instances.
-			g.Printf("%s(Seq.Ref ref) { this.ref = ref; }\n\n", n)
+		g.genConstructor(f, n, jinf != nil)
+	}
+	if jinf == nil || jinf.genNoargCon {
+		// constructor for Go instantiated instances.
+		g.Printf("%s(Seq.Ref ref) { this.ref = ref; }\n\n", n)
+		if len(cons) == 0 {
 			// Generate default no-arg constructor
 			g.Printf("public %s() { this.ref = __New(); }\n\n", n)
 			g.Printf("private static native Seq.Ref __New();\n\n")
 		}
-	} else {
-		g.Printf("%s(Seq.Ref ref) { this.ref = ref; }\n\n", n)
 	}
 
 	for _, f := range fields {
@@ -266,22 +267,25 @@ func (g *JavaGen) genStruct(s structInfo) {
 	g.Printf("}\n\n")
 }
 
-func (g *JavaGen) genConstructor(f *types.Func, n string) {
+func (g *JavaGen) genConstructor(f *types.Func, n string, jcls bool) {
 	g.Printf("public %s(", n)
 	g.genFuncArgs(f, nil)
 	g.Printf(") {\n")
 	g.Indent()
-	g.Printf("super(")
 	sig := f.Type().(*types.Signature)
 	params := sig.Params()
-	for i := 0; i < params.Len(); i++ {
-		if i > 0 {
-			g.Printf(", ")
+	if jcls {
+		g.Printf("super(")
+		for i := 0; i < params.Len(); i++ {
+			if i > 0 {
+				g.Printf(", ")
+			}
+			g.Printf(paramName(params, i))
 		}
-		g.Printf(paramName(params, i))
+		g.Printf(");\n")
 	}
-	g.Printf(");\n")
-	g.Printf("this.ref = __%s(", f.Name())
+	g.Printf("this.ref = ")
+	g.Printf("__%s(", f.Name())
 	for i := 0; i < params.Len(); i++ {
 		if i > 0 {
 			g.Printf(", ")
@@ -1330,21 +1334,20 @@ func (g *JavaGen) GenC() error {
 	}
 	for _, s := range g.structs {
 		sName := s.obj.Name()
+		cons := g.constructors[s.obj]
 		jinf := g.jstructs[s.obj]
-		if jinf != nil {
-			for _, f := range jinf.cons {
-				g.genJNIConstructor(f, sName)
-			}
-			if jinf.genNoargCon {
-				g.Printf("JNIEXPORT jobject JNICALL\n")
-				g.Printf("Java_%s_%s_%s(JNIEnv *env, jclass clazz) {\n", g.jniPkgName(), sName, java.JNIMangle("__New"))
-				g.Indent()
-				g.Printf("int32_t refnum = new_%s_%s();\n", g.pkgPrefix, sName)
-				// Pass no proxy class so that the Seq.Ref is returned instead.
-				g.Printf("return go_seq_from_refnum(env, refnum, NULL, NULL);\n")
-				g.Outdent()
-				g.Printf("}\n\n")
-			}
+		for _, f := range cons {
+			g.genJNIConstructor(f, sName)
+		}
+		if len(cons) == 0 && (jinf == nil || jinf.genNoargCon) {
+			g.Printf("JNIEXPORT jobject JNICALL\n")
+			g.Printf("Java_%s_%s_%s(JNIEnv *env, jclass clazz) {\n", g.jniPkgName(), sName, java.JNIMangle("__New"))
+			g.Indent()
+			g.Printf("int32_t refnum = new_%s_%s();\n", g.pkgPrefix, sName)
+			// Pass no proxy class so that the Seq.Ref is returned instead.
+			g.Printf("return go_seq_from_refnum(env, refnum, NULL, NULL);\n")
+			g.Outdent()
+			g.Printf("}\n\n")
 		}
 
 		for _, m := range exportedMethodSet(types.NewPointer(s.obj.Type())) {

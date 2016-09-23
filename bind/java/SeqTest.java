@@ -527,6 +527,17 @@ public class SeqTest extends InstrumentationTestCase {
     assertTrue("Go struct passed through Java should not be wrapped", Testpkg.callCDupper(cdup));
   }
 
+  public void testConstructor() {
+    Interface i = new Concrete();
+    i.f();
+    S2 s = new S2(1, 2);
+    assertEquals("new S2().sum", 3.0, s.sum());
+    assertEquals("new S2().tryTwoStrings", "gostring", s.tryTwoStrings("go", "string"));
+	new S3();
+	S4 s4 = new S4(123);
+	assertEquals("Constructor argument", 123, s4.getI());
+  }
+
   public void testEmptyError() {
     try {
       Testpkg.emptyError();
