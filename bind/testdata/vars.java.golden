@@ -19,6 +19,10 @@ public final class S implements Seq.Proxy, I {
     
     S(Seq.Ref ref) { this.ref = ref; }
     
+    public S() { this.ref = __New(); }
+    
+    private static native Seq.Ref __New();
+    
     @Override public boolean equals(Object o) {
         if (o == null || !(o instanceof S)) {
             return false;

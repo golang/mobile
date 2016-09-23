@@ -547,3 +547,14 @@ var GlobalErr error = errors.New("global err")
 func IsGlobalErr(err error) bool {
 	return GlobalErr == err
 }
+
+type S3 struct {
+}
+
+type S4 struct {
+	I int
+}
+
+func NewS4WithInt(i int) *S4 {
+	return &S4{i}
+}

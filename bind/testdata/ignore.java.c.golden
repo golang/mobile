@@ -39,6 +39,12 @@ Java_go_ignore_Ignore__1init(JNIEnv *env, jclass _unused) {
 
 // skipped function Result with unsupported parameter or return types
 
+JNIEXPORT jobject JNICALL
+Java_go_ignore_S__1_1New(JNIEnv *env, jclass clazz) {
+    int32_t refnum = new_ignore_S();
+    return go_seq_from_refnum(env, refnum, NULL, NULL);
+}
+
 // skipped function S.Argument with unsupported parameter or return types
 
 // skipped function S.Result with unsupported parameter or return types

@@ -19,6 +19,10 @@ public final class S implements Seq.Proxy {
     
     S(Seq.Ref ref) { this.ref = ref; }
     
+    public S() { this.ref = __New(); }
+    
+    private static native Seq.Ref __New();
+    
     public final native double getX();
     public final native void setX(double v);
     
@@ -78,6 +82,10 @@ public final class S2 implements Seq.Proxy, I {
     }
     
     S2(Seq.Ref ref) { this.ref = ref; }
+    
+    public S2() { this.ref = __New(); }
+    
+    private static native Seq.Ref __New();
     
     public native void m();
     public native String string();

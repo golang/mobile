@@ -19,6 +19,10 @@ public final class TestStruct implements Seq.Proxy {
     
     TestStruct(Seq.Ref ref) { this.ref = ref; }
     
+    public TestStruct() { this.ref = __New(); }
+    
+    private static native Seq.Ref __New();
+    
     public final native String getValue();
     public final native void setValue(String v);
     
