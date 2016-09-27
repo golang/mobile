@@ -149,3 +149,11 @@ func NewJavaInteger() lang.Integer {
 type NoargConstructor struct {
 	util.BitSet // An otherwise unused class with a no-arg constructor
 }
+
+type GoRand struct {
+	util.Random
+}
+
+func (_ *GoRand) Next(this util.Random, i int32) int32 {
+	return this.Super().Next(i)
+}
