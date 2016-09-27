@@ -298,13 +298,13 @@ func (g *JavaGen) genConstructor(f *types.Func, n string) {
 func (g *JavaGen) genFuncArgs(f *types.Func, jm *java.Func) {
 	sig := f.Type().(*types.Signature)
 	params := sig.Params()
-	i := 0
+	first := 0
 	if jm != nil {
 		// Skip the implicit this argument to the Go method
-		i = params.Len() - len(jm.Params)
+		first = params.Len() - len(jm.Params)
 	}
-	for ; i < params.Len(); i++ {
-		if i > 0 {
+	for i := first; i < params.Len(); i++ {
+		if i > first {
 			g.Printf(", ")
 		}
 		v := params.At(i)
