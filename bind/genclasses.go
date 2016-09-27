@@ -162,18 +162,16 @@ func (g *ClassGen) GenPackage(idx int) {
 
 func (g *ClassGen) GenGo() {
 	g.Printf(classesGoHeader)
-	impUnsafe := false
 	for _, cls := range g.classes {
 		for _, f := range cls.Funcs {
 			if f.Public && g.isFuncSupported(f) {
-				impUnsafe = true
 				pkgName := strings.Replace(cls.Name, ".", "/", -1)
 				g.Printf("import %q\n", "Java/"+pkgName)
 				break
 			}
 		}
 	}
-	if impUnsafe {
+	if len(g.classes) > 0 {
 		g.Printf("import \"unsafe\"\n\n")
 	}
 	g.Printf("type proxy interface { Bind_proxy_refnum__() int32 }\n\n")
