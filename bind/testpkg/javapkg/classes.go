@@ -145,3 +145,7 @@ func NewJavaObject() lang.Object {
 func NewJavaInteger() lang.Integer {
 	return Integer.New_I(42)
 }
+
+type NoargConstructor struct {
+	util.BitSet // An otherwise unused class with a no-arg constructor
+}

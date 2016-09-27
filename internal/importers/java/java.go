@@ -46,6 +46,8 @@ type Class struct {
 	Abstract   bool
 	Interface  bool
 	Throwable  bool
+	// Whether the class has a no-arg constructor
+	HasNoArgCon bool
 }
 
 // Func is a Java static function or method or constructor.
@@ -444,8 +446,12 @@ func (j *importer) scanClass(s *bufio.Scanner, name string) (*Class, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(cls.Supers) == 0 && name != "java.lang.Object" {
-		cls.Supers = append(cls.Supers, "java.lang.Object")
+	if len(cls.Supers) == 0 {
+		if name == "java.lang.Object" {
+			cls.HasNoArgCon = true
+		} else {
+			cls.Supers = append(cls.Supers, "java.lang.Object")
+		}
 	}
 	cls.JNIName = JNIMangle(cls.Name)
 	clsElems := strings.Split(cls.Name, ".")
@@ -503,6 +509,7 @@ func (j *importer) scanClass(s *bufio.Scanner, name string) (*Class, error) {
 				f.Final = final
 				f.Constructor = f.Name == cls.FindName
 				if f.Constructor {
+					cls.HasNoArgCon = cls.HasNoArgCon || len(f.Params) == 0
 					f.Public = f.Public && !cls.Abstract
 					f.Name = "new"
 					f.Ret = &Type{Class: name, Kind: Object}

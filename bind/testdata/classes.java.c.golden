@@ -125,6 +125,9 @@ Java_go_java_Java__1init(JNIEnv *env, jclass _unused) {
     clazz = (*env)->FindClass(env, "go/java/Future");
     proxy_class_java_Future = (*env)->NewGlobalRef(env, clazz);
     proxy_class_java_Future_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    clazz = (*env)->FindClass(env, "go/java/Object");
+    proxy_class_java_Object = (*env)->NewGlobalRef(env, clazz);
+    proxy_class_java_Object_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
     clazz = (*env)->FindClass(env, "go/java/Runnable");
     proxy_class_java_Runnable = (*env)->NewGlobalRef(env, clazz);
     proxy_class_java_Runnable_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
@@ -205,6 +208,12 @@ Java_go_java_InputStream_getInputStream(JNIEnv *env, jobject this) {
     int32_t r0 = proxyjava_InputStream_InputStream_Get(o);
     jobject _r0 = go_seq_from_refnum(env, r0, NULL, NULL);
     return _r0;
+}
+
+JNIEXPORT jobject JNICALL
+Java_go_java_Object__1_1New(JNIEnv *env, jclass clazz) {
+    int32_t refnum = new_java_Object();
+    return go_seq_from_refnum(env, refnum, NULL, NULL);
 }
 
 JNIEXPORT void JNICALL
