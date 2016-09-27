@@ -44,6 +44,8 @@ import (
 	_seq "golang.org/x/mobile/bind/seq"
 )
 
+import "unsafe"
+
 type proxy interface { Bind_proxy_refnum__() int32 }
 
 // Suppress unused package error
