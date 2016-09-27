@@ -75,6 +75,12 @@ public final class Object extends java.lang.Object implements Seq.GoObject {
     
     private final Seq.Ref ref;
     
+    Object(Seq.Ref ref) { this.ref = ref; }
+    
+    public Object() { this.ref = __New(); }
+    
+    private static native Seq.Ref __New();
+    
     @Override public final int incRefnum() {
     	int refnum = ref.refnum;
     	Seq.incGoRef(refnum);

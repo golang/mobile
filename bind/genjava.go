@@ -34,8 +34,8 @@ type javaClassInfo struct {
 	// All Java classes and interfaces this class extends and implements.
 	supers  []*java.Class
 	methods map[string]*java.Func
-	// Does the extended class include a noarg constructor
-	hasNoargCon bool
+	// Does the class need a default no-arg constructor
+	genNoargCon bool
 	// Constructors for the type, on the form
 	// func New<Type>(...) *Type
 	cons []*types.Func
@@ -57,7 +57,7 @@ func (g *JavaGen) Init(classes []*java.Class) {
 		}
 		inf := &javaClassInfo{
 			methods:     make(map[string]*java.Func),
-			hasNoargCon: true, // java.lang.Object has a noarg constructor
+			genNoargCon: true, // java.lang.Object has a no-arg constructor
 		}
 		for _, n := range classes {
 			cls := g.clsMap[n]
@@ -76,13 +76,7 @@ func (g *JavaGen) Init(classes []*java.Class) {
 					g.errorf("%s embeds final Java class %s", s.obj, cls.Name)
 				}
 				inf.extends = cls
-				inf.hasNoargCon = false
-				for _, f := range cls.Funcs {
-					if f.Constructor && len(f.Params) == 0 {
-						inf.hasNoargCon = true
-						break
-					}
-				}
+				inf.genNoargCon = cls.HasNoArgCon
 			}
 		}
 		g.jstructs[s.obj] = inf
@@ -91,6 +85,8 @@ func (g *JavaGen) Init(classes []*java.Class) {
 		if t := g.constructorType(f); t != nil {
 			jinf := g.jstructs[t]
 			if jinf != nil {
+				sig := f.Type().(*types.Signature)
+				jinf.genNoargCon = jinf.genNoargCon && sig.Params().Len() > 0
 				jinf.cons = append(jinf.cons, f)
 			}
 		}
@@ -181,7 +177,7 @@ func (g *JavaGen) genStruct(s structInfo) {
 			}
 			g.genConstructor(f, n)
 		}
-		if jinf.hasNoargCon {
+		if jinf.genNoargCon {
 			// Generate constructor for Go instantiated instances.
 			g.Printf("%s(Seq.Ref ref) { this.ref = ref; }\n\n", n)
 			// Generate default no-arg constructor
@@ -1279,7 +1275,7 @@ func (g *JavaGen) GenC() error {
 		if jinf, ok := g.jstructs[s.obj]; ok {
 			// Leave the class and constructor NULL for Java classes with no
 			// default constructor.
-			if !jinf.hasNoargCon {
+			if !jinf.genNoargCon {
 				continue
 			}
 		}
@@ -1328,7 +1324,7 @@ func (g *JavaGen) GenC() error {
 			for _, f := range jinf.cons {
 				g.genJNIConstructor(f, sName)
 			}
-			if jinf.hasNoargCon {
+			if jinf.genNoargCon {
 				g.Printf("JNIEXPORT jobject JNICALL\n")
 				g.Printf("Java_%s_%s_%s(JNIEnv *env, jclass clazz) {\n", g.jniPkgName(), sName, java.JNIMangle("__New"))
 				g.Indent()
