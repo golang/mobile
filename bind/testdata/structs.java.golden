@@ -7,7 +7,7 @@ package go.structs;
 import go.Seq;
 
 public final class S extends Seq.Proxy {
-    { Seq.touch(); }
+    static { Structs.touch(); }
     
     S(Seq.Ref ref) { super(ref); }
     
@@ -59,7 +59,7 @@ package go.structs;
 import go.Seq;
 
 public final class S2 extends Seq.Proxy implements I {
-    { Seq.touch(); }
+    static { Structs.touch(); }
     
     S2(Seq.Ref ref) { super(ref); }
     

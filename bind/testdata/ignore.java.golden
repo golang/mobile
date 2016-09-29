@@ -7,7 +7,7 @@ package go.ignore;
 import go.Seq;
 
 public final class S extends Seq.Proxy implements I {
-    { Seq.touch(); }
+    static { Ignore.touch(); }
     
     S(Seq.Ref ref) { super(ref); }
     

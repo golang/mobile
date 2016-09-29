@@ -7,7 +7,7 @@ package go.issue10788;
 import go.Seq;
 
 public final class TestStruct extends Seq.Proxy {
-    { Seq.touch(); }
+    static { Issue10788.touch(); }
     
     TestStruct(Seq.Ref ref) { super(ref); }
     
