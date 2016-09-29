@@ -7,7 +7,7 @@ package go.java;
 import go.Seq;
 
 public final class Future implements Seq.GoObject, java.util.concurrent.Future {
-    { Seq.touch(); }
+    static { Java.touch(); }
     
     private final Seq.Ref ref;
     
@@ -39,7 +39,7 @@ package go.java;
 import go.Seq;
 
 public final class InputStream extends java.io.InputStream implements Seq.GoObject {
-    { Seq.touch(); }
+    static { Java.touch(); }
     
     private final Seq.Ref ref;
     
@@ -71,7 +71,7 @@ package go.java;
 import go.Seq;
 
 public final class Object extends java.lang.Object implements Seq.GoObject {
-    { Seq.touch(); }
+    static { Java.touch(); }
     
     private final Seq.Ref ref;
     
@@ -95,7 +95,7 @@ package go.java;
 import go.Seq;
 
 public final class Runnable implements Seq.GoObject, java.lang.Runnable {
-    { Seq.touch(); }
+    static { Java.touch(); }
     
     private final Seq.Ref ref;
     

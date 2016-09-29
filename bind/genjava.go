@@ -171,7 +171,7 @@ func (g *JavaGen) genStruct(s structInfo) {
 	g.Printf(" {\n")
 	g.Indent()
 
-	g.Printf("{ Seq.touch(); }\n\n")
+	g.Printf("static { %s.touch(); }\n\n", g.className())
 	if jinf != nil {
 		g.Printf("private final Seq.Ref ref;\n\n")
 		for _, f := range jinf.cons {

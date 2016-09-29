@@ -7,7 +7,7 @@ package go.vars;
 import go.Seq;
 
 public final class S extends Seq.Proxy implements I {
-    { Seq.touch(); }
+    static { Vars.touch(); }
     
     S(Seq.Ref ref) { super(ref); }
     
