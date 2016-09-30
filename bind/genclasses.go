@@ -155,6 +155,10 @@ func (g *ClassGen) GenPackage(idx int) {
 			g.genFuncDecl(false, f)
 			g.Printf("\n")
 		}
+		g.Printf("// Cast takes a proxy for a Java object and converts it to a %s proxy.\n", cls.Name)
+		g.Printf("// Cast panics if the argument is not a proxy or if the underlying object does\n")
+		g.Printf("// not extend or implement %s.\n", cls.Name)
+		g.Printf("Cast func(v interface{}) Java.%s\n", goClsName(cls.Name))
 		g.Outdent()
 		g.Printf(")\n\n")
 	}
@@ -163,16 +167,13 @@ func (g *ClassGen) GenPackage(idx int) {
 func (g *ClassGen) GenGo() {
 	g.Printf(classesGoHeader)
 	for _, cls := range g.classes {
-		for _, f := range cls.Funcs {
-			if f.Public && g.isFuncSupported(f) {
-				pkgName := strings.Replace(cls.Name, ".", "/", -1)
-				g.Printf("import %q\n", "Java/"+pkgName)
-				break
-			}
-		}
+		pkgName := strings.Replace(cls.Name, ".", "/", -1)
+		g.Printf("import %q\n", "Java/"+pkgName)
 	}
 	if len(g.classes) > 0 {
 		g.Printf("import \"unsafe\"\n\n")
+		g.Printf("import \"reflect\"\n\n")
+		g.Printf("import \"fmt\"\n\n")
 	}
 	g.Printf("type proxy interface { Bind_proxy_refnum__() int32 }\n\n")
 	g.Printf("// Suppress unused package error\n\n")
@@ -427,6 +428,7 @@ func (g *ClassGen) genCFuncDecl(jniName string, f *java.Func) {
 }
 
 func (g *ClassGen) genGo(cls *java.Class) {
+	g.Printf("var class_%s C.jclass\n\n", cls.JNIName)
 	g.Printf("func init_%s() {\n", cls.JNIName)
 	g.Indent()
 	g.Printf("cls := C.CString(%q)\n", strings.Replace(cls.FindName, ".", "/", -1))
@@ -435,6 +437,7 @@ func (g *ClassGen) genGo(cls *java.Class) {
 	g.Printf("if clazz == nil {\n")
 	g.Printf("	return\n")
 	g.Printf("}\n")
+	g.Printf("class_%s = clazz\n", cls.JNIName)
 	for _, f := range cls.Funcs {
 		if !f.Public || !g.isFuncSupported(f) {
 			continue
@@ -476,6 +479,17 @@ func (g *ClassGen) genGo(cls *java.Class) {
 		g.Outdent()
 		g.Printf("}\n")
 	}
+	g.Printf("%s.Cast = func(v interface{}) Java.%s {\n", cls.PkgName, goClsName(cls.Name))
+	g.Indent()
+	g.Printf("t := reflect.TypeOf((*proxy_class_%s)(nil))\n", cls.JNIName)
+	g.Printf("cv := reflect.ValueOf(v).Convert(t).Interface().(*proxy_class_%s)\n", cls.JNIName)
+	g.Printf("ref := C.jint(_seq.ToRefNum(cv))\n")
+	g.Printf("if C.go_seq_isinstanceof(ref, class_%s) != 1 {\n", cls.JNIName)
+	g.Printf("	panic(fmt.Errorf(\"%%T is not an instance of %%s\", v, %q))\n", cls.Name)
+	g.Printf("}\n")
+	g.Printf("return cv\n")
+	g.Outdent()
+	g.Printf("}\n")
 	g.Outdent()
 	g.Printf("}\n\n")
 	g.Printf("type proxy_class_%s _seq.Ref\n\n", cls.JNIName)

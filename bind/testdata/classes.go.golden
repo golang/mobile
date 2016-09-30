@@ -44,7 +44,16 @@ import (
 	_seq "golang.org/x/mobile/bind/seq"
 )
 
+import "Java/java/lang/Runnable"
+import "Java/java/io/InputStream"
+import "Java/java/util/concurrent/Future"
+import "Java/java/lang/Object"
+import "Java/java/util/concurrent/TimeUnit"
 import "unsafe"
+
+import "reflect"
+
+import "fmt"
 
 type proxy interface { Bind_proxy_refnum__() int32 }
 
@@ -63,12 +72,24 @@ func initClasses() {
 	init_java_util_concurrent_TimeUnit()
 }
 
+var class_java_lang_Runnable C.jclass
+
 func init_java_lang_Runnable() {
 	cls := C.CString("java/lang/Runnable")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
 	if clazz == nil {
 		return
+	}
+	class_java_lang_Runnable = clazz
+	Runnable.Cast = func(v interface{}) Java.Java_lang_Runnable {
+		t := reflect.TypeOf((*proxy_class_java_lang_Runnable)(nil))
+		cv := reflect.ValueOf(v).Convert(t).Interface().(*proxy_class_java_lang_Runnable)
+		ref := C.jint(_seq.ToRefNum(cv))
+		if C.go_seq_isinstanceof(ref, class_java_lang_Runnable) != 1 {
+			panic(fmt.Errorf("%T is not an instance of %s", v, "java.lang.Runnable"))
+		}
+		return cv
 	}
 }
 
@@ -90,12 +111,24 @@ func (p *proxy_class_java_lang_Runnable) Run() {
 	if (_exc != nil) { panic(_exc) }
 }
 
+var class_java_io_InputStream C.jclass
+
 func init_java_io_InputStream() {
 	cls := C.CString("java/io/InputStream")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
 	if clazz == nil {
 		return
+	}
+	class_java_io_InputStream = clazz
+	InputStream.Cast = func(v interface{}) Java.Java_io_InputStream {
+		t := reflect.TypeOf((*proxy_class_java_io_InputStream)(nil))
+		cv := reflect.ValueOf(v).Convert(t).Interface().(*proxy_class_java_io_InputStream)
+		ref := C.jint(_seq.ToRefNum(cv))
+		if C.go_seq_isinstanceof(ref, class_java_io_InputStream) != 1 {
+			panic(fmt.Errorf("%T is not an instance of %s", v, "java.io.InputStream"))
+		}
+		return cv
 	}
 }
 
@@ -139,12 +172,24 @@ func (p *super_java_io_InputStream) Read() (int32, error) {
 	return _res, _exc
 }
 
+var class_java_util_concurrent_Future C.jclass
+
 func init_java_util_concurrent_Future() {
 	cls := C.CString("java/util/concurrent/Future")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
 	if clazz == nil {
 		return
+	}
+	class_java_util_concurrent_Future = clazz
+	Future.Cast = func(v interface{}) Java.Java_util_concurrent_Future {
+		t := reflect.TypeOf((*proxy_class_java_util_concurrent_Future)(nil))
+		cv := reflect.ValueOf(v).Convert(t).Interface().(*proxy_class_java_util_concurrent_Future)
+		ref := C.jint(_seq.ToRefNum(cv))
+		if C.go_seq_isinstanceof(ref, class_java_util_concurrent_Future) != 1 {
+			panic(fmt.Errorf("%T is not an instance of %s", v, "java.util.concurrent.Future"))
+		}
+		return cv
 	}
 }
 
@@ -203,12 +248,24 @@ func (p *proxy_class_java_util_concurrent_Future) Get2(a0 int64, a1 Java.Java_ut
 	return _res, _exc
 }
 
+var class_java_lang_Object C.jclass
+
 func init_java_lang_Object() {
 	cls := C.CString("java/lang/Object")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
 	if clazz == nil {
 		return
+	}
+	class_java_lang_Object = clazz
+	Object.Cast = func(v interface{}) Java.Java_lang_Object {
+		t := reflect.TypeOf((*proxy_class_java_lang_Object)(nil))
+		cv := reflect.ValueOf(v).Convert(t).Interface().(*proxy_class_java_lang_Object)
+		ref := C.jint(_seq.ToRefNum(cv))
+		if C.go_seq_isinstanceof(ref, class_java_lang_Object) != 1 {
+			panic(fmt.Errorf("%T is not an instance of %s", v, "java.lang.Object"))
+		}
+		return cv
 	}
 }
 
@@ -222,12 +279,24 @@ func (p *proxy_class_java_lang_Object) Super() Java.Java_lang_Object {
 
 type super_java_lang_Object struct {*proxy_class_java_lang_Object}
 
+var class_java_util_concurrent_TimeUnit C.jclass
+
 func init_java_util_concurrent_TimeUnit() {
 	cls := C.CString("java/util/concurrent/TimeUnit")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
 	if clazz == nil {
 		return
+	}
+	class_java_util_concurrent_TimeUnit = clazz
+	TimeUnit.Cast = func(v interface{}) Java.Java_util_concurrent_TimeUnit {
+		t := reflect.TypeOf((*proxy_class_java_util_concurrent_TimeUnit)(nil))
+		cv := reflect.ValueOf(v).Convert(t).Interface().(*proxy_class_java_util_concurrent_TimeUnit)
+		ref := C.jint(_seq.ToRefNum(cv))
+		if C.go_seq_isinstanceof(ref, class_java_util_concurrent_TimeUnit) != 1 {
+			panic(fmt.Errorf("%T is not an instance of %s", v, "java.util.concurrent.TimeUnit"))
+		}
+		return cv
 	}
 }
 

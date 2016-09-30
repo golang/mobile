@@ -59,5 +59,6 @@ extern void go_seq_pop_local_frame(JNIEnv *env);
 extern jclass go_seq_find_class(const char *name);
 extern jmethodID go_seq_get_static_method_id(jclass clazz, const char *name, const char *sig);
 extern jmethodID go_seq_get_method_id(jclass clazz, const char *name, const char *sig);
+extern int go_seq_isinstanceof(jint refnum, jclass clazz);
 
 #endif // __GO_SEQ_HDR__

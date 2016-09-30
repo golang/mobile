@@ -12,6 +12,7 @@ import (
 	"Java/java/lang/Character"
 	"Java/java/lang/Integer"
 	"Java/java/lang/Object"
+	"Java/java/lang/Runnable"
 	"Java/java/util"
 	"Java/java/util/concurrent"
 )
@@ -166,4 +167,21 @@ type GoRand struct {
 
 func (_ *GoRand) Next(this util.Random, i int32) int32 {
 	return this.Super().Next(i)
+}
+
+type I interface{}
+
+func CastInterface(intf I) lang.Runnable {
+	var r lang.Runnable = Runnable.Cast(intf)
+	r.Run()
+	return r
+}
+
+func CastRunnable(o lang.Object) lang.Runnable {
+	defer func() {
+		recover() // swallow the panic
+	}()
+	var r lang.Runnable = Runnable.Cast(o)
+	r.Run()
+	return r
 }

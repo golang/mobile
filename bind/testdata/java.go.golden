@@ -39,7 +39,16 @@ import (
 	_seq "golang.org/x/mobile/bind/seq"
 )
 
+import "Java/java/lang/Float"
+import "Java/java/lang/Object"
+import "Java/java/lang/Runnable"
+import "Java/java/lang/Character"
+import "Java/java/lang/Character/Subset"
 import "unsafe"
+
+import "reflect"
+
+import "fmt"
 
 type proxy interface { Bind_proxy_refnum__() int32 }
 
@@ -58,6 +67,8 @@ func initClasses() {
 	init_java_lang_Character_Subset()
 }
 
+var class_java_lang_Float C.jclass
+
 func init_java_lang_Float() {
 	cls := C.CString("java/lang/Float")
 	clazz := C.go_seq_find_class(cls)
@@ -65,11 +76,23 @@ func init_java_lang_Float() {
 	if clazz == nil {
 		return
 	}
+	class_java_lang_Float = clazz
+	Float.Cast = func(v interface{}) Java.Java_lang_Float {
+		t := reflect.TypeOf((*proxy_class_java_lang_Float)(nil))
+		cv := reflect.ValueOf(v).Convert(t).Interface().(*proxy_class_java_lang_Float)
+		ref := C.jint(_seq.ToRefNum(cv))
+		if C.go_seq_isinstanceof(ref, class_java_lang_Float) != 1 {
+			panic(fmt.Errorf("%T is not an instance of %s", v, "java.lang.Float"))
+		}
+		return cv
+	}
 }
 
 type proxy_class_java_lang_Float _seq.Ref
 
 func (p *proxy_class_java_lang_Float) Bind_proxy_refnum__() int32 { return (*_seq.Ref)(p).Bind_IncNum() }
+
+var class_java_lang_Object C.jclass
 
 func init_java_lang_Object() {
 	cls := C.CString("java/lang/Object")
@@ -77,6 +100,16 @@ func init_java_lang_Object() {
 	C.free(unsafe.Pointer(cls))
 	if clazz == nil {
 		return
+	}
+	class_java_lang_Object = clazz
+	Object.Cast = func(v interface{}) Java.Java_lang_Object {
+		t := reflect.TypeOf((*proxy_class_java_lang_Object)(nil))
+		cv := reflect.ValueOf(v).Convert(t).Interface().(*proxy_class_java_lang_Object)
+		ref := C.jint(_seq.ToRefNum(cv))
+		if C.go_seq_isinstanceof(ref, class_java_lang_Object) != 1 {
+			panic(fmt.Errorf("%T is not an instance of %s", v, "java.lang.Object"))
+		}
+		return cv
 	}
 }
 
@@ -90,6 +123,8 @@ func (p *proxy_class_java_lang_Object) Super() Java.Java_lang_Object {
 
 type super_java_lang_Object struct {*proxy_class_java_lang_Object}
 
+var class_java_lang_Runnable C.jclass
+
 func init_java_lang_Runnable() {
 	cls := C.CString("java/lang/Runnable")
 	clazz := C.go_seq_find_class(cls)
@@ -97,11 +132,23 @@ func init_java_lang_Runnable() {
 	if clazz == nil {
 		return
 	}
+	class_java_lang_Runnable = clazz
+	Runnable.Cast = func(v interface{}) Java.Java_lang_Runnable {
+		t := reflect.TypeOf((*proxy_class_java_lang_Runnable)(nil))
+		cv := reflect.ValueOf(v).Convert(t).Interface().(*proxy_class_java_lang_Runnable)
+		ref := C.jint(_seq.ToRefNum(cv))
+		if C.go_seq_isinstanceof(ref, class_java_lang_Runnable) != 1 {
+			panic(fmt.Errorf("%T is not an instance of %s", v, "java.lang.Runnable"))
+		}
+		return cv
+	}
 }
 
 type proxy_class_java_lang_Runnable _seq.Ref
 
 func (p *proxy_class_java_lang_Runnable) Bind_proxy_refnum__() int32 { return (*_seq.Ref)(p).Bind_IncNum() }
+
+var class_java_lang_Character C.jclass
 
 func init_java_lang_Character() {
 	cls := C.CString("java/lang/Character")
@@ -110,11 +157,23 @@ func init_java_lang_Character() {
 	if clazz == nil {
 		return
 	}
+	class_java_lang_Character = clazz
+	Character.Cast = func(v interface{}) Java.Java_lang_Character {
+		t := reflect.TypeOf((*proxy_class_java_lang_Character)(nil))
+		cv := reflect.ValueOf(v).Convert(t).Interface().(*proxy_class_java_lang_Character)
+		ref := C.jint(_seq.ToRefNum(cv))
+		if C.go_seq_isinstanceof(ref, class_java_lang_Character) != 1 {
+			panic(fmt.Errorf("%T is not an instance of %s", v, "java.lang.Character"))
+		}
+		return cv
+	}
 }
 
 type proxy_class_java_lang_Character _seq.Ref
 
 func (p *proxy_class_java_lang_Character) Bind_proxy_refnum__() int32 { return (*_seq.Ref)(p).Bind_IncNum() }
+
+var class_java_lang_Character_Subset C.jclass
 
 func init_java_lang_Character_Subset() {
 	cls := C.CString("java/lang/Character$Subset")
@@ -122,6 +181,16 @@ func init_java_lang_Character_Subset() {
 	C.free(unsafe.Pointer(cls))
 	if clazz == nil {
 		return
+	}
+	class_java_lang_Character_Subset = clazz
+	Subset.Cast = func(v interface{}) Java.Java_lang_Character_Subset {
+		t := reflect.TypeOf((*proxy_class_java_lang_Character_Subset)(nil))
+		cv := reflect.ValueOf(v).Convert(t).Interface().(*proxy_class_java_lang_Character_Subset)
+		ref := C.jint(_seq.ToRefNum(cv))
+		if C.go_seq_isinstanceof(ref, class_java_lang_Character_Subset) != 1 {
+			panic(fmt.Errorf("%T is not an instance of %s", v, "java.lang.Character.Subset"))
+		}
+		return cv
 	}
 }
 

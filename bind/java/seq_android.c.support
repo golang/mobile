@@ -382,3 +382,11 @@ void go_seq_release_byte_array(JNIEnv *env, jbyteArray arr, jbyte* ptr) {
 		(*env)->ReleaseByteArrayElements(env, arr, ptr, 0);
 	}
 }
+
+int go_seq_isinstanceof(jint refnum, jclass clazz) {
+	JNIEnv *env = go_seq_push_local_frame(0);
+	jobject obj = go_seq_from_refnum(env, refnum, NULL, NULL);
+	jboolean isinst = (*env)->IsInstanceOf(env, obj, clazz);
+	go_seq_pop_local_frame(env);
+	return isinst;
+}
