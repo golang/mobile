@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Random;
 
 import go.javapkg.Javapkg;
+import go.javapkg.I;
 import go.javapkg.GoObject;
 import go.javapkg.GoRunnable;
 import go.javapkg.GoSubset;
@@ -126,5 +127,26 @@ public class ClassesTest extends InstrumentationTestCase {
 		assertTrue("new Object()", o != null);
 		Integer i = Javapkg.newJavaInteger();
 		assertEquals("new Integer(42)", 42, i.intValue());
+	}
+
+	private static class InterfaceRunnable implements I, Runnable {
+		@Override public void run() {
+		}
+	}
+
+	public void testCast() {
+		Runnable r1 = new GoRunnable();
+		Runnable r1c = Javapkg.castRunnable((Object)r1);
+		assertTrue("Casting Go object", r1c != null);
+		Runnable r2 = new Runnable() {
+			@Override public void run() {
+			}
+		};
+		Runnable r2c = Javapkg.castRunnable((Object)r2);
+		assertTrue("Casting Java object", r2c != null);
+		Runnable r3c = Javapkg.castInterface(new InterfaceRunnable());
+		assertTrue("Casting Go interface implementation", r3c != null);
+		Runnable r4c = Javapkg.castRunnable(new Object());
+		assertTrue("Invalid cast", r4c == null);
 	}
 }
