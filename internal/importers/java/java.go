@@ -94,8 +94,9 @@ type Type struct {
 type TypeKind int
 
 type importer struct {
-	clspath string
-	clsMap  map[string]*Class
+	bootclspath string
+	clspath     string
+	clsMap      map[string]*Class
 }
 
 const (
@@ -147,10 +148,11 @@ func javapPath() (string, error) {
 //   ...
 //
 // }
-func Import(classpath string, refs *importers.References) ([]*Class, error) {
+func Import(bootclasspath, classpath string, refs *importers.References) ([]*Class, error) {
 	imp := &importer{
-		clspath: classpath,
-		clsMap:  make(map[string]*Class),
+		bootclspath: bootclasspath,
+		clspath:     classpath,
+		clsMap:      make(map[string]*Class),
 	}
 	clsSet := make(map[string]struct{})
 	var names []string
@@ -355,7 +357,10 @@ func (j *importer) importClasses(names []string, allowMissingClasses bool) ([]*C
 	}
 	args := []string{"-s", "-protected", "-constants"}
 	if j.clspath != "" {
-		args = append(args, "-bootclasspath", j.clspath)
+		args = append(args, "-classpath", j.clspath)
+	}
+	if j.bootclspath != "" {
+		args = append(args, "-bootclasspath", j.bootclspath)
 	}
 	args = append(args, names...)
 	javapPath, err := javapPath()

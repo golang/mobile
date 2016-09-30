@@ -29,7 +29,7 @@ import (
 var cmdBind = &command{
 	run:   runBind,
 	Name:  "bind",
-	Usage: "[-target android|ios] [-o output] [build flags] [package]",
+	Usage: "[-target android|ios] [-bootclasspath <path>] [-classpath <path>] [-o output] [build flags] [package]",
 	Short: "build a library for Android and iOS",
 	Long: `
 Bind generates language bindings for the package named by the import
@@ -61,6 +61,10 @@ can be selected by specifying target type with the architecture name. E.g.,
 For -target ios, gomobile must be run on an OS X machine with Xcode
 installed. Support is not complete. The generated Objective-C types
 are prefixed with 'Go' unless the -prefix flag is provided.
+
+For -target android, the -bootclasspath and -classpath flags are used to
+control the bootstrap classpath and the classpath for Go wrappers to Java
+classes.
 
 The -v flag provides verbose output, including the list of packages built.
 
@@ -135,8 +139,10 @@ func importPackages(args []string) ([]*build.Package, error) {
 }
 
 var (
-	bindPrefix  string // -prefix
-	bindJavaPkg string // -javapkg
+	bindPrefix        string // -prefix
+	bindJavaPkg       string // -javapkg
+	bindClasspath     string // -classpath
+	bindBootClasspath string // -bootclasspath
 )
 
 func init() {
@@ -144,7 +150,9 @@ func init() {
 	cmdBind.flag.StringVar(&bindJavaPkg, "javapkg", "",
 		"specifies custom Java package path prefix used instead of the default 'go'. Valid only with -target=android.")
 	cmdBind.flag.StringVar(&bindPrefix, "prefix", "",
-		"custom Objective-C name prefix used instead of the default 'Go'. Valid only with -lang=ios.")
+		"custom Objective-C name prefix used instead of the default 'Go'. Valid only with -target=ios.")
+	cmdBind.flag.StringVar(&bindClasspath, "classpath", "", "The classpath for imported Java classes. Valid only with -target=android.")
+	cmdBind.flag.StringVar(&bindBootClasspath, "bootclasspath", "", "The bootstrap classpath for imported Java classes. Valid only with -target=android.")
 }
 
 type binder struct {
@@ -254,16 +262,27 @@ func (b *binder) GenJavaSupport(outdir string) error {
 	return copyFile(filepath.Join(outdir, "seq.h"), filepath.Join(javaPkg.Dir, "seq.h"))
 }
 
-func GenClasses(pkgs []*build.Package, srcDir, jpkgSrc string) ([]*java.Class, error) {
+func bootClasspath() (string, error) {
+	if bindBootClasspath != "" {
+		return bindBootClasspath, nil
+	}
 	apiPath, err := androidAPIPath()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
+	return filepath.Join(apiPath, "android.jar"), nil
+}
+
+func GenClasses(pkgs []*build.Package, srcDir, jpkgSrc string) ([]*java.Class, error) {
 	refs, err := importers.AnalyzePackages(pkgs, "Java/")
 	if err != nil {
 		return nil, err
 	}
-	classes, err := java.Import(filepath.Join(apiPath, "android.jar"), refs)
+	bClspath, err := bootClasspath()
+	if err != nil {
+		return nil, err
+	}
+	classes, err := java.Import(bClspath, bindClasspath, refs)
 	if err != nil {
 		return nil, err
 	}

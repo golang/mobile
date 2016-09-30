@@ -208,7 +208,7 @@ func TestGenJava(t *testing.T) {
 	}
 	for _, filename := range allTests {
 		refs := fileRefs(t, filename)
-		classes, err := java.Import("", refs)
+		classes, err := java.Import("", "", refs)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -301,7 +301,7 @@ func TestGenGo(t *testing.T) {
 	for _, filename := range allTests {
 		var buf bytes.Buffer
 		refs := fileRefs(t, filename)
-		classes, err := java.Import("", refs)
+		classes, err := java.Import("", "", refs)
 		if err != nil {
 			t.Fatal(err)
 		}
