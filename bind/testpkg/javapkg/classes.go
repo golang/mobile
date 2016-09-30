@@ -22,6 +22,7 @@ const (
 )
 
 type GoRunnable struct {
+	lang.Object
 	lang.Runnable
 	this lang.Runnable
 }

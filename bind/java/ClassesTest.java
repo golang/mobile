@@ -73,7 +73,7 @@ public class ClassesTest extends InstrumentationTestCase {
 	public void testGoObject() {
 		Runnable r = new GoRunnable();
 		r.run();
-		assertTrue("GoRunnable.toString", r.toString().equals(Javapkg.ToStringPrefix));
+		assertEquals("GoRunnable.toString", r.toString(), Javapkg.ToStringPrefix);
 		Runnable r2 = ((GoRunnable)r).getThis();
 		assertTrue("GoObject.this", r == r2);
 		Object o = new GoObject();
