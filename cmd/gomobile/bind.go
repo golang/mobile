@@ -364,7 +364,9 @@ func GenClasses(pkgs []*build.Package, srcDir, jpkgSrc string) ([]*java.Class, e
 	return classes, nil
 }
 
-func (b *binder) GenJava(pkg *types.Package, allPkg []*types.Package, classes []*java.Class, outdir, javadir string) error {
+func (b *binder) GenJava(pkg *types.Package, allPkg []*types.Package, classes []*java.Class, outdir, androidDir string) error {
+	jpkgname := bind.JavaPkgName(bindJavaPkg, pkg)
+	javadir := filepath.Join(androidDir, strings.Replace(jpkgname, ".", "/", -1))
 	var className string
 	pkgName := ""
 	pkgPath := ""

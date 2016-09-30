@@ -108,17 +108,13 @@ func goAndroidBind(pkgs []*build.Package, androidArchs []string) error {
 		}
 		repo := filepath.Clean(filepath.Join(p.Dir, "..")) // golang.org/x/mobile directory.
 
+		jclsDir := filepath.Join(androidDir, "src", "main", "java")
 		for _, pkg := range binder.pkgs {
-			pkgpath := bindJavaPkg
-			if pkgpath == "" {
-				pkgpath = "go." + pkg.Name()
-			}
-			jclsDir := filepath.Join(androidDir, "src/main/java/"+strings.Replace(pkgpath, ".", "/", -1))
 			if err := binder.GenJava(pkg, binder.pkgs, classes, srcDir, jclsDir); err != nil {
 				return err
 			}
 		}
-		if err := binder.GenJava(nil, binder.pkgs, classes, srcDir, filepath.Join(androidDir, "src/main/java/go")); err != nil {
+		if err := binder.GenJava(nil, binder.pkgs, classes, srcDir, jclsDir); err != nil {
 			return err
 		}
 		if err := binder.GenJavaSupport(srcDir); err != nil {
