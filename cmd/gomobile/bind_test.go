@@ -50,7 +50,7 @@ func TestBindAndroid(t *testing.T) {
 		{
 			javaPkg:    "com.example.foo",
 			wantGobind: "gobind -lang=java -javapkg=com.example.foo",
-			wantPkgDir: "com/example/foo",
+			wantPkgDir: "com/example/foo/asset",
 		},
 	}
 	for _, tc := range tests {

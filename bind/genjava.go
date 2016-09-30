@@ -816,22 +816,31 @@ var javaNameReplacer = newNameSanitizer([]string{
 	"try", "void", "volatile", "while", "false", "null", "true"})
 
 func (g *JavaGen) javaPkgName(pkg *types.Package) string {
+	return JavaPkgName(g.JavaPkg, pkg)
+}
+
+// JavaPkgName returns the Java package name for a Go package
+// given a pkg prefix. If the prefix is empty, "go" is used
+// instead.
+func JavaPkgName(pkgPrefix string, pkg *types.Package) string {
 	if pkg == nil {
 		return "go"
 	}
 	s := javaNameReplacer(pkg.Name())
-	if g.JavaPkg != "" {
-		return g.JavaPkg + "." + s
+	if pkgPrefix != "" {
+		return pkgPrefix + "." + s
 	} else {
 		return "go." + s
 	}
 }
 
 func (g *JavaGen) className() string {
-	return className(g.Pkg)
+	return JavaClassName(g.Pkg)
 }
 
-func className(pkg *types.Package) string {
+// JavaClassName returns the name of the Java class that
+// contains Go package level identifiers.
+func JavaClassName(pkg *types.Package) string {
 	if pkg == nil {
 		return "Universe"
 	}
@@ -1296,7 +1305,7 @@ func (g *JavaGen) GenC() error {
 	}
 	for _, iface := range g.interfaces {
 		pkg := iface.obj.Pkg()
-		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigPrefix(pkg)+className(pkg)+"$proxy"+iface.obj.Name())
+		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigPrefix(pkg)+JavaClassName(pkg)+"$proxy"+iface.obj.Name())
 		g.Printf("proxy_class_%s_%s = (*env)->NewGlobalRef(env, clazz);\n", g.pkgPrefix, iface.obj.Name())
 		g.Printf("proxy_class_%s_%s_cons = (*env)->GetMethodID(env, clazz, \"<init>\", \"(Lgo/Seq$Ref;)V\");\n", g.pkgPrefix, iface.obj.Name())
 		if isErrorType(iface.obj.Type()) {
@@ -1394,7 +1403,7 @@ func (g *JavaGen) GenJava() error {
 	if g.Pkg != nil {
 		for _, p := range g.Pkg.Imports() {
 			if g.validPkg(p) {
-				g.Printf("%s.%s.touch();\n", g.javaPkgName(p), className(p))
+				g.Printf("%s.%s.touch();\n", g.javaPkgName(p), JavaClassName(p))
 			}
 		}
 	}
