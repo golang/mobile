@@ -454,7 +454,7 @@ func (j *importer) scanClass(s *bufio.Scanner, name string) (*Class, error) {
 	if len(cls.Supers) == 0 {
 		if name == "java.lang.Object" {
 			cls.HasNoArgCon = true
-		} else {
+		} else if !cls.Interface {
 			cls.Supers = append(cls.Supers, "java.lang.Object")
 		}
 	}
