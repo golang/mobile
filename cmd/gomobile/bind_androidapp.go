@@ -342,7 +342,8 @@ func buildJar(w io.Writer, srcDir string) error {
 		}
 	}
 
-	apiPath, err := androidAPIPath()
+	bClspath, err := bootClasspath()
+
 	if err != nil {
 		return err
 	}
@@ -351,8 +352,12 @@ func buildJar(w io.Writer, srcDir string) error {
 		"-d", dst,
 		"-source", javacTargetVer,
 		"-target", javacTargetVer,
-		"-bootclasspath", filepath.Join(apiPath, "android.jar"),
+		"-bootclasspath", bClspath,
 	}
+	if bindClasspath != "" {
+		args = append(args, "-classpath", bindClasspath)
+	}
+
 	args = append(args, srcFiles...)
 
 	javac := exec.Command("javac", args...)
