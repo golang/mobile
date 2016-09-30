@@ -18,14 +18,17 @@ gobind {
   // Optional list of architectures. Defaults to all supported architectures.
   GOARCH="arm amd64"
 
-  // Absolute path to the gomobile binary
+  // Absolute path to the gomobile binary. Optional.
   GOMOBILE "/mypath/bin/gomobile"
 
-  // Absolute path to the go binary
+  // Absolute path to the gomobile binary. Optional.
+  GOBIND "/mypath/bin/gobind"
+
+  // Absolute path to the go binary. Optional.
   GO "/usr/local/go/bin/go"
 
-  // Pass extra parameters to command line
-  // GOMOBILEFLAGS "-javapkg my.java.package"
+  // Pass extra parameters to command line. Optional.
+  GOMOBILEFLAGS "-javapkg my.java.package"
 }
 </pre>
 
