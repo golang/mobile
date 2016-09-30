@@ -77,10 +77,20 @@ func (_ *GoFuture) IsDone() bool {
 
 type GoObject struct {
 	lang.Object
+	this lang.Object
 }
 
-func (_ *GoObject) ToString(this lang.Object) string {
+func (o *GoObject) ToString(this lang.Object) string {
+	o.this = this
 	return ToStringPrefix + this.Super().ToString()
+}
+
+func (r *GoObject) CheckClass() bool {
+	// Verify that GetClass returns interface{} because java.lang.Class
+	// is unreferenced.
+	var f func() interface{} = r.this.GetClass
+	// But it should return a value
+	return f() != nil
 }
 
 func (_ *GoObject) HashCode() int32 {

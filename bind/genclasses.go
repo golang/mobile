@@ -573,9 +573,11 @@ func (g *ClassGen) genRefRead(to, from string, intfName, proxyName string, hasPr
 	g.Printf("if %s_ref != nil {\n", to)
 	g.Printf("	if %s < 0 { // go object\n", from)
 	g.Printf("		%s = %s_ref.Get().(%s)\n", to, to, intfName)
+	g.Printf("	} else { // foreign object\n")
 	if hasProxy {
-		g.Printf("	} else { // foreign object\n")
 		g.Printf("		%s = (*%s)(%s_ref)\n", to, proxyName, to)
+	} else {
+		g.Printf("		%s = %s_ref\n", to, to)
 	}
 	g.Printf("	}\n")
 	g.Printf("}\n")
