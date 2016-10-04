@@ -27,16 +27,15 @@ type GoRunnable struct {
 	this lang.Runnable
 }
 
-func (r *GoRunnable) ToString(_ lang.Runnable) string {
+func (r *GoRunnable) ToString(this lang.Runnable) string {
 	return ToStringPrefix
 }
 
 func (r *GoRunnable) Run(this lang.Runnable) {
-	r.this = this // Careful: This creates a reference cycle
 }
 
-func (r *GoRunnable) GetThis() lang.Runnable {
-	return r.this
+func (r *GoRunnable) GetThis(this lang.Runnable) lang.Runnable {
+	return this
 }
 
 type GoInputStream struct {

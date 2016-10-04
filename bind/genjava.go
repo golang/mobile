@@ -214,46 +214,40 @@ func (g *JavaGen) genStruct(s structInfo) {
 			continue
 		}
 		var jm *java.Func
+		hasThis := false
 		if jinf != nil {
 			jm = jinf.methods[m.Name()]
 			if jm != nil {
-				// Check the implicit this argument, if any
-				sig := m.Type().(*types.Signature)
-				params := sig.Params()
-				excess := params.Len() - len(jm.Params)
-				switch {
-				case excess < 0:
-					g.errorf("method %s.%s has fewer arguments than the method it overrides", n, m.Name())
-					continue
-				case excess > 1:
-					g.errorf("overriding method %s.%s has more arguments than the method it overrides", n, m.Name())
-					continue
-				case excess == 1:
-					v := params.At(0)
+				g.Printf("@Override ")
+			}
+			// Check the implicit this argument, if any
+			sig := m.Type().(*types.Signature)
+			params := sig.Params()
+			if params.Len() > 0 {
+				v := params.At(0)
+				if v.Name() == "this" {
 					t := v.Type()
-					if !isJavaType(t) {
-						g.errorf("the `this` argument to method %s.%s is not a Java type", n, m.Name())
-						continue
-					}
-					clsName := classNameFor(t)
-					cls := g.clsMap[clsName]
-					found := false
-					for _, sup := range jinf.supers {
-						if cls == sup {
-							found = true
-							break
+					if isJavaType(t) {
+						clsName := classNameFor(t)
+						cls := g.clsMap[clsName]
+						found := false
+						for _, sup := range jinf.supers {
+							if cls == sup {
+								found = true
+								break
+							}
 						}
-					}
-					if !found {
-						g.errorf("the type %s of the `this` argument to method %s.%s is not a super class to %s", cls.Name, n, m.Name(), n)
-						continue
+						if !found {
+							g.errorf("the type %s of the `this` argument to method %s.%s is not a super class to %s", cls.Name, n, m.Name(), n)
+							continue
+						}
+						hasThis = true
 					}
 				}
-				g.Printf("@Override ")
 			}
 		}
 		g.Printf("public native ")
-		g.genFuncSignature(m, jm)
+		g.genFuncSignature(m, jm, hasThis)
 		t := m.Type().(*types.Signature)
 		isStringer = isStringer || (m.Name() == "String" && t.Params().Len() == 0 && t.Results().Len() == 1 &&
 			types.Identical(t.Results().At(0).Type(), types.Typ[types.String]))
@@ -269,7 +263,7 @@ func (g *JavaGen) genStruct(s structInfo) {
 
 func (g *JavaGen) genConstructor(f *types.Func, n string, jcls bool) {
 	g.Printf("public %s(", n)
-	g.genFuncArgs(f, nil)
+	g.genFuncArgs(f, nil, false)
 	g.Printf(") {\n")
 	g.Indent()
 	sig := f.Type().(*types.Signature)
@@ -296,20 +290,20 @@ func (g *JavaGen) genConstructor(f *types.Func, n string, jcls bool) {
 	g.Outdent()
 	g.Printf("}\n\n")
 	g.Printf("private static native Seq.Ref __%s(", f.Name())
-	g.genFuncArgs(f, nil)
+	g.genFuncArgs(f, nil, false)
 	g.Printf(");\n\n")
 }
 
 // genFuncArgs generated Java function arguments declaration for the function f.
 // If the supplied overridden java function is supplied, genFuncArgs omits the implicit
 // this argument.
-func (g *JavaGen) genFuncArgs(f *types.Func, jm *java.Func) {
+func (g *JavaGen) genFuncArgs(f *types.Func, jm *java.Func, hasThis bool) {
 	sig := f.Type().(*types.Signature)
 	params := sig.Params()
 	first := 0
-	if jm != nil {
+	if hasThis {
 		// Skip the implicit this argument to the Go method
-		first = params.Len() - len(jm.Params)
+		first = 1
 	}
 	for i := first; i < params.Len(); i++ {
 		if i > first {
@@ -420,7 +414,7 @@ func (g *JavaGen) genInterface(iface interfaceInfo) {
 			continue
 		}
 		g.Printf("public ")
-		g.genFuncSignature(m, nil)
+		g.genFuncSignature(m, nil, false)
 	}
 
 	g.Printf("\n")
@@ -562,7 +556,7 @@ func (g *JavaGen) javaType(T types.Type) string {
 	return "TODO"
 }
 
-func (g *JavaGen) genJNIFuncSignature(o *types.Func, sName string, jm *java.Func, proxy bool) {
+func (g *JavaGen) genJNIFuncSignature(o *types.Func, sName string, jm *java.Func, proxy, isjava bool) {
 	sig := o.Type().(*types.Signature)
 	res := sig.Results()
 
@@ -614,9 +608,9 @@ func (g *JavaGen) genJNIFuncSignature(o *types.Func, sName string, jm *java.Func
 	}
 	params := sig.Params()
 	i := 0
-	if jm != nil {
+	if isjava && params.Len() > 0 && params.At(0).Name() == "this" {
 		// Skip the implicit this argument, if any.
-		i = params.Len() - len(jm.Params)
+		i = 1
 	}
 	for ; i < params.Len(); i++ {
 		g.Printf(", ")
@@ -632,7 +626,7 @@ func (g *JavaGen) jniPkgName() string {
 	return strings.Replace(g.javaPkgName(g.Pkg), ".", "_", -1)
 }
 
-func (g *JavaGen) genFuncSignature(o *types.Func, jm *java.Func) {
+func (g *JavaGen) genFuncSignature(o *types.Func, jm *java.Func, hasThis bool) {
 	sig := o.Type().(*types.Signature)
 	res := sig.Results()
 
@@ -667,7 +661,7 @@ func (g *JavaGen) genFuncSignature(o *types.Func, jm *java.Func) {
 		g.Printf(javaNameReplacer(lowerFirst(o.Name())))
 	}
 	g.Printf("(")
-	g.genFuncArgs(o, jm)
+	g.genFuncArgs(o, jm, hasThis)
 	g.Printf(")")
 	if returnsError {
 		if jm != nil {
@@ -969,7 +963,7 @@ func (g *JavaGen) genJNIFunc(o *types.Func, sName string, jm *java.Func, proxy, 
 		g.Printf("// skipped function %s with unsupported parameter or return types\n\n", n)
 		return
 	}
-	g.genJNIFuncSignature(o, sName, jm, proxy)
+	g.genJNIFuncSignature(o, sName, jm, proxy, isjava)
 
 	g.Printf(" {\n")
 	g.Indent()
@@ -992,12 +986,10 @@ func (g *JavaGen) genJNIFuncBody(o *types.Func, sName string, jm *java.Func, isj
 	}
 	params := sig.Params()
 	first := 0
-	if jm != nil {
+	if isjava && params.Len() > 0 && params.At(0).Name() == "this" {
 		// Start after the implicit this argument.
-		first = params.Len() - len(jm.Params)
-		if first >= 1 {
-			g.Printf("int32_t _%s = go_seq_to_refnum(env, __this__);\n", paramName(params, 0))
-		}
+		first = 1
+		g.Printf("int32_t _%s = go_seq_to_refnum(env, __this__);\n", paramName(params, 0))
 	}
 	for i := first; i < params.Len(); i++ {
 		name := paramName(params, i)
@@ -1423,7 +1415,7 @@ func (g *JavaGen) GenJava() error {
 				continue
 			}
 			g.Printf("public native ")
-			g.genFuncSignature(m, nil)
+			g.genFuncSignature(m, nil, false)
 		}
 
 		g.Outdent()
@@ -1445,7 +1437,7 @@ func (g *JavaGen) GenJava() error {
 			continue
 		}
 		g.Printf("public static native ")
-		g.genFuncSignature(f, nil)
+		g.genFuncSignature(f, nil, false)
 	}
 
 	g.Outdent()
