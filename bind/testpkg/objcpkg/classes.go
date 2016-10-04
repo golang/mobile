@@ -16,24 +16,22 @@ const (
 
 type GoNSDate struct {
 	Foundation.NSDate
-	this Foundation.NSDate
 }
 
-func (d *GoNSDate) Hash(this Foundation.NSDate) int {
+func (d *GoNSDate) Hash(self Foundation.NSDate) int {
 	return Hash
 }
 
-func (d *GoNSDate) Description(this Foundation.NSDate) string {
-	// Test this call
-	if h := this.Hash(); h != Hash {
+func (d *GoNSDate) Description(self Foundation.NSDate) string {
+	// Test self call
+	if h := self.Hash(); h != Hash {
 		panic("hash mismatch")
 	}
-	d.this = this
 	return DescriptionStr
 }
 
-func (d *GoNSDate) This() Foundation.NSDate {
-	return d.this
+func (d *GoNSDate) GetSelf(self Foundation.NSDate) Foundation.NSDate {
+	return self
 }
 
 func NewGoNSDate() *GoNSDate {
@@ -43,14 +41,14 @@ func NewGoNSDate() *GoNSDate {
 type GoNSObject struct {
 	C       Foundation.NSObjectC // The class
 	P       Foundation.NSObjectP // The protocol
-	UseThis bool
+	UseSelf bool
 }
 
-func (o *GoNSObject) Description(this Foundation.NSObjectC) string {
-	if o.UseThis {
+func (o *GoNSObject) Description(self Foundation.NSObjectC) string {
+	if o.UseSelf {
 		return DescriptionStr
 	} else {
-		return this.Super().Description()
+		return self.Super().Description()
 	}
 }
 
