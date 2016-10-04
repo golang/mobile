@@ -405,7 +405,7 @@ type funcSummary struct {
 	ret               string
 	sig               *types.Signature
 	params, retParams []paramInfo
-	hasthis           bool
+	hasself           bool
 }
 
 type paramInfo struct {
@@ -429,31 +429,25 @@ func (g *ObjcGen) funcSummary(oinf *objcClassInfo, obj *types.Func) *funcSummary
 	}
 	params := sig.Params()
 	first := 0
-	if om != nil {
-		// Check the implicit this argument and the argument count of the overridden method
-		excess := params.Len() - len(om.Params)
-		if excess < 0 {
-			g.errorf("method %s has fewer arguments than the method it overrides", obj.Name())
-		} else if excess > 1 {
-			g.errorf("overriding method %s has more arguments than the method it overrides", obj.Name())
-		} else if excess == 1 {
-			s.hasthis = true
-			first = 1
-			t := params.At(0).Type()
-			if !isObjcType(t) {
-				g.errorf("the `this` argument to method %s is not a ObjC type", obj.Name())
-				return s
-			} else {
-				ot := g.wrapMap[t.(*types.Named).Obj().Name()]
-				found := false
-				for _, sup := range oinf.supers {
-					if ot == sup {
-						found = true
-						break
+	if oinf != nil {
+		if params.Len() > 0 {
+			v := params.At(0)
+			if v.Name() == "self" {
+				t := v.Type()
+				if isObjcType(t) {
+					s.hasself = true
+					first = 1
+					ot := g.wrapMap[t.(*types.Named).Obj().Name()]
+					found := false
+					for _, sup := range oinf.supers {
+						if ot == sup {
+							found = true
+							break
+						}
 					}
-				}
-				if !found {
-					g.errorf("the type %s of the `this` argument to method %s is not a super class of the enclosing struct", ot.Name, obj.Name())
+					if !found {
+						g.errorf("the type %s of the `this` argument to method %s is not a super class of the enclosing struct", ot.Name, obj.Name())
+					}
 				}
 			}
 		}
@@ -740,7 +734,7 @@ func (g *ObjcGen) genRead(toName, fromName string, t types.Type, mode varMode) {
 func (g *ObjcGen) genFunc(s *funcSummary, objName string) {
 	if objName != "" {
 		g.Printf("int32_t refnum = go_seq_go_to_refnum(self._ref);\n")
-		if s.hasthis {
+		if s.hasself {
 			g.genRefWrite("self")
 		}
 	}
@@ -759,7 +753,7 @@ func (g *ObjcGen) genFunc(s *funcSummary, objName string) {
 	g.Printf("proxy%s_%s_%s(", g.pkgPrefix, objName, s.goname)
 	if objName != "" {
 		g.Printf("refnum")
-		if s.hasthis {
+		if s.hasself {
 			g.Printf(", _self")
 		}
 	}

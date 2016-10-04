@@ -62,9 +62,9 @@
 
 - (void)testClass {
 	GoObjcpkgGoNSDate *d = [[GoObjcpkgGoNSDate alloc] init];
-	NSString *desc = [d description]; // Also stores this
-	XCTAssertEqual(d, [d this], "GoNSDate this not identical");
-	XCTAssertEqual(GoObjcpkgHash, [d hash], "GoNSDate this not identical");
+	NSString *desc = [d description];
+	XCTAssertEqual(d, [d getSelf], "GoNSDate self not identical");
+	XCTAssertEqual(GoObjcpkgHash, [d hash], "GoNSDate hash not identical");
 	XCTAssertTrue([desc isEqualToString:GoObjcpkgDescriptionStr], "GoNSDate description mismatch: %@", desc);
 	GoObjcpkgGoUIResponder *resp = [[GoObjcpkgGoUIResponder alloc] init];
 	[resp pressesBegan:nil withEvent:nil];
@@ -79,7 +79,7 @@
 	};
 	NSString *superDesc = ((NSString *(*)(struct objc_super*, SEL))objc_msgSendSuper)(&_super, @selector(description));
 	XCTAssertTrue([superDesc isEqualToString:[o description]], "GoNSObject description mismatch");
-	[o setUseThis:TRUE];
+	[o setUseSelf:TRUE];
 	XCTAssertTrue([GoObjcpkgDescriptionStr isEqualToString:[o description]], "GoNSObject description mismatch");
 }
 
