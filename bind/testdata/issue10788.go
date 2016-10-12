@@ -10,5 +10,5 @@ type TestStruct struct {
 
 type TestInterface interface {
 	DoSomeWork(s *TestStruct)
-	MultipleUnnamedParams(_ int, p0 string, _ int64)
+	MultipleUnnamedParams(_ int, p0 string, 日本 int64)
 }

@@ -266,7 +266,7 @@ func (g *Generator) cgoType(t types.Type) string {
 	return "TODO"
 }
 
-func (g *Generator) genInterfaceMethodSignature(m *types.Func, iName string, header bool) {
+func (g *Generator) genInterfaceMethodSignature(m *types.Func, iName string, header bool, g_paramName func(*types.Tuple, int) string) {
 	sig := m.Type().(*types.Signature)
 	params := sig.Params()
 	res := sig.Results()
@@ -293,7 +293,7 @@ func (g *Generator) genInterfaceMethodSignature(m *types.Func, iName string, hea
 	g.Printf("cproxy%s_%s_%s(int32_t refnum", g.pkgPrefix, iName, m.Name())
 	for i := 0; i < params.Len(); i++ {
 		t := params.At(i).Type()
-		g.Printf(", %s %s", g.cgoType(t), paramName(params, i))
+		g.Printf(", %s %s", g.cgoType(t), g_paramName(params, i))
 	}
 	g.Printf(")")
 	if header {
@@ -360,10 +360,9 @@ func (g *Generator) isSupported(t types.Type) bool {
 
 var paramRE = regexp.MustCompile(`^p[0-9]*$`)
 
-// paramName replaces incompatible name with a p0-pN name.
+// basicParamName replaces incompatible name with a p0-pN name.
 // Missing names, or existing names of the form p[0-9] are incompatible.
-// TODO(crawshaw): Replace invalid unicode names.
-func paramName(params *types.Tuple, pos int) string {
+func basicParamName(params *types.Tuple, pos int) string {
 	name := params.At(pos).Name()
 	if name == "" || name[0] == '_' || paramRE.MatchString(name) {
 		name = fmt.Sprintf("p%d", pos)
