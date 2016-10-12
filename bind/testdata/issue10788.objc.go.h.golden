@@ -10,6 +10,6 @@
 #include <objc/objc.h>
 void cproxyissue10788_TestInterface_DoSomeWork(int32_t refnum, int32_t s);
 
-void cproxyissue10788_TestInterface_MultipleUnnamedParams(int32_t refnum, nint p0, nstring p1, int64_t p2);
+void cproxyissue10788_TestInterface_MultipleUnnamedParams(int32_t refnum, nint p0, nstring p1, int64_t 日本);
 
 #endif

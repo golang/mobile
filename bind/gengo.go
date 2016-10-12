@@ -40,7 +40,7 @@ func (g *goGen) genFuncBody(o *types.Func, selectorLHS string) {
 	params := sig.Params()
 	for i := 0; i < params.Len(); i++ {
 		p := params.At(i)
-		pn := "param_" + paramName(params, i)
+		pn := "param_" + g.paramName(params, i)
 		g.genRead("_"+pn, pn, p.Type(), modeTransient)
 	}
 
@@ -64,7 +64,7 @@ func (g *goGen) genFuncBody(o *types.Func, selectorLHS string) {
 		if i > 0 {
 			g.Printf(", ")
 		}
-		g.Printf("_param_%s", paramName(params, i))
+		g.Printf("_param_%s", g.paramName(params, i))
 	}
 	g.Printf(")\n")
 
@@ -152,7 +152,7 @@ func (g *goGen) genFuncSignature(o *types.Func, objName string) {
 			g.Printf(", ")
 		}
 		p := params.At(i)
-		g.Printf("param_%s C.%s", paramName(params, i), g.cgoType(p.Type()))
+		g.Printf("param_%s C.%s", g.paramName(params, i), g.cgoType(p.Type()))
 	}
 	g.Printf(") ")
 	res := sig.Results()
@@ -167,6 +167,10 @@ func (g *goGen) genFuncSignature(o *types.Func, objName string) {
 		g.Printf(") ")
 	}
 	g.Printf("{\n")
+}
+
+func (g *goGen) paramName(params *types.Tuple, pos int) string {
+	return basicParamName(params, pos)
 }
 
 func (g *goGen) genFunc(o *types.Func) {
@@ -314,7 +318,7 @@ func (g *goGen) genInterface(obj *types.TypeName) {
 			if i > 0 {
 				g.Printf(", ")
 			}
-			g.Printf("param_%s %s", paramName(params, i), g.typeString(params.At(i).Type()))
+			g.Printf("param_%s %s", g.paramName(params, i), g.typeString(params.At(i).Type()))
 		}
 		g.Printf(") ")
 
@@ -327,7 +331,7 @@ func (g *goGen) genInterface(obj *types.TypeName) {
 		g.Indent()
 
 		for i := 0; i < params.Len(); i++ {
-			pn := "param_" + paramName(params, i)
+			pn := "param_" + g.paramName(params, i)
 			g.genWrite("_"+pn, pn, params.At(i).Type(), modeTransient)
 		}
 
@@ -336,7 +340,7 @@ func (g *goGen) genInterface(obj *types.TypeName) {
 		}
 		g.Printf("C.cproxy%s_%s_%s(C.int32_t(p.Bind_proxy_refnum__())", g.pkgPrefix, obj.Name(), m.Name())
 		for i := 0; i < params.Len(); i++ {
-			g.Printf(", _param_%s", paramName(params, i))
+			g.Printf(", _param_%s", g.paramName(params, i))
 		}
 		g.Printf(")\n")
 		var retName string

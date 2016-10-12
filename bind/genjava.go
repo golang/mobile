@@ -9,6 +9,7 @@ import (
 	"go/constant"
 	"go/types"
 	"math"
+	"regexp"
 	"strings"
 
 	"golang.org/x/mobile/internal/importers/java"
@@ -274,7 +275,7 @@ func (g *JavaGen) genConstructor(f *types.Func, n string, jcls bool) {
 			if i > 0 {
 				g.Printf(", ")
 			}
-			g.Printf(paramName(params, i))
+			g.Printf(g.paramName(params, i))
 		}
 		g.Printf(");\n")
 	}
@@ -284,7 +285,7 @@ func (g *JavaGen) genConstructor(f *types.Func, n string, jcls bool) {
 		if i > 0 {
 			g.Printf(", ")
 		}
-		g.Printf(paramName(params, i))
+		g.Printf(g.paramName(params, i))
 	}
 	g.Printf(");\n")
 	g.Outdent()
@@ -310,7 +311,7 @@ func (g *JavaGen) genFuncArgs(f *types.Func, jm *java.Func, hasThis bool) {
 			g.Printf(", ")
 		}
 		v := params.At(i)
-		name := paramName(params, i)
+		name := g.paramName(params, i)
 		jt := g.javaType(v.Type())
 		g.Printf("%s %s", jt, name)
 	}
@@ -615,7 +616,7 @@ func (g *JavaGen) genJNIFuncSignature(o *types.Func, sName string, jm *java.Func
 	for ; i < params.Len(); i++ {
 		g.Printf(", ")
 		v := sig.Params().At(i)
-		name := paramName(params, i)
+		name := g.paramName(params, i)
 		jt := g.jniType(v.Type())
 		g.Printf("%s %s", jt, name)
 	}
@@ -624,6 +625,16 @@ func (g *JavaGen) genJNIFuncSignature(o *types.Func, sName string, jm *java.Func
 
 func (g *JavaGen) jniPkgName() string {
 	return strings.Replace(g.javaPkgName(g.Pkg), ".", "_", -1)
+}
+
+var javaLetterDigitRE = regexp.MustCompile(`[0-9a-zA-Z$_]`)
+
+func (g *JavaGen) paramName(params *types.Tuple, pos int) string {
+	name := basicParamName(params, pos)
+	if !javaLetterDigitRE.MatchString(name) {
+		name = fmt.Sprintf("p%d", pos)
+	}
+	return name
 }
 
 func (g *JavaGen) genFuncSignature(o *types.Func, jm *java.Func, hasThis bool) {
@@ -928,12 +939,12 @@ func (g *JavaGen) genJNIConstructor(f *types.Func, sName string) {
 	for i := 0; i < params.Len(); i++ {
 		v := params.At(i)
 		jt := g.jniType(v.Type())
-		g.Printf(", %s %s", jt, paramName(params, i))
+		g.Printf(", %s %s", jt, g.paramName(params, i))
 	}
 	g.Printf(") {\n")
 	g.Indent()
 	for i := 0; i < params.Len(); i++ {
-		name := paramName(params, i)
+		name := g.paramName(params, i)
 		g.genJavaToC(name, params.At(i).Type(), modeTransient)
 	}
 	// Constructors always have one result parameter, a *T.
@@ -942,11 +953,11 @@ func (g *JavaGen) genJNIConstructor(f *types.Func, sName string) {
 		if i > 0 {
 			g.Printf(", ")
 		}
-		g.Printf("_%s", paramName(params, i))
+		g.Printf("_%s", g.paramName(params, i))
 	}
 	g.Printf(");\n")
 	for i := 0; i < params.Len(); i++ {
-		g.genRelease(paramName(params, i), params.At(i).Type(), modeTransient)
+		g.genRelease(g.paramName(params, i), params.At(i).Type(), modeTransient)
 	}
 	// Pass no proxy class so that the Seq.Ref is returned instead.
 	g.Printf("return go_seq_from_refnum(env, refnum, NULL, NULL);\n")
@@ -989,10 +1000,10 @@ func (g *JavaGen) genJNIFuncBody(o *types.Func, sName string, jm *java.Func, isj
 	if isjava && params.Len() > 0 && params.At(0).Name() == "this" {
 		// Start after the implicit this argument.
 		first = 1
-		g.Printf("int32_t _%s = go_seq_to_refnum(env, __this__);\n", paramName(params, 0))
+		g.Printf("int32_t _%s = go_seq_to_refnum(env, __this__);\n", g.paramName(params, 0))
 	}
 	for i := first; i < params.Len(); i++ {
-		name := paramName(params, i)
+		name := g.paramName(params, i)
 		g.genJavaToC(name, params.At(i).Type(), modeTransient)
 	}
 	resPrefix := ""
@@ -1013,11 +1024,11 @@ func (g *JavaGen) genJNIFuncBody(o *types.Func, sName string, jm *java.Func, isj
 		if i > 0 || sName != "" {
 			g.Printf(", ")
 		}
-		g.Printf("_%s", paramName(params, i))
+		g.Printf("_%s", g.paramName(params, i))
 	}
 	g.Printf(");\n")
 	for i := first; i < params.Len(); i++ {
-		g.genRelease(paramName(params, i), params.At(i).Type(), modeTransient)
+		g.genRelease(g.paramName(params, i), params.At(i).Type(), modeTransient)
 	}
 	for i := 0; i < res.Len(); i++ {
 		tn := fmt.Sprintf("_r%d", i)
@@ -1061,12 +1072,12 @@ func (g *JavaGen) genMethodInterfaceProxy(oName string, m *types.Func) {
 	sig := m.Type().(*types.Signature)
 	params := sig.Params()
 	res := sig.Results()
-	g.genInterfaceMethodSignature(m, oName, false)
+	g.genInterfaceMethodSignature(m, oName, false, g.paramName)
 	g.Indent()
 	g.Printf("JNIEnv *env = go_seq_push_local_frame(%d);\n", params.Len())
 	g.Printf("jobject o = go_seq_from_refnum(env, refnum, proxy_class_%s_%s, proxy_class_%s_%s_cons);\n", g.pkgPrefix, oName, g.pkgPrefix, oName)
 	for i := 0; i < params.Len(); i++ {
-		pn := paramName(params, i)
+		pn := g.paramName(params, i)
 		g.genCToJava("_"+pn, pn, params.At(i).Type(), modeTransient)
 	}
 	if res.Len() > 0 && !isErrorType(res.At(0).Type()) {
@@ -1077,7 +1088,7 @@ func (g *JavaGen) genMethodInterfaceProxy(oName string, m *types.Func) {
 	}
 	g.Printf("mid_%s_%s", oName, m.Name())
 	for i := 0; i < params.Len(); i++ {
-		g.Printf(", _%s", paramName(params, i))
+		g.Printf(", _%s", g.paramName(params, i))
 	}
 	g.Printf(");\n")
 	var retName string
@@ -1127,7 +1138,7 @@ func (g *JavaGen) GenH() error {
 				g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", iface.obj.Name(), m.Name())
 				continue
 			}
-			g.genInterfaceMethodSignature(m, iface.obj.Name(), true)
+			g.genInterfaceMethodSignature(m, iface.obj.Name(), true, g.paramName)
 			g.Printf("\n")
 		}
 	}

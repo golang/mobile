@@ -64,7 +64,7 @@ func (g *objcGen) genGoH() error {
 				g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", i.obj.Name(), m.Name())
 				continue
 			}
-			g.genInterfaceMethodSignature(m, i.obj.Name(), true)
+			g.genInterfaceMethodSignature(m, i.obj.Name(), true, g.paramName)
 			g.Printf("\n")
 		}
 	}
@@ -366,7 +366,7 @@ func (g *objcGen) funcSummary(obj *types.Func) *funcSummary {
 		p := params.At(i)
 		v := paramInfo{
 			typ:  p.Type(),
-			name: paramName(params, i),
+			name: g.paramName(params, i),
 		}
 		s.params = append(s.params, v)
 	}
@@ -477,6 +477,10 @@ func (s *funcSummary) callMethod(g *objcGen) string {
 
 func (s *funcSummary) returnsVal() bool {
 	return len(s.retParams) == 1 && !isErrorType(s.retParams[0].typ)
+}
+
+func (g *objcGen) paramName(params *types.Tuple, pos int) string {
+	return basicParamName(params, pos)
 }
 
 func (g *objcGen) genFuncH(obj *types.Func) {
@@ -776,7 +780,7 @@ func (g *objcGen) genInterfaceM(obj *types.TypeName, t *types.Interface) bool {
 func (g *objcGen) genInterfaceMethodProxy(obj *types.TypeName, m *types.Func) {
 	oName := obj.Name()
 	s := g.funcSummary(m)
-	g.genInterfaceMethodSignature(m, oName, false)
+	g.genInterfaceMethodSignature(m, oName, false, g.paramName)
 	g.Indent()
 	g.Printf("@autoreleasepool {\n")
 	g.Indent()

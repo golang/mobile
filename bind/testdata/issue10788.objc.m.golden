@@ -54,12 +54,12 @@
 	proxyissue10788_TestInterface_DoSomeWork(refnum, _s);
 }
 
-- (void)multipleUnnamedParams:(long)p0 p1:(NSString*)p1 p2:(int64_t)p2 {
+- (void)multipleUnnamedParams:(long)p0 p1:(NSString*)p1 日本:(int64_t)日本 {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	nint _p0 = (nint)p0;
 	nstring _p1 = go_seq_from_objc_string(p1);
-	int64_t _p2 = (int64_t)p2;
-	proxyissue10788_TestInterface_MultipleUnnamedParams(refnum, _p0, _p1, _p2);
+	int64_t _日本 = (int64_t)日本;
+	proxyissue10788_TestInterface_MultipleUnnamedParams(refnum, _p0, _p1, _日本);
 }
 
 @end
@@ -81,13 +81,13 @@ void cproxyissue10788_TestInterface_DoSomeWork(int32_t refnum, int32_t s) {
 	}
 }
 
-void cproxyissue10788_TestInterface_MultipleUnnamedParams(int32_t refnum, nint p0, nstring p1, int64_t p2) {
+void cproxyissue10788_TestInterface_MultipleUnnamedParams(int32_t refnum, nint p0, nstring p1, int64_t 日本) {
 	@autoreleasepool {
 		GoIssue10788TestInterface* o = go_seq_objc_from_refnum(refnum);
 		long _p0 = (long)p0;
 		NSString *_p1 = go_seq_to_objc_string(p1);
-		int64_t _p2 = (int64_t)p2;
-		[o multipleUnnamedParams:_p0 p1:_p1 p2:_p2];
+		int64_t _日本 = (int64_t)日本;
+		[o multipleUnnamedParams:_p0 p1:_p1 日本:_日本];
 	}
 }
 
