@@ -155,6 +155,47 @@ Usage:
 
 	gomobile version
 
-Version prints versions of the gomobile binary and tools
+Version prints versions of the gomobile binary and tools.
+
+
+Gobind gradle plugin
+
+The gobind gradle plugin integrates gomobile (and gobind) with the Android gradle
+build system. The plugin supports two modes, library project and direct integration.
+
+The library project mode is suitable for exporting Go packages to Android apps. To activate it,
+create a gradle subproject and configure the gobind plugin in the build.gradle file:
+
+	apply plugin: "org.golang.mobile.bind"
+
+	gobind {
+		// The Go package path; must be under one of the GOPATH elements or
+		// a relative to the current directory (e.g. ../../hello)
+		pkg = "golang.org/x/mobile/example/bind/hello"
+
+		// Optional GOPATH.
+		// GOPATH = "/YOUR/GOPATH"
+
+		// Optional path to the go executable.
+		// GO = "/path/to/go"
+
+		// Optionally, set the absolute path to the gomobile binary.
+		// GOMOBILE = "/path/to/gomobile"
+	}
+
+The direct integration mode is suitable for Go packages that import Java API, Android API,
+project dependencies as well as generated R.* and Android databinding classes. In the
+main Android project build.gradle, apply the gobind plugin after the android plugin:
+
+	apply plugin: 'com.android.application'
+
+	...
+
+	apply plugin: "org.golang.mobile.bind"
+
+	gobind {
+		pkg = "golang.org/x/mobile/example/bind/reverse"
+	}
+
 */
 package main // import "golang.org/x/mobile/cmd/gomobile"
