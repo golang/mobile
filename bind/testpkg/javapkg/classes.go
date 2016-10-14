@@ -28,6 +28,8 @@ type GoRunnable struct {
 	lang.Object
 	lang.Runnable
 	this lang.Runnable
+
+	Field string
 }
 
 func (r *GoRunnable) ToString(this lang.Runnable) string {

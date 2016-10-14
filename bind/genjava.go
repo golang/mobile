@@ -889,7 +889,7 @@ func (g *JavaGen) genJNIField(o *types.TypeName, f *types.Var) {
 	g.Printf("JNIEXPORT void JNICALL\n")
 	g.Printf("Java_%s_%s_set%s(JNIEnv *env, jobject this, %s v) {\n", g.jniPkgName(), o.Name(), f.Name(), g.jniType(f.Type()))
 	g.Indent()
-	g.Printf("int32_t o = go_seq_to_refnum(env, this);\n")
+	g.Printf("int32_t o = go_seq_to_refnum_go(env, this);\n")
 	g.genJavaToC("v", f.Type(), modeRetained)
 	g.Printf("proxy%s_%s_%s_Set(o, _v);\n", g.pkgPrefix, o.Name(), f.Name())
 	g.genRelease("v", f.Type(), modeRetained)
@@ -900,7 +900,7 @@ func (g *JavaGen) genJNIField(o *types.TypeName, f *types.Var) {
 	g.Printf("JNIEXPORT %s JNICALL\n", g.jniType(f.Type()))
 	g.Printf("Java_%s_%s_get%s(JNIEnv *env, jobject this) {\n", g.jniPkgName(), o.Name(), f.Name())
 	g.Indent()
-	g.Printf("int32_t o = go_seq_to_refnum(env, this);\n")
+	g.Printf("int32_t o = go_seq_to_refnum_go(env, this);\n")
 	g.Printf("%s r0 = ", g.cgoType(f.Type()))
 	g.Printf("proxy%s_%s_%s_Get(o);\n", g.pkgPrefix, o.Name(), f.Name())
 	g.genCToJava("_r0", "r0", f.Type(), modeRetained)
@@ -996,13 +996,7 @@ func (g *JavaGen) genJNIFuncBody(o *types.Func, sName string, jm *java.Func, isj
 	sig := o.Type().(*types.Signature)
 	res := sig.Results()
 	if sName != "" {
-		if isjava {
-			// We need the Go object backing this GoObject. Use
-			// the _go variant (here only) to get the Go refnum.
-			g.Printf("int32_t o = go_seq_to_refnum_go(env, __this__);\n")
-		} else {
-			g.Printf("int32_t o = go_seq_to_refnum(env, __this__);\n")
-		}
+		g.Printf("int32_t o = go_seq_to_refnum_go(env, __this__);\n")
 	}
 	params := sig.Params()
 	first := 0

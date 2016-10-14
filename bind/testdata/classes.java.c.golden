@@ -166,14 +166,14 @@ Java_go_java_Future_get__JLjava_util_concurrent_TimeUnit_2(JNIEnv* env, jobject 
 
 JNIEXPORT void JNICALL
 Java_go_java_Future_setFuture(JNIEnv *env, jobject this, jobject v) {
-    int32_t o = go_seq_to_refnum(env, this);
+    int32_t o = go_seq_to_refnum_go(env, this);
     int32_t _v = go_seq_to_refnum(env, v);
     proxyjava_Future_Future_Set(o, _v);
 }
 
 JNIEXPORT jobject JNICALL
 Java_go_java_Future_getFuture(JNIEnv *env, jobject this) {
-    int32_t o = go_seq_to_refnum(env, this);
+    int32_t o = go_seq_to_refnum_go(env, this);
     int32_t r0 = proxyjava_Future_Future_Get(o);
     jobject _r0 = go_seq_from_refnum(env, r0, NULL, NULL);
     return _r0;
@@ -197,14 +197,14 @@ Java_go_java_InputStream_read__(JNIEnv* env, jobject __this__) {
 
 JNIEXPORT void JNICALL
 Java_go_java_InputStream_setInputStream(JNIEnv *env, jobject this, jobject v) {
-    int32_t o = go_seq_to_refnum(env, this);
+    int32_t o = go_seq_to_refnum_go(env, this);
     int32_t _v = go_seq_to_refnum(env, v);
     proxyjava_InputStream_InputStream_Set(o, _v);
 }
 
 JNIEXPORT jobject JNICALL
 Java_go_java_InputStream_getInputStream(JNIEnv *env, jobject this) {
-    int32_t o = go_seq_to_refnum(env, this);
+    int32_t o = go_seq_to_refnum_go(env, this);
     int32_t r0 = proxyjava_InputStream_InputStream_Get(o);
     jobject _r0 = go_seq_from_refnum(env, r0, NULL, NULL);
     return _r0;
@@ -218,14 +218,14 @@ Java_go_java_Object__1_1New(JNIEnv *env, jclass clazz) {
 
 JNIEXPORT void JNICALL
 Java_go_java_Object_setObject(JNIEnv *env, jobject this, jobject v) {
-    int32_t o = go_seq_to_refnum(env, this);
+    int32_t o = go_seq_to_refnum_go(env, this);
     int32_t _v = go_seq_to_refnum(env, v);
     proxyjava_Object_Object_Set(o, _v);
 }
 
 JNIEXPORT jobject JNICALL
 Java_go_java_Object_getObject(JNIEnv *env, jobject this) {
-    int32_t o = go_seq_to_refnum(env, this);
+    int32_t o = go_seq_to_refnum_go(env, this);
     int32_t r0 = proxyjava_Object_Object_Get(o);
     jobject _r0 = go_seq_from_refnum(env, r0, NULL, NULL);
     return _r0;
@@ -246,14 +246,14 @@ Java_go_java_Runnable_run(JNIEnv* env, jobject __this__) {
 
 JNIEXPORT void JNICALL
 Java_go_java_Runnable_setRunnable(JNIEnv *env, jobject this, jobject v) {
-    int32_t o = go_seq_to_refnum(env, this);
+    int32_t o = go_seq_to_refnum_go(env, this);
     int32_t _v = go_seq_to_refnum(env, v);
     proxyjava_Runnable_Runnable_Set(o, _v);
 }
 
 JNIEXPORT jobject JNICALL
 Java_go_java_Runnable_getRunnable(JNIEnv *env, jobject this) {
-    int32_t o = go_seq_to_refnum(env, this);
+    int32_t o = go_seq_to_refnum_go(env, this);
     int32_t r0 = proxyjava_Runnable_Runnable_Get(o);
     jobject _r0 = go_seq_from_refnum(env, r0, NULL, NULL);
     return _r0;
