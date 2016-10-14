@@ -451,11 +451,20 @@ func fetchNDK() error {
 				return err
 			}
 		}
-		for _, name := range []string{"clang", "clang++"} {
+		for _, toname := range []string{"clang", "clang++"} {
+			fromname := toname
 			if goos == "windows" {
-				name += ".exe"
+				if goarch == "386" {
+					if toname == "clang++" {
+						// there is no 32-bit version of clang++
+						continue
+					}
+					fromname += "_32"
+				}
+				fromname += ".exe"
+				toname += ".exe"
 			}
-			if err := symlink(filepath.Join(llvmdst, "bin", name), filepath.Join(dst, "bin", toolchain.toolPrefix+"-"+name)); err != nil {
+			if err := symlink(filepath.Join(llvmdst, "bin", fromname), filepath.Join(dst, "bin", toolchain.toolPrefix+"-"+toname)); err != nil {
 				return err
 			}
 		}
