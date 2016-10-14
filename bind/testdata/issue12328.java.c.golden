@@ -28,14 +28,14 @@ Java_go_issue12328_T__1_1New(JNIEnv *env, jclass clazz) {
 
 JNIEXPORT void JNICALL
 Java_go_issue12328_T_setErr(JNIEnv *env, jobject this, jobject v) {
-    int32_t o = go_seq_to_refnum(env, this);
+    int32_t o = go_seq_to_refnum_go(env, this);
     int32_t _v = go_seq_to_refnum(env, v);
     proxyissue12328_T_Err_Set(o, _v);
 }
 
 JNIEXPORT jobject JNICALL
 Java_go_issue12328_T_getErr(JNIEnv *env, jobject this) {
-    int32_t o = go_seq_to_refnum(env, this);
+    int32_t o = go_seq_to_refnum_go(env, this);
     int32_t r0 = proxyissue12328_T_Err_Get(o);
     jobject _r0 = go_seq_from_refnum(env, r0, proxy_class__error, proxy_class__error_cons);
     return _r0;

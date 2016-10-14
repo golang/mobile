@@ -114,7 +114,7 @@ Java_go_interfaces_Interfaces_seven(JNIEnv* env, jclass _clazz) {
 
 JNIEXPORT void JNICALL
 Java_go_interfaces_Interfaces_00024proxyError_err(JNIEnv* env, jobject __this__) {
-    int32_t o = go_seq_to_refnum(env, __this__);
+    int32_t o = go_seq_to_refnum_go(env, __this__);
     int32_t r0 = proxyinterfaces_Error_Err(o);
     jobject _r0 = go_seq_from_refnum(env, r0, proxy_class__error, proxy_class__error_cons);
     go_seq_maybe_throw_exception(env, _r0);
@@ -132,7 +132,7 @@ int32_t cproxyinterfaces_Error_Err(int32_t refnum) {
 
 JNIEXPORT jint JNICALL
 Java_go_interfaces_Interfaces_00024proxyI_rand(JNIEnv* env, jobject __this__) {
-    int32_t o = go_seq_to_refnum(env, __this__);
+    int32_t o = go_seq_to_refnum_go(env, __this__);
     int32_t r0 = proxyinterfaces_I_Rand(o);
     jint _r0 = (jint)r0;
     return _r0;
@@ -149,7 +149,7 @@ int32_t cproxyinterfaces_I_Rand(int32_t refnum) {
 
 JNIEXPORT void JNICALL
 Java_go_interfaces_Interfaces_00024proxyI1_j(JNIEnv* env, jobject __this__) {
-    int32_t o = go_seq_to_refnum(env, __this__);
+    int32_t o = go_seq_to_refnum_go(env, __this__);
     proxyinterfaces_I1_J(o);
 }
 
@@ -162,7 +162,7 @@ void cproxyinterfaces_I1_J(int32_t refnum) {
 
 JNIEXPORT void JNICALL
 Java_go_interfaces_Interfaces_00024proxyI2_g(JNIEnv* env, jobject __this__) {
-    int32_t o = go_seq_to_refnum(env, __this__);
+    int32_t o = go_seq_to_refnum_go(env, __this__);
     proxyinterfaces_I2_G(o);
 }
 
@@ -175,7 +175,7 @@ void cproxyinterfaces_I2_G(int32_t refnum) {
 
 JNIEXPORT jobject JNICALL
 Java_go_interfaces_Interfaces_00024proxyI3_f(JNIEnv* env, jobject __this__) {
-    int32_t o = go_seq_to_refnum(env, __this__);
+    int32_t o = go_seq_to_refnum_go(env, __this__);
     int32_t r0 = proxyinterfaces_I3_F(o);
     jobject _r0 = go_seq_from_refnum(env, r0, proxy_class_interfaces_I1, proxy_class_interfaces_I1_cons);
     return _r0;
@@ -192,7 +192,7 @@ int32_t cproxyinterfaces_I3_F(int32_t refnum) {
 
 JNIEXPORT void JNICALL
 Java_go_interfaces_Interfaces_00024proxyLargerI_anotherFunc(JNIEnv* env, jobject __this__) {
-    int32_t o = go_seq_to_refnum(env, __this__);
+    int32_t o = go_seq_to_refnum_go(env, __this__);
     proxyinterfaces_LargerI_AnotherFunc(o);
 }
 
@@ -205,7 +205,7 @@ void cproxyinterfaces_LargerI_AnotherFunc(int32_t refnum) {
 
 JNIEXPORT jint JNICALL
 Java_go_interfaces_Interfaces_00024proxyLargerI_rand(JNIEnv* env, jobject __this__) {
-    int32_t o = go_seq_to_refnum(env, __this__);
+    int32_t o = go_seq_to_refnum_go(env, __this__);
     int32_t r0 = proxyinterfaces_LargerI_Rand(o);
     jint _r0 = (jint)r0;
     return _r0;
@@ -222,7 +222,7 @@ int32_t cproxyinterfaces_LargerI_Rand(int32_t refnum) {
 
 JNIEXPORT jint JNICALL
 Java_go_interfaces_Interfaces_00024proxySameI_rand(JNIEnv* env, jobject __this__) {
-    int32_t o = go_seq_to_refnum(env, __this__);
+    int32_t o = go_seq_to_refnum_go(env, __this__);
     int32_t r0 = proxyinterfaces_SameI_Rand(o);
     jint _r0 = (jint)r0;
     return _r0;
@@ -239,7 +239,7 @@ int32_t cproxyinterfaces_SameI_Rand(int32_t refnum) {
 
 JNIEXPORT void JNICALL
 Java_go_interfaces_Interfaces_00024proxyWithParam_hasParam(JNIEnv* env, jobject __this__, jboolean p0) {
-    int32_t o = go_seq_to_refnum(env, __this__);
+    int32_t o = go_seq_to_refnum_go(env, __this__);
     char _p0 = (char)p0;
     proxyinterfaces_WithParam_HasParam(o, _p0);
 }

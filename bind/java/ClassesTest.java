@@ -71,6 +71,11 @@ public class ClassesTest extends InstrumentationTestCase {
 		assertNotNull("RuntimeException", exc);
 	}
 
+	public void testField() {
+		GoRunnable r = new GoRunnable();
+		String f = r.getField();
+	}
+
 	public void testGoObject() {
 		Runnable r = new GoRunnable();
 		r.run();
