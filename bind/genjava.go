@@ -941,6 +941,7 @@ func (g *JavaGen) genJNIConstructor(f *types.Func, sName string) {
 		return
 	}
 	sig := f.Type().(*types.Signature)
+	res := sig.Results()
 
 	g.Printf("JNIEXPORT jobject JNICALL\n")
 	g.Printf("Java_%s_%s_%s(JNIEnv *env, jclass clazz", g.jniPkgName(), sName, java.JNIMangle("__"+f.Name()))
@@ -956,8 +957,12 @@ func (g *JavaGen) genJNIConstructor(f *types.Func, sName string) {
 		name := g.paramName(params, i)
 		g.genJavaToC(name, params.At(i).Type(), modeTransient)
 	}
-	// Constructors always have one result parameter, a *T.
-	g.Printf("int32_t refnum = proxy%s__%s(", g.pkgPrefix, f.Name())
+	// Constructors always return a mandatory *T and an optional error
+	if res.Len() == 1 {
+		g.Printf("int32_t refnum = proxy%s__%s(", g.pkgPrefix, f.Name())
+	} else {
+		g.Printf("struct proxy%s__%s_return res = proxy%s__%s(", g.pkgPrefix, f.Name(), g.pkgPrefix, f.Name())
+	}
 	for i := 0; i < params.Len(); i++ {
 		if i > 0 {
 			g.Printf(", ")
@@ -967,6 +972,12 @@ func (g *JavaGen) genJNIConstructor(f *types.Func, sName string) {
 	g.Printf(");\n")
 	for i := 0; i < params.Len(); i++ {
 		g.genRelease(g.paramName(params, i), params.At(i).Type(), modeTransient)
+	}
+	// Extract multi returns and handle errors
+	if res.Len() == 2 {
+		g.Printf("int32_t refnum = res.r0;\n")
+		g.genCToJava("_err", "res.r1", res.At(1).Type(), modeRetained)
+		g.Printf("go_seq_maybe_throw_exception(env, _err);\n")
 	}
 	// Pass no proxy class so that the Seq.Ref is returned instead.
 	g.Printf("return go_seq_from_refnum(env, refnum, NULL, NULL);\n")

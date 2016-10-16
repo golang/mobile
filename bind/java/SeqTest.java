@@ -530,12 +530,27 @@ public class SeqTest extends InstrumentationTestCase {
   public void testConstructor() {
     Interface i = new Concrete();
     i.f();
+
     S2 s = new S2(1, 2);
     assertEquals("new S2().sum", 3.0, s.sum());
     assertEquals("new S2().tryTwoStrings", "gostring", s.tryTwoStrings("go", "string"));
-	new S3();
-	S4 s4 = new S4(123);
-	assertEquals("Constructor argument", 123, s4.getI());
+
+	  new S3();
+
+	  S4 s4 = new S4(123);
+	  assertEquals("Constructor argument", 123, s4.getI());
+
+    s4 = new S4(123.456);
+    assertEquals("Overloaded constructor argument", 123, s4.getI());
+
+    s4 = new S4(false);
+    assertEquals("Exceptional constructor", 0, s4.getI());
+
+    try {
+      s4 = new S4(true);
+      fail("Constructor error wasn't caught");
+    } catch (Exception e) {
+    }
   }
 
   public void testEmptyError() {

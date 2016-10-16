@@ -175,13 +175,14 @@ func (g *Generator) Init() {
 	}
 }
 
-// constructorType returns the type T for a function on the form
+// constructorType returns the type T for a function of the forms:
 //
-// func NewT(...) *T
+// func NewT...(...) *T
+// func NewT...(...) (*T, error)
 func (g *Generator) constructorType(f *types.Func) *types.TypeName {
 	sig := f.Type().(*types.Signature)
 	res := sig.Results()
-	if res.Len() != 1 {
+	if res.Len() != 1 && !(res.Len() == 2 && isErrorType(res.At(1).Type())) {
 		return nil
 	}
 	rt := res.At(0).Type()

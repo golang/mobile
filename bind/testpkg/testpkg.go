@@ -558,3 +558,14 @@ type S4 struct {
 func NewS4WithInt(i int) *S4 {
 	return &S4{i}
 }
+
+func NewS4WithFloat(f float64) *S4 {
+	return &S4{int(f)}
+}
+
+func NewS4WithBoolAndError(b bool) (*S4, error) {
+	if b {
+		return nil, errors.New("some error")
+	}
+	return new(S4), nil
+}
