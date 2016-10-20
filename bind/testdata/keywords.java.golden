@@ -151,4 +151,6 @@ public abstract class Keywords {
     }
     
     
+    public static native void const_(String id);
+    public static native void static_(String strictfp_);
 }

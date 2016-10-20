@@ -634,7 +634,7 @@ func (g *JavaGen) paramName(params *types.Tuple, pos int) string {
 	if !javaLetterDigitRE.MatchString(name) {
 		name = fmt.Sprintf("p%d", pos)
 	}
-	return name
+	return javaNameReplacer(name)
 }
 
 func (g *JavaGen) genFuncSignature(o *types.Func, jm *java.Func, hasThis bool) {

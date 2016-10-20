@@ -573,7 +573,8 @@ func (s *funcSummary) returnsVal() bool {
 }
 
 func (g *ObjcGen) paramName(params *types.Tuple, pos int) string {
-	return basicParamName(params, pos)
+	name := basicParamName(params, pos)
+	return objcNameReplacer(name)
 }
 
 func (g *ObjcGen) genFuncH(obj *types.Func) {

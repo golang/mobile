@@ -607,3 +607,15 @@ func (p *proxykeywords_KeywordCaller) Volatile() {
 func (p *proxykeywords_KeywordCaller) While() {
 	C.cproxykeywords_KeywordCaller_While(C.int32_t(p.Bind_proxy_refnum__()))
 }
+
+//export proxykeywords__Const
+func proxykeywords__Const(param_id C.nstring) {
+	_param_id := decodeString(param_id)
+	keywords.Const(_param_id)
+}
+
+//export proxykeywords__Static
+func proxykeywords__Static(param_strictfp C.nstring) {
+	_param_strictfp := decodeString(param_strictfp)
+	keywords.Static(_param_strictfp)
+}

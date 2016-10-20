@@ -59,3 +59,6 @@ type KeywordCaller interface {
 	Null()
 	True()
 }
+
+func Const(id string)        {}
+func Static(strictfp string) {}
