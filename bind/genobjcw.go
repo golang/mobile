@@ -163,7 +163,7 @@ func (g *ObjcWrapper) genCFuncBody(n *objc.Named, f *objc.Func, super bool) {
 	}
 	g.Printf(");\n")
 	if errParam != nil {
-		g.Printf("id<GoUniverseerror> _%s = nil;\n", errParam.Name)
+		g.Printf("NSError *_%s = nil;\n", errParam.Name)
 		if f.Ret != nil {
 			g.Printf("if (!res && %s != nil) {\n", errParam.Name)
 		} else {

@@ -926,7 +926,7 @@ func (g *ObjcGen) genInterfaceMethodProxy(obj *types.TypeName, m *types.Func) {
 			var rets []string
 			for i, p := range s.retParams {
 				if isErrorType(p.typ) {
-					g.Printf("id<GoUniverseerror> _%s = nil;\n", p.name)
+					g.Printf("NSError *_%s = nil;\n", p.name)
 					if i == len(s.retParams)-1 { // last param.
 						g.Printf("if (!returnVal) {\n")
 					} else {
