@@ -69,6 +69,10 @@
 - (void)while;
 @end
 
+FOUNDATION_EXPORT void GoKeywordsConst(NSString* id_);
+
+FOUNDATION_EXPORT void GoKeywordsStatic(NSString* strictfp);
+
 @class GoKeywordsKeywordCaller;
 
 @interface GoKeywordsKeywordCaller : NSObject <goSeqRefInterface, GoKeywordsKeywordCaller> {

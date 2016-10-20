@@ -129,6 +129,18 @@ Java_go_keywords_Keywords__1init(JNIEnv *env, jclass _unused) {
 }
 
 JNIEXPORT void JNICALL
+Java_go_keywords_Keywords_const_1(JNIEnv* env, jclass _clazz, jstring id) {
+    nstring _id = go_seq_from_java_string(env, id);
+    proxykeywords__Const(_id);
+}
+
+JNIEXPORT void JNICALL
+Java_go_keywords_Keywords_static_1(JNIEnv* env, jclass _clazz, jstring strictfp_) {
+    nstring _strictfp_ = go_seq_from_java_string(env, strictfp_);
+    proxykeywords__Static(_strictfp_);
+}
+
+JNIEXPORT void JNICALL
 Java_go_keywords_Keywords_00024proxyKeywordCaller_abstract_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Abstract(o);

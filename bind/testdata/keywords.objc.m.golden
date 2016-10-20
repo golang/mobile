@@ -286,6 +286,16 @@
 
 
 
+void GoKeywordsConst(NSString* id_) {
+	nstring _id_ = go_seq_from_objc_string(id_);
+	proxykeywords__Const(_id_);
+}
+
+void GoKeywordsStatic(NSString* strictfp) {
+	nstring _strictfp = go_seq_from_objc_string(strictfp);
+	proxykeywords__Static(_strictfp);
+}
+
 void cproxykeywords_KeywordCaller_Abstract(int32_t refnum) {
 	@autoreleasepool {
 		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);

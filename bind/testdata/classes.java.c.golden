@@ -240,8 +240,8 @@ Java_go_java_Runnable__1_1New(JNIEnv *env, jclass clazz) {
 JNIEXPORT void JNICALL
 Java_go_java_Runnable_run(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
-    int32_t _this = go_seq_to_refnum(env, __this__);
-    proxyjava_Runnable_Run(o, _this);
+    int32_t _this_ = go_seq_to_refnum(env, __this__);
+    proxyjava_Runnable_Run(o, _this_);
 }
 
 JNIEXPORT void JNICALL
