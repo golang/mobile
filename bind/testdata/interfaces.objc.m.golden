@@ -232,7 +232,7 @@ int32_t cproxyinterfaces_Error_Err(int32_t refnum) {
 		GoInterfacesError* o = go_seq_objc_from_refnum(refnum);
 		NSError* error = nil;
 		BOOL returnVal = [o err:&error];
-		id<GoUniverseerror> _error = nil;
+		NSError *_error = nil;
 		if (!returnVal) {
 			_error = error;
 		}
