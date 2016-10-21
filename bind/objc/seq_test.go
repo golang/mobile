@@ -48,6 +48,9 @@ func TestObjcSeqTest(t *testing.T) {
 // TestObjcSeqBench runs ObjC test SeqBench.m.
 // This requires the xcode command lines tools.
 func TestObjcSeqBench(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping benchmark in short mode.")
+	}
 	runTest(t, []string{"golang.org/x/mobile/bind/benchmark"}, "xcodebench", "SeqBench.m", true)
 }
 
