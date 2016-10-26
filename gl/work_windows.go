@@ -5,6 +5,7 @@
 package gl
 
 import (
+	"runtime"
 	"syscall"
 	"unsafe"
 )
@@ -108,7 +109,9 @@ func (ctx *context) cStringPtr(str string) (uintptr, func()) {
 func fixFloat(x0, x1, x2, x3 uintptr)
 
 func (ctx *context) doWork(c call) (ret uintptr) {
-	fixFloat(c.args.a0, c.args.a1, c.args.a2, c.args.a3)
+	if runtime.GOARCH == "amd64" {
+		fixFloat(c.args.a0, c.args.a1, c.args.a2, c.args.a3)
+	}
 
 	switch c.args.fn {
 	case glfnActiveTexture:
