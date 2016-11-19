@@ -355,7 +355,7 @@ func (j *importer) importClasses(names []string, allowMissingClasses bool) ([]*C
 	if len(names) == 0 {
 		return nil, nil
 	}
-	args := []string{"-s", "-protected", "-constants"}
+	args := []string{"-J-Duser.language=en", "-s", "-protected", "-constants"}
 	if j.clspath != "" {
 		args = append(args, "-classpath", j.clspath)
 	}
