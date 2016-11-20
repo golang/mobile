@@ -43,7 +43,7 @@ func TestImport(t *testing.T) {
 		for _, m := range test.methods {
 			refs.Names[m.GoName] = struct{}{}
 		}
-		classes, err := Import("", refs)
+		classes, err := Import("", "", refs)
 		if err != nil {
 			t.Fatal(err)
 		}
