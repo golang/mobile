@@ -10,25 +10,25 @@ plugins {
 
 gobind {
   // Package to bind. Separate multiple packages with spaces.
-  pkg "github.com/someone/somepackage"
+  pkg="github.com/someone/somepackage"
 
   // GOPATH
-  GOPATH "/home/gopher"
+  GOPATH="/home/gopher"
 
   // Optional list of architectures. Defaults to all supported architectures.
   GOARCH="arm amd64"
 
   // Absolute path to the gomobile binary. Optional.
-  GOMOBILE "/mypath/bin/gomobile"
+  GOMOBILE="/mypath/bin/gomobile"
 
   // Absolute path to the gomobile binary. Optional.
-  GOBIND "/mypath/bin/gobind"
+  GOBIND="/mypath/bin/gobind"
 
   // Absolute path to the go binary. Optional.
-  GO "/usr/local/go/bin/go"
+  GO="/usr/local/go/bin/go"
 
   // Pass extra parameters to command line. Optional.
-  GOMOBILEFLAGS "-javapkg my.java.package"
+  GOMOBILEFLAGS="-javapkg my.java.package"
 }
 </pre>
 
