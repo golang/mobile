@@ -89,9 +89,6 @@ func (g *ObjcGen) namePrefixOf(pkg *types.Package) string {
 		return "GoUniverse"
 	}
 	p := g.Prefix
-	if p == "" {
-		p = "Go"
-	}
 	return p + strings.Title(pkg.Name())
 }
 
@@ -140,12 +137,12 @@ func (g *ObjcGen) GenH() error {
 	for _, m := range g.modules {
 		g.Printf("@import %s;\n", m)
 	}
-	g.Printf("#include \"GoUniverse.h\"\n\n")
+	g.Printf("#include \"GoUniverse.objc.h\"\n\n")
 
 	if g.Pkg != nil {
 		for _, pkg := range g.Pkg.Imports() {
 			if g.validPkg(pkg) {
-				g.Printf("#include %q\n", g.namePrefixOf(pkg)+".h")
+				g.Printf("#include %q\n", g.namePrefixOf(pkg)+".objc.h")
 			}
 		}
 	}
@@ -239,8 +236,8 @@ func (g *ObjcGen) GenH() error {
 
 func (g *ObjcGen) gobindOpts() string {
 	opts := []string{"-lang=objc"}
-	if g.Prefix != "" {
-		opts = append(opts, "-prefix="+g.Prefix)
+	if g.Prefix != "Go" {
+		opts = append(opts, fmt.Sprintf("-prefix=%q", g.Prefix))
 	}
 	return strings.Join(opts, " ")
 }
@@ -254,7 +251,7 @@ func (g *ObjcGen) GenM() error {
 	g.Printf("#include <Foundation/Foundation.h>\n")
 	g.Printf("#include \"seq.h\"\n")
 	g.Printf("#include \"_cgo_export.h\"\n")
-	g.Printf("#include %q\n", g.namePrefix+".h")
+	g.Printf("#include %q\n", g.namePrefix+".objc.h")
 	g.Printf("\n")
 
 	// struct

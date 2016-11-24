@@ -130,6 +130,7 @@ func TestGenObjc(t *testing.T) {
 
 		var buf bytes.Buffer
 		g := &ObjcGen{
+			Prefix: "Go",
 			Generator: &Generator{
 				Printer: &Printer{Buf: &buf, IndentEach: []byte("\t")},
 				Fset:    fset,
@@ -441,9 +442,12 @@ func testGenGo(t *testing.T, filename string, buf *bytes.Buffer, pkg *types.Pack
 
 func TestCustomPrefix(t *testing.T) {
 	const datafile = "testdata/customprefix.go"
-	const isHeader = true
 	pkg := typeCheck(t, datafile, "")
 
+	type testCase struct {
+		golden string
+		gen    func(w io.Writer) error
+	}
 	var buf bytes.Buffer
 	jg := &JavaGen{
 		JavaPkg: "com.example",
@@ -455,20 +459,7 @@ func TestCustomPrefix(t *testing.T) {
 		},
 	}
 	jg.Init(nil)
-	og := &ObjcGen{
-		Prefix: "EX",
-		Generator: &Generator{
-			Printer: &Printer{Buf: &buf, IndentEach: []byte("    ")},
-			Fset:    fset,
-			AllPkg:  []*types.Package{pkg},
-			Pkg:     pkg,
-		},
-	}
-	og.Init(nil)
-	testCases := []struct {
-		golden string
-		gen    func(w io.Writer) error
-	}{
+	testCases := []testCase{
 		{
 			"testdata/customprefix.java.golden",
 			func(w io.Writer) error {
@@ -507,39 +498,53 @@ func TestCustomPrefix(t *testing.T) {
 				return err
 			},
 		},
-		{
-			"testdata/customprefix.objc.go.h.golden",
-			func(w io.Writer) error {
-				buf.Reset()
-				if err := og.GenGoH(); err != nil {
-					return err
-				}
-				_, err := io.Copy(w, &buf)
-				return err
+	}
+	for _, pref := range []string{"EX", ""} {
+		og := &ObjcGen{
+			Prefix: pref,
+			Generator: &Generator{
+				Printer: &Printer{Buf: &buf, IndentEach: []byte("    ")},
+				Fset:    fset,
+				AllPkg:  []*types.Package{pkg},
+				Pkg:     pkg,
 			},
-		},
-		{
-			"testdata/customprefix.objc.h.golden",
-			func(w io.Writer) error {
-				buf.Reset()
-				if err := og.GenH(); err != nil {
+		}
+		og.Init(nil)
+		testCases = append(testCases, []testCase{
+			{
+				"testdata/customprefix" + pref + ".objc.go.h.golden",
+				func(w io.Writer) error {
+					buf.Reset()
+					if err := og.GenGoH(); err != nil {
+						return err
+					}
+					_, err := io.Copy(w, &buf)
 					return err
-				}
-				_, err := io.Copy(w, &buf)
-				return err
+				},
 			},
-		},
-		{
-			"testdata/customprefix.objc.m.golden",
-			func(w io.Writer) error {
-				buf.Reset()
-				if err := og.GenM(); err != nil {
+			{
+				"testdata/customprefix" + pref + ".objc.h.golden",
+				func(w io.Writer) error {
+					buf.Reset()
+					if err := og.GenH(); err != nil {
+						return err
+					}
+					_, err := io.Copy(w, &buf)
 					return err
-				}
-				_, err := io.Copy(w, &buf)
-				return err
+				},
 			},
-		},
+			{
+				"testdata/customprefix" + pref + ".objc.m.golden",
+				func(w io.Writer) error {
+					buf.Reset()
+					if err := og.GenM(); err != nil {
+						return err
+					}
+					_, err := io.Copy(w, &buf)
+					return err
+				},
+			},
+		}...)
 	}
 
 	for _, tc := range testCases {

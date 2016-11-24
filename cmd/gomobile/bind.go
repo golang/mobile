@@ -94,7 +94,7 @@ func runBind(cmd *command) error {
 	if bindJavaPkg != "" && ctx.GOOS != "android" {
 		return fmt.Errorf("-javapkg is supported only for android target")
 	}
-	if bindPrefix != "" && ctx.GOOS != "darwin" {
+	if bindPrefix != bindPrefixDefault && ctx.GOOS != "darwin" {
 		return fmt.Errorf("-prefix is supported only for ios target")
 	}
 
@@ -146,11 +146,13 @@ var (
 	bindBootClasspath string // -bootclasspath
 )
 
+const bindPrefixDefault = "Go"
+
 func init() {
 	// bind command specific commands.
 	cmdBind.flag.StringVar(&bindJavaPkg, "javapkg", "",
 		"specifies custom Java package path prefix used instead of the default 'go'. Valid only with -target=android.")
-	cmdBind.flag.StringVar(&bindPrefix, "prefix", "",
+	cmdBind.flag.StringVar(&bindPrefix, "prefix", bindPrefixDefault,
 		"custom Objective-C name prefix used instead of the default 'Go'. Valid only with -target=ios.")
 	cmdBind.flag.StringVar(&bindClasspath, "classpath", "", "The classpath for imported Java classes. Valid only with -target=android.")
 	cmdBind.flag.StringVar(&bindBootClasspath, "bootclasspath", "", "The bootstrap classpath for imported Java classes. Valid only with -target=android.")
@@ -188,8 +190,7 @@ func (b *binder) GenObjcSupport(outdir string) error {
 }
 
 func (b *binder) GenObjc(pkg *types.Package, allPkg []*types.Package, outdir string, wrappers []*objc.Named) (string, error) {
-	const bindPrefixDefault = "Go"
-	if bindPrefix == "" || pkg == nil {
+	if pkg == nil {
 		bindPrefix = bindPrefixDefault
 	}
 	pkgName := ""
@@ -202,12 +203,12 @@ func (b *binder) GenObjc(pkg *types.Package, allPkg []*types.Package, outdir str
 	}
 	bindOption := "-lang=objc"
 	if bindPrefix != bindPrefixDefault {
-		bindOption += " -prefix=" + bindPrefix
+		bindOption += fmt.Sprintf(" -prefix=%q", bindPrefix)
 	}
 
 	fileBase := bindPrefix + strings.Title(pkgName)
 	mfile := filepath.Join(outdir, fileBase+".m")
-	hfile := filepath.Join(outdir, fileBase+".h")
+	hfile := filepath.Join(outdir, fileBase+".objc.h")
 	gohfile := filepath.Join(outdir, pkgName+".h")
 
 	var buf bytes.Buffer
