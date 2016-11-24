@@ -120,17 +120,17 @@ func goIOSBind(pkgs []*build.Package) error {
 		headerFiles[0] = title + ".h"
 		err = copyFile(
 			headers+"/"+title+".h",
-			srcDir+"/"+bindPrefix+title+".h",
+			srcDir+"/"+bindPrefix+title+".objc.h",
 		)
 		if err != nil {
 			return err
 		}
 	} else {
 		for i, fileBase := range fileBases {
-			headerFiles[i] = fileBase + ".h"
+			headerFiles[i] = fileBase + ".objc.h"
 			err = copyFile(
-				headers+"/"+fileBase+".h",
-				srcDir+"/"+fileBase+".h")
+				headers+"/"+fileBase+".objc.h",
+				srcDir+"/"+fileBase+".objc.h")
 			if err != nil {
 				return err
 			}
@@ -226,7 +226,7 @@ var iosBindHeaderTmpl = template.Must(template.New("ios.h").Parse(`
 #ifndef __{{.title}}_H__
 #define __{{.title}}_H__
 
-{{range .bases}}#include "{{.}}.h"
+{{range .bases}}#include "{{.}}.objc.h"
 {{end}}
 #endif
 `))

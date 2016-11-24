@@ -7,7 +7,7 @@
 
 #include <Foundation/Foundation.h>
 #include "ref.h"
-#include "GoUniverse.h"
+#include "GoUniverse.objc.h"
 
 #ifdef DEBUG
 #define LOG_DEBUG(...) NSLog(__VA_ARGS__);

@@ -26,7 +26,7 @@ var (
 	lang          = flag.String("lang", "java", "target language for bindings, either java, go, or objc (experimental).")
 	outdir        = flag.String("outdir", "", "result will be written to the directory instead of stdout.")
 	javaPkg       = flag.String("javapkg", "", "custom Java package path prefix used instead of the default 'go'. Valid only with -lang=java.")
-	prefix        = flag.String("prefix", "", "custom Objective-C name prefix used instead of the default 'Go'. Valid only with -lang=objc.")
+	prefix        = flag.String("prefix", "Go", "custom Objective-C name prefix used instead of the default 'Go'. Valid only with -lang=objc.")
 	bootclasspath = flag.String("bootclasspath", "", "Java bootstrap classpath.")
 	classpath     = flag.String("classpath", "", "Java classpath.")
 )
@@ -40,7 +40,7 @@ func main() {
 
 	if *lang != "java" && *javaPkg != "" {
 		log.Fatalf("Invalid option -javapkg for gobind -lang=%s", *lang)
-	} else if *lang != "objc" && *prefix != "" {
+	} else if *lang != "objc" && *prefix != "Go" {
 		log.Fatalf("Invalid option -prefix for gobind -lang=%s", *lang)
 	}
 
