@@ -16,7 +16,9 @@ import (
 	"io/ioutil"
 	"log"
 	"math"
+	"os"
 	"runtime"
+	"syscall"
 	"time"
 
 	"golang.org/x/mobile/asset"
@@ -568,4 +570,29 @@ func NewS4WithBoolAndError(b bool) (*S4, error) {
 		return nil, errors.New("some error")
 	}
 	return new(S4), nil
+}
+
+// Lifted from TestEPIPE in package os.
+func TestSIGPIPE() {
+	r, w, err := os.Pipe()
+	if err != nil {
+		panic(err)
+	}
+	if err := r.Close(); err != nil {
+		panic(err)
+	}
+
+	_, err = w.Write([]byte("hi"))
+	if err == nil {
+		panic("unexpected success of Write to broken pipe")
+	}
+	if pe, ok := err.(*os.PathError); ok {
+		err = pe.Err
+	}
+	if se, ok := err.(*os.SyscallError); ok {
+		err = se.Err
+	}
+	if err != syscall.EPIPE {
+		panic(fmt.Errorf("got %v, expected EPIPE", err))
+	}
 }
