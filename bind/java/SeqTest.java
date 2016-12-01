@@ -577,4 +577,8 @@ public class SeqTest extends InstrumentationTestCase {
     InitCaller initer = Testpkg.newInitCaller();
     initer.init();
   }
+
+  public void testSIGPIPE() {
+    Testpkg.testSIGPIPE();
+  }
 }

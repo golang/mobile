@@ -449,4 +449,8 @@ static int numI = 0;
     XCTAssertFalse(GoTestpkgCallEmptyError(empty, &error), @"GoTestpkgCallEmptyError succeeded; want error");
     XCTAssertNotNil(error, @"GoTestpkgCallEmptyError returned nil error");
 }
+
+- (void)testSIGPIPE {
+    GoTestpkgTestSIGPIPE();
+}
 @end
