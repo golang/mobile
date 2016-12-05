@@ -181,6 +181,15 @@ create a gradle subproject and configure the gobind plugin in the build.gradle f
 
 		// Optionally, set the absolute path to the gomobile binary.
 		// GOMOBILE = "/path/to/gomobile"
+
+		// Pass extra parameters to command line. Optional.
+		// GOMOBILEFLAGS="-javapkg my.java.package"
+
+		// Absolute path to the gobind binary. Optional.
+		// GOBIND="/path/to/gobind"
+
+		// Optional list of architectures. Defaults to all supported architectures.
+		// GOARCH="arm amd64"
 	}
 
 The direct integration mode is suitable for Go packages that import Java API, Android API,
