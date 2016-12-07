@@ -24,7 +24,7 @@
 - (void)setX:(double)v;
 - (double)y;
 - (void)setY:(double)v;
-- (BOOL)identity:(GoStructsS**)ret0_ error:(NSError**)error;
+- (GoStructsS*)identity:(NSError**)error;
 - (double)sum;
 @end
 
@@ -43,7 +43,7 @@
 
 FOUNDATION_EXPORT GoStructsS* GoStructsIdentity(GoStructsS* s);
 
-FOUNDATION_EXPORT BOOL GoStructsIdentityWithError(GoStructsS* s, GoStructsS** ret0_, NSError** error);
+FOUNDATION_EXPORT GoStructsS* GoStructsIdentityWithError(GoStructsS* s, NSError** error);
 
 @class GoStructsI;
 

@@ -250,9 +250,10 @@ int32_t cproxyinterfaces_Error_Err(int32_t refnum) {
 int32_t cproxyinterfaces_I_Rand(int32_t refnum) {
 	@autoreleasepool {
 		GoInterfacesI* o = go_seq_objc_from_refnum(refnum);
-		int32_t returnVal = [o rand];
-		int32_t _returnVal = (int32_t)returnVal;
-		return _returnVal;
+		int32_t ret0_;
+		ret0_ = [o rand];
+		int32_t _ret0_ = (int32_t)ret0_;
+		return _ret0_;
 	}
 }
 
@@ -273,15 +274,16 @@ void cproxyinterfaces_I2_G(int32_t refnum) {
 int32_t cproxyinterfaces_I3_F(int32_t refnum) {
 	@autoreleasepool {
 		GoInterfacesI3* o = go_seq_objc_from_refnum(refnum);
-		GoInterfacesI1* returnVal = [o f];
-		int32_t _returnVal;
-		if ([returnVal conformsToProtocol:@protocol(goSeqRefInterface)]) {
-			id<goSeqRefInterface> returnVal_proxy = (id<goSeqRefInterface>)(returnVal);
-			_returnVal = go_seq_go_to_refnum(returnVal_proxy._ref);
+		GoInterfacesI1* ret0_;
+		ret0_ = [o f];
+		int32_t _ret0_;
+		if ([ret0_ conformsToProtocol:@protocol(goSeqRefInterface)]) {
+			id<goSeqRefInterface> ret0__proxy = (id<goSeqRefInterface>)(ret0_);
+			_ret0_ = go_seq_go_to_refnum(ret0__proxy._ref);
 		} else {
-			_returnVal = go_seq_to_refnum(returnVal);
+			_ret0_ = go_seq_to_refnum(ret0_);
 		}
-		return _returnVal;
+		return _ret0_;
 	}
 }
 
@@ -295,18 +297,20 @@ void cproxyinterfaces_LargerI_AnotherFunc(int32_t refnum) {
 int32_t cproxyinterfaces_LargerI_Rand(int32_t refnum) {
 	@autoreleasepool {
 		GoInterfacesLargerI* o = go_seq_objc_from_refnum(refnum);
-		int32_t returnVal = [o rand];
-		int32_t _returnVal = (int32_t)returnVal;
-		return _returnVal;
+		int32_t ret0_;
+		ret0_ = [o rand];
+		int32_t _ret0_ = (int32_t)ret0_;
+		return _ret0_;
 	}
 }
 
 int32_t cproxyinterfaces_SameI_Rand(int32_t refnum) {
 	@autoreleasepool {
 		GoInterfacesSameI* o = go_seq_objc_from_refnum(refnum);
-		int32_t returnVal = [o rand];
-		int32_t _returnVal = (int32_t)returnVal;
-		return _returnVal;
+		int32_t ret0_;
+		ret0_ = [o rand];
+		int32_t _ret0_ = (int32_t)ret0_;
+		return _ret0_;
 	}
 }
 

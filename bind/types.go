@@ -142,6 +142,10 @@ func isRefType(t types.Type) bool {
 	}
 }
 
+func isNullableType(t types.Type) bool {
+	return types.AssignableTo(types.Typ[types.UntypedNil].Underlying(), t) || t.String() == "string" // string is mapped to NSString*, which is nullable
+}
+
 func typePkgFirstElem(t types.Type) string {
 	nt, ok := t.(*types.Named)
 	if !ok {
