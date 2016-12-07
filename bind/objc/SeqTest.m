@@ -26,17 +26,13 @@ static int numI = 0;
 }
 @synthesize value;
 
-- (BOOL)stringError:(NSString *)s
-              ret0_:(NSString **)ret0_
+- (NSString *)stringError:(NSString *)s
               error:(NSError **)error {
    if ([s isEqualToString:@"number"]) {
-       if (ret0_ != NULL) {
-           *ret0_ = @"OK";
-       }
-       return true;
+       return @"OK";
    }
    *error = [NSError errorWithDomain:@"SeqTest" code:1 userInfo:@{NSLocalizedDescriptionKey: @"NumberError"}];
-   return false;
+   return NULL;
 }
 
 - (BOOL)error:(BOOL)triggerError error:(NSError **)error {
@@ -301,7 +297,7 @@ static int numI = 0;
 	GoTestpkgNode *n = GoTestpkgNewNode(@"ErrTest");
 	n.err = want;
 	NSError *got = n.err;
-	XCTAssertEqual(got, want, @"got different objects efter roundtrip");
+	XCTAssertEqual(got, want, @"got different objects after roundtrip");
 	NSString *gotMsg = GoTestpkgErrorMessage(want);
 	XCTAssertEqualObjects(gotMsg, wantMsg, @"err = %@, want %@", gotMsg, wantMsg);
 }
@@ -349,14 +345,15 @@ static int numI = 0;
 	Number *num = [[Number alloc] init];
 	num.value = 1024;
 
-	NSString *ret;
 	NSError *error;
-	XCTAssertFalse(GoTestpkgCallIStringError(num, @"alphabet", &ret, &error), @"GoTestpkgCallIStringError(Number, 'alphabet') succeeded; want error");
+	NSString *ret = GoTestpkgCallIStringError(num, @"alphabet", &error);
+	XCTAssertNil(ret, @"GoTestpkgCallIStringError(Number, 'alphabet') succeeded(%@); want error", ret);
 	NSString *desc = [error localizedDescription];
 	XCTAssertEqualObjects(desc, @"NumberError", @"GoTestpkgCallIStringError(Number, 'alphabet') returned unexpected error message %@", desc);
 	NSError *error2;
-	XCTAssertTrue(GoTestpkgCallIStringError(num, @"number", &ret, &error2), @"GoTestpkgCallIStringError(Number, 'number') failed(%@); want success", error2);
-	XCTAssertEqualObjects(ret, @"OK", @"GoTestpkgCallIStringError(Number, 'number') returned unexpected results %@", ret);
+	NSString *ret2 = GoTestpkgCallIStringError(num, @"number", &error2);
+	XCTAssertNotNil(ret2, @"GoTestpkgCallIStringError(Number, 'number') failed(%@); want success", error2);
+	XCTAssertEqualObjects(ret2, @"OK", @"GoTestpkgCallIStringError(Number, 'number') returned unexpected results %@", ret2);
 }
 
 - (void)testStrDup:(NSString *)want {
@@ -403,9 +400,8 @@ static int numI = 0;
 }
 
 - (void)testReturnsError {
-	NSString *value;
 	NSError *error;
-	GoTestpkgReturnsError(TRUE, &value, &error);
+	NSString *value = GoTestpkgReturnsError(TRUE, &error);
 	NSString *got = [error.userInfo valueForKey:NSLocalizedDescriptionKey];
 	NSString *want = @"Error";
 	XCTAssertEqualObjects(got, want, @"want %@\nGoTestpkgReturnsError(TRUE) = (%@, %@)", want, value, got);

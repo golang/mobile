@@ -44,7 +44,7 @@
 	proxystructs_S_Y_Set(refnum, _v);
 }
 
-- (BOOL)identity:(GoStructsS**)ret0_ error:(NSError**)error {
+- (GoStructsS*)identity:(NSError**)error {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	struct proxystructs_S_Identity_return res = proxystructs_S_Identity(refnum);
 	GoStructsS* _ret0_ = nil;
@@ -63,11 +63,13 @@
 			_error = [[GoUniverseerror alloc] initWithRef:_error_ref];
 		}
 	}
-	*ret0_ = _ret0_;
 	if (_error != nil && error != nil) {
 		*error = _error;
 	}
-	return (_error == nil);
+	if (_error != nil) {
+		return nil;
+	}
+	return _ret0_;
 }
 
 - (double)sum {
@@ -143,7 +145,7 @@ GoStructsS* GoStructsIdentity(GoStructsS* s) {
 	return _ret0_;
 }
 
-BOOL GoStructsIdentityWithError(GoStructsS* s, GoStructsS** ret0_, NSError** error) {
+GoStructsS* GoStructsIdentityWithError(GoStructsS* s, NSError** error) {
 	int32_t _s;
 	if ([s conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> s_proxy = (id<goSeqRefInterface>)(s);
@@ -168,11 +170,13 @@ BOOL GoStructsIdentityWithError(GoStructsS* s, GoStructsS** ret0_, NSError** err
 			_error = [[GoUniverseerror alloc] initWithRef:_error_ref];
 		}
 	}
-	*ret0_ = _ret0_;
 	if (_error != nil && error != nil) {
 		*error = _error;
 	}
-	return (_error == nil);
+	if (_error != nil) {
+		return nil;
+	}
+	return _ret0_;
 }
 
 void cproxystructs_I_M(int32_t refnum) {

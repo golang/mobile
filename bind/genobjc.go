@@ -490,10 +490,16 @@ func (g *ObjcGen) funcSummary(oinf *objcClassInfo, obj *types.Func) *funcSummary
 		if name == "" || paramRE.MatchString(name) {
 			name = "ret0_"
 		}
+		typ := res.At(0).Type()
 		s.retParams = append(s.retParams, paramInfo{
-			typ:  res.At(0).Type(),
+			typ:  typ,
 			name: name,
 		})
+		if isNullableType(typ) {
+			s.ret = g.objcType(typ) // Return is nullable, so satisfies the ObjC/Swift error protocol
+		} else {
+			s.ret = "BOOL" // Return is not nullable, must use an output parameter and return bool
+		}
 
 		if !isErrorType(res.At(1).Type()) {
 			g.errorf("second result value must be of type error: %s", obj)
@@ -503,7 +509,6 @@ func (g *ObjcGen) funcSummary(oinf *objcClassInfo, obj *types.Func) *funcSummary
 			typ:  res.At(1).Type(),
 			name: "error", // TODO(hyangah): name collision check.
 		})
-		s.ret = "BOOL"
 	default:
 		// TODO(hyangah): relax the constraint on multiple return params.
 		g.errorf("too many result values: %s", obj)
@@ -518,10 +523,12 @@ func (s *funcSummary) asFunc(g *ObjcGen) string {
 	for _, p := range s.params {
 		params = append(params, g.objcType(p.typ)+" "+p.name)
 	}
-	if !s.returnsVal() {
-		for _, p := range s.retParams {
-			params = append(params, g.objcType(p.typ)+"* "+p.name)
-		}
+	skip := 0
+	if s.returnsVal() {
+		skip = 1
+	}
+	for _, p := range s.retParams[skip:] {
+		params = append(params, g.objcType(p.typ)+"* "+p.name)
 	}
 	return fmt.Sprintf("%s %s%s(%s)", s.ret, g.namePrefix, s.name, strings.Join(params, ", "))
 }
@@ -535,14 +542,16 @@ func (s *funcSummary) asMethod(g *ObjcGen) string {
 		}
 		params = append(params, fmt.Sprintf("%s:(%s)%s", key, g.objcType(p.typ), p.name))
 	}
-	if !s.returnsVal() {
-		for _, p := range s.retParams {
-			var key string
-			if len(params) > 0 {
-				key = p.name
-			}
-			params = append(params, fmt.Sprintf("%s:(%s)%s", key, g.objcType(p.typ)+"*", p.name))
+	skip := 0
+	if s.returnsVal() {
+		skip = 1
+	}
+	for _, p := range s.retParams[skip:] {
+		var key string
+		if len(params) > 0 {
+			key = p.name
 		}
+		params = append(params, fmt.Sprintf("%s:(%s)%s", key, g.objcType(p.typ)+"*", p.name))
 	}
 	return fmt.Sprintf("(%s)%s%s", s.ret, objcNameReplacer(lowerFirst(s.name)), strings.Join(params, " "))
 }
@@ -556,20 +565,22 @@ func (s *funcSummary) callMethod(g *ObjcGen) string {
 		}
 		params = append(params, fmt.Sprintf("%s:_%s", key, p.name))
 	}
-	if !s.returnsVal() {
-		for _, p := range s.retParams {
-			var key string
-			if len(params) > 0 {
-				key = p.name
-			}
-			params = append(params, fmt.Sprintf("%s:&%s", key, p.name))
+	skip := 0
+	if s.returnsVal() {
+		skip = 1
+	}
+	for _, p := range s.retParams[skip:] {
+		var key string
+		if len(params) > 0 {
+			key = p.name
 		}
+		params = append(params, fmt.Sprintf("%s:&%s", key, p.name))
 	}
 	return fmt.Sprintf("%s%s", objcNameReplacer(lowerFirst(s.name)), strings.Join(params, " "))
 }
 
 func (s *funcSummary) returnsVal() bool {
-	return len(s.retParams) == 1 && !isErrorType(s.retParams[0].typ)
+	return (len(s.retParams) == 1 && !isErrorType(s.retParams[0].typ)) || (len(s.retParams) == 2 && isNullableType(s.retParams[0].typ))
 }
 
 func (g *ObjcGen) paramName(params *types.Tuple, pos int) string {
@@ -772,27 +783,38 @@ func (g *ObjcGen) genFunc(s *funcSummary, objName string) {
 	for i, r := range s.retParams {
 		g.genRead("_"+r.name, fmt.Sprintf("%sr%d", resPrefix, i), r.typ, modeRetained)
 	}
-
-	if !s.returnsVal() {
-		for _, p := range s.retParams {
-			if isErrorType(p.typ) {
-				g.Printf("if (_%s != nil && %s != nil) {\n", p.name, p.name)
-				g.Indent()
-				g.Printf("*%s = _%s;\n", p.name, p.name)
-				g.Outdent()
-				g.Printf("}\n")
-			} else {
-				g.Printf("*%s = _%s;\n", p.name, p.name)
-			}
+	skip := 0
+	if s.returnsVal() {
+		skip = 1
+	}
+	for _, p := range s.retParams[skip:] {
+		if isErrorType(p.typ) {
+			g.Printf("if (_%s != nil && %s != nil) {\n", p.name, p.name)
+			g.Indent()
+			g.Printf("*%s = _%s;\n", p.name, p.name)
+			g.Outdent()
+			g.Printf("}\n")
+		} else {
+			g.Printf("*%s = _%s;\n", p.name, p.name)
 		}
 	}
 
 	if n := len(s.retParams); n > 0 {
-		p := s.retParams[n-1]
-		if isErrorType(p.typ) {
-			g.Printf("return (_%s == nil);\n", p.name)
+		var (
+			first = s.retParams[0]
+			last  = s.retParams[n-1]
+		)
+		if (n == 1 && isErrorType(last.typ)) || (n == 2 && !isNullableType(first.typ) && isErrorType(last.typ)) {
+			g.Printf("return (_%s == nil);\n", last.name)
 		} else {
-			g.Printf("return _%s;\n", p.name)
+			if s.returnsVal() && isErrorType(last.typ) {
+				g.Printf("if (_%s != nil) {\n", last.name)
+				g.Indent()
+				g.Printf("return nil;\n")
+				g.Outdent()
+				g.Printf("}\n")
+			}
+			g.Printf("return _%s;\n", first.name)
 		}
 	}
 }
@@ -896,39 +918,39 @@ func (g *ObjcGen) genInterfaceMethodProxy(obj *types.TypeName, m *types.Func) {
 	}
 
 	// call method
-	if !s.returnsVal() {
-		for _, p := range s.retParams {
-			if isErrorType(p.typ) {
-				g.Printf("NSError* %s = nil;\n", p.name)
-			} else {
-				g.Printf("%s %s;\n", g.objcType(p.typ), p.name)
-			}
+	for _, p := range s.retParams {
+		if isErrorType(p.typ) {
+			g.Printf("NSError* %s = nil;\n", p.name)
+		} else {
+			g.Printf("%s %s;\n", g.objcType(p.typ), p.name)
 		}
 	}
 
 	if isErrorType(obj.Type()) && m.Name() == "Error" {
 		// As a special case, ObjC NSErrors are passed to Go pretending to implement the Go error interface.
 		// They don't actually have an Error method, so calls to to it needs to be rerouted.
-		g.Printf("NSString *returnVal = [o localizedDescription];\n")
+		g.Printf("%s = [o localizedDescription];\n", s.retParams[0].name)
 	} else {
 		if s.ret == "void" {
 			g.Printf("[o %s];\n", s.callMethod(g))
-		} else {
+		} else if !s.returnsVal() {
 			g.Printf("%s returnVal = [o %s];\n", s.ret, s.callMethod(g))
+		} else {
+			g.Printf("%s = [o %s];\n", s.retParams[0].name, s.callMethod(g))
 		}
 	}
 
 	if len(s.retParams) > 0 {
-		if s.returnsVal() { // len(s.retParams) == 1 && s.retParams[0] != error
+		if len(s.retParams) == 1 && !isErrorType(s.retParams[0].typ) {
 			p := s.retParams[0]
-			g.genWrite("returnVal", p.typ, modeRetained)
-			g.Printf("return _returnVal;\n")
+			g.genWrite(p.name, p.typ, modeRetained)
+			g.Printf("return _%s;\n", p.name)
 		} else {
 			var rets []string
-			for i, p := range s.retParams {
+			for _, p := range s.retParams {
 				if isErrorType(p.typ) {
 					g.Printf("NSError *_%s = nil;\n", p.name)
-					if i == len(s.retParams)-1 { // last param.
+					if !s.returnsVal() {
 						g.Printf("if (!returnVal) {\n")
 					} else {
 						g.Printf("if (%s != nil) {\n", p.name)

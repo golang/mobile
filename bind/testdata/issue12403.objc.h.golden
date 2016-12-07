@@ -15,7 +15,7 @@
 
 @protocol GoIssue12403Parsable <NSObject>
 - (NSString*)fromJSON:(NSString*)jstr;
-- (BOOL)toJSON:(NSString**)ret0_ error:(NSError**)error;
+- (NSString*)toJSON:(NSError**)error;
 @end
 
 @class GoIssue12403Parsable;
@@ -26,7 +26,7 @@
 
 - (instancetype)initWithRef:(id)ref;
 - (NSString*)fromJSON:(NSString*)jstr;
-- (BOOL)toJSON:(NSString**)ret0_ error:(NSError**)error;
+- (NSString*)toJSON:(NSError**)error;
 @end
 
 #endif
