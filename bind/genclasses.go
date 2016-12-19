@@ -306,6 +306,7 @@ func (g *ClassGen) genCMethodBody(cls *java.Class, f *java.Func, virtual bool) {
 	g.Printf("jobject _exc = go_seq_get_exception(env);\n")
 	g.Printf("int32_t _exc_ref = go_seq_to_refnum(env, _exc);\n")
 	if f.Ret != nil {
+		g.genCRetClear("res", f.Ret, "_exc")
 		g.genJavaToC("res", f.Ret)
 	}
 	g.Printf("go_seq_pop_local_frame(env);\n")
@@ -374,6 +375,7 @@ func (g *ClassGen) genC(cls *java.Class) {
 		g.Printf("jobject _exc = go_seq_get_exception(env);\n")
 		g.Printf("int32_t _exc_ref = go_seq_to_refnum(env, _exc);\n")
 		if f.Ret != nil {
+			g.genCRetClear("res", f.Ret, "_exc")
 			g.genJavaToC("res", f.Ret)
 		}
 		g.Printf("go_seq_pop_local_frame(env);\n")
@@ -621,6 +623,22 @@ func (g *ClassGen) genWrite(v string, t *java.Type, mode varMode) {
 	default:
 		panic("invalid kind")
 	}
+}
+
+// genCRetClear clears the result value from a JNI call if an exception was
+// raised.
+func (g *ClassGen) genCRetClear(v string, t *java.Type, exc string) {
+	g.Printf("if (%s != NULL) {\n", exc)
+	g.Indent()
+	switch t.Kind {
+	case java.Int, java.Short, java.Char, java.Byte, java.Long, java.Float, java.Double, java.Boolean:
+		g.Printf("%s = 0;\n", v)
+	default:
+		// Assume a nullable type. It will break if we missed a type.
+		g.Printf("%s = NULL;\n", v)
+	}
+	g.Outdent()
+	g.Printf("}\n")
 }
 
 func (g *ClassGen) genJavaToC(v string, t *java.Type) {

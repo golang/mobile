@@ -702,6 +702,26 @@ func (g *JavaGen) genVar(o *types.Var) {
 	g.Printf("public static native %s get%s();\n\n", jType, o.Name())
 }
 
+// genCRetClear clears the result value from a JNI call if an exception was
+// raised.
+func (g *JavaGen) genCRetClear(varName string, t types.Type, exc string) {
+	g.Printf("if (%s != NULL) {\n", exc)
+	g.Indent()
+	switch t := t.(type) {
+	case *types.Basic:
+		switch t.Kind() {
+		case types.String:
+			g.Printf("%s = NULL;\n", varName)
+		default:
+			g.Printf("%s = 0;\n", varName)
+		}
+	case *types.Slice, *types.Named, *types.Pointer:
+		g.Printf("%s = NULL;\n", varName)
+	}
+	g.Outdent()
+	g.Printf("}\n")
+}
+
 func (g *JavaGen) genJavaToC(varName string, t types.Type, mode varMode) {
 	switch t := t.(type) {
 	case *types.Basic:
@@ -1107,24 +1127,24 @@ func (g *JavaGen) genMethodInterfaceProxy(oName string, m *types.Func) {
 	g.Printf(");\n")
 	var retName string
 	if res.Len() > 0 {
-		var rets []string
 		t := res.At(0).Type()
-		if !isErrorType(t) {
-			g.genJavaToC("res", t, modeRetained)
-			retName = "_res"
-			rets = append(rets, retName)
-		}
 		if res.Len() == 2 || isErrorType(t) {
 			g.Printf("jobject exc = go_seq_get_exception(env);\n")
 			errType := types.Universe.Lookup("error").Type()
 			g.genJavaToC("exc", errType, modeRetained)
 			retName = "_exc"
-			rets = append(rets, "_exc")
+		}
+		if !isErrorType(t) {
+			if res.Len() == 2 {
+				g.genCRetClear("res", t, "exc")
+			}
+			g.genJavaToC("res", t, modeRetained)
+			retName = "_res"
 		}
 
 		if res.Len() > 1 {
 			g.Printf("cproxy%s_%s_%s_return sres = {\n", g.pkgPrefix, oName, m.Name())
-			g.Printf("	%s\n", strings.Join(rets, ", "))
+			g.Printf("	_res, _exc\n")
 			g.Printf("};\n")
 			retName = "sres"
 		}
