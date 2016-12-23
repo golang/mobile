@@ -6,10 +6,10 @@
 #include <Foundation/Foundation.h>
 #include "seq.h"
 #include "_cgo_export.h"
-#include "GoIgnore.objc.h"
+#include "Ignore.objc.h"
 
 
-@implementation GoIgnoreS {
+@implementation IgnoreS {
 }
 
 - (id)initWithRef:(id)ref {
@@ -27,7 +27,7 @@
 @end
 
 
-@implementation GoIgnoreI {
+@implementation IgnoreI {
 }
 
 - (instancetype)initWithRef:(id)ref {
@@ -46,7 +46,7 @@
 // skipped const NamedConst with unsupported type: *types.Const
 
 
-@implementation GoIgnore
+@implementation Ignore
 // skipped variable V with unsupported type: *types.Interface
 
 // skipped variable Var with unsupported type: *types.Interface

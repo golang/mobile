@@ -6,10 +6,10 @@
 #include <Foundation/Foundation.h>
 #include "seq.h"
 #include "_cgo_export.h"
-#include "GoTry.objc.h"
+#include "Try.objc.h"
 
 
-NSString* GoTryThis() {
+NSString* TryThis() {
 	nstring r0 = proxytry__This();
 	NSString *_ret0_ = go_seq_to_objc_string(r0);
 	return _ret0_;

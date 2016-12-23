@@ -94,7 +94,7 @@ func runBind(cmd *command) error {
 	if bindJavaPkg != "" && ctx.GOOS != "android" {
 		return fmt.Errorf("-javapkg is supported only for android target")
 	}
-	if bindPrefix != bindPrefixDefault && ctx.GOOS != "darwin" {
+	if bindPrefix != "" && ctx.GOOS != "darwin" {
 		return fmt.Errorf("-prefix is supported only for ios target")
 	}
 
@@ -146,13 +146,11 @@ var (
 	bindBootClasspath string // -bootclasspath
 )
 
-const bindPrefixDefault = "Go"
-
 func init() {
 	// bind command specific commands.
 	cmdBind.flag.StringVar(&bindJavaPkg, "javapkg", "",
 		"specifies custom Java package path prefix used instead of the default 'go'. Valid only with -target=android.")
-	cmdBind.flag.StringVar(&bindPrefix, "prefix", bindPrefixDefault,
+	cmdBind.flag.StringVar(&bindPrefix, "prefix", "",
 		"custom Objective-C name prefix used instead of the default 'Go'. Valid only with -target=ios.")
 	cmdBind.flag.StringVar(&bindClasspath, "classpath", "", "The classpath for imported Java classes. Valid only with -target=android.")
 	cmdBind.flag.StringVar(&bindBootClasspath, "bootclasspath", "", "The bootstrap classpath for imported Java classes. Valid only with -target=android.")
@@ -191,7 +189,7 @@ func (b *binder) GenObjcSupport(outdir string) error {
 
 func (b *binder) GenObjc(pkg *types.Package, allPkg []*types.Package, outdir string, wrappers []*objc.Named) (string, error) {
 	if pkg == nil {
-		bindPrefix = bindPrefixDefault
+		bindPrefix = ""
 	}
 	pkgName := ""
 	pkgPath := ""
@@ -202,7 +200,7 @@ func (b *binder) GenObjc(pkg *types.Package, allPkg []*types.Package, outdir str
 		pkgName = "universe"
 	}
 	bindOption := "-lang=objc"
-	if bindPrefix != bindPrefixDefault {
+	if bindPrefix != "" {
 		bindOption += fmt.Sprintf(" -prefix=%q", bindPrefix)
 	}
 

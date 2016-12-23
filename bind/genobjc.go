@@ -86,7 +86,7 @@ func (g *ObjcGen) Init(wrappers []*objc.Named) {
 
 func (g *ObjcGen) namePrefixOf(pkg *types.Package) string {
 	if pkg == nil {
-		return "GoUniverse"
+		return "Universe"
 	}
 	p := g.Prefix
 	return p + strings.Title(pkg.Name())
@@ -137,7 +137,9 @@ func (g *ObjcGen) GenH() error {
 	for _, m := range g.modules {
 		g.Printf("@import %s;\n", m)
 	}
-	g.Printf("#include \"GoUniverse.objc.h\"\n\n")
+	if g.Pkg != nil {
+		g.Printf("#include \"Universe.objc.h\"\n\n")
+	}
 
 	if g.Pkg != nil {
 		for _, pkg := range g.Pkg.Imports() {
@@ -236,7 +238,7 @@ func (g *ObjcGen) GenH() error {
 
 func (g *ObjcGen) gobindOpts() string {
 	opts := []string{"-lang=objc"}
-	if g.Prefix != "Go" {
+	if g.Prefix != "" {
 		opts = append(opts, fmt.Sprintf("-prefix=%q", g.Prefix))
 	}
 	return strings.Join(opts, " ")

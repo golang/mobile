@@ -6,9 +6,9 @@
 #include <Foundation/Foundation.h>
 #include "seq.h"
 #include "_cgo_export.h"
-#include "GoInterfaces.objc.h"
+#include "Interfaces.objc.h"
 
-@implementation GoInterfacesError {
+@implementation InterfacesError {
 }
 
 - (instancetype)initWithRef:(id)ref {
@@ -20,12 +20,12 @@
 - (BOOL)err:(NSError**)error {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	int32_t r0 = proxyinterfaces_Error_Err(refnum);
-	GoUniverseerror* _error = nil;
+	Universeerror* _error = nil;
 	GoSeqRef* _error_ref = go_seq_from_refnum(r0);
 	if (_error_ref != NULL) {
 		_error = _error_ref.obj;
 		if (_error == nil) {
-			_error = [[GoUniverseerror alloc] initWithRef:_error_ref];
+			_error = [[Universeerror alloc] initWithRef:_error_ref];
 		}
 	}
 	if (_error != nil && error != nil) {
@@ -37,7 +37,7 @@
 @end
 
 
-@implementation GoInterfacesI {
+@implementation InterfacesI {
 }
 
 - (instancetype)initWithRef:(id)ref {
@@ -56,7 +56,7 @@
 @end
 
 
-@implementation GoInterfacesI1 {
+@implementation InterfacesI1 {
 }
 
 - (instancetype)initWithRef:(id)ref {
@@ -73,7 +73,7 @@
 @end
 
 
-@implementation GoInterfacesI2 {
+@implementation InterfacesI2 {
 }
 
 - (instancetype)initWithRef:(id)ref {
@@ -90,7 +90,7 @@
 @end
 
 
-@implementation GoInterfacesI3 {
+@implementation InterfacesI3 {
 }
 
 - (instancetype)initWithRef:(id)ref {
@@ -99,15 +99,15 @@
 	return self;
 }
 
-- (GoInterfacesI1*)f {
+- (InterfacesI1*)f {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	int32_t r0 = proxyinterfaces_I3_F(refnum);
-	GoInterfacesI1* _ret0_ = nil;
+	InterfacesI1* _ret0_ = nil;
 	GoSeqRef* _ret0__ref = go_seq_from_refnum(r0);
 	if (_ret0__ref != NULL) {
 		_ret0_ = _ret0__ref.obj;
 		if (_ret0_ == nil) {
-			_ret0_ = [[GoInterfacesI1 alloc] initWithRef:_ret0__ref];
+			_ret0_ = [[InterfacesI1 alloc] initWithRef:_ret0__ref];
 		}
 	}
 	return _ret0_;
@@ -116,7 +116,7 @@
 @end
 
 
-@implementation GoInterfacesLargerI {
+@implementation InterfacesLargerI {
 }
 
 - (instancetype)initWithRef:(id)ref {
@@ -140,7 +140,7 @@
 @end
 
 
-@implementation GoInterfacesSameI {
+@implementation InterfacesSameI {
 }
 
 - (instancetype)initWithRef:(id)ref {
@@ -159,7 +159,7 @@
 @end
 
 
-@implementation GoInterfacesWithParam {
+@implementation InterfacesWithParam {
 }
 
 - (instancetype)initWithRef:(id)ref {
@@ -178,7 +178,7 @@
 
 
 
-int32_t GoInterfacesAdd3(id<GoInterfacesI> r) {
+int32_t InterfacesAdd3(id<InterfacesI> r) {
 	int32_t _r;
 	if ([r conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> r_proxy = (id<goSeqRefInterface>)(r);
@@ -191,7 +191,7 @@ int32_t GoInterfacesAdd3(id<GoInterfacesI> r) {
 	return _ret0_;
 }
 
-BOOL GoInterfacesCallErr(id<GoInterfacesError> e, NSError** error) {
+BOOL InterfacesCallErr(id<InterfacesError> e, NSError** error) {
 	int32_t _e;
 	if ([e conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> e_proxy = (id<goSeqRefInterface>)(e);
@@ -200,12 +200,12 @@ BOOL GoInterfacesCallErr(id<GoInterfacesError> e, NSError** error) {
 		_e = go_seq_to_refnum(e);
 	}
 	int32_t r0 = proxyinterfaces__CallErr(_e);
-	GoUniverseerror* _error = nil;
+	Universeerror* _error = nil;
 	GoSeqRef* _error_ref = go_seq_from_refnum(r0);
 	if (_error_ref != NULL) {
 		_error = _error_ref.obj;
 		if (_error == nil) {
-			_error = [[GoUniverseerror alloc] initWithRef:_error_ref];
+			_error = [[Universeerror alloc] initWithRef:_error_ref];
 		}
 	}
 	if (_error != nil && error != nil) {
@@ -214,14 +214,14 @@ BOOL GoInterfacesCallErr(id<GoInterfacesError> e, NSError** error) {
 	return (_error == nil);
 }
 
-id<GoInterfacesI> GoInterfacesSeven() {
+id<InterfacesI> InterfacesSeven() {
 	int32_t r0 = proxyinterfaces__Seven();
-	GoInterfacesI* _ret0_ = nil;
+	InterfacesI* _ret0_ = nil;
 	GoSeqRef* _ret0__ref = go_seq_from_refnum(r0);
 	if (_ret0__ref != NULL) {
 		_ret0_ = _ret0__ref.obj;
 		if (_ret0_ == nil) {
-			_ret0_ = [[GoInterfacesI alloc] initWithRef:_ret0__ref];
+			_ret0_ = [[InterfacesI alloc] initWithRef:_ret0__ref];
 		}
 	}
 	return _ret0_;
@@ -229,7 +229,7 @@ id<GoInterfacesI> GoInterfacesSeven() {
 
 int32_t cproxyinterfaces_Error_Err(int32_t refnum) {
 	@autoreleasepool {
-		GoInterfacesError* o = go_seq_objc_from_refnum(refnum);
+		InterfacesError* o = go_seq_objc_from_refnum(refnum);
 		NSError* error = nil;
 		BOOL returnVal = [o err:&error];
 		NSError *_error = nil;
@@ -249,7 +249,7 @@ int32_t cproxyinterfaces_Error_Err(int32_t refnum) {
 
 int32_t cproxyinterfaces_I_Rand(int32_t refnum) {
 	@autoreleasepool {
-		GoInterfacesI* o = go_seq_objc_from_refnum(refnum);
+		InterfacesI* o = go_seq_objc_from_refnum(refnum);
 		int32_t ret0_;
 		ret0_ = [o rand];
 		int32_t _ret0_ = (int32_t)ret0_;
@@ -259,22 +259,22 @@ int32_t cproxyinterfaces_I_Rand(int32_t refnum) {
 
 void cproxyinterfaces_I1_J(int32_t refnum) {
 	@autoreleasepool {
-		GoInterfacesI1* o = go_seq_objc_from_refnum(refnum);
+		InterfacesI1* o = go_seq_objc_from_refnum(refnum);
 		[o j];
 	}
 }
 
 void cproxyinterfaces_I2_G(int32_t refnum) {
 	@autoreleasepool {
-		GoInterfacesI2* o = go_seq_objc_from_refnum(refnum);
+		InterfacesI2* o = go_seq_objc_from_refnum(refnum);
 		[o g];
 	}
 }
 
 int32_t cproxyinterfaces_I3_F(int32_t refnum) {
 	@autoreleasepool {
-		GoInterfacesI3* o = go_seq_objc_from_refnum(refnum);
-		GoInterfacesI1* ret0_;
+		InterfacesI3* o = go_seq_objc_from_refnum(refnum);
+		InterfacesI1* ret0_;
 		ret0_ = [o f];
 		int32_t _ret0_;
 		if ([ret0_ conformsToProtocol:@protocol(goSeqRefInterface)]) {
@@ -289,14 +289,14 @@ int32_t cproxyinterfaces_I3_F(int32_t refnum) {
 
 void cproxyinterfaces_LargerI_AnotherFunc(int32_t refnum) {
 	@autoreleasepool {
-		GoInterfacesLargerI* o = go_seq_objc_from_refnum(refnum);
+		InterfacesLargerI* o = go_seq_objc_from_refnum(refnum);
 		[o anotherFunc];
 	}
 }
 
 int32_t cproxyinterfaces_LargerI_Rand(int32_t refnum) {
 	@autoreleasepool {
-		GoInterfacesLargerI* o = go_seq_objc_from_refnum(refnum);
+		InterfacesLargerI* o = go_seq_objc_from_refnum(refnum);
 		int32_t ret0_;
 		ret0_ = [o rand];
 		int32_t _ret0_ = (int32_t)ret0_;
@@ -306,7 +306,7 @@ int32_t cproxyinterfaces_LargerI_Rand(int32_t refnum) {
 
 int32_t cproxyinterfaces_SameI_Rand(int32_t refnum) {
 	@autoreleasepool {
-		GoInterfacesSameI* o = go_seq_objc_from_refnum(refnum);
+		InterfacesSameI* o = go_seq_objc_from_refnum(refnum);
 		int32_t ret0_;
 		ret0_ = [o rand];
 		int32_t _ret0_ = (int32_t)ret0_;
@@ -316,7 +316,7 @@ int32_t cproxyinterfaces_SameI_Rand(int32_t refnum) {
 
 void cproxyinterfaces_WithParam_HasParam(int32_t refnum, char p0) {
 	@autoreleasepool {
-		GoInterfacesWithParam* o = go_seq_objc_from_refnum(refnum);
+		InterfacesWithParam* o = go_seq_objc_from_refnum(refnum);
 		BOOL _p0 = p0 ? YES : NO;
 		[o hasParam:_p0];
 	}

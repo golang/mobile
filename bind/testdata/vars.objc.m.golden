@@ -6,10 +6,10 @@
 #include <Foundation/Foundation.h>
 #include "seq.h"
 #include "_cgo_export.h"
-#include "GoVars.objc.h"
+#include "Vars.objc.h"
 
 
-@implementation GoVarsS {
+@implementation VarsS {
 }
 
 - (id)initWithRef:(id)ref {
@@ -21,7 +21,7 @@
 @end
 
 
-@implementation GoVarsI {
+@implementation VarsI {
 }
 
 - (instancetype)initWithRef:(id)ref {
@@ -33,7 +33,7 @@
 @end
 
 
-@implementation GoVars
+@implementation Vars
 + (void) setABool:(BOOL)v {
 	char _v = (char)v;
 	var_setvars_ABool(_v);
@@ -89,7 +89,7 @@
 	return _r0;
 }
 
-+ (void) setAStructPtr:(GoVarsS*)v {
++ (void) setAStructPtr:(VarsS*)v {
 	int32_t _v;
 	if ([v conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> v_proxy = (id<goSeqRefInterface>)(v);
@@ -100,14 +100,14 @@
 	var_setvars_AStructPtr(_v);
 }
 
-+ (GoVarsS*) aStructPtr {
++ (VarsS*) aStructPtr {
 	int32_t r0 = var_getvars_AStructPtr();
-	GoVarsS* _r0 = nil;
+	VarsS* _r0 = nil;
 	GoSeqRef* _r0_ref = go_seq_from_refnum(r0);
 	if (_r0_ref != NULL) {
 		_r0 = _r0_ref.obj;
 		if (_r0 == nil) {
-			_r0 = [[GoVarsS alloc] initWithRef:_r0_ref];
+			_r0 = [[VarsS alloc] initWithRef:_r0_ref];
 		}
 	}
 	return _r0;
@@ -168,7 +168,7 @@
 	return _r0;
 }
 
-+ (void) setAnInterface:(id<GoVarsI>)v {
++ (void) setAnInterface:(id<VarsI>)v {
 	int32_t _v;
 	if ([v conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> v_proxy = (id<goSeqRefInterface>)(v);
@@ -179,14 +179,14 @@
 	var_setvars_AnInterface(_v);
 }
 
-+ (id<GoVarsI>) anInterface {
++ (id<VarsI>) anInterface {
 	int32_t r0 = var_getvars_AnInterface();
-	GoVarsI* _r0 = nil;
+	VarsI* _r0 = nil;
 	GoSeqRef* _r0_ref = go_seq_from_refnum(r0);
 	if (_r0_ref != NULL) {
 		_r0 = _r0_ref.obj;
 		if (_r0 == nil) {
-			_r0 = [[GoVarsI alloc] initWithRef:_r0_ref];
+			_r0 = [[VarsI alloc] initWithRef:_r0_ref];
 		}
 	}
 	return _r0;

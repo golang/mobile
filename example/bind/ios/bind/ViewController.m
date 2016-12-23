@@ -14,7 +14,7 @@
 
 - (void)loadView {
     [super loadView];
-    textLabel.text = GoHelloGreetings(@"iOS and Gopher");
+    textLabel.text = HelloGreetings(@"iOS and Gopher");
 }
 
 @end

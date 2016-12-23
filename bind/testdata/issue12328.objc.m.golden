@@ -6,10 +6,10 @@
 #include <Foundation/Foundation.h>
 #include "seq.h"
 #include "_cgo_export.h"
-#include "GoIssue12328.objc.h"
+#include "Issue12328.objc.h"
 
 
-@implementation GoIssue12328T {
+@implementation Issue12328T {
 }
 
 - (id)initWithRef:(id)ref {
@@ -21,12 +21,12 @@
 - (NSError*)err {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	int32_t r0 = proxyissue12328_T_Err_Get(refnum);
-	GoUniverseerror* _r0 = nil;
+	Universeerror* _r0 = nil;
 	GoSeqRef* _r0_ref = go_seq_from_refnum(r0);
 	if (_r0_ref != NULL) {
 		_r0 = _r0_ref.obj;
 		if (_r0 == nil) {
-			_r0 = [[GoUniverseerror alloc] initWithRef:_r0_ref];
+			_r0 = [[Universeerror alloc] initWithRef:_r0_ref];
 		}
 	}
 	return _r0;

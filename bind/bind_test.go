@@ -130,7 +130,6 @@ func TestGenObjc(t *testing.T) {
 
 		var buf bytes.Buffer
 		g := &ObjcGen{
-			Prefix: "Go",
 			Generator: &Generator{
 				Printer: &Printer{Buf: &buf, IndentEach: []byte("\t")},
 				Fset:    fset,

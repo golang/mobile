@@ -6,25 +6,25 @@
 #include <Foundation/Foundation.h>
 #include "seq.h"
 #include "_cgo_export.h"
-#include "GoBasictypes.objc.h"
+#include "Basictypes.objc.h"
 
-const BOOL GoBasictypesABool = YES;
-const double GoBasictypesAFloat = 0.2015;
-NSString* const GoBasictypesALongString = @"LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString";
-const int32_t GoBasictypesARune = 32;
-NSString* const GoBasictypesAString = @"a string";
-const int64_t GoBasictypesAnInt = 7LL;
-const int64_t GoBasictypesAnInt2 = 9223372036854775807LL;
+const BOOL BasictypesABool = YES;
+const double BasictypesAFloat = 0.2015;
+NSString* const BasictypesALongString = @"LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString,LongString";
+const int32_t BasictypesARune = 32;
+NSString* const BasictypesAString = @"a string";
+const int64_t BasictypesAnInt = 7LL;
+const int64_t BasictypesAnInt2 = 9223372036854775807LL;
 
 
-BOOL GoBasictypesBool(BOOL p0) {
+BOOL BasictypesBool(BOOL p0) {
 	char _p0 = (char)p0;
 	char r0 = proxybasictypes__Bool(_p0);
 	BOOL _ret0_ = r0 ? YES : NO;
 	return _ret0_;
 }
 
-NSData* GoBasictypesByteArrays(NSData* x) {
+NSData* BasictypesByteArrays(NSData* x) {
 	nbyteslice _x = go_seq_from_objc_bytearray(x, 0);
 	nbyteslice r0 = proxybasictypes__ByteArrays(_x);
 	if (![x isKindOfClass:[NSMutableData class]]) {
@@ -34,14 +34,14 @@ NSData* GoBasictypesByteArrays(NSData* x) {
 	return _ret0_;
 }
 
-BOOL GoBasictypesError(NSError** error) {
+BOOL BasictypesError(NSError** error) {
 	int32_t r0 = proxybasictypes__Error();
-	GoUniverseerror* _error = nil;
+	Universeerror* _error = nil;
 	GoSeqRef* _error_ref = go_seq_from_refnum(r0);
 	if (_error_ref != NULL) {
 		_error = _error_ref.obj;
 		if (_error == nil) {
-			_error = [[GoUniverseerror alloc] initWithRef:_error_ref];
+			_error = [[Universeerror alloc] initWithRef:_error_ref];
 		}
 	}
 	if (_error != nil && error != nil) {
@@ -50,15 +50,15 @@ BOOL GoBasictypesError(NSError** error) {
 	return (_error == nil);
 }
 
-BOOL GoBasictypesErrorPair(long* ret0_, NSError** error) {
+BOOL BasictypesErrorPair(long* ret0_, NSError** error) {
 	struct proxybasictypes__ErrorPair_return res = proxybasictypes__ErrorPair();
 	long _ret0_ = (long)res.r0;
-	GoUniverseerror* _error = nil;
+	Universeerror* _error = nil;
 	GoSeqRef* _error_ref = go_seq_from_refnum(res.r1);
 	if (_error_ref != NULL) {
 		_error = _error_ref.obj;
 		if (_error == nil) {
-			_error = [[GoUniverseerror alloc] initWithRef:_error_ref];
+			_error = [[Universeerror alloc] initWithRef:_error_ref];
 		}
 	}
 	*ret0_ = _ret0_;
@@ -68,7 +68,7 @@ BOOL GoBasictypesErrorPair(long* ret0_, NSError** error) {
 	return (_error == nil);
 }
 
-void GoBasictypesInts(int8_t x, int16_t y, int32_t z, int64_t t, long u) {
+void BasictypesInts(int8_t x, int16_t y, int32_t z, int64_t t, long u) {
 	int8_t _x = (int8_t)x;
 	int16_t _y = (int16_t)y;
 	int32_t _z = (int32_t)z;

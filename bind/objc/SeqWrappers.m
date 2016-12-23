@@ -45,34 +45,34 @@
 }
 
 - (void)testFunction {
-	GoObjcpkgFunc();
+	ObjcpkgFunc();
 }
 
 - (void)testMethod {
-	GoObjcpkgMethod();
+	ObjcpkgMethod();
 }
 
 - (void)testNew {
-	GoObjcpkgNew();
+	ObjcpkgNew();
 }
 
 - (void)testError {
-	GoObjcpkgError();
+	ObjcpkgError();
 }
 
 - (void)testClass {
-	GoObjcpkgGoNSDate *d = [[GoObjcpkgGoNSDate alloc] init];
+	ObjcpkgGoNSDate *d = [[ObjcpkgGoNSDate alloc] init];
 	NSString *desc = [d description];
 	XCTAssertEqual(d, [d getSelf], "GoNSDate self not identical");
-	XCTAssertEqual(GoObjcpkgHash, [d hash], "GoNSDate hash not identical");
-	XCTAssertTrue([desc isEqualToString:GoObjcpkgDescriptionStr], "GoNSDate description mismatch: %@", desc);
-	GoObjcpkgGoUIResponder *resp = [[GoObjcpkgGoUIResponder alloc] init];
+	XCTAssertEqual(ObjcpkgHash, [d hash], "GoNSDate hash not identical");
+	XCTAssertTrue([desc isEqualToString:ObjcpkgDescriptionStr], "GoNSDate description mismatch: %@", desc);
+	ObjcpkgGoUIResponder *resp = [[ObjcpkgGoUIResponder alloc] init];
 	[resp pressesBegan:nil withEvent:nil];
 	XCTAssertTrue([resp called], "GoUIResponder.pressesBegan not called");
 }
 
 - (void)testSuper {
-	GoObjcpkgGoNSObject *o = [[GoObjcpkgGoNSObject alloc] init];
+	ObjcpkgGoNSObject *o = [[ObjcpkgGoNSObject alloc] init];
 	struct objc_super _super = {
 		.receiver = o,
 		.super_class = [NSObject class],
@@ -80,18 +80,18 @@
 	NSString *superDesc = ((NSString *(*)(struct objc_super*, SEL))objc_msgSendSuper)(&_super, @selector(description));
 	XCTAssertTrue([superDesc isEqualToString:[o description]], "GoNSObject description mismatch");
 	[o setUseSelf:TRUE];
-	XCTAssertTrue([GoObjcpkgDescriptionStr isEqualToString:[o description]], "GoNSObject description mismatch");
+	XCTAssertTrue([ObjcpkgDescriptionStr isEqualToString:[o description]], "GoNSObject description mismatch");
 }
 
 - (void)testIdentity {
 	NSDate *d = [[NSDate alloc] init];
-	NSDate *d2 = GoObjcpkgDupNSDate(d);
-	XCTAssertEqual(d, d2, @"GoObjcpkgDupNSDate failed to duplicate ObjC instance");
-	GoObjcpkgGoNSDate *gd = [[GoObjcpkgGoNSDate alloc] init];
-	NSDate *gd2 = GoObjcpkgDupNSDate(gd);
-	XCTAssertEqual(gd, gd2, @"GoObjcpkgDupNSDate failed to duplicate Go instance");
-	NSDate *gd3 = GoObjcpkgNewGoNSDate();
-	NSDate *gd4 = GoObjcpkgDupNSDate(gd3);
-	XCTAssertEqual(gd4, gd3, @"GoObjcpkgDupNSDate failed to duplicate instance created in Go");
+	NSDate *d2 = ObjcpkgDupNSDate(d);
+	XCTAssertEqual(d, d2, @"ObjcpkgDupNSDate failed to duplicate ObjC instance");
+	ObjcpkgGoNSDate *gd = [[ObjcpkgGoNSDate alloc] init];
+	NSDate *gd2 = ObjcpkgDupNSDate(gd);
+	XCTAssertEqual(gd, gd2, @"ObjcpkgDupNSDate failed to duplicate Go instance");
+	NSDate *gd3 = ObjcpkgNewGoNSDate();
+	NSDate *gd4 = ObjcpkgDupNSDate(gd3);
+	XCTAssertEqual(gd4, gd3, @"ObjcpkgDupNSDate failed to duplicate instance created in Go");
 }
 @end
