@@ -6,10 +6,10 @@
 #include <Foundation/Foundation.h>
 #include "seq.h"
 #include "_cgo_export.h"
-#include "GoIssue10788.objc.h"
+#include "Issue10788.objc.h"
 
 
-@implementation GoIssue10788TestStruct {
+@implementation Issue10788TestStruct {
 }
 
 - (id)initWithRef:(id)ref {
@@ -34,7 +34,7 @@
 @end
 
 
-@implementation GoIssue10788TestInterface {
+@implementation Issue10788TestInterface {
 }
 
 - (instancetype)initWithRef:(id)ref {
@@ -43,7 +43,7 @@
 	return self;
 }
 
-- (void)doSomeWork:(GoIssue10788TestStruct*)s {
+- (void)doSomeWork:(Issue10788TestStruct*)s {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	int32_t _s;
 	if ([s conformsToProtocol:@protocol(goSeqRefInterface)]) {
@@ -69,13 +69,13 @@
 
 void cproxyissue10788_TestInterface_DoSomeWork(int32_t refnum, int32_t s) {
 	@autoreleasepool {
-		GoIssue10788TestInterface* o = go_seq_objc_from_refnum(refnum);
-		GoIssue10788TestStruct* _s = nil;
+		Issue10788TestInterface* o = go_seq_objc_from_refnum(refnum);
+		Issue10788TestStruct* _s = nil;
 		GoSeqRef* _s_ref = go_seq_from_refnum(s);
 		if (_s_ref != NULL) {
 			_s = _s_ref.obj;
 			if (_s == nil) {
-				_s = [[GoIssue10788TestStruct alloc] initWithRef:_s_ref];
+				_s = [[Issue10788TestStruct alloc] initWithRef:_s_ref];
 			}
 		}
 		[o doSomeWork:_s];
@@ -84,7 +84,7 @@ void cproxyissue10788_TestInterface_DoSomeWork(int32_t refnum, int32_t s) {
 
 void cproxyissue10788_TestInterface_MultipleUnnamedParams(int32_t refnum, nint p0, nstring p1, int64_t 日本) {
 	@autoreleasepool {
-		GoIssue10788TestInterface* o = go_seq_objc_from_refnum(refnum);
+		Issue10788TestInterface* o = go_seq_objc_from_refnum(refnum);
 		long _p0 = (long)p0;
 		NSString *_p1 = go_seq_to_objc_string(p1);
 		int64_t _日本 = (int64_t)日本;

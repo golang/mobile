@@ -6,9 +6,9 @@
 #include <Foundation/Foundation.h>
 #include "seq.h"
 #include "_cgo_export.h"
-#include "GoIssue12403.objc.h"
+#include "Issue12403.objc.h"
 
-@implementation GoIssue12403Parsable {
+@implementation Issue12403Parsable {
 }
 
 - (instancetype)initWithRef:(id)ref {
@@ -29,12 +29,12 @@
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	struct proxyissue12403_Parsable_ToJSON_return res = proxyissue12403_Parsable_ToJSON(refnum);
 	NSString *_ret0_ = go_seq_to_objc_string(res.r0);
-	GoUniverseerror* _error = nil;
+	Universeerror* _error = nil;
 	GoSeqRef* _error_ref = go_seq_from_refnum(res.r1);
 	if (_error_ref != NULL) {
 		_error = _error_ref.obj;
 		if (_error == nil) {
-			_error = [[GoUniverseerror alloc] initWithRef:_error_ref];
+			_error = [[Universeerror alloc] initWithRef:_error_ref];
 		}
 	}
 	if (_error != nil && error != nil) {
@@ -52,7 +52,7 @@
 
 nstring cproxyissue12403_Parsable_FromJSON(int32_t refnum, nstring jstr) {
 	@autoreleasepool {
-		GoIssue12403Parsable* o = go_seq_objc_from_refnum(refnum);
+		Issue12403Parsable* o = go_seq_objc_from_refnum(refnum);
 		NSString *_jstr = go_seq_to_objc_string(jstr);
 		NSString* ret0_;
 		ret0_ = [o fromJSON:_jstr];
@@ -63,7 +63,7 @@ nstring cproxyissue12403_Parsable_FromJSON(int32_t refnum, nstring jstr) {
 
 struct cproxyissue12403_Parsable_ToJSON_return cproxyissue12403_Parsable_ToJSON(int32_t refnum) {
 	@autoreleasepool {
-		GoIssue12403Parsable* o = go_seq_objc_from_refnum(refnum);
+		Issue12403Parsable* o = go_seq_objc_from_refnum(refnum);
 		NSString* ret0_;
 		NSError* error = nil;
 		ret0_ = [o toJSON:&error];

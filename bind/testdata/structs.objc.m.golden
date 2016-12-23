@@ -6,10 +6,10 @@
 #include <Foundation/Foundation.h>
 #include "seq.h"
 #include "_cgo_export.h"
-#include "GoStructs.objc.h"
+#include "Structs.objc.h"
 
 
-@implementation GoStructsS {
+@implementation StructsS {
 }
 
 - (id)initWithRef:(id)ref {
@@ -44,23 +44,23 @@
 	proxystructs_S_Y_Set(refnum, _v);
 }
 
-- (GoStructsS*)identity:(NSError**)error {
+- (StructsS*)identity:(NSError**)error {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	struct proxystructs_S_Identity_return res = proxystructs_S_Identity(refnum);
-	GoStructsS* _ret0_ = nil;
+	StructsS* _ret0_ = nil;
 	GoSeqRef* _ret0__ref = go_seq_from_refnum(res.r0);
 	if (_ret0__ref != NULL) {
 		_ret0_ = _ret0__ref.obj;
 		if (_ret0_ == nil) {
-			_ret0_ = [[GoStructsS alloc] initWithRef:_ret0__ref];
+			_ret0_ = [[StructsS alloc] initWithRef:_ret0__ref];
 		}
 	}
-	GoUniverseerror* _error = nil;
+	Universeerror* _error = nil;
 	GoSeqRef* _error_ref = go_seq_from_refnum(res.r1);
 	if (_error_ref != NULL) {
 		_error = _error_ref.obj;
 		if (_error == nil) {
-			_error = [[GoUniverseerror alloc] initWithRef:_error_ref];
+			_error = [[Universeerror alloc] initWithRef:_error_ref];
 		}
 	}
 	if (_error != nil && error != nil) {
@@ -83,7 +83,7 @@
 
 
 
-@implementation GoStructsS2 {
+@implementation StructsS2 {
 }
 
 - (id)initWithRef:(id)ref {
@@ -107,7 +107,7 @@
 @end
 
 
-@implementation GoStructsI {
+@implementation StructsI {
 }
 
 - (instancetype)initWithRef:(id)ref {
@@ -125,7 +125,7 @@
 
 
 
-GoStructsS* GoStructsIdentity(GoStructsS* s) {
+StructsS* StructsIdentity(StructsS* s) {
 	int32_t _s;
 	if ([s conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> s_proxy = (id<goSeqRefInterface>)(s);
@@ -134,18 +134,18 @@ GoStructsS* GoStructsIdentity(GoStructsS* s) {
 		_s = go_seq_to_refnum(s);
 	}
 	int32_t r0 = proxystructs__Identity(_s);
-	GoStructsS* _ret0_ = nil;
+	StructsS* _ret0_ = nil;
 	GoSeqRef* _ret0__ref = go_seq_from_refnum(r0);
 	if (_ret0__ref != NULL) {
 		_ret0_ = _ret0__ref.obj;
 		if (_ret0_ == nil) {
-			_ret0_ = [[GoStructsS alloc] initWithRef:_ret0__ref];
+			_ret0_ = [[StructsS alloc] initWithRef:_ret0__ref];
 		}
 	}
 	return _ret0_;
 }
 
-GoStructsS* GoStructsIdentityWithError(GoStructsS* s, NSError** error) {
+StructsS* StructsIdentityWithError(StructsS* s, NSError** error) {
 	int32_t _s;
 	if ([s conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> s_proxy = (id<goSeqRefInterface>)(s);
@@ -154,20 +154,20 @@ GoStructsS* GoStructsIdentityWithError(GoStructsS* s, NSError** error) {
 		_s = go_seq_to_refnum(s);
 	}
 	struct proxystructs__IdentityWithError_return res = proxystructs__IdentityWithError(_s);
-	GoStructsS* _ret0_ = nil;
+	StructsS* _ret0_ = nil;
 	GoSeqRef* _ret0__ref = go_seq_from_refnum(res.r0);
 	if (_ret0__ref != NULL) {
 		_ret0_ = _ret0__ref.obj;
 		if (_ret0_ == nil) {
-			_ret0_ = [[GoStructsS alloc] initWithRef:_ret0__ref];
+			_ret0_ = [[StructsS alloc] initWithRef:_ret0__ref];
 		}
 	}
-	GoUniverseerror* _error = nil;
+	Universeerror* _error = nil;
 	GoSeqRef* _error_ref = go_seq_from_refnum(res.r1);
 	if (_error_ref != NULL) {
 		_error = _error_ref.obj;
 		if (_error == nil) {
-			_error = [[GoUniverseerror alloc] initWithRef:_error_ref];
+			_error = [[Universeerror alloc] initWithRef:_error_ref];
 		}
 	}
 	if (_error != nil && error != nil) {
@@ -181,7 +181,7 @@ GoStructsS* GoStructsIdentityWithError(GoStructsS* s, NSError** error) {
 
 void cproxystructs_I_M(int32_t refnum) {
 	@autoreleasepool {
-		GoStructsI* o = go_seq_objc_from_refnum(refnum);
+		StructsI* o = go_seq_objc_from_refnum(refnum);
 		[o m];
 	}
 }

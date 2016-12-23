@@ -6,9 +6,9 @@
 #include <Foundation/Foundation.h>
 #include "seq.h"
 #include "_cgo_export.h"
-#include "GoKeywords.objc.h"
+#include "Keywords.objc.h"
 
-@implementation GoKeywordsKeywordCaller {
+@implementation KeywordsKeywordCaller {
 }
 
 - (instancetype)initWithRef:(id)ref {
@@ -286,383 +286,383 @@
 
 
 
-void GoKeywordsConst(NSString* id_) {
+void KeywordsConst(NSString* id_) {
 	nstring _id_ = go_seq_from_objc_string(id_);
 	proxykeywords__Const(_id_);
 }
 
-void GoKeywordsStatic(NSString* strictfp) {
+void KeywordsStatic(NSString* strictfp) {
 	nstring _strictfp = go_seq_from_objc_string(strictfp);
 	proxykeywords__Static(_strictfp);
 }
 
 void cproxykeywords_KeywordCaller_Abstract(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o abstract];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Assert(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o assert];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Boolean(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o boolean];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Break(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o break];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Byte(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o byte];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Case(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o case];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Catch(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o catch];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Char(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o char_];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Class(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o class];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Const(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o const_];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Continue(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o continue];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Default(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o default];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Do(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o do];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Double(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o double_];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Else(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o else];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Enum(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o enum];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Extends(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o extends];
 	}
 }
 
 void cproxykeywords_KeywordCaller_False(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o false];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Final(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o final];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Finally(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o finally];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Float(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o float_];
 	}
 }
 
 void cproxykeywords_KeywordCaller_For(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o for];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Goto(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o goto];
 	}
 }
 
 void cproxykeywords_KeywordCaller_If(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o if];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Implements(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o implements];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Import(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o import];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Instanceof(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o instanceof];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Int(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o int_];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Interface(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o interface];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Long(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o long_];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Native(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o native];
 	}
 }
 
 void cproxykeywords_KeywordCaller_New(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o new];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Null(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o null];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Package(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o package];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Private(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o private];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Protected(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o protected];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Public(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o public];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Return(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o return];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Short(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o short_];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Static(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o static];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Strictfp(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o strictfp];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Super(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o super_];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Switch(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o switch];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Synchronized(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o synchronized];
 	}
 }
 
 void cproxykeywords_KeywordCaller_This(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o this];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Throw(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o throw];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Throws(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o throws];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Transient(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o transient];
 	}
 }
 
 void cproxykeywords_KeywordCaller_True(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o true];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Try(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o try];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Void(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o void_];
 	}
 }
 
 void cproxykeywords_KeywordCaller_Volatile(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o volatile_];
 	}
 }
 
 void cproxykeywords_KeywordCaller_While(int32_t refnum) {
 	@autoreleasepool {
-		GoKeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
+		KeywordsKeywordCaller* o = go_seq_objc_from_refnum(refnum);
 		[o while];
 	}
 }
