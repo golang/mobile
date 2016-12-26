@@ -13,9 +13,25 @@ static jmethodID m_java_util_concurrent_Future_get__;
 static jmethodID m_java_util_concurrent_Future_get__JLjava_util_concurrent_TimeUnit_2;
 static jclass class_java_lang_Object;
 static jclass class_java_util_concurrent_TimeUnit;
+ret_jint cproxy_s_java_util_Spliterators_iterator__Ljava_util_Spliterator_00024OfInt_2(jclass clazz, jmethodID m, jint a0) {
+	JNIEnv *env = go_seq_push_local_frame(1);
+	jobject _a0 = go_seq_from_refnum(env, a0, NULL, NULL);
+	jobject res = (*env)->CallStaticObjectMethod(env, clazz, m, _a0);
+	jobject _exc = go_seq_get_exception(env);
+	int32_t _exc_ref = go_seq_to_refnum(env, _exc);
+	if (_exc != NULL) {
+		res = NULL;
+	}
+	jint _res = go_seq_to_refnum(env, res);
+	go_seq_pop_local_frame(env);
+	ret_jint __res = {_res, _exc_ref};
+	return __res;
+}
+
+static jclass class_java_util_Spliterators;
 
 void init_proxies() {
-	JNIEnv *env = go_seq_push_local_frame(5);
+	JNIEnv *env = go_seq_push_local_frame(6);
 	jclass clazz;
 	clazz = (*env)->FindClass(env, "java/lang/Runnable");
 	class_java_lang_Runnable = (*env)->NewGlobalRef(env, clazz);
@@ -31,6 +47,8 @@ void init_proxies() {
 	class_java_lang_Object = (*env)->NewGlobalRef(env, clazz);
 	clazz = (*env)->FindClass(env, "java/util/concurrent/TimeUnit");
 	class_java_util_concurrent_TimeUnit = (*env)->NewGlobalRef(env, clazz);
+	clazz = (*env)->FindClass(env, "java/util/Spliterators");
+	class_java_util_Spliterators = (*env)->NewGlobalRef(env, clazz);
 	go_seq_pop_local_frame(env);
 }
 

@@ -7,6 +7,7 @@ package java
 import (
 	"Java/java/io"
 	"Java/java/lang"
+	"Java/java/util/Spliterators"
 	"Java/java/util/concurrent"
 )
 
@@ -43,4 +44,10 @@ func (_ *Future) Get2(_ int64, _ concurrent.TimeUnit) lang.Object {
 
 type Object struct {
 	lang.Object
+}
+
+func innerClassTypes() {
+	// java.util.Spliterators.iterator use inner class types
+	// for the return value as well as parameters.
+	Spliterators.Iterator_Ljava_util_Spliterator_00024OfInt_2(nil)
 }

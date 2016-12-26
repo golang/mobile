@@ -839,6 +839,7 @@ func (j *importer) parseJavaType(desc string) (*Type, int, error) {
 		for i := n; i < len(desc); i++ {
 			if desc[i] == ';' {
 				clsName = strings.Replace(desc[n:i], "/", ".", -1)
+				clsName = strings.Replace(clsName, "$", ".", -1)
 				n += i - n + 1
 				break
 			}
