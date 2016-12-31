@@ -15,8 +15,10 @@ import (
 	"Java/java/lang/Integer"
 	"Java/java/lang/Object"
 	"Java/java/lang/Runnable"
+	"Java/java/net"
 	"Java/java/util"
 	"Java/java/util/concurrent"
+	xnet "Java/javax/net"
 )
 
 const (
@@ -188,4 +190,10 @@ func CastRunnable(o lang.Object) lang.Runnable {
 	var r lang.Runnable = Runnable.Cast(o)
 	r.Run()
 	return r
+}
+
+// Test that extending classes from Java packages
+// with the same last component (in this case "net")
+// works.
+func NameClashingPackages(_ net.Socket, _ xnet.SocketFactory) {
 }

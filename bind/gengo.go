@@ -13,7 +13,22 @@ import (
 
 type goGen struct {
 	*Generator
-	imports map[string]struct{}
+
+	// imports is the list of imports, in the form
+	// "the/package/path"
+	//
+	// or
+	//
+	// name "the/package/path"
+	//
+	// in case of duplicates.
+	imports []string
+	// The set of taken import names.
+	importNames map[string]struct{}
+	// importMap is a map from packages to their names. The name of a package is the last
+	// segment of its path, with duplicates resolved by appending a underscore and a unique
+	// number.
+	importMap map[*types.Package]string
 }
 
 const (
@@ -497,15 +512,16 @@ func (g *goGen) genPreamble() {
 	g.Printf("import (\n")
 	g.Indent()
 	g.Printf("_seq \"golang.org/x/mobile/bind/seq\"\n")
-	for path := range g.imports {
-		g.Printf("%q\n", path)
+	for _, imp := range g.imports {
+		g.Printf("%s\n", imp)
 	}
 	g.Outdent()
 	g.Printf(")\n\n")
 }
 
 func (g *goGen) gen() error {
-	g.imports = make(map[string]struct{})
+	g.importNames = make(map[string]struct{})
+	g.importMap = make(map[*types.Package]string)
 
 	// Switch to a temporary buffer so the preamble can be
 	// written last.
@@ -545,6 +561,28 @@ func (g *goGen) pkgName(pkg *types.Package) string {
 	if pkg == nil {
 		return ""
 	}
-	g.imports[pkg.Path()] = struct{}{}
-	return pkg.Name() + "."
+	if name, exists := g.importMap[pkg]; exists {
+		return name + "."
+	}
+	i := 0
+	pname := pkg.Name()
+	name := pkg.Name()
+	for {
+		if _, exists := g.importNames[name]; !exists {
+			g.importNames[name] = struct{}{}
+			g.importMap[pkg] = name
+			var imp string
+			if pname != name {
+				imp = fmt.Sprintf("%s %q", name, pkg.Path())
+			} else {
+				imp = fmt.Sprintf("%q", pkg.Path())
+			}
+			g.imports = append(g.imports, imp)
+			break
+		}
+		i++
+		name = fmt.Sprintf("%s_%d", pname, i)
+	}
+	g.importMap[pkg] = name
+	return name + "."
 }
