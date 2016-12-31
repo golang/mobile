@@ -228,21 +228,18 @@ func (g *JavaGen) genStruct(s structInfo) {
 				v := params.At(0)
 				if v.Name() == "this" {
 					t := v.Type()
-					if isJavaType(t) {
-						clsName := classNameFor(t)
-						cls := g.clsMap[clsName]
-						found := false
-						for _, sup := range jinf.supers {
-							if cls == sup {
-								found = true
-								break
+					if t, ok := t.(*types.Named); ok {
+						obj := t.Obj()
+						pkg := obj.Pkg()
+						if pkgFirstElem(pkg) == "Java" {
+							clsName := classNameFor(t)
+							exp := g.javaPkgName(g.Pkg) + "." + s.obj.Name()
+							if clsName != exp {
+								g.errorf("the type %s of the `this` argument to method %s.%s is not %s", clsName, n, m.Name(), exp)
+								continue
 							}
+							hasThis = true
 						}
-						if !found {
-							g.errorf("the type %s of the `this` argument to method %s.%s is not a super class to %s", cls.Name, n, m.Name(), n)
-							continue
-						}
-						hasThis = true
 					}
 				}
 			}

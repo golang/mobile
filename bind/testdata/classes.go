@@ -5,6 +5,7 @@
 package java
 
 import (
+	gopkg "Java/go/java"
 	"Java/java/io"
 	"Java/java/lang"
 	"Java/java/util/Spliterators"
@@ -15,7 +16,7 @@ type Runnable struct {
 	lang.Runnable
 }
 
-func (r *Runnable) Run(this lang.Runnable) {
+func (r *Runnable) Run(this gopkg.Runnable) {
 }
 
 type InputStream struct {

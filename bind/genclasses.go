@@ -34,6 +34,8 @@ type (
 		// For each Go package path, the Java class with static functions
 		// or constants.
 		clsPkgs map[string]*java.Class
+		// supers is the map of classes that need Super methods
+		supers map[string]struct{}
 	}
 )
 
@@ -95,7 +97,14 @@ func (g *ClassGen) goType(t *java.Type, local bool) string {
 	}
 }
 
-func (g *ClassGen) Init(classes []*java.Class) {
+// Init initializes the class wrapper generator. Classes is the
+// list of classes to wrap, supers is the list of class names
+// that need Super methods.
+func (g *ClassGen) Init(classes []*java.Class, supers []string) {
+	g.supers = make(map[string]struct{})
+	for _, s := range supers {
+		g.supers[s] = struct{}{}
+	}
 	g.classes = classes
 	g.imported = make(map[string]struct{})
 	g.typePkgs = make(map[string][]*java.Class)
@@ -210,7 +219,7 @@ func (g *ClassGen) GenH() {
 			g.Printf("extern ")
 			g.genCMethodDecl("cproxy", cls.JNIName, f)
 			g.Printf(";\n")
-			if cls.HasSuper() {
+			if _, ok := g.supers[cls.Name]; ok {
 				g.Printf("extern ")
 				g.genCMethodDecl("csuper", cls.JNIName, f)
 				g.Printf(";\n")
@@ -227,9 +236,15 @@ func (g *ClassGen) GenC() {
 	for _, cls := range g.classes {
 		g.genC(cls)
 		g.Printf("static jclass class_%s;\n", cls.JNIName)
+		if _, ok := g.supers[cls.Name]; ok {
+			g.Printf("static jclass sclass_%s;\n", cls.JNIName)
+		}
 		for _, f := range cls.AllMethods {
 			if g.isFuncSupported(f) {
 				g.Printf("static jmethodID m_%s_%s;\n", cls.JNIName, f.JNIName)
+				if _, ok := g.supers[cls.Name]; ok {
+					g.Printf("static jmethodID sm_%s_%s;\n", cls.JNIName, f.JNIName)
+				}
 			}
 		}
 	}
@@ -241,9 +256,16 @@ func (g *ClassGen) GenC() {
 	for _, cls := range g.classes {
 		g.Printf("clazz = (*env)->FindClass(env, %q);\n", strings.Replace(cls.FindName, ".", "/", -1))
 		g.Printf("class_%s = (*env)->NewGlobalRef(env, clazz);\n", cls.JNIName)
+		if _, ok := g.supers[cls.Name]; ok {
+			g.Printf("sclass_%s = (*env)->GetSuperclass(env, clazz);\n", cls.JNIName)
+			g.Printf("sclass_%s = (*env)->NewGlobalRef(env, sclass_%s);\n", cls.JNIName, cls.JNIName)
+		}
 		for _, f := range cls.AllMethods {
 			if g.isFuncSupported(f) {
 				g.Printf("m_%s_%s = go_seq_get_method_id(clazz, %q, %q);\n", cls.JNIName, f.JNIName, f.Name, f.Desc)
+				if _, ok := g.supers[cls.Name]; ok {
+					g.Printf("sm_%s_%s = go_seq_get_method_id(sclass_%s, %q, %q);\n", cls.JNIName, f.JNIName, cls.JNIName, f.Name, f.Desc)
+				}
 			}
 		}
 	}
@@ -257,7 +279,7 @@ func (g *ClassGen) GenC() {
 			}
 			g.genCMethodDecl("cproxy", cls.JNIName, f)
 			g.genCMethodBody(cls, f, false)
-			if cls.HasSuper() {
+			if _, ok := g.supers[cls.Name]; ok {
 				g.genCMethodDecl("csuper", cls.JNIName, f)
 				g.genCMethodBody(cls, f, true)
 			}
@@ -296,9 +318,10 @@ func (g *ClassGen) genCMethodBody(cls *java.Class, f *java.Func, virtual bool) {
 	}
 	g.Printf("Method(env, _this, ")
 	if virtual {
-		g.Printf("class_%s, ", cls.JNIName)
+		g.Printf("sclass_%s, sm_%s_%s", cls.JNIName, cls.JNIName, f.JNIName)
+	} else {
+		g.Printf("m_%s_%s", cls.JNIName, f.JNIName)
 	}
-	g.Printf("m_%s_%s", cls.JNIName, f.JNIName)
 	for i := range f.Params {
 		g.Printf(", _a%d", i)
 	}
@@ -509,7 +532,7 @@ func (g *ClassGen) genGo(cls *java.Class) {
 		g.Printf("	return p.ToString()\n")
 		g.Printf("}\n")
 	}
-	if cls.HasSuper() {
+	if _, ok := g.supers[cls.Name]; ok {
 		g.Printf("func (p *proxy_class_%s) Super() Java.%s {\n", cls.JNIName, goClsName(cls.Name))
 		g.Printf("	return &super_%s{p}\n", cls.JNIName)
 		g.Printf("}\n\n")
@@ -693,7 +716,7 @@ func (g *ClassGen) genInterface(cls *java.Class) {
 		g.genFuncDecl(true, f)
 		g.Printf("\n")
 	}
-	if cls.HasSuper() {
+	if _, ok := g.supers[cls.Name]; ok {
 		g.Printf("Super() %s\n", goClsName(cls.Name))
 	}
 	if cls.Throwable {

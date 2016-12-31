@@ -62,14 +62,10 @@ extern jmethodID proxy_class_java_F_cons;
 extern jclass proxy_class_java_O;
 extern jmethodID proxy_class_java_O_cons;
 
-// skipped method O.Super with unsupported parameter or return types
-
 extern jclass proxy_class_java_R;
 extern jmethodID proxy_class_java_R_cons;
 
 extern jclass proxy_class_java_S;
 extern jmethodID proxy_class_java_S_cons;
-
-// skipped method S.Super with unsupported parameter or return types
 
 #endif

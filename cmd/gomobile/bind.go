@@ -391,7 +391,19 @@ func GenClasses(pkgs []*build.Package, srcDir, jpkgSrc string) ([]*java.Class, e
 	if err != nil {
 		return nil, err
 	}
-	classes, err := java.Import(bClspath, bindClasspath, refs)
+	pref := bindJavaPkg
+	if pref == "" {
+		pref = "go"
+	}
+	if pref != "" {
+		pref = pref + "."
+	}
+	imp := &java.Importer{
+		Bootclasspath: bClspath,
+		Classpath:     bindClasspath,
+		JavaPkgPrefix: pref,
+	}
+	classes, err := imp.Import(refs)
 	if err != nil {
 		return nil, err
 	}
@@ -402,7 +414,11 @@ func GenClasses(pkgs []*build.Package, srcDir, jpkgSrc string) ([]*java.Class, e
 			Buf:        &buf,
 		},
 	}
-	g.Init(classes)
+	var genNames []string
+	for _, emb := range refs.Embedders {
+		genNames = append(genNames, pref+emb.Pkg+"."+emb.Name)
+	}
+	g.Init(classes, genNames)
 	for i, jpkg := range g.Packages() {
 		pkgDir := filepath.Join(jpkgSrc, "src", "Java", jpkg)
 		if err := os.MkdirAll(pkgDir, 0700); err != nil {

@@ -41,14 +41,10 @@ jclass proxy_class_java_F;
 jmethodID proxy_class_java_F_cons;
 jclass proxy_class_java_O;
 jmethodID proxy_class_java_O_cons;
-// skipped method O.Super with unsupported parameter or return types
-
 jclass proxy_class_java_R;
 jmethodID proxy_class_java_R_cons;
 jclass proxy_class_java_S;
 jmethodID proxy_class_java_S_cons;
-// skipped method S.Super with unsupported parameter or return types
-
 
 JNIEXPORT void JNICALL
 Java_go_java_Java__1init(JNIEnv *env, jclass _unused) {
@@ -62,8 +58,6 @@ Java_go_java_Java__1init(JNIEnv *env, jclass _unused) {
     proxy_class_java_O = (*env)->NewGlobalRef(env, clazz);
     proxy_class_java_O_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
     clazz = (*env)->FindClass(env, "go/java/O");
-    // skipped method O.Super with unsupported parameter or return types
-    
     
     clazz = (*env)->FindClass(env, "go/java/Java$proxyR");
     proxy_class_java_R = (*env)->NewGlobalRef(env, clazz);
@@ -74,16 +68,6 @@ Java_go_java_Java__1init(JNIEnv *env, jclass _unused) {
     proxy_class_java_S = (*env)->NewGlobalRef(env, clazz);
     proxy_class_java_S_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
     clazz = (*env)->FindClass(env, "go/java/S");
-    // skipped method S.Super with unsupported parameter or return types
-    
     
 }
-
-// skipped function O.Super with unsupported parameter or return types
-
-// skipped method O with unsupported parameter or return types
-
-// skipped function S.Super with unsupported parameter or return types
-
-// skipped method S with unsupported parameter or return types
 
