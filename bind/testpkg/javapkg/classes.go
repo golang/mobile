@@ -7,6 +7,7 @@
 package javapkg
 
 import (
+	gopkg "Java/go/javapkg"
 	"Java/java/beans"
 	"Java/java/io"
 	"Java/java/io/IOException"
@@ -34,14 +35,14 @@ type GoRunnable struct {
 	Field string
 }
 
-func (r *GoRunnable) ToString(this lang.Runnable) string {
+func (r *GoRunnable) ToString(this gopkg.GoRunnable) string {
 	return ToStringPrefix
 }
 
-func (r *GoRunnable) Run(this lang.Runnable) {
+func (r *GoRunnable) Run(this gopkg.GoRunnable) {
 }
 
-func (r *GoRunnable) GetThis(this lang.Runnable) lang.Runnable {
+func (r *GoRunnable) GetThis(this gopkg.GoRunnable) lang.Runnable {
 	return this
 }
 
@@ -86,7 +87,7 @@ type GoObject struct {
 	this lang.Object
 }
 
-func (o *GoObject) ToString(this lang.Object) string {
+func (o *GoObject) ToString(this gopkg.GoObject) string {
 	o.this = this
 	return ToStringPrefix + this.Super().ToString()
 }
@@ -171,7 +172,7 @@ type GoRand struct {
 	util.Random
 }
 
-func (_ *GoRand) Next(this util.Random, i int32) int32 {
+func (_ *GoRand) Next(this gopkg.GoRand, i int32) int32 {
 	return this.Super().Next(i)
 }
 

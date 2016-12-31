@@ -48,9 +48,16 @@ typedef struct ret_nbyteslice {
 
 extern jint cproxy_java_lang_Runnable_run(jint this);
 extern ret_jint cproxy_java_io_InputStream_read__(jint this);
-extern ret_jint csuper_java_io_InputStream_read__(jint this);
 extern ret_jint cproxy_java_util_concurrent_Future_get__(jint this);
 extern ret_jint cproxy_java_util_concurrent_Future_get__JLjava_util_concurrent_TimeUnit_2(jint this, jlong a0, jint a1);
+extern ret_jint cproxy_go_java_Future_get__(jint this);
+extern ret_jint csuper_go_java_Future_get__(jint this);
+extern ret_jint cproxy_go_java_Future_get__JLjava_util_concurrent_TimeUnit_2(jint this, jlong a0, jint a1);
+extern ret_jint csuper_go_java_Future_get__JLjava_util_concurrent_TimeUnit_2(jint this, jlong a0, jint a1);
+extern ret_jint cproxy_go_java_InputStream_read__(jint this);
+extern ret_jint csuper_go_java_InputStream_read__(jint this);
+extern jint cproxy_go_java_Runnable_run(jint this);
+extern jint csuper_go_java_Runnable_run(jint this);
 extern ret_jint cproxy_s_java_util_Spliterators_iterator__Ljava_util_Spliterator_00024OfInt_2(jclass clazz, jmethodID m, jint a0);
 // JNI function headers for the Go <=> Java bridge.
 //   gobind -lang=java classes

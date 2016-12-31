@@ -223,14 +223,7 @@ func genObjcPackages(t *testing.T, dir string, types []*objc.Named, buf *bytes.B
 	return cg
 }
 
-func genJavaPackages(t *testing.T, dir string, classes []*java.Class, buf *bytes.Buffer) *ClassGen {
-	cg := &ClassGen{
-		Printer: &Printer{
-			IndentEach: []byte("\t"),
-			Buf:        buf,
-		},
-	}
-	cg.Init(classes)
+func genJavaPackages(t *testing.T, dir string, cg *ClassGen) {
 	pkgBase := filepath.Join(dir, "src", "Java")
 	if err := os.MkdirAll(pkgBase, 0700); err != nil {
 		t.Fatal(err)
@@ -241,16 +234,16 @@ func genJavaPackages(t *testing.T, dir string, classes []*java.Class, buf *bytes
 			t.Fatal(err)
 		}
 		pkgFile := filepath.Join(pkgDir, "package.go")
-		buf.Reset()
+		cg.Buf.Reset()
 		cg.GenPackage(i)
-		if err := ioutil.WriteFile(pkgFile, buf.Bytes(), 0600); err != nil {
+		if err := ioutil.WriteFile(pkgFile, cg.Buf.Bytes(), 0600); err != nil {
 			t.Fatal(err)
 		}
 	}
-	buf.Reset()
+	cg.Buf.Reset()
 	cg.GenInterfaces()
 	clsFile := filepath.Join(pkgBase, "interfaces.go")
-	if err := ioutil.WriteFile(clsFile, buf.Bytes(), 0600); err != nil {
+	if err := ioutil.WriteFile(clsFile, cg.Buf.Bytes(), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -264,7 +257,6 @@ func genJavaPackages(t *testing.T, dir string, classes []*java.Class, buf *bytes
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("failed to go install the generated Java wrappers: %v: %s", err, string(out))
 	}
-	return cg
 }
 
 func TestGenJava(t *testing.T) {
@@ -274,7 +266,10 @@ func TestGenJava(t *testing.T) {
 	}
 	for _, filename := range allTests {
 		refs := fileRefs(t, filename, "Java/")
-		classes, err := java.Import("", "", refs)
+		imp := &java.Importer{
+			JavaPkgPrefix: "go.",
+		}
+		classes, err := imp.Import(refs)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -287,7 +282,18 @@ func TestGenJava(t *testing.T) {
 				t.Fatal(err)
 			}
 			defer os.RemoveAll(tmpGopath)
-			cg = genJavaPackages(t, tmpGopath, classes, new(bytes.Buffer))
+			cg = &ClassGen{
+				Printer: &Printer{
+					IndentEach: []byte("\t"),
+					Buf:        new(bytes.Buffer),
+				},
+			}
+			var genNames []string
+			for _, emb := range refs.Embedders {
+				genNames = append(genNames, imp.JavaPkgPrefix+emb.Pkg+"."+emb.Name)
+			}
+			cg.Init(classes, genNames)
+			genJavaPackages(t, tmpGopath, cg)
 			cg.Buf = &buf
 		}
 		pkg := typeCheck(t, filename, tmpGopath)
@@ -374,7 +380,10 @@ func TestGenGoJavaWrappers(t *testing.T) {
 	for _, filename := range javaTests {
 		var buf bytes.Buffer
 		refs := fileRefs(t, filename, "Java/")
-		classes, err := java.Import("", "", refs)
+		imp := &java.Importer{
+			JavaPkgPrefix: "go.",
+		}
+		classes, err := imp.Import(refs)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -383,7 +392,18 @@ func TestGenGoJavaWrappers(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer os.RemoveAll(tmpGopath)
-		cg := genJavaPackages(t, tmpGopath, classes, &buf)
+		cg := &ClassGen{
+			Printer: &Printer{
+				IndentEach: []byte("\t"),
+				Buf:        &buf,
+			},
+		}
+		var genNames []string
+		for _, emb := range refs.Embedders {
+			genNames = append(genNames, imp.JavaPkgPrefix+emb.Pkg+"."+emb.Name)
+		}
+		cg.Init(classes, genNames)
+		genJavaPackages(t, tmpGopath, cg)
 		pkg := typeCheck(t, filename, tmpGopath)
 		cg.GenGo()
 		testGenGo(t, filename, &buf, pkg)

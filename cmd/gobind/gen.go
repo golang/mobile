@@ -140,7 +140,7 @@ func genPkg(p *types.Package, allPkg []*types.Package, classes []*java.Class) {
 	}
 }
 
-func genJavaPackages(ctx *build.Context, dir string, classes []*java.Class) error {
+func genJavaPackages(ctx *build.Context, dir string, classes []*java.Class, genNames []string) error {
 	var buf bytes.Buffer
 	cg := &bind.ClassGen{
 		Printer: &bind.Printer{
@@ -148,7 +148,7 @@ func genJavaPackages(ctx *build.Context, dir string, classes []*java.Class) erro
 			Buf:        &buf,
 		},
 	}
-	cg.Init(classes)
+	cg.Init(classes, genNames)
 	pkgBase := filepath.Join(dir, "src", "Java")
 	if err := os.MkdirAll(pkgBase, 0700); err != nil {
 		return err

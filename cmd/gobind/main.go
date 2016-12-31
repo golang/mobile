@@ -60,7 +60,19 @@ func main() {
 		log.Fatal(err)
 	}
 	if len(refs.Refs) > 0 {
-		classes, err = java.Import(*bootclasspath, *classpath, refs)
+		pref := *javaPkg
+		if pref == "" {
+			pref = "go"
+		}
+		if pref != "" {
+			pref = pref + "."
+		}
+		imp := &java.Importer{
+			Bootclasspath: *bootclasspath,
+			Classpath:     *classpath,
+			JavaPkgPrefix: pref,
+		}
+		classes, err = imp.Import(refs)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -70,7 +82,11 @@ func main() {
 				log.Fatal(err)
 			}
 			defer os.RemoveAll(tmpGopath)
-			if err := genJavaPackages(ctx, tmpGopath, classes); err != nil {
+			var genNames []string
+			for _, emb := range refs.Embedders {
+				genNames = append(genNames, pref+emb.Pkg+"."+emb.Name)
+			}
+			if err := genJavaPackages(ctx, tmpGopath, classes, genNames); err != nil {
 				log.Fatal(err)
 			}
 			gopath := ctx.GOPATH

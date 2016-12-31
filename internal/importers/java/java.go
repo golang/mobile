@@ -93,10 +93,13 @@ type Type struct {
 
 type TypeKind int
 
-type importer struct {
-	bootclspath string
-	clspath     string
-	clsMap      map[string]*Class
+type Importer struct {
+	Bootclasspath string
+	Classpath     string
+	// JavaPkgPrefix is java package name for generated classes.
+	JavaPkgPrefix string
+
+	clsMap map[string]*Class
 }
 
 const (
@@ -148,11 +151,9 @@ func javapPath() (string, error) {
 //   ...
 //
 // }
-func Import(bootclasspath, classpath string, refs *importers.References) ([]*Class, error) {
-	imp := &importer{
-		bootclspath: bootclasspath,
-		clspath:     classpath,
-		clsMap:      make(map[string]*Class),
+func (j *Importer) Import(refs *importers.References) ([]*Class, error) {
+	if j.clsMap == nil {
+		j.clsMap = make(map[string]*Class)
 	}
 	clsSet := make(map[string]struct{})
 	var names []string
@@ -166,19 +167,44 @@ func Import(bootclasspath, classpath string, refs *importers.References) ([]*Cla
 			}
 		}
 	}
-	classes, err := imp.importClasses(names, true)
+	classes, err := j.importClasses(names, true)
 	if err != nil {
 		return nil, err
 	}
-	for _, cls := range classes {
-		imp.fillAllMethods(cls)
+	// Embedders refer to every exported Go struct that will have its class
+	// generated. Allow Go code to reverse bind to those classes by synthesizing
+	// their class descriptors.
+	for _, emb := range refs.Embedders {
+		n := j.JavaPkgPrefix + emb.Pkg + "." + emb.Name
+		if _, exists := j.clsMap[n]; exists {
+			continue
+		}
+		cls := &Class{
+			Name:     n,
+			FindName: n,
+			JNIName:  JNIMangle(n),
+			PkgName:  emb.Name,
+		}
+		for _, ref := range emb.Refs {
+			jpkg := strings.Replace(ref.Pkg, "/", ".", -1)
+			super := jpkg + "." + ref.Name
+			if _, exists := j.clsMap[super]; !exists {
+				return nil, fmt.Errorf("class %q not found", super)
+			}
+			cls.Supers = append(cls.Supers, super)
+		}
+		classes = append(classes, cls)
+		j.clsMap[cls.Name] = cls
 	}
-	imp.fillThrowables()
 	for _, cls := range classes {
-		imp.mangleOverloads(cls.AllMethods)
-		imp.mangleOverloads(cls.Funcs)
+		j.fillAllMethods(cls)
 	}
-	imp.filterReferences(classes, refs)
+	j.fillThrowables()
+	for _, cls := range classes {
+		j.mangleOverloads(cls.AllMethods)
+		j.mangleOverloads(cls.Funcs)
+	}
+	j.filterReferences(classes, refs)
 	return classes, nil
 }
 
@@ -209,10 +235,6 @@ func JNIMangle(s string) string {
 		}
 	}
 	return string(m)
-}
-
-func (c *Class) HasSuper() bool {
-	return !c.Final && !c.Interface
 }
 
 func (t *Type) Type() string {
@@ -316,7 +338,7 @@ func (t *Type) JNICallType() string {
 	}
 }
 
-func (j *importer) filterReferences(classes []*Class, refs *importers.References) {
+func (j *Importer) filterReferences(classes []*Class, refs *importers.References) {
 	refFuncs := make(map[[2]string]struct{})
 	for _, ref := range refs.Refs {
 		pkgName := strings.Replace(ref.Pkg, "/", ".", -1)
@@ -351,16 +373,16 @@ func (j *importer) filterReferences(classes []*Class, refs *importers.References
 	}
 }
 
-func (j *importer) importClasses(names []string, allowMissingClasses bool) ([]*Class, error) {
+func (j *Importer) importClasses(names []string, allowMissingClasses bool) ([]*Class, error) {
 	if len(names) == 0 {
 		return nil, nil
 	}
 	args := []string{"-J-Duser.language=en", "-s", "-protected", "-constants"}
-	if j.clspath != "" {
-		args = append(args, "-classpath", j.clspath)
+	if j.Classpath != "" {
+		args = append(args, "-classpath", j.Classpath)
 	}
-	if j.bootclspath != "" {
-		args = append(args, "-bootclasspath", j.bootclspath)
+	if j.Bootclasspath != "" {
+		args = append(args, "-bootclasspath", j.Bootclasspath)
 	}
 	args = append(args, names...)
 	javapPath, err := javapPath()
@@ -411,7 +433,7 @@ func (j *importer) importClasses(names []string, allowMissingClasses bool) ([]*C
 	return classes, nil
 }
 
-func (j *importer) unknownSuperClasses(cls *Class, unk []string) []string {
+func (j *Importer) unknownSuperClasses(cls *Class, unk []string) []string {
 loop:
 	for _, n := range cls.Supers {
 		if s, exists := j.clsMap[n]; exists {
@@ -428,7 +450,7 @@ loop:
 	return unk
 }
 
-func (j *importer) scanClass(s *bufio.Scanner, name string) (*Class, error) {
+func (j *Importer) scanClass(s *bufio.Scanner, name string) (*Class, error) {
 	if !s.Scan() {
 		return nil, fmt.Errorf("%s: missing javap header", name)
 	}
@@ -544,7 +566,7 @@ func (j *importer) scanClass(s *bufio.Scanner, name string) (*Class, error) {
 	return cls, nil
 }
 
-func (j *importer) scanClassDecl(name string, decl string) (*Class, error) {
+func (j *Importer) scanClassDecl(name string, decl string) (*Class, error) {
 	cls := &Class{
 		Name: name,
 	}
@@ -633,7 +655,7 @@ func (j *importer) scanClassDecl(name string, decl string) (*Class, error) {
 	return nil, fmt.Errorf("missing ending { in class declaration: %q", decl)
 }
 
-func (j *importer) scanVar(decl, desc string) (*Var, error) {
+func (j *Importer) scanVar(decl, desc string) (*Var, error) {
 	v := new(Var)
 	const eq = " = "
 	idx := strings.Index(decl, eq)
@@ -664,7 +686,7 @@ func (j *importer) scanVar(decl, desc string) (*Var, error) {
 	return v, nil
 }
 
-func (j *importer) scanMethod(decl, desc string, parenIdx int) (*Func, error) {
+func (j *Importer) scanMethod(decl, desc string, parenIdx int) (*Func, error) {
 	// Member is a method
 	f := new(Func)
 	f.Desc = desc
@@ -705,7 +727,7 @@ func (j *importer) scanMethod(decl, desc string, parenIdx int) (*Func, error) {
 	return f, nil
 }
 
-func (j *importer) fillThrowables() {
+func (j *Importer) fillThrowables() {
 	thrCls, ok := j.clsMap["java.lang.Throwable"]
 	if !ok {
 		// If Throwable isn't in the class map
@@ -717,7 +739,7 @@ func (j *importer) fillThrowables() {
 	}
 }
 
-func (j *importer) fillThrowableFor(cls, thrCls *Class) {
+func (j *Importer) fillThrowableFor(cls, thrCls *Class) {
 	if cls.Interface || cls.Throwable {
 		return
 	}
@@ -729,7 +751,7 @@ func (j *importer) fillThrowableFor(cls, thrCls *Class) {
 	}
 }
 
-func (j *importer) fillAllMethods(cls *Class) {
+func (j *Importer) fillAllMethods(cls *Class) {
 	if len(cls.AllMethods) > 0 {
 		return
 	}
@@ -764,7 +786,7 @@ func (j *importer) fillAllMethods(cls *Class) {
 // mangleOverloads assigns unique names to overloaded Java functions by appending
 // the argument count. If multiple methods have the same name and argument count,
 // the method signature is appended in JNI mangled form.
-func (j *importer) mangleOverloads(allFuncs []*Func) {
+func (j *Importer) mangleOverloads(allFuncs []*Func) {
 	overloads := make(map[string][]*Func)
 	for _, f := range allFuncs {
 		overloads[f.Name] = append(overloads[f.Name], f)
@@ -795,7 +817,7 @@ func (j *importer) mangleOverloads(allFuncs []*Func) {
 	}
 }
 
-func (j *importer) parseJavaValue(v string) (string, bool) {
+func (j *Importer) parseJavaValue(v string) (string, bool) {
 	v = strings.TrimRight(v, "df")
 	switch v {
 	case "", "NaN", "Infinity", "-Infinity":
@@ -810,7 +832,7 @@ func (j *importer) parseJavaValue(v string) (string, bool) {
 	}
 }
 
-func (j *importer) parseJavaType(desc string) (*Type, int, error) {
+func (j *Importer) parseJavaType(desc string) (*Type, int, error) {
 	t := new(Type)
 	var n int
 	if desc == "" {
