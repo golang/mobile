@@ -8,6 +8,7 @@ import (
 	gopkg "Java/go/java"
 	"Java/java/io"
 	"Java/java/lang"
+	"Java/java/lang/System"
 	"Java/java/util/Spliterators"
 	"Java/java/util/concurrent"
 )
@@ -51,4 +52,10 @@ func innerClassTypes() {
 	// java.util.Spliterators.iterator use inner class types
 	// for the return value as well as parameters.
 	Spliterators.Iterator_Ljava_util_Spliterator_00024OfInt_2(nil)
+}
+
+func returnType() {
+	// Implicit types (java.io.Console) should be wrapped.
+	cons := System.Console()
+	cons.Flush()
 }

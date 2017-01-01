@@ -84,9 +84,6 @@ func (g *ClassGen) goType(t *java.Type, local bool) string {
 	case java.Array:
 		return "[]" + g.goType(t.Elem, local)
 	case java.Object:
-		if _, exists := g.imported[t.Class]; !exists {
-			return "interface{}"
-		}
 		name := goClsName(t.Class)
 		if !local {
 			name = "Java." + name

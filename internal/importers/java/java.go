@@ -196,16 +196,52 @@ func (j *Importer) Import(refs *importers.References) ([]*Class, error) {
 		classes = append(classes, cls)
 		j.clsMap[cls.Name] = cls
 	}
+	j.initClasses(classes, refs)
+	// Include implicit classes that are used in parameter or return values.
+	newClasses := classes
+	for len(newClasses) > 0 {
+		var impNames []string
+		var impClasses []*Class
+		for _, cls := range newClasses {
+			for _, funcs := range [][]*Func{cls.Funcs, cls.AllMethods} {
+				for _, f := range funcs {
+					names := j.implicitFuncTypes(f)
+					for _, name := range names {
+						if _, exists := clsSet[name]; exists {
+							continue
+						}
+						clsSet[name] = struct{}{}
+						if cls, exists := j.clsMap[name]; exists {
+							impClasses = append(impClasses, cls)
+						} else {
+							impNames = append(impNames, name)
+						}
+					}
+				}
+			}
+		}
+		imports, err := j.importClasses(impNames, false)
+		if err != nil {
+			return nil, err
+		}
+		impClasses = append(impClasses, imports...)
+		j.initClasses(impClasses, refs)
+		classes = append(classes, impClasses...)
+		newClasses = impClasses
+	}
+	j.fillThrowables(classes)
+	return classes, nil
+}
+
+func (j *Importer) initClasses(classes []*Class, refs *importers.References) {
 	for _, cls := range classes {
 		j.fillAllMethods(cls)
 	}
-	j.fillThrowables()
 	for _, cls := range classes {
 		j.mangleOverloads(cls.AllMethods)
 		j.mangleOverloads(cls.Funcs)
 	}
 	j.filterReferences(classes, refs)
-	return classes, nil
 }
 
 func (v *Var) Constant() bool {
@@ -411,7 +447,7 @@ func (j *Importer) importClasses(names []string, allowMissingClasses bool) ([]*C
 		classes = append(classes, cls)
 		j.clsMap[name] = cls
 	}
-	// Include the methods from classes extended or implemented
+	// Include methods from extended or implemented classes.
 	unkCls := classes
 	for {
 		var unknown []string
@@ -425,12 +461,22 @@ func (j *Importer) importClasses(names []string, allowMissingClasses bool) ([]*C
 		if err != nil {
 			return nil, err
 		}
-		for _, cls := range newCls {
-			j.clsMap[cls.Name] = cls
-		}
 		unkCls = newCls
 	}
 	return classes, nil
+}
+
+func (j *Importer) implicitFuncTypes(f *Func) []string {
+	var unk []string
+	if rt := f.Ret; rt != nil && rt.Kind == Object {
+		unk = append(unk, rt.Class)
+	}
+	for _, t := range f.Params {
+		if t.Kind == Object {
+			unk = append(unk, t.Class)
+		}
+	}
+	return unk
 }
 
 func (j *Importer) unknownSuperClasses(cls *Class, unk []string) []string {
@@ -727,14 +773,14 @@ func (j *Importer) scanMethod(decl, desc string, parenIdx int) (*Func, error) {
 	return f, nil
 }
 
-func (j *Importer) fillThrowables() {
+func (j *Importer) fillThrowables(classes []*Class) {
 	thrCls, ok := j.clsMap["java.lang.Throwable"]
 	if !ok {
 		// If Throwable isn't in the class map
 		// no imported class inherits from Throwable
 		return
 	}
-	for _, cls := range j.clsMap {
+	for _, cls := range classes {
 		j.fillThrowableFor(cls, thrCls)
 	}
 }
@@ -769,10 +815,7 @@ func (j *Importer) fillAllMethods(cls *Class) {
 		for _, f := range super.AllMethods {
 			if _, exists := methods[f.FuncSig]; !exists {
 				methods[f.FuncSig] = struct{}{}
-				// Copy function so each class can have its own
-				// JNI name mangling.
-				cpf := *f
-				cls.AllMethods = append(cls.AllMethods, &cpf)
+				cls.AllMethods = append(cls.AllMethods, f)
 			}
 		}
 	}
@@ -788,8 +831,11 @@ func (j *Importer) fillAllMethods(cls *Class) {
 // the method signature is appended in JNI mangled form.
 func (j *Importer) mangleOverloads(allFuncs []*Func) {
 	overloads := make(map[string][]*Func)
-	for _, f := range allFuncs {
-		overloads[f.Name] = append(overloads[f.Name], f)
+	for i, f := range allFuncs {
+		// Name mangling is per class so copy the function first.
+		f := *f
+		allFuncs[i] = &f
+		overloads[f.Name] = append(overloads[f.Name], &f)
 	}
 	for _, funcs := range overloads {
 		for _, f := range funcs {
