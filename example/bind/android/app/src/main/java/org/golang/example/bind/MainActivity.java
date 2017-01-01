@@ -10,8 +10,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.widget.TextView;
 
-import go.hello.Hello;
-
+import hello.Hello;
 
 public class MainActivity extends Activity {
 

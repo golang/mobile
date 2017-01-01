@@ -17,35 +17,35 @@ jclass proxy_class_issue10788_TestStruct;
 jmethodID proxy_class_issue10788_TestStruct_cons;
 
 JNIEXPORT void JNICALL
-Java_go_issue10788_Issue10788__1init(JNIEnv *env, jclass _unused) {
+Java_issue10788_Issue10788__1init(JNIEnv *env, jclass _unused) {
     jclass clazz;
-    clazz = (*env)->FindClass(env, "go/issue10788/TestStruct");
+    clazz = (*env)->FindClass(env, "issue10788/TestStruct");
     proxy_class_issue10788_TestStruct = (*env)->NewGlobalRef(env, clazz);
     proxy_class_issue10788_TestStruct_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
-    clazz = (*env)->FindClass(env, "go/issue10788/Issue10788$proxyTestInterface");
+    clazz = (*env)->FindClass(env, "issue10788/Issue10788$proxyTestInterface");
     proxy_class_issue10788_TestInterface = (*env)->NewGlobalRef(env, clazz);
     proxy_class_issue10788_TestInterface_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
-    clazz = (*env)->FindClass(env, "go/issue10788/TestInterface");
-    mid_TestInterface_DoSomeWork = (*env)->GetMethodID(env, clazz, "doSomeWork", "(Lgo/issue10788/TestStruct;)V");
+    clazz = (*env)->FindClass(env, "issue10788/TestInterface");
+    mid_TestInterface_DoSomeWork = (*env)->GetMethodID(env, clazz, "doSomeWork", "(Lissue10788/TestStruct;)V");
     mid_TestInterface_MultipleUnnamedParams = (*env)->GetMethodID(env, clazz, "multipleUnnamedParams", "(JLjava/lang/String;J)V");
     
 }
 
 JNIEXPORT jobject JNICALL
-Java_go_issue10788_TestStruct__1_1New(JNIEnv *env, jclass clazz) {
+Java_issue10788_TestStruct__1_1New(JNIEnv *env, jclass clazz) {
     int32_t refnum = new_issue10788_TestStruct();
     return go_seq_from_refnum(env, refnum, NULL, NULL);
 }
 
 JNIEXPORT void JNICALL
-Java_go_issue10788_TestStruct_setValue(JNIEnv *env, jobject this, jstring v) {
+Java_issue10788_TestStruct_setValue(JNIEnv *env, jobject this, jstring v) {
     int32_t o = go_seq_to_refnum_go(env, this);
     nstring _v = go_seq_from_java_string(env, v);
     proxyissue10788_TestStruct_Value_Set(o, _v);
 }
 
 JNIEXPORT jstring JNICALL
-Java_go_issue10788_TestStruct_getValue(JNIEnv *env, jobject this) {
+Java_issue10788_TestStruct_getValue(JNIEnv *env, jobject this) {
     int32_t o = go_seq_to_refnum_go(env, this);
     nstring r0 = proxyissue10788_TestStruct_Value_Get(o);
     jstring _r0 = go_seq_to_java_string(env, r0);
@@ -53,7 +53,7 @@ Java_go_issue10788_TestStruct_getValue(JNIEnv *env, jobject this) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_issue10788_Issue10788_00024proxyTestInterface_doSomeWork(JNIEnv* env, jobject __this__, jobject s) {
+Java_issue10788_Issue10788_00024proxyTestInterface_doSomeWork(JNIEnv* env, jobject __this__, jobject s) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     int32_t _s = go_seq_to_refnum(env, s);
     proxyissue10788_TestInterface_DoSomeWork(o, _s);
@@ -68,7 +68,7 @@ void cproxyissue10788_TestInterface_DoSomeWork(int32_t refnum, int32_t s) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_issue10788_Issue10788_00024proxyTestInterface_multipleUnnamedParams(JNIEnv* env, jobject __this__, jlong p0, jstring p1, jlong p2) {
+Java_issue10788_Issue10788_00024proxyTestInterface_multipleUnnamedParams(JNIEnv* env, jobject __this__, jlong p0, jstring p1, jlong p2) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     nint _p0 = (nint)p0;
     nstring _p1 = go_seq_from_java_string(env, p1);

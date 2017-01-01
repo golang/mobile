@@ -30,24 +30,24 @@ type Java_util_Spliterators interface {
 type Java_lang_System interface {
 }
 
-type Go_java_Future interface {
+type Java_Future interface {
 	Get() (Java_lang_Object, error)
 	Get2(a0 int64, a1 Java_util_concurrent_TimeUnit) (Java_lang_Object, error)
-	Super() Go_java_Future
+	Super() Java_Future
 }
 
-type Go_java_InputStream interface {
+type Java_InputStream interface {
 	Read() (int32, error)
-	Super() Go_java_InputStream
+	Super() Java_InputStream
 }
 
-type Go_java_Object interface {
-	Super() Go_java_Object
+type Java_Object interface {
+	Super() Java_Object
 }
 
-type Go_java_Runnable interface {
+type Java_Runnable interface {
 	Run()
-	Super() Go_java_Runnable
+	Super() Java_Runnable
 }
 
 type Java_util_PrimitiveIterator_OfInt interface {
@@ -84,10 +84,10 @@ import "Java/java/lang/Object"
 import "Java/java/util/concurrent/TimeUnit"
 import "Java/java/util/Spliterators"
 import "Java/java/lang/System"
-import "Java/go/java/Future"
-import "Java/go/java/InputStream"
-import "Java/go/java/Object"
-import "Java/go/java/Runnable"
+import "Java/java/Future"
+import "Java/java/InputStream"
+import "Java/java/Object"
+import "Java/java/Runnable"
 import "Java/java/util/PrimitiveIterator/OfInt"
 import "Java/java/util/Spliterator/OfInt"
 import "Java/java/io/Console"
@@ -114,10 +114,10 @@ func initClasses() {
 	init_java_util_concurrent_TimeUnit()
 	init_java_util_Spliterators()
 	init_java_lang_System()
-	init_go_java_Future()
-	init_go_java_InputStream()
-	init_go_java_Object()
-	init_go_java_Runnable()
+	init_java_Future()
+	init_java_InputStream()
+	init_java_Object()
+	init_java_Runnable()
 	init_java_util_PrimitiveIterator_OfInt()
 	init_java_util_Spliterator_OfInt()
 	init_java_io_Console()
@@ -446,33 +446,33 @@ type proxy_class_java_lang_System _seq.Ref
 
 func (p *proxy_class_java_lang_System) Bind_proxy_refnum__() int32 { return (*_seq.Ref)(p).Bind_IncNum() }
 
-var class_go_java_Future C.jclass
+var class_java_Future C.jclass
 
-func init_go_java_Future() {
-	cls := C.CString("go/java/Future")
+func init_java_Future() {
+	cls := C.CString("java/Future")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
 	if clazz == nil {
 		return
 	}
-	class_go_java_Future = clazz
-	Future.Cast = func(v interface{}) Java.Go_java_Future {
-		t := reflect.TypeOf((*proxy_class_go_java_Future)(nil))
-		cv := reflect.ValueOf(v).Convert(t).Interface().(*proxy_class_go_java_Future)
+	class_java_Future = clazz
+	Future.Cast = func(v interface{}) Java.Java_Future {
+		t := reflect.TypeOf((*proxy_class_java_Future)(nil))
+		cv := reflect.ValueOf(v).Convert(t).Interface().(*proxy_class_java_Future)
 		ref := C.jint(_seq.ToRefNum(cv))
-		if C.go_seq_isinstanceof(ref, class_go_java_Future) != 1 {
-			panic(fmt.Errorf("%T is not an instance of %s", v, "go.java.Future"))
+		if C.go_seq_isinstanceof(ref, class_java_Future) != 1 {
+			panic(fmt.Errorf("%T is not an instance of %s", v, "java.Future"))
 		}
 		return cv
 	}
 }
 
-type proxy_class_go_java_Future _seq.Ref
+type proxy_class_java_Future _seq.Ref
 
-func (p *proxy_class_go_java_Future) Bind_proxy_refnum__() int32 { return (*_seq.Ref)(p).Bind_IncNum() }
+func (p *proxy_class_java_Future) Bind_proxy_refnum__() int32 { return (*_seq.Ref)(p).Bind_IncNum() }
 
-func (p *proxy_class_go_java_Future) Get() (Java.Java_lang_Object, error) {
-	res := C.cproxy_go_java_Future_get__(C.jint(p.Bind_proxy_refnum__()))
+func (p *proxy_class_java_Future) Get() (Java.Java_lang_Object, error) {
+	res := C.cproxy_java_Future_get__(C.jint(p.Bind_proxy_refnum__()))
 	var _res Java.Java_lang_Object
 	_res_ref := _seq.FromRefNum(int32(res.res))
 	if _res_ref != nil {
@@ -494,13 +494,13 @@ func (p *proxy_class_go_java_Future) Get() (Java.Java_lang_Object, error) {
 	return _res, _exc
 }
 
-func (p *proxy_class_go_java_Future) Get2(a0 int64, a1 Java.Java_util_concurrent_TimeUnit) (Java.Java_lang_Object, error) {
+func (p *proxy_class_java_Future) Get2(a0 int64, a1 Java.Java_util_concurrent_TimeUnit) (Java.Java_lang_Object, error) {
 	_a0 := C.jlong(a0)
 	var _a1 C.jint = _seq.NullRefNum
 	if a1 != nil {
 		_a1 = C.jint(_seq.ToRefNum(a1))
 	}
-	res := C.cproxy_go_java_Future_get__JLjava_util_concurrent_TimeUnit_2(C.jint(p.Bind_proxy_refnum__()), _a0, _a1)
+	res := C.cproxy_java_Future_get__JLjava_util_concurrent_TimeUnit_2(C.jint(p.Bind_proxy_refnum__()), _a0, _a1)
 	var _res Java.Java_lang_Object
 	_res_ref := _seq.FromRefNum(int32(res.res))
 	if _res_ref != nil {
@@ -522,14 +522,14 @@ func (p *proxy_class_go_java_Future) Get2(a0 int64, a1 Java.Java_util_concurrent
 	return _res, _exc
 }
 
-func (p *proxy_class_go_java_Future) Super() Java.Go_java_Future {
-	return &super_go_java_Future{p}
+func (p *proxy_class_java_Future) Super() Java.Java_Future {
+	return &super_java_Future{p}
 }
 
-type super_go_java_Future struct {*proxy_class_go_java_Future}
+type super_java_Future struct {*proxy_class_java_Future}
 
-func (p *super_go_java_Future) Get() (Java.Java_lang_Object, error) {
-	res := C.csuper_go_java_Future_get__(C.jint(p.Bind_proxy_refnum__()))
+func (p *super_java_Future) Get() (Java.Java_lang_Object, error) {
+	res := C.csuper_java_Future_get__(C.jint(p.Bind_proxy_refnum__()))
 	var _res Java.Java_lang_Object
 	_res_ref := _seq.FromRefNum(int32(res.res))
 	if _res_ref != nil {
@@ -551,13 +551,13 @@ func (p *super_go_java_Future) Get() (Java.Java_lang_Object, error) {
 	return _res, _exc
 }
 
-func (p *super_go_java_Future) Get2(a0 int64, a1 Java.Java_util_concurrent_TimeUnit) (Java.Java_lang_Object, error) {
+func (p *super_java_Future) Get2(a0 int64, a1 Java.Java_util_concurrent_TimeUnit) (Java.Java_lang_Object, error) {
 	_a0 := C.jlong(a0)
 	var _a1 C.jint = _seq.NullRefNum
 	if a1 != nil {
 		_a1 = C.jint(_seq.ToRefNum(a1))
 	}
-	res := C.csuper_go_java_Future_get__JLjava_util_concurrent_TimeUnit_2(C.jint(p.Bind_proxy_refnum__()), _a0, _a1)
+	res := C.csuper_java_Future_get__JLjava_util_concurrent_TimeUnit_2(C.jint(p.Bind_proxy_refnum__()), _a0, _a1)
 	var _res Java.Java_lang_Object
 	_res_ref := _seq.FromRefNum(int32(res.res))
 	if _res_ref != nil {
@@ -579,33 +579,33 @@ func (p *super_go_java_Future) Get2(a0 int64, a1 Java.Java_util_concurrent_TimeU
 	return _res, _exc
 }
 
-var class_go_java_InputStream C.jclass
+var class_java_InputStream C.jclass
 
-func init_go_java_InputStream() {
-	cls := C.CString("go/java/InputStream")
+func init_java_InputStream() {
+	cls := C.CString("java/InputStream")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
 	if clazz == nil {
 		return
 	}
-	class_go_java_InputStream = clazz
-	InputStream.Cast = func(v interface{}) Java.Go_java_InputStream {
-		t := reflect.TypeOf((*proxy_class_go_java_InputStream)(nil))
-		cv := reflect.ValueOf(v).Convert(t).Interface().(*proxy_class_go_java_InputStream)
+	class_java_InputStream = clazz
+	InputStream.Cast = func(v interface{}) Java.Java_InputStream {
+		t := reflect.TypeOf((*proxy_class_java_InputStream)(nil))
+		cv := reflect.ValueOf(v).Convert(t).Interface().(*proxy_class_java_InputStream)
 		ref := C.jint(_seq.ToRefNum(cv))
-		if C.go_seq_isinstanceof(ref, class_go_java_InputStream) != 1 {
-			panic(fmt.Errorf("%T is not an instance of %s", v, "go.java.InputStream"))
+		if C.go_seq_isinstanceof(ref, class_java_InputStream) != 1 {
+			panic(fmt.Errorf("%T is not an instance of %s", v, "java.InputStream"))
 		}
 		return cv
 	}
 }
 
-type proxy_class_go_java_InputStream _seq.Ref
+type proxy_class_java_InputStream _seq.Ref
 
-func (p *proxy_class_go_java_InputStream) Bind_proxy_refnum__() int32 { return (*_seq.Ref)(p).Bind_IncNum() }
+func (p *proxy_class_java_InputStream) Bind_proxy_refnum__() int32 { return (*_seq.Ref)(p).Bind_IncNum() }
 
-func (p *proxy_class_go_java_InputStream) Read() (int32, error) {
-	res := C.cproxy_go_java_InputStream_read__(C.jint(p.Bind_proxy_refnum__()))
+func (p *proxy_class_java_InputStream) Read() (int32, error) {
+	res := C.cproxy_java_InputStream_read__(C.jint(p.Bind_proxy_refnum__()))
 	_res := int32(res.res)
 	var _exc error
 	_exc_ref := _seq.FromRefNum(int32(res.exc))
@@ -619,14 +619,14 @@ func (p *proxy_class_go_java_InputStream) Read() (int32, error) {
 	return _res, _exc
 }
 
-func (p *proxy_class_go_java_InputStream) Super() Java.Go_java_InputStream {
-	return &super_go_java_InputStream{p}
+func (p *proxy_class_java_InputStream) Super() Java.Java_InputStream {
+	return &super_java_InputStream{p}
 }
 
-type super_go_java_InputStream struct {*proxy_class_go_java_InputStream}
+type super_java_InputStream struct {*proxy_class_java_InputStream}
 
-func (p *super_go_java_InputStream) Read() (int32, error) {
-	res := C.csuper_go_java_InputStream_read__(C.jint(p.Bind_proxy_refnum__()))
+func (p *super_java_InputStream) Read() (int32, error) {
+	res := C.csuper_java_InputStream_read__(C.jint(p.Bind_proxy_refnum__()))
 	_res := int32(res.res)
 	var _exc error
 	_exc_ref := _seq.FromRefNum(int32(res.exc))
@@ -640,64 +640,64 @@ func (p *super_go_java_InputStream) Read() (int32, error) {
 	return _res, _exc
 }
 
-var class_go_java_Object C.jclass
+var class_java_Object C.jclass
 
-func init_go_java_Object() {
-	cls := C.CString("go/java/Object")
+func init_java_Object() {
+	cls := C.CString("java/Object")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
 	if clazz == nil {
 		return
 	}
-	class_go_java_Object = clazz
-	Object.Cast = func(v interface{}) Java.Go_java_Object {
-		t := reflect.TypeOf((*proxy_class_go_java_Object)(nil))
-		cv := reflect.ValueOf(v).Convert(t).Interface().(*proxy_class_go_java_Object)
+	class_java_Object = clazz
+	Object.Cast = func(v interface{}) Java.Java_Object {
+		t := reflect.TypeOf((*proxy_class_java_Object)(nil))
+		cv := reflect.ValueOf(v).Convert(t).Interface().(*proxy_class_java_Object)
 		ref := C.jint(_seq.ToRefNum(cv))
-		if C.go_seq_isinstanceof(ref, class_go_java_Object) != 1 {
-			panic(fmt.Errorf("%T is not an instance of %s", v, "go.java.Object"))
+		if C.go_seq_isinstanceof(ref, class_java_Object) != 1 {
+			panic(fmt.Errorf("%T is not an instance of %s", v, "java.Object"))
 		}
 		return cv
 	}
 }
 
-type proxy_class_go_java_Object _seq.Ref
+type proxy_class_java_Object _seq.Ref
 
-func (p *proxy_class_go_java_Object) Bind_proxy_refnum__() int32 { return (*_seq.Ref)(p).Bind_IncNum() }
+func (p *proxy_class_java_Object) Bind_proxy_refnum__() int32 { return (*_seq.Ref)(p).Bind_IncNum() }
 
-func (p *proxy_class_go_java_Object) Super() Java.Go_java_Object {
-	return &super_go_java_Object{p}
+func (p *proxy_class_java_Object) Super() Java.Java_Object {
+	return &super_java_Object{p}
 }
 
-type super_go_java_Object struct {*proxy_class_go_java_Object}
+type super_java_Object struct {*proxy_class_java_Object}
 
-var class_go_java_Runnable C.jclass
+var class_java_Runnable C.jclass
 
-func init_go_java_Runnable() {
-	cls := C.CString("go/java/Runnable")
+func init_java_Runnable() {
+	cls := C.CString("java/Runnable")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
 	if clazz == nil {
 		return
 	}
-	class_go_java_Runnable = clazz
-	Runnable.Cast = func(v interface{}) Java.Go_java_Runnable {
-		t := reflect.TypeOf((*proxy_class_go_java_Runnable)(nil))
-		cv := reflect.ValueOf(v).Convert(t).Interface().(*proxy_class_go_java_Runnable)
+	class_java_Runnable = clazz
+	Runnable.Cast = func(v interface{}) Java.Java_Runnable {
+		t := reflect.TypeOf((*proxy_class_java_Runnable)(nil))
+		cv := reflect.ValueOf(v).Convert(t).Interface().(*proxy_class_java_Runnable)
 		ref := C.jint(_seq.ToRefNum(cv))
-		if C.go_seq_isinstanceof(ref, class_go_java_Runnable) != 1 {
-			panic(fmt.Errorf("%T is not an instance of %s", v, "go.java.Runnable"))
+		if C.go_seq_isinstanceof(ref, class_java_Runnable) != 1 {
+			panic(fmt.Errorf("%T is not an instance of %s", v, "java.Runnable"))
 		}
 		return cv
 	}
 }
 
-type proxy_class_go_java_Runnable _seq.Ref
+type proxy_class_java_Runnable _seq.Ref
 
-func (p *proxy_class_go_java_Runnable) Bind_proxy_refnum__() int32 { return (*_seq.Ref)(p).Bind_IncNum() }
+func (p *proxy_class_java_Runnable) Bind_proxy_refnum__() int32 { return (*_seq.Ref)(p).Bind_IncNum() }
 
-func (p *proxy_class_go_java_Runnable) Run() {
-	res := C.cproxy_go_java_Runnable_run(C.jint(p.Bind_proxy_refnum__()))
+func (p *proxy_class_java_Runnable) Run() {
+	res := C.cproxy_java_Runnable_run(C.jint(p.Bind_proxy_refnum__()))
 	var _exc error
 	_exc_ref := _seq.FromRefNum(int32(res))
 	if _exc_ref != nil {
@@ -710,14 +710,14 @@ func (p *proxy_class_go_java_Runnable) Run() {
 	if (_exc != nil) { panic(_exc) }
 }
 
-func (p *proxy_class_go_java_Runnable) Super() Java.Go_java_Runnable {
-	return &super_go_java_Runnable{p}
+func (p *proxy_class_java_Runnable) Super() Java.Java_Runnable {
+	return &super_java_Runnable{p}
 }
 
-type super_go_java_Runnable struct {*proxy_class_go_java_Runnable}
+type super_java_Runnable struct {*proxy_class_java_Runnable}
 
-func (p *super_go_java_Runnable) Run() {
-	res := C.csuper_go_java_Runnable_run(C.jint(p.Bind_proxy_refnum__()))
+func (p *super_java_Runnable) Run() {
+	res := C.csuper_java_Runnable_run(C.jint(p.Bind_proxy_refnum__()))
 	var _exc error
 	_exc_ref := _seq.FromRefNum(int32(res))
 	if _exc_ref != nil {
@@ -835,7 +835,7 @@ package gomobile_bind
 import "C"
 
 import (
-	java_1 "Java/go/java"
+	java_1 "Java/java"
 	"Java/java/io"
 	"Java/java/lang"
 	"Java/java/util/concurrent"
@@ -1022,7 +1022,7 @@ func proxyjava_Runnable_Run(refnum C.int32_t, param_this C.int32_t) {
 		if param_this < 0 { // go object
 			_param_this = _param_this_ref.Get().(java_1.Runnable)
 		} else { // foreign object
-			_param_this = (*proxy_class_go_java_Runnable)(_param_this_ref)
+			_param_this = (*proxy_class_java_Runnable)(_param_this_ref)
 		}
 	}
 	v.Run(_param_this)

@@ -45,7 +45,7 @@ func TestBindAndroid(t *testing.T) {
 	}{
 		{
 			wantGobind: "gobind -lang=java",
-			wantPkgDir: "go/asset",
+			wantPkgDir: "asset",
 		},
 		{
 			javaPkg:    "com.example.foo",
@@ -121,7 +121,7 @@ mkdir -p $WORK/android/src/main/java/{{.JavaPkgDir}}
 mkdir -p $WORK/gomobile_bind
 mkdir -p $WORK/gomobile_bind
 mkdir -p $WORK/android/src/main/java/go
-gobind -lang=java -outdir=$WORK/android/src/main/java/go 
+{{.GobindJavaCmd}} -outdir=$WORK/android/src/main/java/go 
 mkdir -p $WORK/android/src/main/java/go
 mkdir -p $WORK/gomobile_bind
 mkdir -p $WORK/gomobile_bind

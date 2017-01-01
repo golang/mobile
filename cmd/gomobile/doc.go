@@ -56,7 +56,7 @@ the module import wizard (File > New > New Module > Import .JAR or
 (version 1.7+) and Android SDK (API level 15 or newer) to build the
 library for Android. The environment variable ANDROID_HOME must be set
 to the path to Android SDK. The generated Java class is in the java
-package 'go.<package_name>' unless -javapkg flag is specified.
+package '<package_name>' unless -javapkg flag is specified.
 
 By default, -target=android builds shared libraries for all supported
 instruction sets (arm, arm64, 386, amd64). A subset of instruction sets
@@ -64,8 +64,8 @@ can be selected by specifying target type with the architecture name. E.g.,
 -target=android/arm,android/386.
 
 For -target ios, gomobile must be run on an OS X machine with Xcode
-installed. Support is not complete. The generated Objective-C types
-are prefixed with 'Go' unless the -prefix flag is provided.
+installed. Support is not complete. The -prefix flag can be used to prefix
+the names of generated Objective-C types.
 
 The -v flag provides verbose output, including the list of packages built.
 

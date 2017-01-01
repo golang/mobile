@@ -20,7 +20,7 @@ import (
 
 type JavaGen struct {
 	// JavaPkg is the Java package prefix for the generated classes. The prefix is prepended to the Go
-	// package name to create the full Java package name. If JavaPkg is empty, 'go' is used as prefix.
+	// package name to create the full Java package name.
 	JavaPkg string
 
 	*Generator
@@ -844,11 +844,10 @@ func JavaPkgName(pkgPrefix string, pkg *types.Package) string {
 		return "go"
 	}
 	s := javaNameReplacer(pkg.Name())
-	if pkgPrefix != "" {
-		return pkgPrefix + "." + s
-	} else {
-		return "go." + s
+	if pkgPrefix == "" {
+		return s
 	}
+	return pkgPrefix + "." + s
 }
 
 func (g *JavaGen) className() string {

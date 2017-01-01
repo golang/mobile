@@ -5,7 +5,7 @@
 package java
 
 import (
-	gopkg "Java/go/java"
+	gopkg "Java/java"
 	"Java/java/io"
 	"Java/java/lang"
 	"Java/java/lang/System"

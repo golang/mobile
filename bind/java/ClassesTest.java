@@ -12,12 +12,12 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Random;
 
-import go.javapkg.Javapkg;
-import go.javapkg.I;
-import go.javapkg.GoObject;
-import go.javapkg.GoRunnable;
-import go.javapkg.GoSubset;
-import go.javapkg.GoInputStream;
+import javapkg.Javapkg;
+import javapkg.I;
+import javapkg.GoObject;
+import javapkg.GoRunnable;
+import javapkg.GoSubset;
+import javapkg.GoInputStream;
 
 public class ClassesTest extends InstrumentationTestCase {
 	public void testConst() {

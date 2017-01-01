@@ -149,9 +149,9 @@ var (
 func init() {
 	// bind command specific commands.
 	cmdBind.flag.StringVar(&bindJavaPkg, "javapkg", "",
-		"specifies custom Java package path prefix used instead of the default 'go'. Valid only with -target=android.")
+		"specifies custom Java package path prefix. Valid only with -target=android.")
 	cmdBind.flag.StringVar(&bindPrefix, "prefix", "",
-		"custom Objective-C name prefix used instead of the default 'Go'. Valid only with -target=ios.")
+		"custom Objective-C name prefix. Valid only with -target=ios.")
 	cmdBind.flag.StringVar(&bindClasspath, "classpath", "", "The classpath for imported Java classes. Valid only with -target=android.")
 	cmdBind.flag.StringVar(&bindBootClasspath, "bootclasspath", "", "The bootstrap classpath for imported Java classes. Valid only with -target=android.")
 }
@@ -391,17 +391,10 @@ func GenClasses(pkgs []*build.Package, srcDir, jpkgSrc string) ([]*java.Class, e
 	if err != nil {
 		return nil, err
 	}
-	pref := bindJavaPkg
-	if pref == "" {
-		pref = "go"
-	}
-	if pref != "" {
-		pref = pref + "."
-	}
 	imp := &java.Importer{
 		Bootclasspath: bClspath,
 		Classpath:     bindClasspath,
-		JavaPkgPrefix: pref,
+		JavaPkg:       bindJavaPkg,
 	}
 	classes, err := imp.Import(refs)
 	if err != nil {
@@ -416,7 +409,11 @@ func GenClasses(pkgs []*build.Package, srcDir, jpkgSrc string) ([]*java.Class, e
 	}
 	var genNames []string
 	for _, emb := range refs.Embedders {
-		genNames = append(genNames, pref+emb.Pkg+"."+emb.Name)
+		n := emb.Pkg + "." + emb.Name
+		if bindJavaPkg != "" {
+			n = bindJavaPkg + "." + n
+		}
+		genNames = append(genNames, n)
 	}
 	g.Init(classes, genNames)
 	for i, jpkg := range g.Packages() {
@@ -495,12 +492,10 @@ func (b *binder) GenJava(pkg *types.Package, allPkg []*types.Package, classes []
 	var className string
 	pkgName := ""
 	pkgPath := ""
-	javaPkg := ""
 	if pkg != nil {
 		className = strings.Title(pkg.Name())
 		pkgName = pkg.Name()
 		pkgPath = pkg.Path()
-		javaPkg = bindJavaPkg
 	} else {
 		pkgName = "universe"
 		className = "Universe"
@@ -509,13 +504,13 @@ func (b *binder) GenJava(pkg *types.Package, allPkg []*types.Package, classes []
 	cFile := filepath.Join(outdir, "java_"+pkgName+".c")
 	hFile := filepath.Join(outdir, pkgName+".h")
 	bindOption := "-lang=java"
-	if javaPkg != "" {
-		bindOption += " -javapkg=" + javaPkg
+	if bindJavaPkg != "" {
+		bindOption += " -javapkg=" + bindJavaPkg
 	}
 
 	var buf bytes.Buffer
 	g := &bind.JavaGen{
-		JavaPkg: javaPkg,
+		JavaPkg: bindJavaPkg,
 		Generator: &bind.Generator{
 			Printer: &bind.Printer{Buf: &buf, IndentEach: []byte("    ")},
 			Fset:    b.fset,
