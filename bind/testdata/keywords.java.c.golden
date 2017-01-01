@@ -66,12 +66,12 @@ static jmethodID mid_KeywordCaller_Volatile;
 static jmethodID mid_KeywordCaller_While;
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords__1init(JNIEnv *env, jclass _unused) {
+Java_keywords_Keywords__1init(JNIEnv *env, jclass _unused) {
     jclass clazz;
-    clazz = (*env)->FindClass(env, "go/keywords/Keywords$proxyKeywordCaller");
+    clazz = (*env)->FindClass(env, "keywords/Keywords$proxyKeywordCaller");
     proxy_class_keywords_KeywordCaller = (*env)->NewGlobalRef(env, clazz);
     proxy_class_keywords_KeywordCaller_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
-    clazz = (*env)->FindClass(env, "go/keywords/KeywordCaller");
+    clazz = (*env)->FindClass(env, "keywords/KeywordCaller");
     mid_KeywordCaller_Abstract = (*env)->GetMethodID(env, clazz, "abstract_", "()V");
     mid_KeywordCaller_Assert = (*env)->GetMethodID(env, clazz, "assert_", "()V");
     mid_KeywordCaller_Boolean = (*env)->GetMethodID(env, clazz, "boolean_", "()V");
@@ -129,19 +129,19 @@ Java_go_keywords_Keywords__1init(JNIEnv *env, jclass _unused) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_const_1(JNIEnv* env, jclass _clazz, jstring id) {
+Java_keywords_Keywords_const_1(JNIEnv* env, jclass _clazz, jstring id) {
     nstring _id = go_seq_from_java_string(env, id);
     proxykeywords__Const(_id);
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_static_1(JNIEnv* env, jclass _clazz, jstring strictfp_) {
+Java_keywords_Keywords_static_1(JNIEnv* env, jclass _clazz, jstring strictfp_) {
     nstring _strictfp_ = go_seq_from_java_string(env, strictfp_);
     proxykeywords__Static(_strictfp_);
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_abstract_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_abstract_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Abstract(o);
 }
@@ -154,7 +154,7 @@ void cproxykeywords_KeywordCaller_Abstract(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_assert_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_assert_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Assert(o);
 }
@@ -167,7 +167,7 @@ void cproxykeywords_KeywordCaller_Assert(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_boolean_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_boolean_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Boolean(o);
 }
@@ -180,7 +180,7 @@ void cproxykeywords_KeywordCaller_Boolean(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_break_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_break_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Break(o);
 }
@@ -193,7 +193,7 @@ void cproxykeywords_KeywordCaller_Break(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_byte_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_byte_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Byte(o);
 }
@@ -206,7 +206,7 @@ void cproxykeywords_KeywordCaller_Byte(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_case_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_case_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Case(o);
 }
@@ -219,7 +219,7 @@ void cproxykeywords_KeywordCaller_Case(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_catch_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_catch_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Catch(o);
 }
@@ -232,7 +232,7 @@ void cproxykeywords_KeywordCaller_Catch(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_char_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_char_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Char(o);
 }
@@ -245,7 +245,7 @@ void cproxykeywords_KeywordCaller_Char(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_class_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_class_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Class(o);
 }
@@ -258,7 +258,7 @@ void cproxykeywords_KeywordCaller_Class(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_const_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_const_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Const(o);
 }
@@ -271,7 +271,7 @@ void cproxykeywords_KeywordCaller_Const(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_continue_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_continue_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Continue(o);
 }
@@ -284,7 +284,7 @@ void cproxykeywords_KeywordCaller_Continue(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_default_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_default_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Default(o);
 }
@@ -297,7 +297,7 @@ void cproxykeywords_KeywordCaller_Default(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_do_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_do_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Do(o);
 }
@@ -310,7 +310,7 @@ void cproxykeywords_KeywordCaller_Do(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_double_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_double_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Double(o);
 }
@@ -323,7 +323,7 @@ void cproxykeywords_KeywordCaller_Double(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_else_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_else_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Else(o);
 }
@@ -336,7 +336,7 @@ void cproxykeywords_KeywordCaller_Else(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_enum_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_enum_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Enum(o);
 }
@@ -349,7 +349,7 @@ void cproxykeywords_KeywordCaller_Enum(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_extends_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_extends_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Extends(o);
 }
@@ -362,7 +362,7 @@ void cproxykeywords_KeywordCaller_Extends(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_false_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_false_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_False(o);
 }
@@ -375,7 +375,7 @@ void cproxykeywords_KeywordCaller_False(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_final_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_final_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Final(o);
 }
@@ -388,7 +388,7 @@ void cproxykeywords_KeywordCaller_Final(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_finally_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_finally_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Finally(o);
 }
@@ -401,7 +401,7 @@ void cproxykeywords_KeywordCaller_Finally(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_float_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_float_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Float(o);
 }
@@ -414,7 +414,7 @@ void cproxykeywords_KeywordCaller_Float(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_for_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_for_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_For(o);
 }
@@ -427,7 +427,7 @@ void cproxykeywords_KeywordCaller_For(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_goto_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_goto_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Goto(o);
 }
@@ -440,7 +440,7 @@ void cproxykeywords_KeywordCaller_Goto(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_if_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_if_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_If(o);
 }
@@ -453,7 +453,7 @@ void cproxykeywords_KeywordCaller_If(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_implements_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_implements_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Implements(o);
 }
@@ -466,7 +466,7 @@ void cproxykeywords_KeywordCaller_Implements(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_import_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_import_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Import(o);
 }
@@ -479,7 +479,7 @@ void cproxykeywords_KeywordCaller_Import(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_instanceof_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_instanceof_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Instanceof(o);
 }
@@ -492,7 +492,7 @@ void cproxykeywords_KeywordCaller_Instanceof(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_int_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_int_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Int(o);
 }
@@ -505,7 +505,7 @@ void cproxykeywords_KeywordCaller_Int(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_interface_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_interface_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Interface(o);
 }
@@ -518,7 +518,7 @@ void cproxykeywords_KeywordCaller_Interface(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_long_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_long_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Long(o);
 }
@@ -531,7 +531,7 @@ void cproxykeywords_KeywordCaller_Long(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_native_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_native_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Native(o);
 }
@@ -544,7 +544,7 @@ void cproxykeywords_KeywordCaller_Native(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_new_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_new_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_New(o);
 }
@@ -557,7 +557,7 @@ void cproxykeywords_KeywordCaller_New(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_null_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_null_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Null(o);
 }
@@ -570,7 +570,7 @@ void cproxykeywords_KeywordCaller_Null(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_package_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_package_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Package(o);
 }
@@ -583,7 +583,7 @@ void cproxykeywords_KeywordCaller_Package(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_private_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_private_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Private(o);
 }
@@ -596,7 +596,7 @@ void cproxykeywords_KeywordCaller_Private(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_protected_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_protected_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Protected(o);
 }
@@ -609,7 +609,7 @@ void cproxykeywords_KeywordCaller_Protected(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_public_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_public_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Public(o);
 }
@@ -622,7 +622,7 @@ void cproxykeywords_KeywordCaller_Public(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_return_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_return_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Return(o);
 }
@@ -635,7 +635,7 @@ void cproxykeywords_KeywordCaller_Return(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_short_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_short_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Short(o);
 }
@@ -648,7 +648,7 @@ void cproxykeywords_KeywordCaller_Short(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_static_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_static_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Static(o);
 }
@@ -661,7 +661,7 @@ void cproxykeywords_KeywordCaller_Static(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_strictfp_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_strictfp_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Strictfp(o);
 }
@@ -674,7 +674,7 @@ void cproxykeywords_KeywordCaller_Strictfp(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_super_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_super_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Super(o);
 }
@@ -687,7 +687,7 @@ void cproxykeywords_KeywordCaller_Super(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_switch_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_switch_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Switch(o);
 }
@@ -700,7 +700,7 @@ void cproxykeywords_KeywordCaller_Switch(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_synchronized_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_synchronized_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Synchronized(o);
 }
@@ -713,7 +713,7 @@ void cproxykeywords_KeywordCaller_Synchronized(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_this_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_this_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_This(o);
 }
@@ -726,7 +726,7 @@ void cproxykeywords_KeywordCaller_This(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_throw_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_throw_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Throw(o);
 }
@@ -739,7 +739,7 @@ void cproxykeywords_KeywordCaller_Throw(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_throws_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_throws_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Throws(o);
 }
@@ -752,7 +752,7 @@ void cproxykeywords_KeywordCaller_Throws(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_transient_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_transient_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Transient(o);
 }
@@ -765,7 +765,7 @@ void cproxykeywords_KeywordCaller_Transient(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_true_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_true_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_True(o);
 }
@@ -778,7 +778,7 @@ void cproxykeywords_KeywordCaller_True(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_try_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_try_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Try(o);
 }
@@ -791,7 +791,7 @@ void cproxykeywords_KeywordCaller_Try(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_void_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_void_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Void(o);
 }
@@ -804,7 +804,7 @@ void cproxykeywords_KeywordCaller_Void(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_volatile_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_volatile_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_Volatile(o);
 }
@@ -817,7 +817,7 @@ void cproxykeywords_KeywordCaller_Volatile(int32_t refnum) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_keywords_Keywords_00024proxyKeywordCaller_while_1(JNIEnv* env, jobject __this__) {
+Java_keywords_Keywords_00024proxyKeywordCaller_while_1(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxykeywords_KeywordCaller_While(o);
 }

@@ -7,7 +7,6 @@
 package javapkg
 
 import (
-	gopkg "Java/go/javapkg"
 	"Java/java/beans"
 	"Java/java/io"
 	"Java/java/io/IOException"
@@ -19,6 +18,7 @@ import (
 	"Java/java/net"
 	"Java/java/util"
 	"Java/java/util/concurrent"
+	gopkg "Java/javapkg"
 	xnet "Java/javax/net"
 )
 

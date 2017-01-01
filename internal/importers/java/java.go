@@ -96,8 +96,8 @@ type TypeKind int
 type Importer struct {
 	Bootclasspath string
 	Classpath     string
-	// JavaPkgPrefix is java package name for generated classes.
-	JavaPkgPrefix string
+	// JavaPkg is java package name for generated classes.
+	JavaPkg string
 
 	clsMap map[string]*Class
 }
@@ -175,7 +175,10 @@ func (j *Importer) Import(refs *importers.References) ([]*Class, error) {
 	// generated. Allow Go code to reverse bind to those classes by synthesizing
 	// their class descriptors.
 	for _, emb := range refs.Embedders {
-		n := j.JavaPkgPrefix + emb.Pkg + "." + emb.Name
+		n := emb.Pkg + "." + emb.Name
+		if j.JavaPkg != "" {
+			n = j.JavaPkg + "." + n
+		}
 		if _, exists := j.clsMap[n]; exists {
 			continue
 		}

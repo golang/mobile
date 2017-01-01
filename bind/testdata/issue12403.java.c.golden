@@ -15,19 +15,19 @@ static jmethodID mid_Parsable_FromJSON;
 static jmethodID mid_Parsable_ToJSON;
 
 JNIEXPORT void JNICALL
-Java_go_issue12403_Issue12403__1init(JNIEnv *env, jclass _unused) {
+Java_issue12403_Issue12403__1init(JNIEnv *env, jclass _unused) {
     jclass clazz;
-    clazz = (*env)->FindClass(env, "go/issue12403/Issue12403$proxyParsable");
+    clazz = (*env)->FindClass(env, "issue12403/Issue12403$proxyParsable");
     proxy_class_issue12403_Parsable = (*env)->NewGlobalRef(env, clazz);
     proxy_class_issue12403_Parsable_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
-    clazz = (*env)->FindClass(env, "go/issue12403/Parsable");
+    clazz = (*env)->FindClass(env, "issue12403/Parsable");
     mid_Parsable_FromJSON = (*env)->GetMethodID(env, clazz, "fromJSON", "(Ljava/lang/String;)Ljava/lang/String;");
     mid_Parsable_ToJSON = (*env)->GetMethodID(env, clazz, "toJSON", "()Ljava/lang/String;");
     
 }
 
 JNIEXPORT jstring JNICALL
-Java_go_issue12403_Issue12403_00024proxyParsable_fromJSON(JNIEnv* env, jobject __this__, jstring jstr) {
+Java_issue12403_Issue12403_00024proxyParsable_fromJSON(JNIEnv* env, jobject __this__, jstring jstr) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     nstring _jstr = go_seq_from_java_string(env, jstr);
     nstring r0 = proxyissue12403_Parsable_FromJSON(o, _jstr);
@@ -46,7 +46,7 @@ nstring cproxyissue12403_Parsable_FromJSON(int32_t refnum, nstring jstr) {
 }
 
 JNIEXPORT jstring JNICALL
-Java_go_issue12403_Issue12403_00024proxyParsable_toJSON(JNIEnv* env, jobject __this__) {
+Java_issue12403_Issue12403_00024proxyParsable_toJSON(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     struct proxyissue12403_Parsable_ToJSON_return res = proxyissue12403_Parsable_ToJSON(o);
     jstring _r0 = go_seq_to_java_string(env, res.r0);

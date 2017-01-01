@@ -10,8 +10,8 @@ import android.test.MoreAsserts;
 import java.util.Arrays;
 import java.util.Random;
 
-import go.testpkg.*;
-import go.secondpkg.Secondpkg;
+import testpkg.*;
+import secondpkg.Secondpkg;
 
 public class SeqTest extends InstrumentationTestCase {
   public SeqTest() {
@@ -483,14 +483,14 @@ public class SeqTest extends InstrumentationTestCase {
   }
 
   public void testImportedPkg() {
-    Testpkg.callImportedI(new go.secondpkg.I() {
+    Testpkg.callImportedI(new secondpkg.I() {
       @Override public long f(long i) {
         return i;
       }
     });
     assertEquals("imported string should match", Secondpkg.HelloString, Secondpkg.hello());
-    go.secondpkg.I i = Testpkg.newImportedI();
-    go.secondpkg.S s = Testpkg.newImportedS();
+    secondpkg.I i = Testpkg.newImportedI();
+    secondpkg.S s = Testpkg.newImportedS();
     i = Testpkg.getImportedVarI();
     s = Testpkg.getImportedVarS();
     assertEquals("numbers should match", 8, i.f(8));
@@ -505,9 +505,9 @@ public class SeqTest extends InstrumentationTestCase {
     Testpkg.withImportedI(i);
     Testpkg.withImportedS(s);
 
-    go.secondpkg.IF f = new AnI();
+    secondpkg.IF f = new AnI();
     f = Testpkg.new_();
-    go.secondpkg.Ser ser = Testpkg.newSer();
+    secondpkg.Ser ser = Testpkg.newSer();
   }
 
   public void testRoundtripEquality() {

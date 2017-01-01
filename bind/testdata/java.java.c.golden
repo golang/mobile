@@ -47,27 +47,27 @@ jclass proxy_class_java_S;
 jmethodID proxy_class_java_S_cons;
 
 JNIEXPORT void JNICALL
-Java_go_java_Java__1init(JNIEnv *env, jclass _unused) {
+Java_java_Java__1init(JNIEnv *env, jclass _unused) {
     jclass clazz;
-    clazz = (*env)->FindClass(env, "go/java/Java$proxyF");
+    clazz = (*env)->FindClass(env, "java/Java$proxyF");
     proxy_class_java_F = (*env)->NewGlobalRef(env, clazz);
     proxy_class_java_F_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
-    clazz = (*env)->FindClass(env, "go/java/F");
+    clazz = (*env)->FindClass(env, "java/F");
     
-    clazz = (*env)->FindClass(env, "go/java/Java$proxyO");
+    clazz = (*env)->FindClass(env, "java/Java$proxyO");
     proxy_class_java_O = (*env)->NewGlobalRef(env, clazz);
     proxy_class_java_O_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
-    clazz = (*env)->FindClass(env, "go/java/O");
+    clazz = (*env)->FindClass(env, "java/O");
     
-    clazz = (*env)->FindClass(env, "go/java/Java$proxyR");
+    clazz = (*env)->FindClass(env, "java/Java$proxyR");
     proxy_class_java_R = (*env)->NewGlobalRef(env, clazz);
     proxy_class_java_R_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
-    clazz = (*env)->FindClass(env, "go/java/R");
+    clazz = (*env)->FindClass(env, "java/R");
     
-    clazz = (*env)->FindClass(env, "go/java/Java$proxyS");
+    clazz = (*env)->FindClass(env, "java/Java$proxyS");
     proxy_class_java_S = (*env)->NewGlobalRef(env, clazz);
     proxy_class_java_S_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
-    clazz = (*env)->FindClass(env, "go/java/S");
+    clazz = (*env)->FindClass(env, "java/S");
     
 }
 

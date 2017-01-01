@@ -266,9 +266,7 @@ func TestGenJava(t *testing.T) {
 	}
 	for _, filename := range allTests {
 		refs := fileRefs(t, filename, "Java/")
-		imp := &java.Importer{
-			JavaPkgPrefix: "go.",
-		}
+		imp := &java.Importer{}
 		classes, err := imp.Import(refs)
 		if err != nil {
 			t.Fatal(err)
@@ -290,7 +288,7 @@ func TestGenJava(t *testing.T) {
 			}
 			var genNames []string
 			for _, emb := range refs.Embedders {
-				genNames = append(genNames, imp.JavaPkgPrefix+emb.Pkg+"."+emb.Name)
+				genNames = append(genNames, emb.Pkg+"."+emb.Name)
 			}
 			cg.Init(classes, genNames)
 			genJavaPackages(t, tmpGopath, cg)
@@ -380,9 +378,7 @@ func TestGenGoJavaWrappers(t *testing.T) {
 	for _, filename := range javaTests {
 		var buf bytes.Buffer
 		refs := fileRefs(t, filename, "Java/")
-		imp := &java.Importer{
-			JavaPkgPrefix: "go.",
-		}
+		imp := &java.Importer{}
 		classes, err := imp.Import(refs)
 		if err != nil {
 			t.Fatal(err)
@@ -400,7 +396,7 @@ func TestGenGoJavaWrappers(t *testing.T) {
 		}
 		var genNames []string
 		for _, emb := range refs.Embedders {
-			genNames = append(genNames, imp.JavaPkgPrefix+emb.Pkg+"."+emb.Name)
+			genNames = append(genNames, emb.Pkg+"."+emb.Name)
 		}
 		cg.Init(classes, genNames)
 		genJavaPackages(t, tmpGopath, cg)

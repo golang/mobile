@@ -2,16 +2,16 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package reverse implements an Android in Go
+// Package reverse implements an Android app in 100% Go.
 package reverse
 
 import (
 	"Java/android/databinding/DataBindingUtil"
 	"Java/android/os"
 	"Java/android/support/v7/app"
-	gopkg "Java/go/reverse"
-	rlayout "Java/go/reverse/R/layout"
-	"Java/go/reverse/databinding/ActivityMainBinding"
+	gopkg "Java/reverse"
+	rlayout "Java/reverse/R/layout"
+	"Java/reverse/databinding/ActivityMainBinding"
 )
 
 type MainActivity struct {

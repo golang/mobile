@@ -13,28 +13,28 @@ jclass proxy_class_issue12328_T;
 jmethodID proxy_class_issue12328_T_cons;
 
 JNIEXPORT void JNICALL
-Java_go_issue12328_Issue12328__1init(JNIEnv *env, jclass _unused) {
+Java_issue12328_Issue12328__1init(JNIEnv *env, jclass _unused) {
     jclass clazz;
-    clazz = (*env)->FindClass(env, "go/issue12328/T");
+    clazz = (*env)->FindClass(env, "issue12328/T");
     proxy_class_issue12328_T = (*env)->NewGlobalRef(env, clazz);
     proxy_class_issue12328_T_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
 }
 
 JNIEXPORT jobject JNICALL
-Java_go_issue12328_T__1_1New(JNIEnv *env, jclass clazz) {
+Java_issue12328_T__1_1New(JNIEnv *env, jclass clazz) {
     int32_t refnum = new_issue12328_T();
     return go_seq_from_refnum(env, refnum, NULL, NULL);
 }
 
 JNIEXPORT void JNICALL
-Java_go_issue12328_T_setErr(JNIEnv *env, jobject this, jobject v) {
+Java_issue12328_T_setErr(JNIEnv *env, jobject this, jobject v) {
     int32_t o = go_seq_to_refnum_go(env, this);
     int32_t _v = go_seq_to_refnum(env, v);
     proxyissue12328_T_Err_Set(o, _v);
 }
 
 JNIEXPORT jobject JNICALL
-Java_go_issue12328_T_getErr(JNIEnv *env, jobject this) {
+Java_issue12328_T_getErr(JNIEnv *env, jobject this) {
     int32_t o = go_seq_to_refnum_go(env, this);
     int32_t r0 = proxyissue12328_T_Err_Get(o);
     jobject _r0 = go_seq_from_refnum(env, r0, proxy_class__error, proxy_class__error_cons);

@@ -44,22 +44,22 @@ ret_jint cproxy_s_java_lang_System_console(jclass clazz, jmethodID m) {
 }
 
 static jclass class_java_lang_System;
-static jclass class_go_java_Future;
-static jclass sclass_go_java_Future;
-static jmethodID m_go_java_Future_get__;
-static jmethodID sm_go_java_Future_get__;
-static jmethodID m_go_java_Future_get__JLjava_util_concurrent_TimeUnit_2;
-static jmethodID sm_go_java_Future_get__JLjava_util_concurrent_TimeUnit_2;
-static jclass class_go_java_InputStream;
-static jclass sclass_go_java_InputStream;
-static jmethodID m_go_java_InputStream_read__;
-static jmethodID sm_go_java_InputStream_read__;
-static jclass class_go_java_Object;
-static jclass sclass_go_java_Object;
-static jclass class_go_java_Runnable;
-static jclass sclass_go_java_Runnable;
-static jmethodID m_go_java_Runnable_run;
-static jmethodID sm_go_java_Runnable_run;
+static jclass class_java_Future;
+static jclass sclass_java_Future;
+static jmethodID m_java_Future_get__;
+static jmethodID sm_java_Future_get__;
+static jmethodID m_java_Future_get__JLjava_util_concurrent_TimeUnit_2;
+static jmethodID sm_java_Future_get__JLjava_util_concurrent_TimeUnit_2;
+static jclass class_java_InputStream;
+static jclass sclass_java_InputStream;
+static jmethodID m_java_InputStream_read__;
+static jmethodID sm_java_InputStream_read__;
+static jclass class_java_Object;
+static jclass sclass_java_Object;
+static jclass class_java_Runnable;
+static jclass sclass_java_Runnable;
+static jmethodID m_java_Runnable_run;
+static jmethodID sm_java_Runnable_run;
 static jclass class_java_util_PrimitiveIterator_OfInt;
 static jclass class_java_util_Spliterator_OfInt;
 static jclass class_java_io_Console;
@@ -86,30 +86,30 @@ void init_proxies() {
 	class_java_util_Spliterators = (*env)->NewGlobalRef(env, clazz);
 	clazz = (*env)->FindClass(env, "java/lang/System");
 	class_java_lang_System = (*env)->NewGlobalRef(env, clazz);
-	clazz = (*env)->FindClass(env, "go/java/Future");
-	class_go_java_Future = (*env)->NewGlobalRef(env, clazz);
-	sclass_go_java_Future = (*env)->GetSuperclass(env, clazz);
-	sclass_go_java_Future = (*env)->NewGlobalRef(env, sclass_go_java_Future);
-	m_go_java_Future_get__ = go_seq_get_method_id(clazz, "get", "()Ljava/lang/Object;");
-	sm_go_java_Future_get__ = go_seq_get_method_id(sclass_go_java_Future, "get", "()Ljava/lang/Object;");
-	m_go_java_Future_get__JLjava_util_concurrent_TimeUnit_2 = go_seq_get_method_id(clazz, "get", "(JLjava/util/concurrent/TimeUnit;)Ljava/lang/Object;");
-	sm_go_java_Future_get__JLjava_util_concurrent_TimeUnit_2 = go_seq_get_method_id(sclass_go_java_Future, "get", "(JLjava/util/concurrent/TimeUnit;)Ljava/lang/Object;");
-	clazz = (*env)->FindClass(env, "go/java/InputStream");
-	class_go_java_InputStream = (*env)->NewGlobalRef(env, clazz);
-	sclass_go_java_InputStream = (*env)->GetSuperclass(env, clazz);
-	sclass_go_java_InputStream = (*env)->NewGlobalRef(env, sclass_go_java_InputStream);
-	m_go_java_InputStream_read__ = go_seq_get_method_id(clazz, "read", "()I");
-	sm_go_java_InputStream_read__ = go_seq_get_method_id(sclass_go_java_InputStream, "read", "()I");
-	clazz = (*env)->FindClass(env, "go/java/Object");
-	class_go_java_Object = (*env)->NewGlobalRef(env, clazz);
-	sclass_go_java_Object = (*env)->GetSuperclass(env, clazz);
-	sclass_go_java_Object = (*env)->NewGlobalRef(env, sclass_go_java_Object);
-	clazz = (*env)->FindClass(env, "go/java/Runnable");
-	class_go_java_Runnable = (*env)->NewGlobalRef(env, clazz);
-	sclass_go_java_Runnable = (*env)->GetSuperclass(env, clazz);
-	sclass_go_java_Runnable = (*env)->NewGlobalRef(env, sclass_go_java_Runnable);
-	m_go_java_Runnable_run = go_seq_get_method_id(clazz, "run", "()V");
-	sm_go_java_Runnable_run = go_seq_get_method_id(sclass_go_java_Runnable, "run", "()V");
+	clazz = (*env)->FindClass(env, "java/Future");
+	class_java_Future = (*env)->NewGlobalRef(env, clazz);
+	sclass_java_Future = (*env)->GetSuperclass(env, clazz);
+	sclass_java_Future = (*env)->NewGlobalRef(env, sclass_java_Future);
+	m_java_Future_get__ = go_seq_get_method_id(clazz, "get", "()Ljava/lang/Object;");
+	sm_java_Future_get__ = go_seq_get_method_id(sclass_java_Future, "get", "()Ljava/lang/Object;");
+	m_java_Future_get__JLjava_util_concurrent_TimeUnit_2 = go_seq_get_method_id(clazz, "get", "(JLjava/util/concurrent/TimeUnit;)Ljava/lang/Object;");
+	sm_java_Future_get__JLjava_util_concurrent_TimeUnit_2 = go_seq_get_method_id(sclass_java_Future, "get", "(JLjava/util/concurrent/TimeUnit;)Ljava/lang/Object;");
+	clazz = (*env)->FindClass(env, "java/InputStream");
+	class_java_InputStream = (*env)->NewGlobalRef(env, clazz);
+	sclass_java_InputStream = (*env)->GetSuperclass(env, clazz);
+	sclass_java_InputStream = (*env)->NewGlobalRef(env, sclass_java_InputStream);
+	m_java_InputStream_read__ = go_seq_get_method_id(clazz, "read", "()I");
+	sm_java_InputStream_read__ = go_seq_get_method_id(sclass_java_InputStream, "read", "()I");
+	clazz = (*env)->FindClass(env, "java/Object");
+	class_java_Object = (*env)->NewGlobalRef(env, clazz);
+	sclass_java_Object = (*env)->GetSuperclass(env, clazz);
+	sclass_java_Object = (*env)->NewGlobalRef(env, sclass_java_Object);
+	clazz = (*env)->FindClass(env, "java/Runnable");
+	class_java_Runnable = (*env)->NewGlobalRef(env, clazz);
+	sclass_java_Runnable = (*env)->GetSuperclass(env, clazz);
+	sclass_java_Runnable = (*env)->NewGlobalRef(env, sclass_java_Runnable);
+	m_java_Runnable_run = go_seq_get_method_id(clazz, "run", "()V");
+	sm_java_Runnable_run = go_seq_get_method_id(sclass_java_Runnable, "run", "()V");
 	clazz = (*env)->FindClass(env, "java/util/PrimitiveIterator$OfInt");
 	class_java_util_PrimitiveIterator_OfInt = (*env)->NewGlobalRef(env, clazz);
 	clazz = (*env)->FindClass(env, "java/util/Spliterator$OfInt");
@@ -181,11 +181,11 @@ ret_jint cproxy_java_util_concurrent_Future_get__JLjava_util_concurrent_TimeUnit
 	return __res;
 }
 
-ret_jint cproxy_go_java_Future_get__(jint this) {
+ret_jint cproxy_java_Future_get__(jint this) {
 	JNIEnv *env = go_seq_push_local_frame(1);
 	// Must be a Java object
 	jobject _this = go_seq_from_refnum(env, this, NULL, NULL);
-	jobject res = (*env)->CallObjectMethod(env, _this, m_go_java_Future_get__);
+	jobject res = (*env)->CallObjectMethod(env, _this, m_java_Future_get__);
 	jobject _exc = go_seq_get_exception(env);
 	int32_t _exc_ref = go_seq_to_refnum(env, _exc);
 	if (_exc != NULL) {
@@ -197,11 +197,11 @@ ret_jint cproxy_go_java_Future_get__(jint this) {
 	return __res;
 }
 
-ret_jint csuper_go_java_Future_get__(jint this) {
+ret_jint csuper_java_Future_get__(jint this) {
 	JNIEnv *env = go_seq_push_local_frame(1);
 	// Must be a Java object
 	jobject _this = go_seq_from_refnum(env, this, NULL, NULL);
-	jobject res = (*env)->CallNonvirtualObjectMethod(env, _this, sclass_go_java_Future, sm_go_java_Future_get__);
+	jobject res = (*env)->CallNonvirtualObjectMethod(env, _this, sclass_java_Future, sm_java_Future_get__);
 	jobject _exc = go_seq_get_exception(env);
 	int32_t _exc_ref = go_seq_to_refnum(env, _exc);
 	if (_exc != NULL) {
@@ -213,13 +213,13 @@ ret_jint csuper_go_java_Future_get__(jint this) {
 	return __res;
 }
 
-ret_jint cproxy_go_java_Future_get__JLjava_util_concurrent_TimeUnit_2(jint this, jlong a0, jint a1) {
+ret_jint cproxy_java_Future_get__JLjava_util_concurrent_TimeUnit_2(jint this, jlong a0, jint a1) {
 	JNIEnv *env = go_seq_push_local_frame(3);
 	// Must be a Java object
 	jobject _this = go_seq_from_refnum(env, this, NULL, NULL);
 	jlong _a0 = a0;
 	jobject _a1 = go_seq_from_refnum(env, a1, NULL, NULL);
-	jobject res = (*env)->CallObjectMethod(env, _this, m_go_java_Future_get__JLjava_util_concurrent_TimeUnit_2, _a0, _a1);
+	jobject res = (*env)->CallObjectMethod(env, _this, m_java_Future_get__JLjava_util_concurrent_TimeUnit_2, _a0, _a1);
 	jobject _exc = go_seq_get_exception(env);
 	int32_t _exc_ref = go_seq_to_refnum(env, _exc);
 	if (_exc != NULL) {
@@ -231,13 +231,13 @@ ret_jint cproxy_go_java_Future_get__JLjava_util_concurrent_TimeUnit_2(jint this,
 	return __res;
 }
 
-ret_jint csuper_go_java_Future_get__JLjava_util_concurrent_TimeUnit_2(jint this, jlong a0, jint a1) {
+ret_jint csuper_java_Future_get__JLjava_util_concurrent_TimeUnit_2(jint this, jlong a0, jint a1) {
 	JNIEnv *env = go_seq_push_local_frame(3);
 	// Must be a Java object
 	jobject _this = go_seq_from_refnum(env, this, NULL, NULL);
 	jlong _a0 = a0;
 	jobject _a1 = go_seq_from_refnum(env, a1, NULL, NULL);
-	jobject res = (*env)->CallNonvirtualObjectMethod(env, _this, sclass_go_java_Future, sm_go_java_Future_get__JLjava_util_concurrent_TimeUnit_2, _a0, _a1);
+	jobject res = (*env)->CallNonvirtualObjectMethod(env, _this, sclass_java_Future, sm_java_Future_get__JLjava_util_concurrent_TimeUnit_2, _a0, _a1);
 	jobject _exc = go_seq_get_exception(env);
 	int32_t _exc_ref = go_seq_to_refnum(env, _exc);
 	if (_exc != NULL) {
@@ -249,11 +249,11 @@ ret_jint csuper_go_java_Future_get__JLjava_util_concurrent_TimeUnit_2(jint this,
 	return __res;
 }
 
-ret_jint cproxy_go_java_InputStream_read__(jint this) {
+ret_jint cproxy_java_InputStream_read__(jint this) {
 	JNIEnv *env = go_seq_push_local_frame(1);
 	// Must be a Java object
 	jobject _this = go_seq_from_refnum(env, this, NULL, NULL);
-	jint res = (*env)->CallIntMethod(env, _this, m_go_java_InputStream_read__);
+	jint res = (*env)->CallIntMethod(env, _this, m_java_InputStream_read__);
 	jobject _exc = go_seq_get_exception(env);
 	int32_t _exc_ref = go_seq_to_refnum(env, _exc);
 	if (_exc != NULL) {
@@ -265,11 +265,11 @@ ret_jint cproxy_go_java_InputStream_read__(jint this) {
 	return __res;
 }
 
-ret_jint csuper_go_java_InputStream_read__(jint this) {
+ret_jint csuper_java_InputStream_read__(jint this) {
 	JNIEnv *env = go_seq_push_local_frame(1);
 	// Must be a Java object
 	jobject _this = go_seq_from_refnum(env, this, NULL, NULL);
-	jint res = (*env)->CallNonvirtualIntMethod(env, _this, sclass_go_java_InputStream, sm_go_java_InputStream_read__);
+	jint res = (*env)->CallNonvirtualIntMethod(env, _this, sclass_java_InputStream, sm_java_InputStream_read__);
 	jobject _exc = go_seq_get_exception(env);
 	int32_t _exc_ref = go_seq_to_refnum(env, _exc);
 	if (_exc != NULL) {
@@ -281,22 +281,22 @@ ret_jint csuper_go_java_InputStream_read__(jint this) {
 	return __res;
 }
 
-jint cproxy_go_java_Runnable_run(jint this) {
+jint cproxy_java_Runnable_run(jint this) {
 	JNIEnv *env = go_seq_push_local_frame(1);
 	// Must be a Java object
 	jobject _this = go_seq_from_refnum(env, this, NULL, NULL);
-	(*env)->CallVoidMethod(env, _this, m_go_java_Runnable_run);
+	(*env)->CallVoidMethod(env, _this, m_java_Runnable_run);
 	jobject _exc = go_seq_get_exception(env);
 	int32_t _exc_ref = go_seq_to_refnum(env, _exc);
 	go_seq_pop_local_frame(env);
 	return _exc_ref;
 }
 
-jint csuper_go_java_Runnable_run(jint this) {
+jint csuper_java_Runnable_run(jint this) {
 	JNIEnv *env = go_seq_push_local_frame(1);
 	// Must be a Java object
 	jobject _this = go_seq_from_refnum(env, this, NULL, NULL);
-	(*env)->CallNonvirtualVoidMethod(env, _this, sclass_go_java_Runnable, sm_go_java_Runnable_run);
+	(*env)->CallNonvirtualVoidMethod(env, _this, sclass_java_Runnable, sm_java_Runnable_run);
 	jobject _exc = go_seq_get_exception(env);
 	int32_t _exc_ref = go_seq_to_refnum(env, _exc);
 	go_seq_pop_local_frame(env);
@@ -335,34 +335,34 @@ jclass proxy_class_java_Runnable;
 jmethodID proxy_class_java_Runnable_cons;
 
 JNIEXPORT void JNICALL
-Java_go_java_Java__1init(JNIEnv *env, jclass _unused) {
+Java_java_Java__1init(JNIEnv *env, jclass _unused) {
     jclass clazz;
-    clazz = (*env)->FindClass(env, "go/java/Future");
+    clazz = (*env)->FindClass(env, "java/Future");
     proxy_class_java_Future = (*env)->NewGlobalRef(env, clazz);
     proxy_class_java_Future_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
-    clazz = (*env)->FindClass(env, "go/java/Object");
+    clazz = (*env)->FindClass(env, "java/Object");
     proxy_class_java_Object = (*env)->NewGlobalRef(env, clazz);
     proxy_class_java_Object_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
-    clazz = (*env)->FindClass(env, "go/java/Runnable");
+    clazz = (*env)->FindClass(env, "java/Runnable");
     proxy_class_java_Runnable = (*env)->NewGlobalRef(env, clazz);
     proxy_class_java_Runnable_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
 }
 
 JNIEXPORT jobject JNICALL
-Java_go_java_Java_newInputStream(JNIEnv* env, jclass _clazz) {
+Java_java_Java_newInputStream(JNIEnv* env, jclass _clazz) {
     int32_t r0 = proxyjava__NewInputStream();
     jobject _r0 = go_seq_from_refnum(env, r0, proxy_class_java_InputStream, proxy_class_java_InputStream_cons);
     return _r0;
 }
 
 JNIEXPORT jobject JNICALL
-Java_go_java_Future__1_1New(JNIEnv *env, jclass clazz) {
+Java_java_Future__1_1New(JNIEnv *env, jclass clazz) {
     int32_t refnum = new_java_Future();
     return go_seq_from_refnum(env, refnum, NULL, NULL);
 }
 
 JNIEXPORT jobject JNICALL
-Java_go_java_Future_get__(JNIEnv* env, jobject __this__) {
+Java_java_Future_get__(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     int32_t r0 = proxyjava_Future_Get(o);
     jobject _r0 = go_seq_from_refnum(env, r0, NULL, NULL);
@@ -370,7 +370,7 @@ Java_go_java_Future_get__(JNIEnv* env, jobject __this__) {
 }
 
 JNIEXPORT jobject JNICALL
-Java_go_java_Future_get__JLjava_util_concurrent_TimeUnit_2(JNIEnv* env, jobject __this__, jlong p0, jobject p1) {
+Java_java_Future_get__JLjava_util_concurrent_TimeUnit_2(JNIEnv* env, jobject __this__, jlong p0, jobject p1) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     int64_t _p0 = (int64_t)p0;
     int32_t _p1 = go_seq_to_refnum(env, p1);
@@ -380,14 +380,14 @@ Java_go_java_Future_get__JLjava_util_concurrent_TimeUnit_2(JNIEnv* env, jobject 
 }
 
 JNIEXPORT void JNICALL
-Java_go_java_Future_setFuture(JNIEnv *env, jobject this, jobject v) {
+Java_java_Future_setFuture(JNIEnv *env, jobject this, jobject v) {
     int32_t o = go_seq_to_refnum_go(env, this);
     int32_t _v = go_seq_to_refnum(env, v);
     proxyjava_Future_Future_Set(o, _v);
 }
 
 JNIEXPORT jobject JNICALL
-Java_go_java_Future_getFuture(JNIEnv *env, jobject this) {
+Java_java_Future_getFuture(JNIEnv *env, jobject this) {
     int32_t o = go_seq_to_refnum_go(env, this);
     int32_t r0 = proxyjava_Future_Future_Get(o);
     jobject _r0 = go_seq_from_refnum(env, r0, NULL, NULL);
@@ -395,13 +395,13 @@ Java_go_java_Future_getFuture(JNIEnv *env, jobject this) {
 }
 
 JNIEXPORT jobject JNICALL
-Java_go_java_InputStream__1_1NewInputStream(JNIEnv *env, jclass clazz) {
+Java_java_InputStream__1_1NewInputStream(JNIEnv *env, jclass clazz) {
     int32_t refnum = proxyjava__NewInputStream();
     return go_seq_from_refnum(env, refnum, NULL, NULL);
 }
 
 JNIEXPORT jint JNICALL
-Java_go_java_InputStream_read__(JNIEnv* env, jobject __this__) {
+Java_java_InputStream_read__(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     struct proxyjava_InputStream_Read_return res = proxyjava_InputStream_Read(o);
     jint _r0 = (jint)res.r0;
@@ -411,14 +411,14 @@ Java_go_java_InputStream_read__(JNIEnv* env, jobject __this__) {
 }
 
 JNIEXPORT void JNICALL
-Java_go_java_InputStream_setInputStream(JNIEnv *env, jobject this, jobject v) {
+Java_java_InputStream_setInputStream(JNIEnv *env, jobject this, jobject v) {
     int32_t o = go_seq_to_refnum_go(env, this);
     int32_t _v = go_seq_to_refnum(env, v);
     proxyjava_InputStream_InputStream_Set(o, _v);
 }
 
 JNIEXPORT jobject JNICALL
-Java_go_java_InputStream_getInputStream(JNIEnv *env, jobject this) {
+Java_java_InputStream_getInputStream(JNIEnv *env, jobject this) {
     int32_t o = go_seq_to_refnum_go(env, this);
     int32_t r0 = proxyjava_InputStream_InputStream_Get(o);
     jobject _r0 = go_seq_from_refnum(env, r0, NULL, NULL);
@@ -426,20 +426,20 @@ Java_go_java_InputStream_getInputStream(JNIEnv *env, jobject this) {
 }
 
 JNIEXPORT jobject JNICALL
-Java_go_java_Object__1_1New(JNIEnv *env, jclass clazz) {
+Java_java_Object__1_1New(JNIEnv *env, jclass clazz) {
     int32_t refnum = new_java_Object();
     return go_seq_from_refnum(env, refnum, NULL, NULL);
 }
 
 JNIEXPORT void JNICALL
-Java_go_java_Object_setObject(JNIEnv *env, jobject this, jobject v) {
+Java_java_Object_setObject(JNIEnv *env, jobject this, jobject v) {
     int32_t o = go_seq_to_refnum_go(env, this);
     int32_t _v = go_seq_to_refnum(env, v);
     proxyjava_Object_Object_Set(o, _v);
 }
 
 JNIEXPORT jobject JNICALL
-Java_go_java_Object_getObject(JNIEnv *env, jobject this) {
+Java_java_Object_getObject(JNIEnv *env, jobject this) {
     int32_t o = go_seq_to_refnum_go(env, this);
     int32_t r0 = proxyjava_Object_Object_Get(o);
     jobject _r0 = go_seq_from_refnum(env, r0, NULL, NULL);
@@ -447,27 +447,27 @@ Java_go_java_Object_getObject(JNIEnv *env, jobject this) {
 }
 
 JNIEXPORT jobject JNICALL
-Java_go_java_Runnable__1_1New(JNIEnv *env, jclass clazz) {
+Java_java_Runnable__1_1New(JNIEnv *env, jclass clazz) {
     int32_t refnum = new_java_Runnable();
     return go_seq_from_refnum(env, refnum, NULL, NULL);
 }
 
 JNIEXPORT void JNICALL
-Java_go_java_Runnable_run(JNIEnv* env, jobject __this__) {
+Java_java_Runnable_run(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     int32_t _this_ = go_seq_to_refnum(env, __this__);
     proxyjava_Runnable_Run(o, _this_);
 }
 
 JNIEXPORT void JNICALL
-Java_go_java_Runnable_setRunnable(JNIEnv *env, jobject this, jobject v) {
+Java_java_Runnable_setRunnable(JNIEnv *env, jobject this, jobject v) {
     int32_t o = go_seq_to_refnum_go(env, this);
     int32_t _v = go_seq_to_refnum(env, v);
     proxyjava_Runnable_Runnable_Set(o, _v);
 }
 
 JNIEXPORT jobject JNICALL
-Java_go_java_Runnable_getRunnable(JNIEnv *env, jobject this) {
+Java_java_Runnable_getRunnable(JNIEnv *env, jobject this) {
     int32_t o = go_seq_to_refnum_go(env, this);
     int32_t r0 = proxyjava_Runnable_Runnable_Get(o);
     jobject _r0 = go_seq_from_refnum(env, r0, NULL, NULL);
