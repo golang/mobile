@@ -29,6 +29,21 @@ ret_jint cproxy_s_java_util_Spliterators_iterator__Ljava_util_Spliterator_00024O
 }
 
 static jclass class_java_util_Spliterators;
+ret_jint cproxy_s_java_lang_System_console(jclass clazz, jmethodID m) {
+	JNIEnv *env = go_seq_push_local_frame(0);
+	jobject res = (*env)->CallStaticObjectMethod(env, clazz, m);
+	jobject _exc = go_seq_get_exception(env);
+	int32_t _exc_ref = go_seq_to_refnum(env, _exc);
+	if (_exc != NULL) {
+		res = NULL;
+	}
+	jint _res = go_seq_to_refnum(env, res);
+	go_seq_pop_local_frame(env);
+	ret_jint __res = {_res, _exc_ref};
+	return __res;
+}
+
+static jclass class_java_lang_System;
 static jclass class_go_java_Future;
 static jclass sclass_go_java_Future;
 static jmethodID m_go_java_Future_get__;
@@ -45,9 +60,13 @@ static jclass class_go_java_Runnable;
 static jclass sclass_go_java_Runnable;
 static jmethodID m_go_java_Runnable_run;
 static jmethodID sm_go_java_Runnable_run;
+static jclass class_java_util_PrimitiveIterator_OfInt;
+static jclass class_java_util_Spliterator_OfInt;
+static jclass class_java_io_Console;
+static jmethodID m_java_io_Console_flush;
 
 void init_proxies() {
-	JNIEnv *env = go_seq_push_local_frame(10);
+	JNIEnv *env = go_seq_push_local_frame(14);
 	jclass clazz;
 	clazz = (*env)->FindClass(env, "java/lang/Runnable");
 	class_java_lang_Runnable = (*env)->NewGlobalRef(env, clazz);
@@ -65,6 +84,8 @@ void init_proxies() {
 	class_java_util_concurrent_TimeUnit = (*env)->NewGlobalRef(env, clazz);
 	clazz = (*env)->FindClass(env, "java/util/Spliterators");
 	class_java_util_Spliterators = (*env)->NewGlobalRef(env, clazz);
+	clazz = (*env)->FindClass(env, "java/lang/System");
+	class_java_lang_System = (*env)->NewGlobalRef(env, clazz);
 	clazz = (*env)->FindClass(env, "go/java/Future");
 	class_go_java_Future = (*env)->NewGlobalRef(env, clazz);
 	sclass_go_java_Future = (*env)->GetSuperclass(env, clazz);
@@ -89,6 +110,13 @@ void init_proxies() {
 	sclass_go_java_Runnable = (*env)->NewGlobalRef(env, sclass_go_java_Runnable);
 	m_go_java_Runnable_run = go_seq_get_method_id(clazz, "run", "()V");
 	sm_go_java_Runnable_run = go_seq_get_method_id(sclass_go_java_Runnable, "run", "()V");
+	clazz = (*env)->FindClass(env, "java/util/PrimitiveIterator$OfInt");
+	class_java_util_PrimitiveIterator_OfInt = (*env)->NewGlobalRef(env, clazz);
+	clazz = (*env)->FindClass(env, "java/util/Spliterator$OfInt");
+	class_java_util_Spliterator_OfInt = (*env)->NewGlobalRef(env, clazz);
+	clazz = (*env)->FindClass(env, "java/io/Console");
+	class_java_io_Console = (*env)->NewGlobalRef(env, clazz);
+	m_java_io_Console_flush = go_seq_get_method_id(clazz, "flush", "()V");
 	go_seq_pop_local_frame(env);
 }
 
@@ -269,6 +297,17 @@ jint csuper_go_java_Runnable_run(jint this) {
 	// Must be a Java object
 	jobject _this = go_seq_from_refnum(env, this, NULL, NULL);
 	(*env)->CallNonvirtualVoidMethod(env, _this, sclass_go_java_Runnable, sm_go_java_Runnable_run);
+	jobject _exc = go_seq_get_exception(env);
+	int32_t _exc_ref = go_seq_to_refnum(env, _exc);
+	go_seq_pop_local_frame(env);
+	return _exc_ref;
+}
+
+jint cproxy_java_io_Console_flush(jint this) {
+	JNIEnv *env = go_seq_push_local_frame(1);
+	// Must be a Java object
+	jobject _this = go_seq_from_refnum(env, this, NULL, NULL);
+	(*env)->CallVoidMethod(env, _this, m_java_io_Console_flush);
 	jobject _exc = go_seq_get_exception(env);
 	int32_t _exc_ref = go_seq_to_refnum(env, _exc);
 	go_seq_pop_local_frame(env);

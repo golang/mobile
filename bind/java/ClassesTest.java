@@ -114,12 +114,6 @@ public class ClassesTest extends InstrumentationTestCase {
 		assertEquals("IOException message", Javapkg.IOExceptionMessage, exc.getMessage());
 	}
 
-	public void testUnknownType() {
-		GoObject o = new GoObject();
-		o.toString(); // Set this
-		assertTrue("GoObject.getClass not null", o.checkClass());
-	}
-
 	public void testInnerClass() {
 		Character.Subset s = new Character.Subset(""){};
 		Character.Subset s2 = new GoSubset("");
