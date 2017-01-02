@@ -45,6 +45,9 @@ type Named struct {
 	// declarations.
 	funcMap  map[string]struct{}
 	Protocol bool
+	// Generated is true if the type is wrapper of a
+	// generated Go struct.
+	Generated bool
 }
 
 // Super denotes a super class or protocol.
@@ -111,6 +114,10 @@ func Import(refs *importers.References) ([]*Named, error) {
 	modMap := make(map[string]struct{})
 	typeNames := make(map[string][]string)
 	typeSet := make(map[string]struct{})
+	genMods := make(map[string]struct{})
+	for _, emb := range refs.Embedders {
+		genMods[initialUpper(emb.Pkg)] = struct{}{}
+	}
 	for _, ref := range refs.Refs {
 		var module, name string
 		if idx := strings.Index(ref.Pkg, "/"); idx != -1 {
@@ -128,8 +135,11 @@ func Import(refs *importers.References) ([]*Named, error) {
 			typeSet[fullName] = struct{}{}
 		}
 		if _, exists := modMap[module]; !exists {
-			modMap[module] = struct{}{}
-			modules = append(modules, module)
+			// Include the module only if it is generated.
+			if _, exists := genMods[module]; !exists {
+				modMap[module] = struct{}{}
+				modules = append(modules, module)
+			}
 		}
 	}
 	var allTypes []*Named
@@ -140,6 +150,30 @@ func Import(refs *importers.References) ([]*Named, error) {
 			return nil, fmt.Errorf("%s: %v", module, err)
 		}
 		allTypes = append(allTypes, types...)
+	}
+	// Embedders refer to every exported Go struct that will have its class
+	// generated. Allow Go code to reverse bind to those classes by synthesizing
+	// their descriptors.
+	for _, emb := range refs.Embedders {
+		module := initialUpper(emb.Pkg)
+		named := &Named{
+			Name:      module + emb.Name,
+			GoName:    emb.Name,
+			Module:    module,
+			Generated: true,
+		}
+		for _, ref := range emb.Refs {
+			t, exists := typeMap[ref.Name]
+			if !exists {
+				return nil, fmt.Errorf("type not found: %q", ref.Name)
+			}
+			named.Supers = append(named.Supers, Super{
+				Name:     t.Name,
+				Protocol: t.Protocol,
+			})
+		}
+		typeMap[emb.Name] = named
+		allTypes = append(allTypes, named)
 	}
 	for _, t := range allTypes {
 		fillAllMethods(t, typeMap)

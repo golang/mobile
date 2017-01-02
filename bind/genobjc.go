@@ -51,7 +51,9 @@ func (g *ObjcGen) Init(wrappers []*objc.Named) {
 	for _, w := range wrappers {
 		g.wrapMap[w.GoName] = w
 		if _, exists := modMap[w.Module]; !exists {
-			g.modules = append(g.modules, w.Module)
+			if !w.Generated {
+				g.modules = append(g.modules, w.Module)
+			}
 			modMap[w.Module] = struct{}{}
 		}
 	}
@@ -412,19 +414,20 @@ type paramInfo struct {
 	name string
 }
 
-func (g *ObjcGen) funcSummary(oinf *objcClassInfo, obj *types.Func) *funcSummary {
-	sig := obj.Type().(*types.Signature)
-	s := &funcSummary{goname: obj.Name(), sig: sig}
+func (g *ObjcGen) funcSummary(obj *types.TypeName, f *types.Func) *funcSummary {
+	sig := f.Type().(*types.Signature)
+	s := &funcSummary{goname: f.Name(), sig: sig}
 	var om *objc.Func
 	var sigElems []string
+	oinf := g.ostructs[obj]
 	if oinf != nil {
-		om = oinf.methods[obj.Name()]
+		om = oinf.methods[f.Name()]
 	}
 	if om != nil {
 		sigElems = strings.Split(om.Sig, ":")
 		s.name = sigElems[0]
 	} else {
-		s.name = obj.Name()
+		s.name = f.Name()
 	}
 	params := sig.Params()
 	first := 0
@@ -433,19 +436,15 @@ func (g *ObjcGen) funcSummary(oinf *objcClassInfo, obj *types.Func) *funcSummary
 			v := params.At(0)
 			if v.Name() == "self" {
 				t := v.Type()
-				if isObjcType(t) {
-					s.hasself = true
-					first = 1
-					ot := g.wrapMap[t.(*types.Named).Obj().Name()]
-					found := false
-					for _, sup := range oinf.supers {
-						if ot == sup {
-							found = true
-							break
+				if t, ok := t.(*types.Named); ok {
+					if pkg := t.Obj().Pkg(); pkgFirstElem(pkg) == "ObjC" {
+						s.hasself = true
+						module := pkg.Path()[len("ObjC/"):]
+						typName := module + "." + t.Obj().Name()
+						exp := g.namePrefix + "." + obj.Name()
+						if typName != exp {
+							g.errorf("the type %s of the `this` argument to method %s is not %s", typName, f.Name(), exp)
 						}
-					}
-					if !found {
-						g.errorf("the type %s of the `this` argument to method %s is not a super class of the enclosing struct", ot.Name, obj.Name())
 					}
 				}
 			}
@@ -501,7 +500,7 @@ func (g *ObjcGen) funcSummary(oinf *objcClassInfo, obj *types.Func) *funcSummary
 		}
 
 		if !isErrorType(res.At(1).Type()) {
-			g.errorf("second result value must be of type error: %s", obj)
+			g.errorf("second result value must be of type error: %s", f)
 			return nil
 		}
 		s.retParams = append(s.retParams, paramInfo{
@@ -510,7 +509,7 @@ func (g *ObjcGen) funcSummary(oinf *objcClassInfo, obj *types.Func) *funcSummary
 		})
 	default:
 		// TODO(hyangah): relax the constraint on multiple return params.
-		g.errorf("too many result values: %s", obj)
+		g.errorf("too many result values: %s", f)
 		return nil
 	}
 
@@ -534,14 +533,18 @@ func (s *funcSummary) asFunc(g *ObjcGen) string {
 
 func (s *funcSummary) asMethod(g *ObjcGen) string {
 	var params []string
-	for i, p := range s.params {
+	skip := 0
+	if s.hasself {
+		skip = 1
+	}
+	for i, p := range s.params[skip:] {
 		var key string
 		if i != 0 {
 			key = p.name
 		}
 		params = append(params, fmt.Sprintf("%s:(%s)%s", key, g.objcType(p.typ), p.name))
 	}
-	skip := 0
+	skip = 0
 	if s.returnsVal() {
 		skip = 1
 	}
@@ -743,13 +746,15 @@ func (g *ObjcGen) genRead(toName, fromName string, t types.Type, mode varMode) {
 }
 
 func (g *ObjcGen) genFunc(s *funcSummary, objName string) {
+	skip := 0
 	if objName != "" {
 		g.Printf("int32_t refnum = go_seq_go_to_refnum(self._ref);\n")
 		if s.hasself {
-			g.genRefWrite("self")
+			skip = 1
+			g.Printf("int32_t _self = go_seq_to_refnum(self);\n")
 		}
 	}
-	for _, p := range s.params {
+	for _, p := range s.params[skip:] {
 		g.genWrite(p.name, p.typ, modeTransient)
 	}
 	resPrefix := ""
@@ -768,7 +773,7 @@ func (g *ObjcGen) genFunc(s *funcSummary, objName string) {
 			g.Printf(", _self")
 		}
 	}
-	for i, p := range s.params {
+	for i, p := range s.params[skip:] {
 		if i > 0 || objName != "" {
 			g.Printf(", ")
 		}
@@ -782,7 +787,7 @@ func (g *ObjcGen) genFunc(s *funcSummary, objName string) {
 	for i, r := range s.retParams {
 		g.genRead("_"+r.name, fmt.Sprintf("%sr%d", resPrefix, i), r.typ, modeRetained)
 	}
-	skip := 0
+	skip = 0
 	if s.returnsVal() {
 		skip = 1
 	}
@@ -1045,7 +1050,7 @@ func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", obj.Name(), m.Name())
 			continue
 		}
-		s := g.funcSummary(g.ostructs[obj], m)
+		s := g.funcSummary(obj, m)
 		g.Printf("- %s;\n", objcNameReplacer(lowerFirst(s.asMethod(g))))
 	}
 	g.Printf("@end\n")
@@ -1094,7 +1099,7 @@ func (g *ObjcGen) genStructM(obj *types.TypeName, t *types.Struct) {
 			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", obj.Name(), m.Name())
 			continue
 		}
-		s := g.funcSummary(g.ostructs[obj], m)
+		s := g.funcSummary(obj, m)
 		g.Printf("- %s {\n", s.asMethod(g))
 		g.Indent()
 		g.genFunc(s, obj.Name())
