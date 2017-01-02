@@ -179,14 +179,7 @@ func TestGenObjc(t *testing.T) {
 	}
 }
 
-func genObjcPackages(t *testing.T, dir string, types []*objc.Named, buf *bytes.Buffer) *ObjcWrapper {
-	cg := &ObjcWrapper{
-		Printer: &Printer{
-			IndentEach: []byte("\t"),
-			Buf:        buf,
-		},
-	}
-	cg.Init(types)
+func genObjcPackages(t *testing.T, dir string, cg *ObjcWrapper) {
 	pkgBase := filepath.Join(dir, "src", "ObjC")
 	if err := os.MkdirAll(pkgBase, 0700); err != nil {
 		t.Fatal(err)
@@ -197,16 +190,16 @@ func genObjcPackages(t *testing.T, dir string, types []*objc.Named, buf *bytes.B
 			t.Fatal(err)
 		}
 		pkgFile := filepath.Join(pkgDir, "package.go")
-		buf.Reset()
+		cg.Buf.Reset()
 		cg.GenPackage(i)
-		if err := ioutil.WriteFile(pkgFile, buf.Bytes(), 0600); err != nil {
+		if err := ioutil.WriteFile(pkgFile, cg.Buf.Bytes(), 0600); err != nil {
 			t.Fatal(err)
 		}
 	}
-	buf.Reset()
+	cg.Buf.Reset()
 	cg.GenInterfaces()
 	clsFile := filepath.Join(pkgBase, "interfaces.go")
-	if err := ioutil.WriteFile(clsFile, buf.Bytes(), 0600); err != nil {
+	if err := ioutil.WriteFile(clsFile, cg.Buf.Bytes(), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -220,7 +213,6 @@ func genObjcPackages(t *testing.T, dir string, types []*objc.Named, buf *bytes.B
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("failed to go install the generated ObjC wrappers: %v: %s", err, string(out))
 	}
-	return cg
 }
 
 func genJavaPackages(t *testing.T, dir string, cg *ClassGen) {
@@ -422,7 +414,18 @@ func TestGenGoObjcWrappers(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer os.RemoveAll(tmpGopath)
-		cg := genObjcPackages(t, tmpGopath, types, &buf)
+		cg := &ObjcWrapper{
+			Printer: &Printer{
+				IndentEach: []byte("\t"),
+				Buf:        &buf,
+			},
+		}
+		var genNames []string
+		for _, emb := range refs.Embedders {
+			genNames = append(genNames, emb.Name)
+		}
+		cg.Init(types, genNames)
+		genObjcPackages(t, tmpGopath, cg)
 		pkg := typeCheck(t, filename, tmpGopath)
 		cg.GenGo()
 		testGenGo(t, filename, &buf, pkg)

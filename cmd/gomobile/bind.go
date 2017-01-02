@@ -311,7 +311,11 @@ func GenObjcWrappers(pkgs []*build.Package, srcDir, pkgGen string) ([]*objc.Name
 			Buf:        &buf,
 		},
 	}
-	g.Init(types)
+	var genNames []string
+	for _, emb := range refs.Embedders {
+		genNames = append(genNames, emb.Name)
+	}
+	g.Init(types, genNames)
 	for i, name := range g.Packages() {
 		pkgDir := filepath.Join(pkgGen, "src", "ObjC", name)
 		if err := os.MkdirAll(pkgDir, 0700); err != nil {

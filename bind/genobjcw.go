@@ -26,10 +26,18 @@ type (
 		// For each module/name Go package path, the ObjC type
 		// with static functions or constants.
 		typePkgs map[string]*objc.Named
+		// supers is the map of types that need Super methods.
+		supers map[string]struct{}
 	}
 )
 
-func (g *ObjcWrapper) Init(types []*objc.Named) {
+// Init initializes the ObjC types wrapper generator. Types is the
+// list of types to wrap, genNames the list of generated type names.
+func (g *ObjcWrapper) Init(types []*objc.Named, genNames []string) {
+	g.supers = make(map[string]struct{})
+	for _, s := range genNames {
+		g.supers[s] = struct{}{}
+	}
 	g.types = types
 	g.imported = make(map[string]*objc.Named)
 	g.modMap = make(map[string][]*objc.Named)
@@ -39,8 +47,10 @@ func (g *ObjcWrapper) Init(types []*objc.Named) {
 		g.imported[n.GoName] = n
 		typePkg := n.Module + "/" + n.GoName
 		g.typePkgs[typePkg] = n
-		if _, exists := g.modMap[n.Module]; !exists {
-			g.modules = append(g.modules, n.Module)
+		if !n.Generated {
+			if _, exists := g.modMap[n.Module]; !exists {
+				g.modules = append(g.modules, n.Module)
+			}
 		}
 		g.modMap[n.Module] = append(g.modMap[n.Module], n)
 		if _, exists := pkgSet[n.Module]; !exists {
@@ -68,7 +78,7 @@ func (g *ObjcWrapper) GenM() {
 			}
 			g.genCFuncDecl("cproxy", n.GoName, f)
 			g.genCFuncBody(n, f, false)
-			if !n.Protocol {
+			if _, exists := g.supers[n.GoName]; exists {
 				g.genCFuncDecl("csuper", n.GoName, f)
 				g.genCFuncBody(n, f, true)
 			}
@@ -99,7 +109,7 @@ func (g *ObjcWrapper) genCFuncBody(n *objc.Named, f *objc.Func, super bool) {
 	if super {
 		g.Printf("struct objc_super _super = {\n")
 		g.Printf("	.receiver = _this,\n")
-		g.Printf("	.super_class = [%s class],\n", n.Name)
+		g.Printf("	.super_class = class_getSuperclass([%s class]),\n", n.Name)
 		g.Printf("};\n")
 	}
 	retType := "void"
@@ -123,7 +133,7 @@ func (g *ObjcWrapper) genCFuncBody(n *objc.Named, f *objc.Func, super bool) {
 		switch f.Ret.Kind {
 		case objc.String, objc.Bool, objc.Data, objc.Int, objc.Uint, objc.Short, objc.Ushort, objc.Char, objc.Float, objc.Double, objc.Class, objc.Protocol:
 		default:
-			// If support struct is added, objc_msgSend_stret must be used
+			// If support for struct results is added, objc_msgSend_stret must be used
 			panic("unsupported type kind - use objc_msgSend_stret?")
 		}
 	}
@@ -214,6 +224,19 @@ func (g *ObjcWrapper) GenH() {
 	for _, m := range g.modules {
 		g.Printf("@import %s;\n", m)
 	}
+	// Include header files for generated types
+	for _, n := range g.pkgNames {
+		hasGen := false
+		for _, t := range g.modMap[n] {
+			if t.Generated {
+				hasGen = true
+				break
+			}
+		}
+		if hasGen {
+			g.Printf("#import %q\n", n+".objc.h")
+		}
+	}
 	for _, tn := range []string{"int", "nstring", "nbyteslice", "long", "unsigned long", "short", "unsigned short", "bool", "char", "unsigned char", "float", "double"} {
 		sn := strings.Replace(tn, " ", "_", -1)
 		g.Printf("typedef struct ret_%s {\n", sn)
@@ -230,7 +253,7 @@ func (g *ObjcWrapper) GenH() {
 			g.Printf("extern ")
 			g.genCFuncDecl("cproxy", n.GoName, f)
 			g.Printf(";\n")
-			if !n.Protocol {
+			if _, exists := g.supers[n.GoName]; exists {
 				g.Printf("extern ")
 				g.genCFuncDecl("csuper", n.GoName, f)
 				g.Printf(";\n")
@@ -341,7 +364,7 @@ func (g *ObjcWrapper) genGo(n *objc.Named) {
 		g.genFuncDecl(false, f)
 		g.genFuncBody(n, f, "cproxy")
 	}
-	if !n.Protocol {
+	if _, exists := g.supers[n.GoName]; exists {
 		g.Printf("func (p *proxy_class_%s) Super() ObjC.%s {\n", n.GoName, n.Module+"_"+n.GoName)
 		g.Printf("  return &super_%s{p}\n", n.GoName)
 		g.Printf("}\n\n")
@@ -557,7 +580,7 @@ func (g *ObjcWrapper) genInterface(n *objc.Named) {
 		g.genFuncDecl(true, f)
 		g.Printf("\n")
 	}
-	if !n.Protocol {
+	if _, exists := g.supers[n.GoName]; exists {
 		g.Printf("Super() %s\n", n.Module+"_"+n.GoName)
 	}
 	g.Outdent()
