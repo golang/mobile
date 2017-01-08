@@ -153,6 +153,7 @@ class BindTask extends DefaultTask {
 				throw new GradleException('Neither sdk.dir or ANDROID_HOME is set')
 			}
 			environment("GOPATH", gopath)
+			environment("GOOS", "android")
 			environment("PATH", paths.join(File.pathSeparator))
 			environment("ANDROID_HOME", androidHome)
 		}
