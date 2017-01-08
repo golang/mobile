@@ -581,4 +581,8 @@ public class SeqTest extends InstrumentationTestCase {
   public void testSIGPIPE() {
     Testpkg.testSIGPIPE();
   }
+
+  public void testTags() {
+    assertEquals("Constant from a tagged file", 42, Testpkg.TaggedConst);
+  }
 }

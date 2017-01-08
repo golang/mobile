@@ -447,4 +447,8 @@ static int numI = 0;
 - (void)testSIGPIPE {
 	TestpkgTestSIGPIPE();
 }
+
+- (void)testTags {
+	XCTAssertEqual(42, TestpkgTaggedConst, @"Tagged const must exist");
+}
 @end

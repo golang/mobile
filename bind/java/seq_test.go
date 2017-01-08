@@ -106,12 +106,12 @@ func runTest(t *testing.T, pkgNames []string, javaPkg, javaCls string) {
 		}
 	}
 
-	cmd := []string{"gomobile", "bind", "-o", "pkg.aar"}
+	args := []string{"bind", "-tags", "aaa bbb", "-o", "pkg.aar"}
 	if javaPkg != "" {
-		cmd = append(cmd, "-javapkg", javaPkg)
+		args = append(args, "-javapkg", javaPkg)
 	}
-	cmd = append(cmd, pkgNames...)
-	buf, err := run(strings.Join(cmd, " "))
+	args = append(args, pkgNames...)
+	buf, err := exec.Command("gomobile", args...).CombinedOutput()
 	if err != nil {
 		t.Logf("%s", buf)
 		t.Fatalf("failed to run gomobile bind: %v", err)

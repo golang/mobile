@@ -106,7 +106,7 @@ mkdir -p $WORK/gomobile_bind
 mkdir -p $WORK/gomobile_bind
 mkdir -p $WORK/gomobile_bind
 mkdir -p $WORK/gen/src/Java
-GOOS=android GOARCH=arm CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-clang CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-clang++ CGO_CFLAGS=-target armv7a-none-linux-androideabi --sysroot $GOMOBILE/android-{{.NDK}}/arm/sysroot CGO_CPPFLAGS=-target armv7a-none-linux-androideabi --sysroot $GOMOBILE/android-{{.NDK}}/arm/sysroot CGO_LDFLAGS=-target armv7a-none-linux-androideabi --sysroot $GOMOBILE/android-{{.NDK}}/arm/sysroot CGO_ENABLED=1 GOARM=7 GOPATH=$WORK/gen:$GOPATH go install -pkgdir=$GOMOBILE/pkg_android_arm -tags="" -x golang.org/x/mobile/asset
+GOOS=android GOARCH=arm CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-clang CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-clang++ CGO_CFLAGS=-target armv7a-none-linux-androideabi --sysroot $GOMOBILE/android-{{.NDK}}/arm/sysroot CGO_CPPFLAGS=-target armv7a-none-linux-androideabi --sysroot $GOMOBILE/android-{{.NDK}}/arm/sysroot CGO_LDFLAGS=-target armv7a-none-linux-androideabi --sysroot $GOMOBILE/android-{{.NDK}}/arm/sysroot CGO_ENABLED=1 GOARM=7 GOPATH=$WORK/gen:$GOPATH go install -pkgdir=$GOMOBILE/pkg_android_arm -x golang.org/x/mobile/asset
 rm -r -f "$WORK/fakegopath"
 mkdir -p $WORK/fakegopath/pkg
 cp $GOMOBILE/pkg_android_arm/golang.org/x/mobile/asset.a $WORK/fakegopath/pkg/android_arm/golang.org/x/mobile/asset.a
@@ -134,7 +134,7 @@ mkdir -p $WORK/gomobile_bind
 cp $GOPATH/src/golang.org/x/mobile/bind/seq.go.support $WORK/gomobile_bind/seq.go
 mkdir -p $WORK/gomobile_bind
 mkdir -p $WORK/android/src/main/java/go
-GOOS=android GOARCH=arm CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-clang{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-clang++{{.EXE}} CGO_CFLAGS=-target armv7a-none-linux-androideabi --sysroot $GOMOBILE/android-{{.NDK}}/arm/sysroot CGO_CPPFLAGS=-target armv7a-none-linux-androideabi --sysroot $GOMOBILE/android-{{.NDK}}/arm/sysroot CGO_LDFLAGS=-target armv7a-none-linux-androideabi --sysroot $GOMOBILE/android-{{.NDK}}/arm/sysroot CGO_ENABLED=1 GOARM=7 GOPATH=$WORK/gen:$GOPATH go build -pkgdir=$GOMOBILE/pkg_android_arm -tags="" -x -buildmode=c-shared -o=$WORK/android/src/main/jniLibs/armeabi-v7a/libgojni.so $WORK/androidlib/main.go
+GOOS=android GOARCH=arm CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-clang{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-clang++{{.EXE}} CGO_CFLAGS=-target armv7a-none-linux-androideabi --sysroot $GOMOBILE/android-{{.NDK}}/arm/sysroot CGO_CPPFLAGS=-target armv7a-none-linux-androideabi --sysroot $GOMOBILE/android-{{.NDK}}/arm/sysroot CGO_LDFLAGS=-target armv7a-none-linux-androideabi --sysroot $GOMOBILE/android-{{.NDK}}/arm/sysroot CGO_ENABLED=1 GOARM=7 GOPATH=$WORK/gen:$GOPATH go build -pkgdir=$GOMOBILE/pkg_android_arm -x -buildmode=c-shared -o=$WORK/android/src/main/jniLibs/armeabi-v7a/libgojni.so $WORK/androidlib/main.go
 rm $WORK/android/src/main/java/go/Seq.java
 ln -s $GOPATH/src/golang.org/x/mobile/bind/java/Seq.java $WORK/android/src/main/java/go/Seq.java
 rm $WORK/android/src/main/java/go/LoadJNI.java
