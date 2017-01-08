@@ -197,7 +197,7 @@ var iosModuleMapTmpl = template.Must(template.New("iosmmap").Parse(`framework mo
 func goIOSBindArchive(name, path string, env, fileBases []string) (string, error) {
 	arch := getenv(env, "GOARCH")
 	archive := filepath.Join(tmpdir, name+"-"+arch+".a")
-	err := goBuild(path, env, "-buildmode=c-archive", "-tags=ios", "-o", archive)
+	err := goBuild(path, env, "-buildmode=c-archive", "-o", archive)
 	if err != nil {
 		return "", err
 	}

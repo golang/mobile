@@ -102,13 +102,15 @@ func runTest(t *testing.T, pkgNames []string, project, testfile string, dumpOutp
 	}
 	defer os.Chdir(cwd)
 
-	buf, err := run("gomobile bind -target=ios " + strings.Join(pkgNames, " "))
+	cmd := exec.Command("gomobile", "bind", "-target", "ios", "-tags", "aaa bbb")
+	cmd.Args = append(cmd.Args, pkgNames...)
+	buf, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Logf("%s", buf)
 		t.Fatalf("failed to run gomobile bind: %v", err)
 	}
 
-	cmd := exec.Command("xcodebuild", "test", "-scheme", project, "-destination", *destination)
+	cmd = exec.Command("xcodebuild", "test", "-scheme", project, "-destination", *destination)
 	buf, err = cmd.CombinedOutput()
 	if err != nil {
 		t.Logf("%s", buf)

@@ -15,7 +15,6 @@ import (
 	"os/exec"
 	"regexp"
 	"runtime"
-	"strconv"
 	"strings"
 )
 
@@ -270,8 +269,10 @@ func goCmd(subcmd string, srcs []string, env []string, args ...string) error {
 		"go",
 		subcmd,
 		"-pkgdir="+pkgdir(env),
-		"-tags="+strconv.Quote(strings.Join(ctx.BuildTags, ",")),
 	)
+	if len(ctx.BuildTags) > 0 {
+		cmd.Args = append(cmd.Args, "-tags", strings.Join(ctx.BuildTags, " "))
+	}
 	if buildV {
 		cmd.Args = append(cmd.Args, "-v")
 	}

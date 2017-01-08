@@ -91,6 +91,10 @@ func runBind(cmd *command) error {
 	ctx.GOARCH = "arm"
 	ctx.GOOS = targetOS
 
+	if ctx.GOOS == "darwin" {
+		ctx.BuildTags = append(ctx.BuildTags, "ios")
+	}
+
 	if bindJavaPkg != "" && ctx.GOOS != "android" {
 		return fmt.Errorf("-javapkg is supported only for android target")
 	}
