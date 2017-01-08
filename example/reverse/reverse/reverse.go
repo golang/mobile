@@ -3,6 +3,9 @@
 // license that can be found in the LICENSE file.
 
 // Package reverse implements an Android app in 100% Go.
+
+// +build android
+
 package reverse
 
 import (
