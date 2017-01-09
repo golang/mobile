@@ -31,6 +31,7 @@ func init() {
 var updateFlag = flag.Bool("update", false, "Update the golden files.")
 
 var tests = []string{
+	"", // The universe package with the error type.
 	"testdata/basictypes.go",
 	"testdata/structs.go",
 	"testdata/interfaces.go",
@@ -126,16 +127,21 @@ func writeTempFile(t *testing.T, name string, contents []byte) string {
 
 func TestGenObjc(t *testing.T) {
 	for _, filename := range tests {
-		pkg := typeCheck(t, filename, "")
+		var pkg *types.Package
+		if filename != "" {
+			pkg = typeCheck(t, filename, "")
+		}
 
 		var buf bytes.Buffer
 		g := &ObjcGen{
 			Generator: &Generator{
 				Printer: &Printer{Buf: &buf, IndentEach: []byte("\t")},
 				Fset:    fset,
-				AllPkg:  []*types.Package{pkg},
 				Pkg:     pkg,
 			},
+		}
+		if pkg != nil {
+			g.AllPkg = []*types.Package{pkg}
 		}
 		g.Init(nil)
 
@@ -164,7 +170,13 @@ func TestGenObjc(t *testing.T) {
 			}
 			out := writeTempFile(t, "generated"+tc.suffix, buf.Bytes())
 			defer os.Remove(out)
-			golden := filename[:len(filename)-len(".go")] + tc.suffix
+			var golden string
+			if filename != "" {
+				golden = filename[:len(filename)-len(".go")]
+			} else {
+				golden = "testdata/universe"
+			}
+			golden += tc.suffix
 			if diffstr := diff(golden, out); diffstr != "" {
 				t.Errorf("%s: does not match Objective-C golden:\n%s", filename, diffstr)
 				if *updateFlag {
@@ -216,6 +228,8 @@ func genObjcPackages(t *testing.T, dir string, cg *ObjcWrapper) {
 }
 
 func genJavaPackages(t *testing.T, dir string, cg *ClassGen) {
+	buf := cg.Buf
+	cg.Buf = new(bytes.Buffer)
 	pkgBase := filepath.Join(dir, "src", "Java")
 	if err := os.MkdirAll(pkgBase, 0700); err != nil {
 		t.Fatal(err)
@@ -231,6 +245,7 @@ func genJavaPackages(t *testing.T, dir string, cg *ClassGen) {
 		if err := ioutil.WriteFile(pkgFile, cg.Buf.Bytes(), 0600); err != nil {
 			t.Fatal(err)
 		}
+		io.Copy(buf, cg.Buf)
 	}
 	cg.Buf.Reset()
 	cg.GenInterfaces()
@@ -238,6 +253,8 @@ func genJavaPackages(t *testing.T, dir string, cg *ClassGen) {
 	if err := ioutil.WriteFile(clsFile, cg.Buf.Bytes(), 0600); err != nil {
 		t.Fatal(err)
 	}
+	io.Copy(buf, cg.Buf)
+	cg.Buf = buf
 
 	cmd := exec.Command(
 		"go",
@@ -257,43 +274,50 @@ func TestGenJava(t *testing.T) {
 		allTests = append(append([]string{}, allTests...), javaTests...)
 	}
 	for _, filename := range allTests {
-		refs := fileRefs(t, filename, "Java/")
-		imp := &java.Importer{}
-		classes, err := imp.Import(refs)
-		if err != nil {
-			t.Fatal(err)
-		}
-		var cg *ClassGen
-		tmpGopath := ""
+		var pkg *types.Package
 		var buf bytes.Buffer
-		if len(classes) > 0 {
-			tmpGopath, err = ioutil.TempDir(os.TempDir(), "gomobile-bind-test-")
+		var cg *ClassGen
+		var classes []*java.Class
+		if filename != "" {
+			refs := fileRefs(t, filename, "Java/")
+			imp := &java.Importer{}
+			var err error
+			classes, err = imp.Import(refs)
 			if err != nil {
 				t.Fatal(err)
 			}
-			defer os.RemoveAll(tmpGopath)
-			cg = &ClassGen{
-				Printer: &Printer{
-					IndentEach: []byte("\t"),
-					Buf:        new(bytes.Buffer),
-				},
+			tmpGopath := ""
+			if len(classes) > 0 {
+				tmpGopath, err = ioutil.TempDir(os.TempDir(), "gomobile-bind-test-")
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer os.RemoveAll(tmpGopath)
+				cg = &ClassGen{
+					Printer: &Printer{
+						IndentEach: []byte("\t"),
+						Buf:        new(bytes.Buffer),
+					},
+				}
+				var genNames []string
+				for _, emb := range refs.Embedders {
+					genNames = append(genNames, emb.Pkg+"."+emb.Name)
+				}
+				cg.Init(classes, genNames)
+				genJavaPackages(t, tmpGopath, cg)
+				cg.Buf = &buf
 			}
-			var genNames []string
-			for _, emb := range refs.Embedders {
-				genNames = append(genNames, emb.Pkg+"."+emb.Name)
-			}
-			cg.Init(classes, genNames)
-			genJavaPackages(t, tmpGopath, cg)
-			cg.Buf = &buf
+			pkg = typeCheck(t, filename, tmpGopath)
 		}
-		pkg := typeCheck(t, filename, tmpGopath)
 		g := &JavaGen{
 			Generator: &Generator{
 				Printer: &Printer{Buf: &buf, IndentEach: []byte("    ")},
 				Fset:    fset,
-				AllPkg:  []*types.Package{pkg},
 				Pkg:     pkg,
 			},
+		}
+		if pkg != nil {
+			g.AllPkg = []*types.Package{pkg}
 		}
 		g.Init(classes)
 		testCases := []struct {
@@ -339,7 +363,13 @@ func TestGenJava(t *testing.T) {
 			}
 			out := writeTempFile(t, "generated"+tc.suffix, buf.Bytes())
 			defer os.Remove(out)
-			golden := filename[:len(filename)-len(".go")] + tc.suffix
+			var golden string
+			if filename != "" {
+				golden = filename[:len(filename)-len(".go")]
+			} else {
+				golden = "testdata/universe"
+			}
+			golden += tc.suffix
 			if diffstr := diff(golden, out); diffstr != "" {
 				t.Errorf("%s: does not match Java golden:\n%s", filename, diffstr)
 
@@ -358,7 +388,10 @@ func TestGenJava(t *testing.T) {
 func TestGenGo(t *testing.T) {
 	for _, filename := range tests {
 		var buf bytes.Buffer
-		pkg := typeCheck(t, filename, "")
+		var pkg *types.Package
+		if filename != "" {
+			pkg = typeCheck(t, filename, "")
+		}
 		testGenGo(t, filename, &buf, pkg)
 	}
 }
@@ -437,7 +470,9 @@ func testGenGo(t *testing.T, filename string, buf *bytes.Buffer, pkg *types.Pack
 		Writer: buf,
 		Fset:   fset,
 		Pkg:    pkg,
-		AllPkg: []*types.Package{pkg},
+	}
+	if pkg != nil {
+		conf.AllPkg = []*types.Package{pkg}
 	}
 	if err := GenGo(conf); err != nil {
 		t.Errorf("%s: %v", filename, err)
@@ -445,7 +480,11 @@ func testGenGo(t *testing.T, filename string, buf *bytes.Buffer, pkg *types.Pack
 	}
 	out := writeTempFile(t, "go", buf.Bytes())
 	defer os.Remove(out)
-	golden := filename + ".golden"
+	golden := filename
+	if golden == "" {
+		golden = "testdata/universe"
+	}
+	golden += ".golden"
 	if diffstr := diff(golden, out); diffstr != "" {
 		t.Errorf("%s: does not match Go golden:\n%s", filename, diffstr)
 
