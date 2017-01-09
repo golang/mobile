@@ -744,9 +744,6 @@ func (g *ObjcWrapper) goType(t *objc.Type, local bool) string {
 	case objc.Protocol, objc.Class:
 		var n *objc.Named
 		n = g.lookupImported(t)
-		if n == nil {
-			return "interface{}"
-		}
 		name := n.Module + "_" + n.GoName
 		if !local {
 			name = "ObjC." + name

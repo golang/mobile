@@ -58,8 +58,8 @@ func TestImport(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if len(types) != 1 {
-			t.Fatalf("got %d types, expected 1", len(types))
+		if len(types) == 0 {
+			t.Fatalf("got no types, expected at least 1")
 		}
 		n := types[0]
 		if n.Name != test.name {
@@ -67,7 +67,7 @@ func TestImport(t *testing.T) {
 		}
 	loop:
 		for _, exp := range test.methods {
-			for _, got := range n.Methods {
+			for _, got := range n.AllMethods {
 				if reflect.DeepEqual(exp, got) {
 					continue loop
 				}
