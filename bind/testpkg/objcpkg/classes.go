@@ -65,3 +65,8 @@ type GoUIResponder struct {
 func (r *GoUIResponder) PressesBegan(_ Foundation.NSSet, _ UIKit.UIPressesEvent) {
 	r.Called = true
 }
+
+// Check that implicitly referenced types are wrapped.
+func implicitType(r UIKit.UIResponder) {
+	r.MotionBegan(0, nil)
+}
