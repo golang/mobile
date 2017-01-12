@@ -76,6 +76,7 @@ func TestAndroidBuild(t *testing.T) {
 	buildX = true
 	buildO = "basic.apk"
 	buildTarget = "android"
+	ndkRoot = "/NDK"
 	gopath = filepath.ToSlash(filepath.SplitList(os.Getenv("GOPATH"))[0])
 	if goos == "windows" {
 		os.Setenv("HOMEDRIVE", "C:")
@@ -100,7 +101,7 @@ func TestAndroidBuild(t *testing.T) {
 var androidBuildTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
 WORK=$WORK
 mkdir -p $WORK/lib/armeabi-v7a
-GOOS=android GOARCH=arm CC=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-clang{{.EXE}} CXX=$GOMOBILE/android-{{.NDK}}/arm/bin/arm-linux-androideabi-clang++{{.EXE}} CGO_CFLAGS=-target armv7a-none-linux-androideabi --sysroot $GOMOBILE/android-{{.NDK}}/arm/sysroot CGO_CPPFLAGS=-target armv7a-none-linux-androideabi --sysroot $GOMOBILE/android-{{.NDK}}/arm/sysroot CGO_LDFLAGS=-target armv7a-none-linux-androideabi --sysroot $GOMOBILE/android-{{.NDK}}/arm/sysroot CGO_ENABLED=1 GOARM=7 go build -pkgdir=$GOMOBILE/pkg_android_arm -tags tag1 -x -buildmode=c-shared -o $WORK/lib/armeabi-v7a/libbasic.so golang.org/x/mobile/example/basic
+GOOS=android GOARCH=arm CC=/NDK/toolchains/llvm/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin/clang{{.EXE}} CXX=/NDK/toolchains/llvm/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin/clang++{{.EXE}} CGO_CFLAGS=-target armv7a-none-linux-androideabi --sysroot /NDK/platforms/android-15/arch-arm -gcc-toolchain /NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}} -I$GOMOBILE/include CGO_CPPFLAGS=-target armv7a-none-linux-androideabi --sysroot /NDK/platforms/android-15/arch-arm -gcc-toolchain /NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}} -I$GOMOBILE/include CGO_LDFLAGS=-target armv7a-none-linux-androideabi --sysroot /NDK/platforms/android-15/arch-arm -gcc-toolchain /NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}} -L/NDK/platforms/android-15/arch-arm/usr/lib -L$GOMOBILE/lib/arm CGO_ENABLED=1 GOARM=7 go build -pkgdir=$GOMOBILE/pkg_android_arm -tags tag1 -x -buildmode=c-shared -o $WORK/lib/armeabi-v7a/libbasic.so golang.org/x/mobile/example/basic
 `))
 
 func TestParseBuildTargetFlag(t *testing.T) {
