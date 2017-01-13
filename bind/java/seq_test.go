@@ -64,20 +64,25 @@ func TestJavaSeqBench(t *testing.T) {
 // This requires the gradle command in PATH and
 // the Android SDK whose path is available through ANDROID_HOME environment variable.
 func runTest(t *testing.T, pkgNames []string, javaPkg, javaCls string) {
-	if _, err := run("which gradle"); err != nil {
+	gradle, err := exec.LookPath("gradle")
+	if err != nil {
 		t.Skip("command gradle not found, skipping")
 	}
 	if sdk := os.Getenv("ANDROID_HOME"); sdk == "" {
 		t.Skip("ANDROID_HOME environment var not set, skipping")
 	}
-	if _, err := run("which gomobile"); err != nil {
+	gomobile, err := exec.LookPath("gomobile")
+	if err != nil {
 		t.Log("go install gomobile")
 		if _, err := run("go install golang.org/x/mobile/cmd/gomobile"); err != nil {
 			t.Fatalf("gomobile install failed: %v", err)
 		}
+		if gomobile, err = exec.LookPath("gomobile"); err != nil {
+			t.Fatalf("gomobile install failed: %v", err)
+		}
 		t.Log("gomobile init")
 		start := time.Now()
-		if _, err := run("gomobile init"); err != nil {
+		if _, err := run(gomobile + " init"); err != nil {
 			t.Fatalf("gomobile init failed: %v", err)
 		}
 		t.Logf("gomobile init took %v", time.Since(start))
@@ -111,7 +116,7 @@ func runTest(t *testing.T, pkgNames []string, javaPkg, javaCls string) {
 		args = append(args, "-javapkg", javaPkg)
 	}
 	args = append(args, pkgNames...)
-	buf, err := exec.Command("gomobile", args...).CombinedOutput()
+	buf, err := exec.Command(gomobile, args...).CombinedOutput()
 	if err != nil {
 		t.Logf("%s", buf)
 		t.Fatalf("failed to run gomobile bind: %v", err)
@@ -141,7 +146,7 @@ func runTest(t *testing.T, pkgNames []string, javaPkg, javaCls string) {
 		t.Fatalf("failed to write build.gradle file: %v", err)
 	}
 
-	if buf, err := run("gradle connectedAndroidTest"); err != nil {
+	if buf, err := run(gradle + " connectedAndroidTest"); err != nil {
 		t.Logf("%s", buf)
 		t.Errorf("failed to run gradle test: %v", err)
 	}
