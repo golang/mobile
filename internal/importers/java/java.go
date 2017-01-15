@@ -137,6 +137,10 @@ type funcRef struct {
 	goName  string
 }
 
+type errClsNotFound struct {
+	name string
+}
+
 const (
 	Int TypeKind = iota
 	Boolean
@@ -151,9 +155,9 @@ const (
 	Object
 )
 
-var (
-	errClsNotFound = errors.New("class not found")
-)
+func (e *errClsNotFound) Error() string {
+	return "class not found: " + e.name
+}
 
 // IsAvailable returns whether the required tools are available for
 // Import to work. In particular, IsAvailable checks the existence
@@ -615,10 +619,11 @@ func (j *Importer) importClasses(names []string, allowMissingClasses bool) ([]*C
 	for _, name := range names {
 		cls, err := j.scanClass(s, name)
 		if err != nil {
-			if err == errClsNotFound && allowMissingClasses {
+			_, notfound := err.(*errClsNotFound)
+			if notfound && allowMissingClasses {
 				continue
 			}
-			if err == errClsNotFound && name != "android.databinding.DataBindingComponent" {
+			if notfound && name != "android.databinding.DataBindingComponent" {
 				return nil, err
 			}
 			// The Android Databinding library generates android.databinding.DataBindingComponent
@@ -725,7 +730,7 @@ func (j *Importer) scanClass(s *bufio.Scanner, name string) (*Class, error) {
 	if errPref := "Error: "; strings.HasPrefix(head, errPref) {
 		msg := head[len(errPref):]
 		if strings.HasPrefix(msg, "class not found: "+name) {
-			return nil, errClsNotFound
+			return nil, &errClsNotFound{name}
 		}
 		return nil, errors.New(msg)
 	}
