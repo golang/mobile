@@ -6,7 +6,8 @@ package java;
 
 import go.Seq;
 
-public interface F {
+public interface F extends R {
+    public String toString();
     
 }
 
@@ -18,7 +19,8 @@ package java;
 
 import go.Seq;
 
-public interface O {
+public interface O extends R {
+    public String toString();
     
 }
 
@@ -42,7 +44,8 @@ package java;
 
 import go.Seq;
 
-public interface S {
+public interface S extends R {
+    public String toString();
     
 }
 
@@ -78,6 +81,7 @@ public abstract class Java {
         
         proxyF(Seq.Ref ref) { this.ref = ref; }
         
+        public native String toString();
     }
     private static final class proxyO implements Seq.Proxy, O {
         private final Seq.Ref ref;
@@ -90,6 +94,7 @@ public abstract class Java {
         
         proxyO(Seq.Ref ref) { this.ref = ref; }
         
+        public native String toString();
     }
     private static final class proxyR implements Seq.Proxy, R {
         private final Seq.Ref ref;
@@ -114,6 +119,7 @@ public abstract class Java {
         
         proxyS(Seq.Ref ref) { this.ref = ref; }
         
+        public native String toString();
     }
     
     

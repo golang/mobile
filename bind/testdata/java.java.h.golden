@@ -46,6 +46,10 @@ typedef struct ret_nbyteslice {
 	jint exc;
 } ret_nbyteslice;
 
+extern ret_nstring cproxy_java_lang_Float_toString(jint this);
+extern ret_nstring cproxy_java_lang_Object_toString(jint this);
+extern ret_nstring cproxy_java_lang_Character_toString(jint this);
+extern ret_nstring cproxy_java_lang_Character_Subset_toString(jint this);
 // JNI function headers for the Go <=> Java bridge.
 //   gobind -lang=java java
 //
@@ -59,13 +63,19 @@ typedef struct ret_nbyteslice {
 extern jclass proxy_class_java_F;
 extern jmethodID proxy_class_java_F_cons;
 
+nstring cproxyjava_F_ToString(int32_t refnum);
+
 extern jclass proxy_class_java_O;
 extern jmethodID proxy_class_java_O_cons;
+
+nstring cproxyjava_O_ToString(int32_t refnum);
 
 extern jclass proxy_class_java_R;
 extern jmethodID proxy_class_java_R_cons;
 
 extern jclass proxy_class_java_S;
 extern jmethodID proxy_class_java_S_cons;
+
+nstring cproxyjava_S_ToString(int32_t refnum);
 
 #endif

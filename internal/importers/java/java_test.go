@@ -47,6 +47,14 @@ func TestImport(t *testing.T) {
 			},
 		},
 	}
+	toString := &FuncSet{
+		Name:   "toString",
+		GoName: "ToString",
+		CommonSig: CommonSig{
+			Ret: &Type{Kind: String}, HasRet: true,
+		},
+		Funcs: []*Func{&Func{FuncSig: FuncSig{Name: "toString", Desc: "()Ljava/lang/String;"}, ArgDesc: "", JNIName: "toString", Public: true, Ret: &Type{Kind: String}}},
+	}
 	for _, test := range tests {
 		refs := &importers.References{
 			Refs:  []importers.PkgRef{test.ref},
@@ -66,8 +74,12 @@ func TestImport(t *testing.T) {
 		if cls.Name != test.name {
 			t.Errorf("got class name %s, expected %s", cls.Name, test.name)
 		}
+		methods := test.methods
+		if !cls.Interface {
+			methods = append(methods, toString)
+		}
 	loop:
-		for _, exp := range test.methods {
+		for _, exp := range methods {
 			for _, got := range cls.AllMethods {
 				if reflect.DeepEqual(exp, got) {
 					continue loop
