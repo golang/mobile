@@ -59,8 +59,8 @@ extern ret_jint csuper_java_InputStream_read__(jint this);
 extern jint cproxy_java_Runnable_run(jint this);
 extern jint csuper_java_Runnable_run(jint this);
 extern jint cproxy_java_io_Console_flush(jint this);
-extern ret_jint cproxy_s_java_util_Spliterators_iterator__Ljava_util_Spliterator_00024OfInt_2(jclass clazz, jmethodID m, jint a0);
-extern ret_jint cproxy_s_java_lang_System_console(jclass clazz, jmethodID m);
+extern ret_jint cproxy_s_java_util_Spliterators_iterator__Ljava_util_Spliterator_00024OfInt_2(jint a0);
+extern ret_jint cproxy_s_java_lang_System_console();
 // JNI function headers for the Go <=> Java bridge.
 //   gobind -lang=java classes
 //
