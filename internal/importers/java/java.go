@@ -206,6 +206,9 @@ func (j *Importer) Import(refs *importers.References) ([]*Class, error) {
 			}
 		}
 	}
+	// Make sure toString() is included; it is called when wrapping Java exception types to Go
+	// errors.
+	refs.Names["ToString"] = struct{}{}
 	funcRefs := make(map[funcRef]struct{})
 	for _, ref := range refs.Refs {
 		pkgName := strings.Replace(ref.Pkg, "/", ".", -1)
