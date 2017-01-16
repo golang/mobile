@@ -16,6 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"reflect"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -35,11 +36,15 @@ type Class struct {
 	JNIName string
 	// "Inner"
 	PkgName string
-	Funcs   []*Func
-	Methods []*Func
+	Funcs   []*FuncSet
+	Methods []*FuncSet
+	// funcMap maps function names.
+	funcMap map[string]*FuncSet
+	// FuncMap maps method names.
+	methodMap map[string]*FuncSet
 	// All methods, including methods from
 	// supers.
-	AllMethods []*Func
+	AllMethods []*FuncSet
 	Vars       []*Var
 	Supers     []string
 	Final      bool
@@ -50,11 +55,34 @@ type Class struct {
 	HasNoArgCon bool
 }
 
+// FuncSet is the set of overloaded variants of a function.
+// If the function is not overloaded, its FuncSet contains
+// one entry.
+type FuncSet struct {
+	Name   string
+	GoName string
+	Funcs  []*Func
+	CommonSig
+}
+
+// CommonSig is a signature compatible with every
+// overloaded variant of a FuncSet.
+type CommonSig struct {
+	// Variadic is set if the signature covers variants
+	// with varying number of parameters.
+	Variadic bool
+	// HasRet is true if at least one variant returns a
+	// value.
+	HasRet bool
+	Throws bool
+	Params []*Type
+	Ret    *Type
+}
+
 // Func is a Java static function or method or constructor.
 type Func struct {
 	FuncSig
 	ArgDesc string
-	GoName  string
 	// Mangled JNI name
 	JNIName     string
 	Static      bool
@@ -100,6 +128,13 @@ type Importer struct {
 	JavaPkg string
 
 	clsMap map[string]*Class
+}
+
+// funcRef is a reference to a Java function (static method).
+// It is used as a key to filter unused Java functions.
+type funcRef struct {
+	clsName string
+	goName  string
 }
 
 const (
@@ -167,10 +202,21 @@ func (j *Importer) Import(refs *importers.References) ([]*Class, error) {
 			}
 		}
 	}
+	funcRefs := make(map[funcRef]struct{})
+	for _, ref := range refs.Refs {
+		pkgName := strings.Replace(ref.Pkg, "/", ".", -1)
+		funcRefs[funcRef{pkgName, ref.Name}] = struct{}{}
+	}
 	classes, err := j.importClasses(names, true)
 	if err != nil {
 		return nil, err
 	}
+	j.filterReferences(classes, refs, funcRefs)
+	supers, err := j.importReferencedClasses(classes)
+	if err != nil {
+		return nil, err
+	}
+	j.filterReferences(supers, refs, funcRefs)
 	// Embedders refer to every exported Go struct that will have its class
 	// generated. Allow Go code to reverse bind to those classes by synthesizing
 	// their class descriptors.
@@ -182,6 +228,7 @@ func (j *Importer) Import(refs *importers.References) ([]*Class, error) {
 		if _, exists := j.clsMap[n]; exists {
 			continue
 		}
+		clsSet[n] = struct{}{}
 		cls := &Class{
 			Name:     n,
 			FindName: n,
@@ -199,52 +246,193 @@ func (j *Importer) Import(refs *importers.References) ([]*Class, error) {
 		classes = append(classes, cls)
 		j.clsMap[cls.Name] = cls
 	}
-	j.initClasses(classes, refs)
 	// Include implicit classes that are used in parameter or return values.
-	newClasses := classes
-	for len(newClasses) > 0 {
-		var impNames []string
-		var impClasses []*Class
-		for _, cls := range newClasses {
-			for _, funcs := range [][]*Func{cls.Funcs, cls.AllMethods} {
-				for _, f := range funcs {
+	for _, cls := range classes {
+		for _, fsets := range [][]*FuncSet{cls.Funcs, cls.Methods} {
+			for _, fs := range fsets {
+				for _, f := range fs.Funcs {
 					names := j.implicitFuncTypes(f)
 					for _, name := range names {
 						if _, exists := clsSet[name]; exists {
 							continue
 						}
 						clsSet[name] = struct{}{}
-						if cls, exists := j.clsMap[name]; exists {
-							impClasses = append(impClasses, cls)
-						} else {
-							impNames = append(impNames, name)
-						}
+						classes = append(classes, j.clsMap[name])
 					}
 				}
 			}
 		}
-		imports, err := j.importClasses(impNames, false)
-		if err != nil {
-			return nil, err
+	}
+	for _, cls := range j.clsMap {
+		j.fillFuncSigs(cls.Funcs)
+		j.fillFuncSigs(cls.Methods)
+		for _, m := range cls.Methods {
+			j.fillSuperSigs(cls, m)
 		}
-		impClasses = append(impClasses, imports...)
-		j.initClasses(impClasses, refs)
-		classes = append(classes, impClasses...)
-		newClasses = impClasses
+	}
+	for _, cls := range j.clsMap {
+		j.fillAllMethods(cls)
+	}
+	// Include classes that appear as ancestor types for overloaded signatures.
+	for _, cls := range classes {
+		for _, funcs := range [][]*FuncSet{cls.Funcs, cls.AllMethods} {
+			for _, f := range funcs {
+				for _, p := range f.Params {
+					if p == nil || p.Kind != Object {
+						continue
+					}
+					if _, exists := clsSet[p.Class]; !exists {
+						clsSet[p.Class] = struct{}{}
+						classes = append(classes, j.clsMap[p.Class])
+					}
+				}
+				if t := f.Ret; t != nil && t.Kind == Object {
+					if _, exists := clsSet[t.Class]; !exists {
+						clsSet[t.Class] = struct{}{}
+						classes = append(classes, j.clsMap[t.Class])
+					}
+				}
+			}
+		}
+	}
+	for _, cls := range classes {
+		j.fillJNINames(cls.Funcs)
+		j.fillJNINames(cls.AllMethods)
 	}
 	j.fillThrowables(classes)
 	return classes, nil
 }
 
-func (j *Importer) initClasses(classes []*Class, refs *importers.References) {
-	for _, cls := range classes {
-		j.fillAllMethods(cls)
+func (j *Importer) fillJNINames(funcs []*FuncSet) {
+	for _, fs := range funcs {
+		for _, f := range fs.Funcs {
+			f.JNIName = JNIMangle(f.Name)
+			if len(fs.Funcs) > 1 {
+				f.JNIName += "__" + JNIMangle(f.ArgDesc)
+			}
+		}
 	}
-	for _, cls := range classes {
-		j.mangleOverloads(cls.AllMethods)
-		j.mangleOverloads(cls.Funcs)
+}
+
+// commonType finds the most specific type common to t1 and t2.
+// If t1 and t2 are both Java classes, the most specific ancestor
+// class is returned.
+// Else if the types are equal, their type is returned.
+// Finally, nil is returned, indicating no common type.
+func commonType(clsMap map[string]*Class, t1, t2 *Type) *Type {
+	if t1 == nil || t2 == nil {
+		return nil
 	}
-	j.filterReferences(classes, refs)
+	if reflect.DeepEqual(t1, t2) {
+		return t1
+	}
+	if t1.Kind != Object || t2.Kind != Object {
+		// The types are fundamentally incompatible
+		return nil
+	}
+	superSet := make(map[string]struct{})
+	supers := []string{t1.Class}
+	for len(supers) > 0 {
+		var newSupers []string
+		for _, s := range supers {
+			cls := clsMap[s]
+			superSet[s] = struct{}{}
+			newSupers = append(newSupers, cls.Supers...)
+		}
+		supers = newSupers
+	}
+	supers = []string{t2.Class}
+	for len(supers) > 0 {
+		var newSupers []string
+		for _, s := range supers {
+			if _, exists := superSet[s]; exists {
+				return &Type{Kind: Object, Class: s}
+			}
+			cls := clsMap[s]
+			newSupers = append(newSupers, cls.Supers...)
+		}
+		supers = newSupers
+	}
+	return &Type{Kind: Object, Class: "java.lang.Object"}
+}
+
+// combineSigs finds the most specific function signature
+// that covers all its overload variants.
+// If a function has only one variant, its common signature
+// is the signature of that variant.
+func combineSigs(clsMap map[string]*Class, sigs ...CommonSig) CommonSig {
+	var common CommonSig
+	minp := len(sigs[0].Params)
+	for i := 1; i < len(sigs); i++ {
+		sig := sigs[i]
+		n := len(sig.Params)
+		common.Variadic = common.Variadic || sig.Variadic || n != minp
+		if n < minp {
+			minp = n
+		}
+	}
+	for i, sig := range sigs {
+		for j, p := range sig.Params {
+			idx := j
+			// If the common signature is variadic, combine all parameters in the
+			// last parameter type of the shortest parameter list.
+			if idx > minp {
+				idx = minp
+			}
+			if idx < len(common.Params) {
+				common.Params[idx] = commonType(clsMap, common.Params[idx], p)
+			} else {
+				common.Params = append(common.Params, p)
+			}
+		}
+		common.Throws = common.Throws || sig.Throws
+		common.HasRet = common.HasRet || sig.HasRet
+		if i > 0 {
+			common.Ret = commonType(clsMap, common.Ret, sig.Ret)
+		} else {
+			common.Ret = sig.Ret
+		}
+	}
+	return common
+}
+
+// fillSuperSigs combines methods signatures with super class signatures,
+// to preserve the assignability of classes to their super classes.
+//
+// For example, the class
+//
+// class A {
+//   void f();
+// }
+//
+// is by itself represented by the Go interface
+//
+// type A interface {
+//   f()
+// }
+//
+// However, if class
+//
+// class B extends A {
+//   void f(int);
+// }
+//
+// is also imported, it will be represented as
+//
+// type B interface {
+//   f(...int32)
+// }
+//
+// To make Go B assignable to Go A, the signature of A's f must
+// be updated to f(...int32) as well.
+func (j *Importer) fillSuperSigs(cls *Class, m *FuncSet) {
+	for _, s := range cls.Supers {
+		sup := j.clsMap[s]
+		if sm, exists := sup.methodMap[m.GoName]; exists {
+			sm.CommonSig = combineSigs(j.clsMap, sm.CommonSig, m.CommonSig)
+		}
+		j.fillSuperSigs(sup, m)
+	}
 }
 
 func (v *Var) Constant() bool {
@@ -377,20 +565,11 @@ func (t *Type) JNICallType() string {
 	}
 }
 
-func (j *Importer) filterReferences(classes []*Class, refs *importers.References) {
-	refFuncs := make(map[[2]string]struct{})
-	for _, ref := range refs.Refs {
-		pkgName := strings.Replace(ref.Pkg, "/", ".", -1)
-		cls := j.clsMap[pkgName]
-		if cls == nil {
-			continue
-		}
-		refFuncs[[...]string{pkgName, ref.Name}] = struct{}{}
-	}
+func (j *Importer) filterReferences(classes []*Class, refs *importers.References, funcRefs map[funcRef]struct{}) {
 	for _, cls := range classes {
-		var filtered []*Func
+		var filtered []*FuncSet
 		for _, f := range cls.Funcs {
-			if _, exists := refFuncs[[...]string{cls.Name, f.GoName}]; exists {
+			if _, exists := funcRefs[funcRef{cls.Name, f.GoName}]; exists {
 				filtered = append(filtered, f)
 			}
 		}
@@ -402,16 +581,10 @@ func (j *Importer) filterReferences(classes []*Class, refs *importers.References
 			}
 		}
 		cls.Methods = filtered
-		filtered = nil
-		for _, m := range cls.AllMethods {
-			if _, exists := refs.Names[m.GoName]; exists {
-				filtered = append(filtered, m)
-			}
-		}
-		cls.AllMethods = filtered
 	}
 }
 
+// importClasses imports the named classes from the classpaths of the Importer.
 func (j *Importer) importClasses(names []string, allowMissingClasses bool) ([]*Class, error) {
 	if len(names) == 0 {
 		return nil, nil
@@ -442,31 +615,54 @@ func (j *Importer) importClasses(names []string, allowMissingClasses bool) ([]*C
 	for _, name := range names {
 		cls, err := j.scanClass(s, name)
 		if err != nil {
-			if allowMissingClasses && err == errClsNotFound {
+			if err == errClsNotFound && allowMissingClasses {
 				continue
 			}
-			return nil, err
+			if err == errClsNotFound && name != "android.databinding.DataBindingComponent" {
+				return nil, err
+			}
+			// The Android Databinding library generates android.databinding.DataBindingComponent
+			// too late in the build process for the gobind plugin to import it. Synthesize a class
+			// for it instead.
+			cls = &Class{
+				Name:      name,
+				FindName:  name,
+				Interface: true,
+				PkgName:   "databinding",
+				JNIName:   JNIMangle(name),
+			}
 		}
 		classes = append(classes, cls)
 		j.clsMap[name] = cls
 	}
+	return classes, nil
+}
+
+// importReferencedClasses imports all implicit classes (super types, parameter and
+// return types) for the given classes not already imported.
+func (j *Importer) importReferencedClasses(classes []*Class) ([]*Class, error) {
+	var allCls []*Class
 	// Include methods from extended or implemented classes.
-	unkCls := classes
 	for {
-		var unknown []string
-		for _, cls := range unkCls {
-			unknown = j.unknownSuperClasses(cls, unknown)
+		set := make(map[string]struct{})
+		for _, cls := range classes {
+			j.unknownImplicitClasses(cls, set)
 		}
-		if len(unknown) == 0 {
+		if len(set) == 0 {
 			break
 		}
-		newCls, err := j.importClasses(unknown, false)
+		var names []string
+		for n := range set {
+			names = append(names, n)
+		}
+		newCls, err := j.importClasses(names, false)
 		if err != nil {
 			return nil, err
 		}
-		unkCls = newCls
+		allCls = append(allCls, newCls...)
+		classes = newCls
 	}
-	return classes, nil
+	return allCls, nil
 }
 
 func (j *Importer) implicitFuncTypes(f *Func) []string {
@@ -482,21 +678,43 @@ func (j *Importer) implicitFuncTypes(f *Func) []string {
 	return unk
 }
 
-func (j *Importer) unknownSuperClasses(cls *Class, unk []string) []string {
-loop:
-	for _, n := range cls.Supers {
-		if s, exists := j.clsMap[n]; exists {
-			unk = j.unknownSuperClasses(s, unk)
-		} else {
-			for _, u := range unk {
-				if u == n {
-					continue loop
+func (j *Importer) unknownImplicitClasses(cls *Class, set map[string]struct{}) {
+	for _, fsets := range [][]*FuncSet{cls.Funcs, cls.Methods} {
+		for _, fs := range fsets {
+			for _, f := range fs.Funcs {
+				names := j.implicitFuncTypes(f)
+				for _, name := range names {
+					if _, exists := j.clsMap[name]; !exists {
+						set[name] = struct{}{}
+					}
 				}
 			}
-			unk = append(unk, n)
 		}
 	}
-	return unk
+	for _, n := range cls.Supers {
+		if s, exists := j.clsMap[n]; exists {
+			j.unknownImplicitClasses(s, set)
+		} else {
+			set[n] = struct{}{}
+		}
+	}
+}
+
+func (j *Importer) implicitFuncClasses(funcs []*FuncSet, impl []string) []string {
+	var l []string
+	for _, fs := range funcs {
+		for _, f := range fs.Funcs {
+			if rt := f.Ret; rt != nil && rt.Kind == Object {
+				l = append(l, rt.Class)
+			}
+			for _, t := range f.Params {
+				if t.Kind == Object {
+					l = append(l, t.Class)
+				}
+			}
+		}
+	}
+	return impl
 }
 
 func (j *Importer) scanClass(s *bufio.Scanner, name string) (*Class, error) {
@@ -521,13 +739,6 @@ func (j *Importer) scanClass(s *bufio.Scanner, name string) (*Class, error) {
 	cls, err := j.scanClassDecl(name, clsDecl)
 	if err != nil {
 		return nil, err
-	}
-	if len(cls.Supers) == 0 {
-		if name == "java.lang.Object" {
-			cls.HasNoArgCon = true
-		} else if !cls.Interface {
-			cls.Supers = append(cls.Supers, "java.lang.Object")
-		}
 	}
 	cls.JNIName = JNIMangle(cls.Name)
 	clsElems := strings.Split(cls.Name, ".")
@@ -606,18 +817,37 @@ func (j *Importer) scanClass(s *bufio.Scanner, name string) (*Class, error) {
 		}
 	}
 	for _, f := range funcs {
+		var m map[string]*FuncSet
+		var l *[]*FuncSet
+		goName := initialUpper(f.Name)
 		if f.Static || f.Constructor {
-			cls.Funcs = append(cls.Funcs, f)
+			m = cls.funcMap
+			l = &cls.Funcs
 		} else {
-			cls.Methods = append(cls.Methods, f)
+			m = cls.methodMap
+			l = &cls.Methods
 		}
+		fs, exists := m[goName]
+		if !exists {
+			fs = &FuncSet{
+				Name:   f.Name,
+				GoName: goName,
+			}
+			m[goName] = fs
+			*l = append(*l, fs)
+		}
+		fs.Funcs = append(fs.Funcs, f)
 	}
 	return cls, nil
 }
 
 func (j *Importer) scanClassDecl(name string, decl string) (*Class, error) {
+	isRoot := name == "java.lang.Object"
 	cls := &Class{
-		Name: name,
+		Name:        name,
+		funcMap:     make(map[string]*FuncSet),
+		methodMap:   make(map[string]*FuncSet),
+		HasNoArgCon: isRoot,
 	}
 	const (
 		stMod = iota
@@ -625,6 +855,7 @@ func (j *Importer) scanClassDecl(name string, decl string) (*Class, error) {
 		stExt
 		stImpl
 	)
+	superClsDecl := isRoot
 	st := stMod
 	var w []byte
 	// if > 0, we're inside a generics declaration
@@ -641,6 +872,9 @@ func (j *Importer) scanClassDecl(name string, decl string) (*Class, error) {
 		case '<':
 			gennest++
 		case '{':
+			if !superClsDecl && !cls.Interface {
+				cls.Supers = append(cls.Supers, "java.lang.Object")
+			}
 			return cls, nil
 		case ' ', ',':
 			if gennest > 0 {
@@ -655,6 +889,7 @@ func (j *Importer) scanClassDecl(name string, decl string) (*Class, error) {
 					}
 					cls.FindName = w
 				case stExt:
+					superClsDecl = true
 					cls.Supers = append(cls.Supers, w)
 				case stImpl:
 					if !cls.Interface {
@@ -800,68 +1035,61 @@ func (j *Importer) fillThrowableFor(cls, thrCls *Class) {
 	}
 }
 
+func commonSig(f *Func) CommonSig {
+	return CommonSig{
+		Params: f.Params,
+		Ret:    f.Ret,
+		HasRet: f.Ret != nil,
+		Throws: f.Throws != "",
+	}
+}
+
+func (j *Importer) fillFuncSigs(funcs []*FuncSet) {
+	for _, fs := range funcs {
+		var sigs []CommonSig
+		for _, f := range fs.Funcs {
+			sigs = append(sigs, commonSig(f))
+		}
+		fs.CommonSig = combineSigs(j.clsMap, sigs...)
+	}
+}
+
 func (j *Importer) fillAllMethods(cls *Class) {
 	if len(cls.AllMethods) > 0 {
-		return
-	}
-	if len(cls.Supers) == 0 {
-		cls.AllMethods = cls.Methods
 		return
 	}
 	for _, supName := range cls.Supers {
 		super := j.clsMap[supName]
 		j.fillAllMethods(super)
 	}
-	methods := make(map[FuncSig]struct{})
+	var fsets []*FuncSet
+	fsets = append(fsets, cls.Methods...)
 	for _, supName := range cls.Supers {
 		super := j.clsMap[supName]
-		for _, f := range super.AllMethods {
-			if _, exists := methods[f.FuncSig]; !exists {
-				methods[f.FuncSig] = struct{}{}
-				cls.AllMethods = append(cls.AllMethods, f)
+		fsets = append(fsets, super.AllMethods...)
+	}
+	sigs := make(map[FuncSig]struct{})
+	methods := make(map[string]*FuncSet)
+	for _, fs := range fsets {
+		clsFs, exists := methods[fs.Name]
+		if !exists {
+			clsFs = &FuncSet{
+				Name:      fs.Name,
+				GoName:    fs.GoName,
+				CommonSig: fs.CommonSig,
 			}
+			cls.AllMethods = append(cls.AllMethods, clsFs)
+			methods[fs.Name] = clsFs
+		} else {
+			// Combine the (overloaded) signature with the other variants.
+			clsFs.CommonSig = combineSigs(j.clsMap, clsFs.CommonSig, fs.CommonSig)
 		}
-	}
-	for _, f := range cls.Methods {
-		if _, exists := methods[f.FuncSig]; !exists {
-			cls.AllMethods = append(cls.AllMethods, f)
-		}
-	}
-}
-
-// mangleOverloads assigns unique names to overloaded Java functions by appending
-// the argument count. If multiple methods have the same name and argument count,
-// the method signature is appended in JNI mangled form.
-func (j *Importer) mangleOverloads(allFuncs []*Func) {
-	overloads := make(map[string][]*Func)
-	for i, f := range allFuncs {
-		// Name mangling is per class so copy the function first.
-		f := *f
-		allFuncs[i] = &f
-		overloads[f.Name] = append(overloads[f.Name], &f)
-	}
-	for _, funcs := range overloads {
-		for _, f := range funcs {
-			f.GoName = initialUpper(f.Name)
-			f.JNIName = JNIMangle(f.Name)
-		}
-		if len(funcs) == 1 {
-			continue
-		}
-		lengths := make(map[int]int)
-		for _, f := range funcs {
-			f.JNIName += "__" + JNIMangle(f.ArgDesc)
-			lengths[len(f.Params)]++
-		}
-		for _, f := range funcs {
-			n := len(f.Params)
-			if lengths[n] > 1 {
-				f.GoName += "_" + JNIMangle(f.ArgDesc)
+		for _, f := range fs.Funcs {
+			if _, exists := sigs[f.FuncSig]; exists {
 				continue
 			}
-			if n > 0 {
-				f.GoName = fmt.Sprintf("%s%d", f.GoName, n)
-			}
+			sigs[f.FuncSig] = struct{}{}
+			clsFs.Funcs = append(clsFs.Funcs, f)
 		}
 	}
 }

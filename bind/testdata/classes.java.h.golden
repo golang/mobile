@@ -48,6 +48,8 @@ typedef struct ret_nbyteslice {
 
 extern jint cproxy_java_lang_Runnable_run(jint this);
 extern ret_jint cproxy_java_io_InputStream_read__(jint this);
+extern ret_jint cproxy_java_io_InputStream_read___3B(jint this, nbyteslice a0);
+extern ret_jint cproxy_java_io_InputStream_read___3BII(jint this, nbyteslice a0, jint a1, jint a2);
 extern ret_jint cproxy_java_util_concurrent_Future_get__(jint this);
 extern ret_jint cproxy_java_util_concurrent_Future_get__JLjava_util_concurrent_TimeUnit_2(jint this, jlong a0, jint a1);
 extern ret_jint cproxy_java_Future_get__(jint this);
@@ -56,10 +58,17 @@ extern ret_jint cproxy_java_Future_get__JLjava_util_concurrent_TimeUnit_2(jint t
 extern ret_jint csuper_java_Future_get__JLjava_util_concurrent_TimeUnit_2(jint this, jlong a0, jint a1);
 extern ret_jint cproxy_java_InputStream_read__(jint this);
 extern ret_jint csuper_java_InputStream_read__(jint this);
+extern ret_jint cproxy_java_InputStream_read___3B(jint this, nbyteslice a0);
+extern ret_jint csuper_java_InputStream_read___3B(jint this, nbyteslice a0);
+extern ret_jint cproxy_java_InputStream_read___3BII(jint this, nbyteslice a0, jint a1, jint a2);
+extern ret_jint csuper_java_InputStream_read___3BII(jint this, nbyteslice a0, jint a1, jint a2);
 extern jint cproxy_java_Runnable_run(jint this);
 extern jint csuper_java_Runnable_run(jint this);
 extern jint cproxy_java_io_Console_flush(jint this);
+extern ret_jint cproxy_s_java_util_Spliterators_iterator__Ljava_util_Spliterator_2(jint a0);
 extern ret_jint cproxy_s_java_util_Spliterators_iterator__Ljava_util_Spliterator_00024OfInt_2(jint a0);
+extern ret_jint cproxy_s_java_util_Spliterators_iterator__Ljava_util_Spliterator_00024OfLong_2(jint a0);
+extern ret_jint cproxy_s_java_util_Spliterators_iterator__Ljava_util_Spliterator_00024OfDouble_2(jint a0);
 extern ret_jint cproxy_s_java_lang_System_console();
 // JNI function headers for the Go <=> Java bridge.
 //   gobind -lang=java classes

@@ -7,6 +7,7 @@ package bind
 import (
 	"fmt"
 	"path"
+	"reflect"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -49,6 +50,15 @@ func (g *ClassGen) isSupported(t *java.Type) bool {
 	}
 }
 
+func (g *ClassGen) isFuncSetSupported(fs *java.FuncSet) bool {
+	for _, f := range fs.Funcs {
+		if g.isFuncSupported(f) {
+			return true
+		}
+	}
+	return false
+}
+
 func (g *ClassGen) isFuncSupported(f *java.Func) bool {
 	for _, a := range f.Params {
 		if !g.isSupported(a) {
@@ -62,6 +72,11 @@ func (g *ClassGen) isFuncSupported(f *java.Func) bool {
 }
 
 func (g *ClassGen) goType(t *java.Type, local bool) string {
+	if t == nil {
+		// interface{} is used for parameters types for overloaded methods
+		// where no common ancestor type exists.
+		return "interface{}"
+	}
 	switch t.Kind {
 	case java.Int:
 		return "int32"
@@ -153,13 +168,16 @@ func (g *ClassGen) GenPackage(idx int) {
 		g.Printf("var (\n")
 		g.Indent()
 		// Functions
-		for _, f := range cls.Funcs {
-			if !f.Public || !g.isFuncSupported(f) {
-				continue
+	loop:
+		for _, fs := range cls.Funcs {
+			for _, f := range fs.Funcs {
+				if f.Public && g.isFuncSupported(f) {
+					g.Printf("%s func", fs.GoName)
+					g.genFuncDecl(false, fs)
+					g.Printf("\n")
+					continue loop
+				}
 			}
-			g.Printf("%s func", f.GoName)
-			g.genFuncDecl(false, f)
-			g.Printf("\n")
 		}
 		g.Printf("// Cast takes a proxy for a Java object and converts it to a %s proxy.\n", cls.Name)
 		g.Printf("// Cast panics if the argument is not a proxy or if the underlying object does\n")
@@ -209,17 +227,19 @@ func (g *ClassGen) GenH() {
 	}
 	g.Printf("\n")
 	for _, cls := range g.classes {
-		for _, f := range cls.AllMethods {
-			if !g.isFuncSupported(f) {
-				continue
-			}
-			g.Printf("extern ")
-			g.genCMethodDecl("cproxy", cls.JNIName, f)
-			g.Printf(";\n")
-			if _, ok := g.supers[cls.Name]; ok {
+		for _, fs := range cls.AllMethods {
+			for _, f := range fs.Funcs {
+				if !g.isFuncSupported(f) {
+					continue
+				}
 				g.Printf("extern ")
-				g.genCMethodDecl("csuper", cls.JNIName, f)
+				g.genCMethodDecl("cproxy", cls.JNIName, f)
 				g.Printf(";\n")
+				if _, ok := g.supers[cls.Name]; ok {
+					g.Printf("extern ")
+					g.genCMethodDecl("csuper", cls.JNIName, f)
+					g.Printf(";\n")
+				}
 			}
 		}
 	}
@@ -235,17 +255,21 @@ func (g *ClassGen) GenC() {
 		if _, ok := g.supers[cls.Name]; ok {
 			g.Printf("static jclass sclass_%s;\n", cls.JNIName)
 		}
-		for _, f := range cls.Funcs {
-			if !f.Public || !g.isFuncSupported(f) {
-				continue
+		for _, fs := range cls.Funcs {
+			for _, f := range fs.Funcs {
+				if !f.Public || !g.isFuncSupported(f) {
+					continue
+				}
+				g.Printf("static jmethodID m_s_%s_%s;\n", cls.JNIName, f.JNIName)
 			}
-			g.Printf("static jmethodID m_s_%s_%s;\n", cls.JNIName, f.JNIName)
 		}
-		for _, f := range cls.AllMethods {
-			if g.isFuncSupported(f) {
-				g.Printf("static jmethodID m_%s_%s;\n", cls.JNIName, f.JNIName)
-				if _, ok := g.supers[cls.Name]; ok {
-					g.Printf("static jmethodID sm_%s_%s;\n", cls.JNIName, f.JNIName)
+		for _, fs := range cls.AllMethods {
+			for _, f := range fs.Funcs {
+				if g.isFuncSupported(f) {
+					g.Printf("static jmethodID m_%s_%s;\n", cls.JNIName, f.JNIName)
+					if _, ok := g.supers[cls.Name]; ok {
+						g.Printf("static jmethodID sm_%s_%s;\n", cls.JNIName, f.JNIName)
+					}
 				}
 			}
 		}
@@ -263,22 +287,26 @@ func (g *ClassGen) GenC() {
 			g.Printf("sclass_%s = (*env)->GetSuperclass(env, clazz);\n", cls.JNIName)
 			g.Printf("sclass_%s = (*env)->NewGlobalRef(env, sclass_%s);\n", cls.JNIName, cls.JNIName)
 		}
-		for _, f := range cls.Funcs {
-			if !f.Public || !g.isFuncSupported(f) {
-				continue
-			}
-			g.Printf("m_s_%s_%s = ", cls.JNIName, f.JNIName)
-			if f.Constructor {
-				g.Printf("go_seq_get_method_id(clazz, \"<init>\", %q);\n", f.Desc)
-			} else {
-				g.Printf("go_seq_get_static_method_id(clazz, %q, %q);\n", f.Name, f.Desc)
+		for _, fs := range cls.Funcs {
+			for _, f := range fs.Funcs {
+				if !f.Public || !g.isFuncSupported(f) {
+					continue
+				}
+				g.Printf("m_s_%s_%s = ", cls.JNIName, f.JNIName)
+				if f.Constructor {
+					g.Printf("go_seq_get_method_id(clazz, \"<init>\", %q);\n", f.Desc)
+				} else {
+					g.Printf("go_seq_get_static_method_id(clazz, %q, %q);\n", f.Name, f.Desc)
+				}
 			}
 		}
-		for _, f := range cls.AllMethods {
-			if g.isFuncSupported(f) {
-				g.Printf("m_%s_%s = go_seq_get_method_id(clazz, %q, %q);\n", cls.JNIName, f.JNIName, f.Name, f.Desc)
-				if _, ok := g.supers[cls.Name]; ok {
-					g.Printf("sm_%s_%s = go_seq_get_method_id(sclass_%s, %q, %q);\n", cls.JNIName, f.JNIName, cls.JNIName, f.Name, f.Desc)
+		for _, fs := range cls.AllMethods {
+			for _, f := range fs.Funcs {
+				if g.isFuncSupported(f) {
+					g.Printf("m_%s_%s = go_seq_get_method_id(clazz, %q, %q);\n", cls.JNIName, f.JNIName, f.Name, f.Desc)
+					if _, ok := g.supers[cls.Name]; ok {
+						g.Printf("sm_%s_%s = go_seq_get_method_id(sclass_%s, %q, %q);\n", cls.JNIName, f.JNIName, cls.JNIName, f.Name, f.Desc)
+					}
 				}
 			}
 		}
@@ -287,15 +315,17 @@ func (g *ClassGen) GenC() {
 	g.Outdent()
 	g.Printf("}\n\n")
 	for _, cls := range g.classes {
-		for _, f := range cls.AllMethods {
-			if !g.isFuncSupported(f) {
-				continue
-			}
-			g.genCMethodDecl("cproxy", cls.JNIName, f)
-			g.genCMethodBody(cls, f, false)
-			if _, ok := g.supers[cls.Name]; ok {
-				g.genCMethodDecl("csuper", cls.JNIName, f)
-				g.genCMethodBody(cls, f, true)
+		for _, fs := range cls.AllMethods {
+			for _, f := range fs.Funcs {
+				if !g.isFuncSupported(f) {
+					continue
+				}
+				g.genCMethodDecl("cproxy", cls.JNIName, f)
+				g.genCMethodBody(cls, f, false)
+				if _, ok := g.supers[cls.Name]; ok {
+					g.genCMethodDecl("csuper", cls.JNIName, f)
+					g.genCMethodBody(cls, f, true)
+				}
 			}
 		}
 	}
@@ -365,76 +395,84 @@ func initialUpper(s string) string {
 	return string(unicode.ToUpper(r)) + s[n:]
 }
 
-func (g *ClassGen) genFuncDecl(local bool, f *java.Func) {
+func (g *ClassGen) genFuncDecl(local bool, fs *java.FuncSet) {
 	g.Printf("(")
-	for i, a := range f.Params {
+	for i, a := range fs.Params {
 		if i > 0 {
 			g.Printf(", ")
 		}
-		g.Printf("a%d %s", i, g.goType(a, local))
+		g.Printf("a%d ", i)
+		if i == len(fs.Params)-1 && fs.Variadic {
+			g.Printf("...")
+		}
+		g.Printf(g.goType(a, local))
 	}
 	g.Printf(")")
-	if f.Throws != "" {
-		if f.Ret != nil {
-			g.Printf(" (%s, error)", g.goType(f.Ret, local))
+	if fs.Throws {
+		if fs.HasRet {
+			g.Printf(" (%s, error)", g.goType(fs.Ret, local))
 		} else {
 			g.Printf(" error")
 		}
-	} else if f.Ret != nil {
-		g.Printf(" %s", g.goType(f.Ret, local))
+	} else if fs.HasRet {
+		g.Printf(" %s", g.goType(fs.Ret, local))
 	}
 }
 
 func (g *ClassGen) genC(cls *java.Class) {
-	for _, f := range cls.Funcs {
-		if !f.Public || !g.isFuncSupported(f) {
-			continue
+	for _, fs := range cls.Funcs {
+		for _, f := range fs.Funcs {
+			if !f.Public || !g.isFuncSupported(f) {
+				continue
+			}
+			g.genCFuncDecl(cls.JNIName, f)
+			g.Printf(" {\n")
+			g.Indent()
+			g.Printf("JNIEnv *env = go_seq_push_local_frame(%d);\n", len(f.Params))
+			for i, a := range f.Params {
+				g.genCToJava(fmt.Sprintf("a%d", i), a)
+			}
+			if f.Constructor {
+				g.Printf("jobject res = (*env)->NewObject(env")
+			} else if f.Ret != nil {
+				g.Printf("%s res = (*env)->CallStatic%sMethod(env", f.Ret.JNIType(), f.Ret.JNICallType())
+			} else {
+				g.Printf("(*env)->CallStaticVoidMethod(env")
+			}
+			g.Printf(", class_%s, m_s_%s_%s", cls.JNIName, cls.JNIName, f.JNIName)
+			for i := range f.Params {
+				g.Printf(", _a%d", i)
+			}
+			g.Printf(");\n")
+			g.Printf("jobject _exc = go_seq_get_exception(env);\n")
+			g.Printf("int32_t _exc_ref = go_seq_to_refnum(env, _exc);\n")
+			if f.Ret != nil {
+				g.genCRetClear("res", f.Ret, "_exc")
+				g.genJavaToC("res", f.Ret)
+			}
+			g.Printf("go_seq_pop_local_frame(env);\n")
+			if f.Ret != nil {
+				g.Printf("ret_%s __res = {_res, _exc_ref};\n", f.Ret.CType())
+				g.Printf("return __res;\n")
+			} else {
+				g.Printf("return _exc_ref;\n")
+			}
+			g.Outdent()
+			g.Printf("}\n\n")
 		}
-		g.genCFuncDecl(cls.JNIName, f)
-		g.Printf(" {\n")
-		g.Indent()
-		g.Printf("JNIEnv *env = go_seq_push_local_frame(%d);\n", len(f.Params))
-		for i, a := range f.Params {
-			g.genCToJava(fmt.Sprintf("a%d", i), a)
-		}
-		if f.Constructor {
-			g.Printf("jobject res = (*env)->NewObject(env")
-		} else if f.Ret != nil {
-			g.Printf("%s res = (*env)->CallStatic%sMethod(env", f.Ret.JNIType(), f.Ret.JNICallType())
-		} else {
-			g.Printf("(*env)->CallStaticVoidMethod(env")
-		}
-		g.Printf(", class_%s, m_s_%s_%s", cls.JNIName, cls.JNIName, f.JNIName)
-		for i := range f.Params {
-			g.Printf(", _a%d", i)
-		}
-		g.Printf(");\n")
-		g.Printf("jobject _exc = go_seq_get_exception(env);\n")
-		g.Printf("int32_t _exc_ref = go_seq_to_refnum(env, _exc);\n")
-		if f.Ret != nil {
-			g.genCRetClear("res", f.Ret, "_exc")
-			g.genJavaToC("res", f.Ret)
-		}
-		g.Printf("go_seq_pop_local_frame(env);\n")
-		if f.Ret != nil {
-			g.Printf("ret_%s __res = {_res, _exc_ref};\n", f.Ret.CType())
-			g.Printf("return __res;\n")
-		} else {
-			g.Printf("return _exc_ref;\n")
-		}
-		g.Outdent()
-		g.Printf("}\n\n")
 	}
 }
 
 func (g *ClassGen) genH(cls *java.Class) {
-	for _, f := range cls.Funcs {
-		if !f.Public || !g.isFuncSupported(f) {
-			continue
+	for _, fs := range cls.Funcs {
+		for _, f := range fs.Funcs {
+			if !f.Public || !g.isFuncSupported(f) {
+				continue
+			}
+			g.Printf("extern ")
+			g.genCFuncDecl(cls.JNIName, f)
+			g.Printf(";\n")
 		}
-		g.Printf("extern ")
-		g.genCFuncDecl(cls.JNIName, f)
-		g.Printf(";\n")
 	}
 }
 
@@ -480,13 +518,20 @@ func (g *ClassGen) genGo(cls *java.Class) {
 	g.Printf("	return\n")
 	g.Printf("}\n")
 	g.Printf("class_%s = clazz\n", cls.JNIName)
-	for _, f := range cls.Funcs {
-		if !f.Public || !g.isFuncSupported(f) {
+	for _, fs := range cls.Funcs {
+		var supported bool
+		for _, f := range fs.Funcs {
+			if f.Public && g.isFuncSupported(f) {
+				supported = true
+				break
+			}
+		}
+		if !supported {
 			continue
 		}
-		g.Printf("%s.%s = func", cls.PkgName, f.GoName)
-		g.genFuncDecl(false, f)
-		g.genFuncBody(cls, f, "cproxy_s", true)
+		g.Printf("%s.%s = func", cls.PkgName, fs.GoName)
+		g.genFuncDecl(false, fs)
+		g.genFuncBody(cls, fs, "cproxy_s", true)
 	}
 	g.Printf("%s.Cast = func(v interface{}) Java.%s {\n", cls.PkgName, goClsName(cls.Name))
 	g.Indent()
@@ -503,13 +548,13 @@ func (g *ClassGen) genGo(cls *java.Class) {
 	g.Printf("}\n\n")
 	g.Printf("type proxy_class_%s _seq.Ref\n\n", cls.JNIName)
 	g.Printf("func (p *proxy_class_%s) Bind_proxy_refnum__() int32 { return (*_seq.Ref)(p).Bind_IncNum() }\n\n", cls.JNIName)
-	for _, f := range cls.AllMethods {
-		if !g.isFuncSupported(f) {
+	for _, fs := range cls.AllMethods {
+		if !g.isFuncSetSupported(fs) {
 			continue
 		}
-		g.Printf("func (p *proxy_class_%s) %s", cls.JNIName, f.GoName)
-		g.genFuncDecl(false, f)
-		g.genFuncBody(cls, f, "cproxy", false)
+		g.Printf("func (p *proxy_class_%s) %s", cls.JNIName, fs.GoName)
+		g.genFuncDecl(false, fs)
+		g.genFuncBody(cls, fs, "cproxy", false)
 	}
 	if cls.Throwable {
 		g.Printf("func (p *proxy_class_%s) Error() string {\n", cls.JNIName)
@@ -521,54 +566,145 @@ func (g *ClassGen) genGo(cls *java.Class) {
 		g.Printf("	return &super_%s{p}\n", cls.JNIName)
 		g.Printf("}\n\n")
 		g.Printf("type super_%s struct {*proxy_class_%[1]s}\n\n", cls.JNIName)
-		for _, f := range cls.AllMethods {
-			if !g.isFuncSupported(f) {
+		for _, fs := range cls.AllMethods {
+			if !g.isFuncSetSupported(fs) {
 				continue
 			}
-			g.Printf("func (p *super_%s) %s", cls.JNIName, f.GoName)
-			g.genFuncDecl(false, f)
-			g.genFuncBody(cls, f, "csuper", false)
+			g.Printf("func (p *super_%s) %s", cls.JNIName, fs.GoName)
+			g.genFuncDecl(false, fs)
+			g.genFuncBody(cls, fs, "csuper", false)
 		}
 	}
 }
 
-func (g *ClassGen) genFuncBody(cls *java.Class, f *java.Func, prefix string, static bool) {
+// genFuncBody generated a Go function body for a FuncSet. It resolves overloading dynamically,
+// by inspecting the number of arguments (if the FuncSet contains varying parameter counts),
+// and their types.
+func (g *ClassGen) genFuncBody(cls *java.Class, fs *java.FuncSet, prefix string, static bool) {
+	maxp := len(fs.Funcs[0].Params)
+	minp := maxp
+	// sort the function variants into argument sizes.
+	buckets := make(map[int][]*java.Func)
+	for _, f := range fs.Funcs {
+		n := len(f.Params)
+		if n < minp {
+			minp = n
+		} else if n > maxp {
+			maxp = n
+		}
+		buckets[n] = append(buckets[n], f)
+	}
 	g.Printf(" {\n")
 	g.Indent()
-	for i, a := range f.Params {
-		g.genWrite(fmt.Sprintf("a%d", i), a, modeTransient)
+	if fs.Variadic {
+		// Switch over the number of arguments.
+		g.Printf("switch %d + len(a%d) {\n", minp, minp)
 	}
-	g.Printf("res := C.%s_%s_%s(", prefix, cls.JNIName, f.JNIName)
-	if !static {
-		g.Printf("C.jint(p.Bind_proxy_refnum__())")
-	}
-	for i := range f.Params {
-		if !static || i > 0 {
-			g.Printf(", ")
+	for i := minp; i <= maxp; i++ {
+		funcs := buckets[i]
+		if len(funcs) == 0 {
+			continue
 		}
-		g.Printf("_a%d", i)
+		if fs.Variadic {
+			g.Printf("case %d:\n", i)
+			g.Indent()
+		}
+		for _, f := range funcs {
+			if len(funcs) > 1 {
+				g.Printf("{\n")
+				g.Indent()
+			}
+			var argNames []string
+			var preds []string
+			for i, a := range f.Params {
+				var ct *java.Type
+				var argName string
+				if i >= minp {
+					argName = fmt.Sprintf("a%d[%d]", minp, i-minp)
+					ct = fs.Params[minp]
+				} else {
+					argName = fmt.Sprintf("a%d", i)
+					ct = fs.Params[i]
+				}
+				if !reflect.DeepEqual(ct, a) {
+					g.Printf("_a%d, ok%d := %s.(%s)\n", i, i, argName, g.goType(a, false))
+					argName = fmt.Sprintf("_a%d", i)
+					preds = append(preds, fmt.Sprintf("ok%d", i))
+				}
+				argNames = append(argNames, argName)
+			}
+			if len(preds) > 0 {
+				g.Printf("if %s {\n", strings.Join(preds, " && "))
+				g.Indent()
+			}
+			for i, a := range f.Params {
+				g.genWrite(fmt.Sprintf("__a%d", i), argNames[i], a, modeTransient)
+			}
+			g.Printf("res := C.%s_%s_%s(", prefix, cls.JNIName, f.JNIName)
+			if !static {
+				g.Printf("C.jint(p.Bind_proxy_refnum__())")
+			}
+			for i := range f.Params {
+				if !static || i > 0 {
+					g.Printf(", ")
+				}
+				g.Printf("__a%d", i)
+			}
+			g.Printf(")\n")
+			g.genFuncRet(fs, f)
+			if len(preds) > 0 {
+				g.Outdent()
+				g.Printf("}\n")
+			}
+			if len(funcs) > 1 {
+				g.Outdent()
+				g.Printf("}\n")
+			}
+		}
+		if fs.Variadic {
+			g.Outdent()
+		}
 	}
-	g.Printf(")\n")
-	g.genFuncRet(f)
+	if fs.Variadic {
+		g.Printf("}\n")
+	}
+	if fs.Variadic || len(fs.Funcs) > 1 {
+		g.Printf("panic(\"no overloaded method found for %s.%s that matched the arguments\")\n", cls.Name, fs.Name)
+	}
 	g.Outdent()
 	g.Printf("}\n\n")
 }
 
-func (g *ClassGen) genFuncRet(f *java.Func) {
+func (g *ClassGen) genFuncRet(fs *java.FuncSet, f *java.Func) {
 	if f.Ret != nil {
 		g.genRead("_res", "res.res", f.Ret, modeRetained)
 		g.genRefRead("_exc", "res.exc", "error", "proxy_error", true)
 	} else {
 		g.genRefRead("_exc", "res", "error", "proxy_error", true)
 	}
-	if f.Throws == "" {
+	if !fs.Throws {
 		g.Printf("if (_exc != nil) { panic(_exc) }\n")
-		if f.Ret != nil {
-			g.Printf("return _res\n")
+		if fs.HasRet {
+			if f.Ret != nil {
+				g.Printf("return _res\n")
+			} else {
+				// The variant doesn't return a value, but the common
+				// signature does. Use nil as a placeholder return value.
+				g.Printf("return nil\n")
+			}
+		} else if fs.Variadic || len(fs.Funcs) > 1 {
+			// If there are overloaded variants, return here to avoid the fallback
+			// panic generated in genFuncBody.
+			g.Printf("return\n")
 		}
 	} else {
-		if f.Ret != nil {
-			g.Printf("return _res, _exc\n")
+		if fs.HasRet {
+			if f.Ret != nil {
+				g.Printf("return _res, _exc\n")
+			} else {
+				// As above, use a nil placeholder return value.
+				g.Printf("return nil, _exc\n")
+			}
 		} else {
 			g.Printf("return _exc\n")
 		}
@@ -612,26 +748,26 @@ func (g *ClassGen) genRefRead(to, from string, intfName, proxyName string, hasPr
 	g.Printf("}\n")
 }
 
-func (g *ClassGen) genWrite(v string, t *java.Type, mode varMode) {
+func (g *ClassGen) genWrite(dst, v string, t *java.Type, mode varMode) {
 	switch t.Kind {
 	case java.Int, java.Short, java.Char, java.Byte, java.Long, java.Float, java.Double:
-		g.Printf("_%s := C.%s(%s)\n", v, t.CType(), v)
+		g.Printf("%s := C.%s(%s)\n", dst, t.CType(), v)
 	case java.Boolean:
-		g.Printf("_%s := C.jboolean(C.JNI_FALSE)\n", v)
+		g.Printf("%s := C.jboolean(C.JNI_FALSE)\n", dst)
 		g.Printf("if %s {\n", v)
-		g.Printf("	_%s = C.jboolean(C.JNI_TRUE)\n", v)
+		g.Printf("	%s = C.jboolean(C.JNI_TRUE)\n", dst)
 		g.Printf("}\n")
 	case java.String:
-		g.Printf("_%s := encodeString(%s)\n", v, v)
+		g.Printf("%s := encodeString(%s)\n", dst, v)
 	case java.Array:
 		if t.Elem.Kind != java.Byte {
 			panic("unsupported array type")
 		}
-		g.Printf("_%s := fromSlice(%s, %v)\n", v, v, mode == modeRetained)
+		g.Printf("%s := fromSlice(%s, %v)\n", dst, v, mode == modeRetained)
 	case java.Object:
-		g.Printf("var _%s C.jint = _seq.NullRefNum\n", v)
+		g.Printf("var %s C.jint = _seq.NullRefNum\n", dst)
 		g.Printf("if %s != nil {\n", v)
-		g.Printf("	_%s = C.jint(_seq.ToRefNum(%s))\n", v, v)
+		g.Printf("	%s = C.jint(_seq.ToRefNum(%s))\n", dst, v)
 		g.Printf("}\n")
 	default:
 		panic("invalid kind")
@@ -698,12 +834,12 @@ func (g *ClassGen) genInterface(cls *java.Class) {
 	g.Printf("type %s interface {\n", goClsName(cls.Name))
 	g.Indent()
 	// Methods
-	for _, f := range cls.AllMethods {
-		if !g.isFuncSupported(f) {
+	for _, fs := range cls.AllMethods {
+		if !g.isFuncSetSupported(fs) {
 			continue
 		}
-		g.Printf(f.GoName)
-		g.genFuncDecl(true, f)
+		g.Printf(fs.GoName)
+		g.genFuncDecl(true, fs)
 		g.Printf("\n")
 	}
 	if _, ok := g.supers[cls.Name]; ok {

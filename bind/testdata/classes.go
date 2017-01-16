@@ -36,12 +36,13 @@ type Future struct {
 	concurrent.Future
 }
 
-func (_ *Future) Get() lang.Object {
-	return nil
+func (_ *Future) Get() (lang.Object, error) {
+	return nil, nil
 }
 
-func (_ *Future) Get2(_ int64, _ concurrent.TimeUnit) lang.Object {
-	return nil
+// Use a trailing underscore to override multiple overloaded methods.
+func (_ *Future) Get_(_ int64, _ concurrent.TimeUnit) (lang.Object, error) {
+	return nil, nil
 }
 
 type Object struct {
@@ -51,7 +52,7 @@ type Object struct {
 func innerClassTypes() {
 	// java.util.Spliterators.iterator use inner class types
 	// for the return value as well as parameters.
-	Spliterators.Iterator_Ljava_util_Spliterator_00024OfInt_2(nil)
+	Spliterators.Iterator(nil)
 }
 
 func returnType() {

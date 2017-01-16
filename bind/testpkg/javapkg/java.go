@@ -30,7 +30,7 @@ func IntegerBytes() int {
 }
 
 func IntegerValueOf(v int32) int32 {
-	i := Integer.ValueOf_I(v)
+	i, _ := Integer.ValueOf(v)
 	return i.IntValue()
 }
 
@@ -45,7 +45,7 @@ func IntegerDecode(v string) (int32, error) {
 }
 
 func IntegerParseInt(v string, radix int32) (int32, error) {
-	return Integer.ParseInt2(v, radix)
+	return Integer.ParseInt(v, radix)
 }
 
 func ProvokeRuntimeException() (err error) {

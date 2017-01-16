@@ -51,7 +51,7 @@ type GoInputStream struct {
 }
 
 func (_ *GoInputStream) Read() (int32, error) {
-	return 0, IOException.New_Ljava_lang_String_2(IOExceptionMessage)
+	return 0, IOException.New(IOExceptionMessage)
 }
 
 func NewGoInputStream() *GoInputStream {
@@ -66,12 +66,13 @@ func (_ *GoFuture) Cancel(_ bool) bool {
 	return false
 }
 
-func (_ *GoFuture) Get() lang.Object {
-	return nil
+func (_ *GoFuture) Get() (lang.Object, error) {
+	return nil, nil
 }
 
-func (_ *GoFuture) Get2(_ int64, _ concurrent.TimeUnit) lang.Object {
-	return nil
+// Use a trailing underscore to override multiple overloaded methods.
+func (_ *GoFuture) Get_(_ int64, _ concurrent.TimeUnit) (lang.Object, error) {
+	return nil, nil
 }
 
 func (_ *GoFuture) IsCancelled() bool {
@@ -153,7 +154,8 @@ func NewJavaObject() lang.Object {
 }
 
 func NewJavaInteger() lang.Integer {
-	return Integer.New_I(42)
+	i, _ := Integer.New(int32(42))
+	return i
 }
 
 type NoargConstructor struct {
