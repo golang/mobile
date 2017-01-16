@@ -16,6 +16,7 @@ const c = Name.Constant
 
 type T struct {
 	Name.Type
+	hidden Name.Type2
 }
 `
 	fset := token.NewFileSet()

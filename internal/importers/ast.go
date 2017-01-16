@@ -80,8 +80,9 @@ type PkgRef struct {
 
 type refsSaver struct {
 	pkgPrefix string
-	References
-	refMap map[PkgRef]struct{}
+	*References
+	refMap       map[PkgRef]struct{}
+	insideStruct bool
 }
 
 // AnalyzeFile scans the provided file for references to packages with the given
@@ -94,7 +95,7 @@ func AnalyzeFile(file *ast.File, pkgPrefix string) (*References, error) {
 	pkg, _ := ast.NewPackage(fset, files, visitor.importer(), nil)
 	ast.Walk(visitor, pkg)
 	visitor.findEmbeddingStructs(pkg)
-	return &visitor.References, nil
+	return visitor.References, nil
 }
 
 // AnalyzePackages scans the provided packages for references to packages with the given
@@ -118,7 +119,7 @@ func AnalyzePackages(pkgs []*build.Package, pkgPrefix string) (*References, erro
 		ast.Walk(visitor, astpkg)
 		visitor.findEmbeddingStructs(astpkg)
 	}
-	return &visitor.References, nil
+	return visitor.References, nil
 }
 
 // findEmbeddingStructs finds all top level declarations embedding a prefixed type.
@@ -148,6 +149,9 @@ func (v *refsSaver) findEmbeddingStructs(pkg *ast.Package) {
 		}
 		var refs []PkgRef
 		for _, f := range t.Fields.List {
+			if len(f.Names) > 0 && !f.Names[0].IsExported() {
+				continue
+			}
 			sel, ok := f.Type.(*ast.SelectorExpr)
 			if !ok {
 				continue
@@ -169,8 +173,9 @@ func (v *refsSaver) findEmbeddingStructs(pkg *ast.Package) {
 
 func newRefsSaver(pkgPrefix string) *refsSaver {
 	s := &refsSaver{
-		pkgPrefix: pkgPrefix,
-		refMap:    make(map[PkgRef]struct{}),
+		pkgPrefix:  pkgPrefix,
+		refMap:     make(map[PkgRef]struct{}),
+		References: &References{},
 	}
 	s.Names = make(map[string]struct{})
 	return s
@@ -212,6 +217,17 @@ func (v *refsSaver) parseRef(sel *ast.SelectorExpr) (PkgRef, bool) {
 
 func (v *refsSaver) Visit(n ast.Node) ast.Visitor {
 	switch n := n.(type) {
+	case *ast.StructType:
+		// Use a copy of refsSaver that only accepts exported fields. It refers
+		// to the original refsSaver for collecting references.
+		v2 := *v
+		v2.insideStruct = true
+		return &v2
+	case *ast.Field:
+		if v.insideStruct && len(n.Names) == 1 && !n.Names[0].IsExported() {
+			return nil
+		}
+		return v
 	case *ast.SelectorExpr:
 		v.Names[n.Sel.Name] = struct{}{}
 		if ref, ok := v.parseRef(n); ok {

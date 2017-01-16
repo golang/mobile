@@ -11,18 +11,25 @@ import (
 	"Java/android/support/v7/app"
 	gopkg "Java/reverse"
 	rlayout "Java/reverse/R/layout"
+	"Java/reverse/databinding"
 	"Java/reverse/databinding/ActivityMainBinding"
 )
 
 type MainActivity struct {
 	app.AppCompatActivity
+	binding databinding.ActivityMainBinding
 }
 
 func (a *MainActivity) OnCreate(this gopkg.MainActivity, b os.Bundle) {
 	this.Super().OnCreate(b)
 	db := DataBindingUtil.SetContentView(this, rlayout.Activity_main)
-	mainBind := ActivityMainBinding.Cast(db)
-	mainBind.SetAct(this)
+	a.binding = ActivityMainBinding.Cast(db)
+	a.binding.SetAct(this)
+}
+
+func (a *MainActivity) OnDestroy(this gopkg.MainActivity) {
+	a.binding = nil // break reference cycle
+	this.Super().OnDestroy()
 }
 
 func (a *MainActivity) GetLabel() string {
