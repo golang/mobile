@@ -243,7 +243,7 @@ func (j *Importer) Import(refs *importers.References) ([]*Class, error) {
 			jpkg := strings.Replace(ref.Pkg, "/", ".", -1)
 			super := jpkg + "." + ref.Name
 			if _, exists := j.clsMap[super]; !exists {
-				return nil, fmt.Errorf("class %q not found", super)
+				return nil, fmt.Errorf("failed to find Java class %s, embedded by %s", super, n)
 			}
 			cls.Supers = append(cls.Supers, super)
 		}
