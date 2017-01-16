@@ -26,8 +26,8 @@ public final class Future implements Seq.GoObject, java.util.concurrent.Future {
     public final native java.util.concurrent.Future getFuture();
     public final native void setFuture(java.util.concurrent.Future v);
     
-    @Override public native java.lang.Object get();
-    @Override public native java.lang.Object get(long p0, java.util.concurrent.TimeUnit p1);
+    @Override public native java.lang.Object get() throws java.lang.InterruptedException, java.util.concurrent.ExecutionException;
+    @Override public native java.lang.Object get(long p0, java.util.concurrent.TimeUnit p1) throws java.lang.InterruptedException, java.util.concurrent.ExecutionException, java.util.concurrent.TimeoutException;
 }
 
 // Java class java.InputStream is a proxy for talking to a Go program.

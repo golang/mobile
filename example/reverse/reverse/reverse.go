@@ -18,9 +18,9 @@ type MainActivity struct {
 	app.AppCompatActivity
 }
 
-func (a *MainActivity) OnCreate1(this gopkg.MainActivity, b os.Bundle) {
-	this.Super().OnCreate1(b)
-	db := DataBindingUtil.SetContentView2(this, rlayout.Activity_main)
+func (a *MainActivity) OnCreate(this gopkg.MainActivity, b os.Bundle) {
+	this.Super().OnCreate(b)
+	db := DataBindingUtil.SetContentView(this, rlayout.Activity_main)
 	mainBind := ActivityMainBinding.Cast(db)
 	mainBind.SetAct(this)
 }

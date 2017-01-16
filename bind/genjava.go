@@ -9,6 +9,7 @@ import (
 	"go/constant"
 	"go/types"
 	"math"
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -38,7 +39,7 @@ type javaClassInfo struct {
 	extends *java.Class
 	// All Java classes and interfaces this class extends and implements.
 	supers  []*java.Class
-	methods map[string]*java.Func
+	methods map[string]*java.FuncSet
 	// Does the class need a default no-arg constructor
 	genNoargCon bool
 }
@@ -59,16 +60,21 @@ func (g *JavaGen) Init(classes []*java.Class) {
 			continue
 		}
 		inf := &javaClassInfo{
-			methods:     make(map[string]*java.Func),
+			methods:     make(map[string]*java.FuncSet),
 			genNoargCon: true, // java.lang.Object has a no-arg constructor
 		}
 		for _, n := range classes {
 			cls := g.clsMap[n]
-			for _, f := range cls.AllMethods {
-				if f.Final {
-					continue
+			for _, fs := range cls.AllMethods {
+				hasMeth := false
+				for _, f := range fs.Funcs {
+					if !f.Final {
+						hasMeth = true
+					}
 				}
-				inf.methods[f.GoName] = f
+				if hasMeth {
+					inf.methods[fs.GoName] = fs
+				}
 			}
 			inf.supers = append(inf.supers, cls)
 			if !cls.Interface {
@@ -94,6 +100,104 @@ func (g *JavaGen) Init(classes []*java.Class) {
 			g.constructors[t] = append(g.constructors[t], f)
 		}
 	}
+}
+
+func (j *javaClassInfo) toJavaType(T types.Type) *java.Type {
+	switch T := T.(type) {
+	case *types.Basic:
+		var kind java.TypeKind
+		switch T.Kind() {
+		case types.Bool, types.UntypedBool:
+			kind = java.Boolean
+		case types.Uint8:
+			kind = java.Byte
+		case types.Int16:
+			kind = java.Short
+		case types.Int32, types.UntypedRune: // types.Rune
+			kind = java.Int
+		case types.Int64, types.UntypedInt:
+			kind = java.Long
+		case types.Float32:
+			kind = java.Float
+		case types.Float64, types.UntypedFloat:
+			kind = java.Double
+		case types.String, types.UntypedString:
+			kind = java.String
+		default:
+			return nil
+		}
+		return &java.Type{Kind: kind}
+	case *types.Slice:
+		switch e := T.Elem().(type) {
+		case *types.Basic:
+			switch e.Kind() {
+			case types.Uint8: // Byte.
+				return &java.Type{Kind: java.Array, Elem: &java.Type{Kind: java.Byte}}
+			}
+		}
+		return nil
+	case *types.Named:
+		if isJavaType(T) {
+			return &java.Type{Kind: java.Object, Class: classNameFor(T)}
+		}
+	}
+	return nil
+}
+
+// lookupMethod searches the Java class descriptor for a method
+// that matches the Go method.
+func (j *javaClassInfo) lookupMethod(m *types.Func, hasThis bool) *java.Func {
+	jm := j.methods[m.Name()]
+	if jm == nil {
+		// If an exact match is not found, try the method with trailing underscores
+		// stripped. This way, name clashes can be avoided when overriding multiple
+		// overloaded methods from Go.
+		base := strings.TrimRight(m.Name(), "_")
+		jm = j.methods[base]
+		if jm == nil {
+			return nil
+		}
+	}
+	// A name match was found. Now use the parameter and return types to locate
+	// the correct variant.
+	sig := m.Type().(*types.Signature)
+	params := sig.Params()
+	// Convert Go parameter types to their Java counterparts, if possible.
+	var jparams []*java.Type
+	i := 0
+	if hasThis {
+		i = 1
+	}
+	for ; i < params.Len(); i++ {
+		jparams = append(jparams, j.toJavaType(params.At(i).Type()))
+	}
+	var ret *java.Type
+	var throws bool
+	if results := sig.Results(); results.Len() > 0 {
+		ret = j.toJavaType(results.At(0).Type())
+		if results.Len() > 1 {
+			throws = isErrorType(results.At(1).Type())
+		}
+	}
+loop:
+	for _, f := range jm.Funcs {
+		if len(f.Params) != len(jparams) {
+			continue
+		}
+		if throws != (f.Throws != "") {
+			continue
+		}
+		if !reflect.DeepEqual(ret, f.Ret) {
+			continue
+		}
+		for i, p := range f.Params {
+			if !reflect.DeepEqual(p, jparams[i]) {
+				continue loop
+			}
+		}
+		return f
+	}
+	return nil
 }
 
 // ClassNames returns the list of names of the generated Java classes and interfaces.
@@ -217,31 +321,10 @@ func (g *JavaGen) genStruct(s structInfo) {
 		var jm *java.Func
 		hasThis := false
 		if jinf != nil {
-			jm = jinf.methods[m.Name()]
+			hasThis = g.hasThis(n, m)
+			jm = jinf.lookupMethod(m, hasThis)
 			if jm != nil {
 				g.Printf("@Override ")
-			}
-			// Check the implicit this argument, if any
-			sig := m.Type().(*types.Signature)
-			params := sig.Params()
-			if params.Len() > 0 {
-				v := params.At(0)
-				if v.Name() == "this" {
-					t := v.Type()
-					if t, ok := t.(*types.Named); ok {
-						obj := t.Obj()
-						pkg := obj.Pkg()
-						if pkgFirstElem(pkg) == "Java" {
-							clsName := classNameFor(t)
-							exp := g.javaPkgName(g.Pkg) + "." + s.obj.Name()
-							if clsName != exp {
-								g.errorf("the type %s of the `this` argument to method %s.%s is not %s", clsName, n, m.Name(), exp)
-								continue
-							}
-							hasThis = true
-						}
-					}
-				}
 			}
 		}
 		g.Printf("public native ")
@@ -257,6 +340,35 @@ func (g *JavaGen) genStruct(s structInfo) {
 
 	g.Outdent()
 	g.Printf("}\n\n")
+}
+
+// hasThis returns whether a method has an implicit "this" parameter.
+func (g *JavaGen) hasThis(sName string, m *types.Func) bool {
+	sig := m.Type().(*types.Signature)
+	params := sig.Params()
+	if params.Len() == 0 {
+		return false
+	}
+	v := params.At(0)
+	if v.Name() != "this" {
+		return false
+	}
+	t, ok := v.Type().(*types.Named)
+	if !ok {
+		return false
+	}
+	obj := t.Obj()
+	pkg := obj.Pkg()
+	if pkgFirstElem(pkg) != "Java" {
+		return false
+	}
+	clsName := classNameFor(t)
+	exp := g.javaPkgName(g.Pkg) + "." + sName
+	if clsName != exp {
+		g.errorf("the type %s of the `this` argument to method %s.%s is not %s", clsName, sName, m.Name(), exp)
+		return false
+	}
+	return true
 }
 
 func (g *JavaGen) genConstructor(f *types.Func, n string, jcls bool) {
@@ -1386,7 +1498,7 @@ func (g *JavaGen) GenC() error {
 		for _, m := range exportedMethodSet(types.NewPointer(s.obj.Type())) {
 			var jm *java.Func
 			if jinf != nil {
-				jm = jinf.methods[m.Name()]
+				jm = jinf.lookupMethod(m, g.hasThis(s.obj.Name(), m))
 			}
 			g.genJNIFunc(m, sName, jm, false, jinf != nil)
 		}
