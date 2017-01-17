@@ -585,7 +585,12 @@ func (g *ClassGen) genFuncBody(cls *java.Class, fs *java.FuncSet, prefix string,
 	minp := maxp
 	// sort the function variants into argument sizes.
 	buckets := make(map[int][]*java.Func)
+	numF := 0
 	for _, f := range fs.Funcs {
+		if !g.isFuncSupported(f) {
+			continue
+		}
+		numF++
 		n := len(f.Params)
 		if n < minp {
 			minp = n
@@ -596,7 +601,7 @@ func (g *ClassGen) genFuncBody(cls *java.Class, fs *java.FuncSet, prefix string,
 	}
 	g.Printf(" {\n")
 	g.Indent()
-	if fs.Variadic {
+	if len(buckets) != 1 {
 		// Switch over the number of arguments.
 		g.Printf("switch %d + len(a%d) {\n", minp, minp)
 	}
@@ -605,7 +610,7 @@ func (g *ClassGen) genFuncBody(cls *java.Class, fs *java.FuncSet, prefix string,
 		if len(funcs) == 0 {
 			continue
 		}
-		if fs.Variadic {
+		if len(buckets) != 1 {
 			g.Printf("case %d:\n", i)
 			g.Indent()
 		}
@@ -651,7 +656,7 @@ func (g *ClassGen) genFuncBody(cls *java.Class, fs *java.FuncSet, prefix string,
 				g.Printf("__a%d", i)
 			}
 			g.Printf(")\n")
-			g.genFuncRet(fs, f)
+			g.genFuncRet(fs, f, numF > 1)
 			if len(preds) > 0 {
 				g.Outdent()
 				g.Printf("}\n")
@@ -661,21 +666,21 @@ func (g *ClassGen) genFuncBody(cls *java.Class, fs *java.FuncSet, prefix string,
 				g.Printf("}\n")
 			}
 		}
-		if fs.Variadic {
+		if len(buckets) != 1 {
 			g.Outdent()
 		}
 	}
-	if fs.Variadic {
+	if len(buckets) != 1 {
 		g.Printf("}\n")
 	}
-	if fs.Variadic || len(fs.Funcs) > 1 {
+	if numF > 1 {
 		g.Printf("panic(\"no overloaded method found for %s.%s that matched the arguments\")\n", cls.Name, fs.Name)
 	}
 	g.Outdent()
 	g.Printf("}\n\n")
 }
 
-func (g *ClassGen) genFuncRet(fs *java.FuncSet, f *java.Func) {
+func (g *ClassGen) genFuncRet(fs *java.FuncSet, f *java.Func, mustReturn bool) {
 	if f.Ret != nil {
 		g.genRead("_res", "res.res", f.Ret, modeRetained)
 		g.genRefRead("_exc", "res.exc", "error", "proxy_error", true)
@@ -692,7 +697,7 @@ func (g *ClassGen) genFuncRet(fs *java.FuncSet, f *java.Func) {
 				// signature does. Use nil as a placeholder return value.
 				g.Printf("return nil\n")
 			}
-		} else if fs.Variadic || len(fs.Funcs) > 1 {
+		} else if mustReturn {
 			// If there are overloaded variants, return here to avoid the fallback
 			// panic generated in genFuncBody.
 			g.Printf("return\n")

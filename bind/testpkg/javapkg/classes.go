@@ -16,6 +16,7 @@ import (
 	"Java/java/lang/Object"
 	"Java/java/lang/Runnable"
 	"Java/java/net"
+	"Java/java/nio"
 	"Java/java/util"
 	"Java/java/util/concurrent"
 	gopkg "Java/javapkg"
@@ -191,4 +192,9 @@ func CastRunnable(o lang.Object) lang.Runnable {
 // with the same last component (in this case "net")
 // works.
 func NameClashingPackages(_ net.Socket, _ xnet.SocketFactory) {
+}
+
+func testReferenceToUnsupportedParameters() {
+	var ib nio.IntBuffer
+	ib.Put(nil)
 }
