@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 #import "ViewController.h"
-#import "hello/Hello.h"  // Gomobile bind generated header file in hello.framework
+@import Hello;  // Gomobile bind generated framework
 
 @interface ViewController ()
 @end
