@@ -11,6 +11,7 @@ import (
 
 type (
 	F lang.Float
+	L lang.Long
 	O lang.Object
 	R lang.Runnable
 	S Character.Subset // Inner class
