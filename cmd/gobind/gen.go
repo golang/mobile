@@ -20,6 +20,7 @@ import (
 	"unicode/utf8"
 
 	"golang.org/x/mobile/bind"
+	"golang.org/x/mobile/internal/importers"
 	"golang.org/x/mobile/internal/importers/java"
 )
 
@@ -140,15 +141,16 @@ func genPkg(p *types.Package, allPkg []*types.Package, classes []*java.Class) {
 	}
 }
 
-func genJavaPackages(ctx *build.Context, dir string, classes []*java.Class, genNames []string) error {
+func genJavaPackages(ctx *build.Context, dir string, classes []*java.Class, embedders []importers.Struct) error {
 	var buf bytes.Buffer
 	cg := &bind.ClassGen{
+		JavaPkg: *javaPkg,
 		Printer: &bind.Printer{
 			IndentEach: []byte("\t"),
 			Buf:        &buf,
 		},
 	}
-	cg.Init(classes, genNames)
+	cg.Init(classes, embedders)
 	pkgBase := filepath.Join(dir, "src", "Java")
 	if err := os.MkdirAll(pkgBase, 0700); err != nil {
 		return err

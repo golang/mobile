@@ -12,6 +12,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"golang.org/x/mobile/internal/importers"
 	"golang.org/x/mobile/internal/importers/java"
 )
 
@@ -25,6 +26,9 @@ type (
 	// will work.
 	ClassGen struct {
 		*Printer
+		// JavaPkg is the Java package prefix for the generated classes. The prefix is prepended to the Go
+		// package name to create the full Java package name.
+		JavaPkg  string
 		imported map[string]struct{}
 		// The list of imported Java classes
 		classes []*java.Class
@@ -35,8 +39,12 @@ type (
 		// For each Go package path, the Java class with static functions
 		// or constants.
 		clsPkgs map[string]*java.Class
-		// supers is the map of classes that need Super methods
-		supers map[string]struct{}
+		// goClsMap is the map of Java class names to Go type names, qualified with package name. Go types
+		// that implement Java classes need Super methods and Unwrap methods.
+		goClsMap map[string]string
+		// goClsImports is the list of imports of user packages that contains the Go types implementing Java
+		// classes.
+		goClsImports []string
 	}
 )
 
@@ -110,12 +118,22 @@ func (g *ClassGen) goType(t *java.Type, local bool) string {
 }
 
 // Init initializes the class wrapper generator. Classes is the
-// list of classes to wrap, supers is the list of class names
-// that need Super methods.
-func (g *ClassGen) Init(classes []*java.Class, supers []string) {
-	g.supers = make(map[string]struct{})
-	for _, s := range supers {
-		g.supers[s] = struct{}{}
+// list of classes to wrap, goClasses is the list of Java classes
+// implemented in Go.
+func (g *ClassGen) Init(classes []*java.Class, goClasses []importers.Struct) {
+	g.goClsMap = make(map[string]string)
+	impMap := make(map[string]struct{})
+	for _, s := range goClasses {
+		n := s.Pkg + "." + s.Name
+		jn := n
+		if g.JavaPkg != "" {
+			jn = g.JavaPkg + "." + jn
+		}
+		g.goClsMap[jn] = n
+		if _, exists := impMap[s.PkgPath]; !exists {
+			impMap[s.PkgPath] = struct{}{}
+			g.goClsImports = append(g.goClsImports, s.PkgPath)
+		}
 	}
 	g.classes = classes
 	g.imported = make(map[string]struct{})
@@ -194,6 +212,9 @@ func (g *ClassGen) GenGo() {
 		pkgName := strings.Replace(cls.Name, ".", "/", -1)
 		g.Printf("import %q\n", "Java/"+pkgName)
 	}
+	for _, imp := range g.goClsImports {
+		g.Printf("import %q\n", imp)
+	}
 	if len(g.classes) > 0 {
 		g.Printf("import \"unsafe\"\n\n")
 		g.Printf("import \"reflect\"\n\n")
@@ -235,7 +256,7 @@ func (g *ClassGen) GenH() {
 				g.Printf("extern ")
 				g.genCMethodDecl("cproxy", cls.JNIName, f)
 				g.Printf(";\n")
-				if _, ok := g.supers[cls.Name]; ok {
+				if _, ok := g.goClsMap[cls.Name]; ok {
 					g.Printf("extern ")
 					g.genCMethodDecl("csuper", cls.JNIName, f)
 					g.Printf(";\n")
@@ -252,7 +273,7 @@ func (g *ClassGen) GenC() {
 	g.Printf(classesCHeader)
 	for _, cls := range g.classes {
 		g.Printf("static jclass class_%s;\n", cls.JNIName)
-		if _, ok := g.supers[cls.Name]; ok {
+		if _, ok := g.goClsMap[cls.Name]; ok {
 			g.Printf("static jclass sclass_%s;\n", cls.JNIName)
 		}
 		for _, fs := range cls.Funcs {
@@ -267,7 +288,7 @@ func (g *ClassGen) GenC() {
 			for _, f := range fs.Funcs {
 				if g.isFuncSupported(f) {
 					g.Printf("static jmethodID m_%s_%s;\n", cls.JNIName, f.JNIName)
-					if _, ok := g.supers[cls.Name]; ok {
+					if _, ok := g.goClsMap[cls.Name]; ok {
 						g.Printf("static jmethodID sm_%s_%s;\n", cls.JNIName, f.JNIName)
 					}
 				}
@@ -283,7 +304,7 @@ func (g *ClassGen) GenC() {
 	for _, cls := range g.classes {
 		g.Printf("clazz = (*env)->FindClass(env, %q);\n", strings.Replace(cls.FindName, ".", "/", -1))
 		g.Printf("class_%s = (*env)->NewGlobalRef(env, clazz);\n", cls.JNIName)
-		if _, ok := g.supers[cls.Name]; ok {
+		if _, ok := g.goClsMap[cls.Name]; ok {
 			g.Printf("sclass_%s = (*env)->GetSuperclass(env, clazz);\n", cls.JNIName)
 			g.Printf("sclass_%s = (*env)->NewGlobalRef(env, sclass_%s);\n", cls.JNIName, cls.JNIName)
 		}
@@ -304,7 +325,7 @@ func (g *ClassGen) GenC() {
 			for _, f := range fs.Funcs {
 				if g.isFuncSupported(f) {
 					g.Printf("m_%s_%s = go_seq_get_method_id(clazz, %q, %q);\n", cls.JNIName, f.JNIName, f.Name, f.Desc)
-					if _, ok := g.supers[cls.Name]; ok {
+					if _, ok := g.goClsMap[cls.Name]; ok {
 						g.Printf("sm_%s_%s = go_seq_get_method_id(sclass_%s, %q, %q);\n", cls.JNIName, f.JNIName, cls.JNIName, f.Name, f.Desc)
 					}
 				}
@@ -322,7 +343,7 @@ func (g *ClassGen) GenC() {
 				}
 				g.genCMethodDecl("cproxy", cls.JNIName, f)
 				g.genCMethodBody(cls, f, false)
-				if _, ok := g.supers[cls.Name]; ok {
+				if _, ok := g.goClsMap[cls.Name]; ok {
 					g.genCMethodDecl("csuper", cls.JNIName, f)
 					g.genCMethodBody(cls, f, true)
 				}
@@ -561,11 +582,17 @@ func (g *ClassGen) genGo(cls *java.Class) {
 		g.Printf("	return p.ToString()\n")
 		g.Printf("}\n")
 	}
-	if _, ok := g.supers[cls.Name]; ok {
+	if goName, ok := g.goClsMap[cls.Name]; ok {
 		g.Printf("func (p *proxy_class_%s) Super() Java.%s {\n", cls.JNIName, goClsName(cls.Name))
 		g.Printf("	return &super_%s{p}\n", cls.JNIName)
 		g.Printf("}\n\n")
 		g.Printf("type super_%s struct {*proxy_class_%[1]s}\n\n", cls.JNIName)
+		g.Printf("func (p *proxy_class_%s) Unwrap() interface{} {\n", cls.JNIName)
+		g.Indent()
+		g.Printf("goRefnum := C.go_seq_unwrap(C.jint(p.Bind_proxy_refnum__()))\n")
+		g.Printf("return _seq.FromRefNum(int32(goRefnum)).Get().(*%s)\n", goName)
+		g.Outdent()
+		g.Printf("}\n\n")
 		for _, fs := range cls.AllMethods {
 			if !g.isFuncSetSupported(fs) {
 				continue
@@ -847,8 +874,13 @@ func (g *ClassGen) genInterface(cls *java.Class) {
 		g.genFuncDecl(true, fs)
 		g.Printf("\n")
 	}
-	if _, ok := g.supers[cls.Name]; ok {
+	if goName, ok := g.goClsMap[cls.Name]; ok {
 		g.Printf("Super() %s\n", goClsName(cls.Name))
+		g.Printf("// Unwrap returns the Go object this Java instance\n")
+		g.Printf("// is wrapping.\n")
+		g.Printf("// The return value is a %s, but the delclared type is\n", goName)
+		g.Printf("// interface{} to avoid import cycles.\n")
+		g.Printf("Unwrap() interface{}\n")
 	}
 	if cls.Throwable {
 		g.Printf("Error() string\n")

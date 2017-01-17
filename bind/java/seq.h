@@ -34,6 +34,9 @@ typedef jlong nint;
 
 extern void go_seq_dec_ref(int32_t ref);
 extern void go_seq_inc_ref(int32_t ref);
+// go_seq_unwrap takes a reference number to a Java wrapper and returns
+// a reference number to its wrapped Go object.
+extern int32_t go_seq_unwrap(jint refnum);
 extern int32_t go_seq_to_refnum(JNIEnv *env, jobject o);
 extern int32_t go_seq_to_refnum_go(JNIEnv *env, jobject o);
 extern jobject go_seq_from_refnum(JNIEnv *env, int32_t refnum, jclass proxy_class, jmethodID proxy_cons);

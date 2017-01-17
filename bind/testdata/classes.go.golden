@@ -475,22 +475,42 @@ type Java_lang_System interface {
 type Java_Future interface {
 	Get(a0 ...interface{}) (Java_lang_Object, error)
 	Super() Java_Future
+	// Unwrap returns the Go object this Java instance
+	// is wrapping.
+	// The return value is a java.Future, but the delclared type is
+	// interface{} to avoid import cycles.
+	Unwrap() interface{}
 }
 
 type Java_InputStream interface {
 	Read(a0 ...interface{}) (int32, error)
 	ToString() string
 	Super() Java_InputStream
+	// Unwrap returns the Go object this Java instance
+	// is wrapping.
+	// The return value is a java.InputStream, but the delclared type is
+	// interface{} to avoid import cycles.
+	Unwrap() interface{}
 }
 
 type Java_Object interface {
 	ToString() string
 	Super() Java_Object
+	// Unwrap returns the Go object this Java instance
+	// is wrapping.
+	// The return value is a java.Object, but the delclared type is
+	// interface{} to avoid import cycles.
+	Unwrap() interface{}
 }
 
 type Java_Runnable interface {
 	Run()
 	Super() Java_Runnable
+	// Unwrap returns the Go object this Java instance
+	// is wrapping.
+	// The return value is a java.Runnable, but the delclared type is
+	// interface{} to avoid import cycles.
+	Unwrap() interface{}
 }
 
 type Java_util_Iterator interface {
@@ -559,6 +579,7 @@ import "Java/java/util/Spliterator/OfLong"
 import "Java/java/util/PrimitiveIterator/OfDouble"
 import "Java/java/util/Spliterator/OfDouble"
 import "Java/java/io/Console"
+import "testdata"
 import "unsafe"
 
 import "reflect"
@@ -1213,6 +1234,11 @@ func (p *proxy_class_java_Future) Super() Java.Java_Future {
 
 type super_java_Future struct {*proxy_class_java_Future}
 
+func (p *proxy_class_java_Future) Unwrap() interface{} {
+	goRefnum := C.go_seq_unwrap(C.jint(p.Bind_proxy_refnum__()))
+	return _seq.FromRefNum(int32(goRefnum)).Get().(*java.Future)
+}
+
 func (p *super_java_Future) Get(a0 ...interface{}) (Java.Java_lang_Object, error) {
 	switch 0 + len(a0) {
 	case 0:
@@ -1374,6 +1400,11 @@ func (p *proxy_class_java_InputStream) Super() Java.Java_InputStream {
 
 type super_java_InputStream struct {*proxy_class_java_InputStream}
 
+func (p *proxy_class_java_InputStream) Unwrap() interface{} {
+	goRefnum := C.go_seq_unwrap(C.jint(p.Bind_proxy_refnum__()))
+	return _seq.FromRefNum(int32(goRefnum)).Get().(*java.InputStream)
+}
+
 func (p *super_java_InputStream) Read(a0 ...interface{}) (int32, error) {
 	switch 0 + len(a0) {
 	case 0:
@@ -1494,6 +1525,11 @@ func (p *proxy_class_java_Object) Super() Java.Java_Object {
 
 type super_java_Object struct {*proxy_class_java_Object}
 
+func (p *proxy_class_java_Object) Unwrap() interface{} {
+	goRefnum := C.go_seq_unwrap(C.jint(p.Bind_proxy_refnum__()))
+	return _seq.FromRefNum(int32(goRefnum)).Get().(*java.Object)
+}
+
 func (p *super_java_Object) ToString() string {
 	res := C.csuper_java_Object_toString(C.jint(p.Bind_proxy_refnum__()))
 	_res := decodeString(res.res)
@@ -1554,6 +1590,11 @@ func (p *proxy_class_java_Runnable) Super() Java.Java_Runnable {
 }
 
 type super_java_Runnable struct {*proxy_class_java_Runnable}
+
+func (p *proxy_class_java_Runnable) Unwrap() interface{} {
+	goRefnum := C.go_seq_unwrap(C.jint(p.Bind_proxy_refnum__()))
+	return _seq.FromRefNum(int32(goRefnum)).Get().(*java.Runnable)
+}
 
 func (p *super_java_Runnable) Run() {
 	res := C.csuper_java_Runnable_run(C.jint(p.Bind_proxy_refnum__()))

@@ -237,10 +237,11 @@ func (j *Importer) Import(refs *importers.References) ([]*Class, error) {
 		}
 		clsSet[n] = struct{}{}
 		cls := &Class{
-			Name:     n,
-			FindName: n,
-			JNIName:  JNIMangle(n),
-			PkgName:  emb.Name,
+			Name:        n,
+			FindName:    n,
+			JNIName:     JNIMangle(n),
+			PkgName:     emb.Name,
+			HasNoArgCon: true,
 		}
 		for _, ref := range emb.Refs {
 			jpkg := strings.Replace(ref.Pkg, "/", ".", -1)

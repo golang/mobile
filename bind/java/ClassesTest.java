@@ -18,6 +18,7 @@ import javapkg.GoObject;
 import javapkg.GoRunnable;
 import javapkg.GoSubset;
 import javapkg.GoInputStream;
+import javapkg.GoArrayList;
 
 public class ClassesTest extends InstrumentationTestCase {
 	public void testConst() {
@@ -147,5 +148,10 @@ public class ClassesTest extends InstrumentationTestCase {
 		assertTrue("Casting Go interface implementation", r3c != null);
 		Runnable r4c = Javapkg.castRunnable(new Object());
 		assertTrue("Invalid cast", r4c == null);
+	}
+
+	public void testUnwrap() {
+		GoArrayList l = new GoArrayList();
+		Javapkg.unwrapGoArrayList(l);
 	}
 }
