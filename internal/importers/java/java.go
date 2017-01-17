@@ -1103,7 +1103,7 @@ func (j *Importer) fillAllMethods(cls *Class) {
 }
 
 func (j *Importer) parseJavaValue(v string) (string, bool) {
-	v = strings.TrimRight(v, "df")
+	v = strings.TrimRight(v, "ldf")
 	switch v {
 	case "", "NaN", "Infinity", "-Infinity":
 		return "", false
