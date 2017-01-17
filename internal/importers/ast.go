@@ -227,7 +227,6 @@ func (v *refsSaver) Visit(n ast.Node) ast.Visitor {
 		if v.insideStruct && len(n.Names) == 1 && !n.Names[0].IsExported() {
 			return nil
 		}
-		return v
 	case *ast.SelectorExpr:
 		v.Names[n.Sel.Name] = struct{}{}
 		if ref, ok := v.parseRef(n); ok {
@@ -235,8 +234,8 @@ func (v *refsSaver) Visit(n ast.Node) ast.Visitor {
 				v.refMap[ref] = struct{}{}
 				v.Refs = append(v.Refs, ref)
 			}
+			return nil
 		}
-		return nil
 	case *ast.FuncDecl:
 		if n.Recv != nil { // Methods
 			v.Names[n.Name.Name] = struct{}{}

@@ -11,12 +11,17 @@ func TestAnalyzer(t *testing.T) {
 	file := `package ast_test
 
 import "Prefix/some/pkg/Name"
+import "Prefix/some/pkg/Name2"
 
 const c = Name.Constant
 
 type T struct {
 	Name.Type
 	hidden Name.Type2
+}
+
+func f() {
+	Name2.Func().Func().Func()
 }
 `
 	fset := token.NewFileSet()
@@ -28,12 +33,18 @@ type T struct {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(refs.Refs) != 2 {
-		t.Fatalf("expected 2 references; got %d", len(refs.Refs))
+	exps := []PkgRef{
+		{Pkg: "some/pkg/Name", Name: "Constant"},
+		{Pkg: "some/pkg/Name", Name: "Type"},
+		{Pkg: "some/pkg/Name2", Name: "Func"},
 	}
-	got := refs.Refs[0]
-	if exp := (PkgRef{"some/pkg/Name", "Constant"}); exp != got {
-		t.Errorf("expected ref %v; got %v", exp, got)
+	if len(refs.Refs) != len(exps) {
+		t.Fatalf("expected %d references; got %d", len(exps), len(refs.Refs))
+	}
+	for i, exp := range exps {
+		if got := refs.Refs[i]; exp != got {
+			t.Errorf("expected ref %v; got %v", exp, got)
+		}
 	}
 	if _, exists := refs.Names["Constant"]; !exists {
 		t.Errorf("expected \"Constant\" in the names set")
@@ -45,9 +56,9 @@ type T struct {
 	exp := Struct{
 		Name: "T",
 		Pkg:  "ast_test",
-		Refs: []PkgRef{{"some/pkg/Name", "Type"}},
+		Refs: []PkgRef{{Pkg: "some/pkg/Name", Name: "Type"}},
 	}
 	if !reflect.DeepEqual(exp, s) {
-		t.Errorf("expected struct %v; got %v", exp, got)
+		t.Errorf("expected struct %v; got %v", exp, s)
 	}
 }
