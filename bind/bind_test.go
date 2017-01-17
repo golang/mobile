@@ -14,6 +14,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -64,6 +65,10 @@ func fileRefs(t *testing.T, filename string, pkgPrefix string) *importers.Refere
 	refs, err := importers.AnalyzeFile(f, pkgPrefix)
 	if err != nil {
 		t.Fatalf("%s: %v", filename, err)
+	}
+	fakePath := path.Dir(filename)
+	for i := range refs.Embedders {
+		refs.Embedders[i].PkgPath = fakePath
 	}
 	return refs
 }
@@ -299,11 +304,7 @@ func TestGenJava(t *testing.T) {
 						Buf:        new(bytes.Buffer),
 					},
 				}
-				var genNames []string
-				for _, emb := range refs.Embedders {
-					genNames = append(genNames, emb.Pkg+"."+emb.Name)
-				}
-				cg.Init(classes, genNames)
+				cg.Init(classes, refs.Embedders)
 				genJavaPackages(t, tmpGopath, cg)
 				cg.Buf = &buf
 			}
@@ -419,11 +420,7 @@ func TestGenGoJavaWrappers(t *testing.T) {
 				Buf:        &buf,
 			},
 		}
-		var genNames []string
-		for _, emb := range refs.Embedders {
-			genNames = append(genNames, emb.Pkg+"."+emb.Name)
-		}
-		cg.Init(classes, genNames)
+		cg.Init(classes, refs.Embedders)
 		genJavaPackages(t, tmpGopath, cg)
 		pkg := typeCheck(t, filename, tmpGopath)
 		cg.GenGo()

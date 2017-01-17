@@ -75,15 +75,7 @@ func main() {
 				log.Fatal(err)
 			}
 			defer os.RemoveAll(tmpGopath)
-			var genNames []string
-			for _, emb := range refs.Embedders {
-				n := emb.Pkg + "." + emb.Name
-				if *javaPkg != "" {
-					n = *javaPkg + "." + n
-				}
-				genNames = append(genNames, n)
-			}
-			if err := genJavaPackages(ctx, tmpGopath, classes, genNames); err != nil {
+			if err := genJavaPackages(ctx, tmpGopath, classes, refs.Embedders); err != nil {
 				log.Fatal(err)
 			}
 			gopath := ctx.GOPATH

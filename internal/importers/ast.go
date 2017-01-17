@@ -67,15 +67,16 @@ type References struct {
 // Struct is a representation of a struct type with embedded
 // types.
 type Struct struct {
-	Name string
-	Pkg  string
-	Refs []PkgRef
+	Name    string
+	Pkg     string
+	PkgPath string
+	Refs    []PkgRef
 }
 
 // PkgRef is a reference to an identifier in a package.
 type PkgRef struct {
-	Pkg  string
 	Name string
+	Pkg  string
 }
 
 type refsSaver struct {
@@ -94,7 +95,7 @@ func AnalyzeFile(file *ast.File, pkgPrefix string) (*References, error) {
 	// Ignore errors (from unknown packages)
 	pkg, _ := ast.NewPackage(fset, files, visitor.importer(), nil)
 	ast.Walk(visitor, pkg)
-	visitor.findEmbeddingStructs(pkg)
+	visitor.findEmbeddingStructs("", pkg)
 	return visitor.References, nil
 }
 
@@ -117,7 +118,7 @@ func AnalyzePackages(pkgs []*build.Package, pkgPrefix string) (*References, erro
 		// Ignore errors (from unknown packages)
 		astpkg, _ := ast.NewPackage(fset, files, imp, nil)
 		ast.Walk(visitor, astpkg)
-		visitor.findEmbeddingStructs(astpkg)
+		visitor.findEmbeddingStructs(pkg.ImportPath, astpkg)
 	}
 	return visitor.References, nil
 }
@@ -131,7 +132,7 @@ func AnalyzePackages(pkgs []*build.Package, pkgPrefix string) (*References, erro
 // type T struct {
 //     Package.Class
 // }
-func (v *refsSaver) findEmbeddingStructs(pkg *ast.Package) {
+func (v *refsSaver) findEmbeddingStructs(pkgpath string, pkg *ast.Package) {
 	var names []string
 	for _, obj := range pkg.Scope.Objects {
 		if obj.Kind != ast.Typ || !ast.IsExported(obj.Name) {
@@ -162,8 +163,9 @@ func (v *refsSaver) findEmbeddingStructs(pkg *ast.Package) {
 		}
 		if len(refs) > 0 {
 			v.Embedders = append(v.Embedders, Struct{
-				Name: obj.Name,
-				Pkg:  pkg.Name,
+				Name:    obj.Name,
+				Pkg:     pkg.Name,
+				PkgPath: pkgpath,
 
 				Refs: refs,
 			})

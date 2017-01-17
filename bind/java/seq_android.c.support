@@ -233,6 +233,14 @@ int32_t go_seq_to_refnum(JNIEnv *env, jobject o) {
 	return (int32_t)(*env)->CallStaticIntMethod(env, seq_class, seq_incRef, o);
 }
 
+int32_t go_seq_unwrap(jint refnum) {
+	JNIEnv *env = go_seq_push_local_frame(0);
+	jobject jobj = go_seq_from_refnum(env, refnum, NULL, NULL);
+	int32_t goref = go_seq_to_refnum_go(env, jobj);
+	go_seq_pop_local_frame(env);
+	return goref;
+}
+
 jobject go_seq_from_refnum(JNIEnv *env, int32_t refnum, jclass proxy_class, jmethodID proxy_cons) {
 	if (refnum == NULL_REFNUM) {
 		return NULL;

@@ -138,6 +138,10 @@ func NewGoArrayListWithCap(_ int32) *GoArrayList {
 	return new(GoArrayList)
 }
 
+func UnwrapGoArrayList(l gopkg.GoArrayList) {
+	_ = l.Unwrap().(*GoArrayList)
+}
+
 func CallSubset(s Character.Subset) {
 	s.ToString()
 }

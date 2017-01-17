@@ -415,20 +415,13 @@ func GenClasses(pkgs []*build.Package, srcDir, jpkgSrc string) ([]*java.Class, e
 	}
 	var buf bytes.Buffer
 	g := &bind.ClassGen{
+		JavaPkg: bindJavaPkg,
 		Printer: &bind.Printer{
 			IndentEach: []byte("\t"),
 			Buf:        &buf,
 		},
 	}
-	var genNames []string
-	for _, emb := range refs.Embedders {
-		n := emb.Pkg + "." + emb.Name
-		if bindJavaPkg != "" {
-			n = bindJavaPkg + "." + n
-		}
-		genNames = append(genNames, n)
-	}
-	g.Init(classes, genNames)
+	g.Init(classes, refs.Embedders)
 	for i, jpkg := range g.Packages() {
 		pkgDir := filepath.Join(jpkgSrc, "src", "Java", jpkg)
 		if err := os.MkdirAll(pkgDir, 0700); err != nil {

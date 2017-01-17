@@ -21,7 +21,7 @@ func TestImport(t *testing.T) {
 		methods []*FuncSet
 	}{
 		{
-			ref:  importers.PkgRef{"java/lang/Object", "equals"},
+			ref:  importers.PkgRef{Pkg: "java/lang/Object", Name: "equals"},
 			name: "java.lang.Object",
 			methods: []*FuncSet{
 				&FuncSet{
@@ -35,7 +35,7 @@ func TestImport(t *testing.T) {
 			},
 		},
 		{
-			ref:  importers.PkgRef{"java/lang/Runnable", "run"},
+			ref:  importers.PkgRef{Pkg: "java/lang/Runnable", Name: "run"},
 			name: "java.lang.Runnable",
 			methods: []*FuncSet{
 				&FuncSet{
