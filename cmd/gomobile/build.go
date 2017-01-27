@@ -14,7 +14,6 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
-	"runtime"
 	"strings"
 )
 
@@ -110,8 +109,8 @@ func runBuild(cmd *command) (err error) {
 		}
 	case "darwin":
 		// TODO: use targetArchs?
-		if runtime.GOOS != "darwin" {
-			return fmt.Errorf("-target=ios requires darwin host")
+		if !xcodeAvailable() {
+			return fmt.Errorf("-target=ios requires XCode")
 		}
 		if pkg.Name != "main" {
 			if err := goBuild(pkg.ImportPath, darwinArmEnv); err != nil {
