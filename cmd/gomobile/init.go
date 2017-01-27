@@ -315,8 +315,8 @@ var commonPkgs = []string{
 }
 
 func installDarwin() error {
-	if goos != "darwin" {
-		return nil // Only build iOS compilers on OS X.
+	if !xcodeAvailable() {
+		return nil
 	}
 	if err := installStd(darwinArmEnv); err != nil {
 		return err

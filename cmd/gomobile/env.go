@@ -149,7 +149,7 @@ func envInit() (err error) {
 		}
 	}
 
-	if runtime.GOOS != "darwin" {
+	if !xcodeAvailable() {
 		return nil
 	}
 
@@ -377,4 +377,9 @@ var ndk = ndkConfig{
 		toolPrefix: "x86_64-linux-android",
 		minGoVer:   go1_6,
 	},
+}
+
+func xcodeAvailable() bool {
+	_, err := exec.LookPath("xcrun")
+	return err == nil
 }
