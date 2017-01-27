@@ -19,23 +19,35 @@ static jmethodID m_java_lang_Character_Subset_toString;
 void init_proxies() {
 	JNIEnv *env = go_seq_push_local_frame(6);
 	jclass clazz;
-	clazz = (*env)->FindClass(env, "java/lang/Float");
-	class_java_lang_Float = (*env)->NewGlobalRef(env, clazz);
-	m_java_lang_Float_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
-	clazz = (*env)->FindClass(env, "java/lang/Long");
-	class_java_lang_Long = (*env)->NewGlobalRef(env, clazz);
-	m_java_lang_Long_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
-	clazz = (*env)->FindClass(env, "java/lang/Object");
-	class_java_lang_Object = (*env)->NewGlobalRef(env, clazz);
-	m_java_lang_Object_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
-	clazz = (*env)->FindClass(env, "java/lang/Runnable");
-	class_java_lang_Runnable = (*env)->NewGlobalRef(env, clazz);
-	clazz = (*env)->FindClass(env, "java/lang/Character");
-	class_java_lang_Character = (*env)->NewGlobalRef(env, clazz);
-	m_java_lang_Character_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
-	clazz = (*env)->FindClass(env, "java/lang/Character$Subset");
-	class_java_lang_Character_Subset = (*env)->NewGlobalRef(env, clazz);
-	m_java_lang_Character_Subset_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
+	clazz = go_seq_find_class("java/lang/Float");
+	if (clazz != NULL) {
+		class_java_lang_Float = (*env)->NewGlobalRef(env, clazz);
+		m_java_lang_Float_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
+	}
+	clazz = go_seq_find_class("java/lang/Long");
+	if (clazz != NULL) {
+		class_java_lang_Long = (*env)->NewGlobalRef(env, clazz);
+		m_java_lang_Long_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
+	}
+	clazz = go_seq_find_class("java/lang/Object");
+	if (clazz != NULL) {
+		class_java_lang_Object = (*env)->NewGlobalRef(env, clazz);
+		m_java_lang_Object_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
+	}
+	clazz = go_seq_find_class("java/lang/Runnable");
+	if (clazz != NULL) {
+		class_java_lang_Runnable = (*env)->NewGlobalRef(env, clazz);
+	}
+	clazz = go_seq_find_class("java/lang/Character");
+	if (clazz != NULL) {
+		class_java_lang_Character = (*env)->NewGlobalRef(env, clazz);
+		m_java_lang_Character_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
+	}
+	clazz = go_seq_find_class("java/lang/Character$Subset");
+	if (clazz != NULL) {
+		class_java_lang_Character_Subset = (*env)->NewGlobalRef(env, clazz);
+		m_java_lang_Character_Subset_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
+	}
 	go_seq_pop_local_frame(env);
 }
 

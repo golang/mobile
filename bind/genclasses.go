@@ -302,7 +302,9 @@ func (g *ClassGen) GenC() {
 	g.Printf("JNIEnv *env = go_seq_push_local_frame(%d);\n", len(g.classes))
 	g.Printf("jclass clazz;\n")
 	for _, cls := range g.classes {
-		g.Printf("clazz = (*env)->FindClass(env, %q);\n", strings.Replace(cls.FindName, ".", "/", -1))
+		g.Printf("clazz = go_seq_find_class(%q);\n", strings.Replace(cls.FindName, ".", "/", -1))
+		g.Printf("if (clazz != NULL) {\n")
+		g.Indent()
 		g.Printf("class_%s = (*env)->NewGlobalRef(env, clazz);\n", cls.JNIName)
 		if _, ok := g.goClsMap[cls.Name]; ok {
 			g.Printf("sclass_%s = (*env)->GetSuperclass(env, clazz);\n", cls.JNIName)
@@ -331,6 +333,8 @@ func (g *ClassGen) GenC() {
 				}
 			}
 		}
+		g.Outdent()
+		g.Printf("}\n")
 	}
 	g.Printf("go_seq_pop_local_frame(env);\n")
 	g.Outdent()
