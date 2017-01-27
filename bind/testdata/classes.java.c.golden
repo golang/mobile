@@ -140,88 +140,128 @@ static jmethodID m_java_io_Console_toString;
 void init_proxies() {
 	JNIEnv *env = go_seq_push_local_frame(20);
 	jclass clazz;
-	clazz = (*env)->FindClass(env, "java/lang/Runnable");
-	class_java_lang_Runnable = (*env)->NewGlobalRef(env, clazz);
-	m_java_lang_Runnable_run = go_seq_get_method_id(clazz, "run", "()V");
-	clazz = (*env)->FindClass(env, "java/io/InputStream");
-	class_java_io_InputStream = (*env)->NewGlobalRef(env, clazz);
-	m_java_io_InputStream_read__ = go_seq_get_method_id(clazz, "read", "()I");
-	m_java_io_InputStream_read___3B = go_seq_get_method_id(clazz, "read", "([B)I");
-	m_java_io_InputStream_read___3BII = go_seq_get_method_id(clazz, "read", "([BII)I");
-	m_java_io_InputStream_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
-	clazz = (*env)->FindClass(env, "java/util/concurrent/Future");
-	class_java_util_concurrent_Future = (*env)->NewGlobalRef(env, clazz);
-	m_java_util_concurrent_Future_get__ = go_seq_get_method_id(clazz, "get", "()Ljava/lang/Object;");
-	m_java_util_concurrent_Future_get__JLjava_util_concurrent_TimeUnit_2 = go_seq_get_method_id(clazz, "get", "(JLjava/util/concurrent/TimeUnit;)Ljava/lang/Object;");
-	clazz = (*env)->FindClass(env, "java/lang/Object");
-	class_java_lang_Object = (*env)->NewGlobalRef(env, clazz);
-	m_java_lang_Object_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
-	clazz = (*env)->FindClass(env, "java/util/concurrent/TimeUnit");
-	class_java_util_concurrent_TimeUnit = (*env)->NewGlobalRef(env, clazz);
-	m_java_util_concurrent_TimeUnit_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
-	clazz = (*env)->FindClass(env, "java/util/Spliterators");
-	class_java_util_Spliterators = (*env)->NewGlobalRef(env, clazz);
-	m_s_java_util_Spliterators_iterator__Ljava_util_Spliterator_2 = go_seq_get_static_method_id(clazz, "iterator", "(Ljava/util/Spliterator;)Ljava/util/Iterator;");
-	m_s_java_util_Spliterators_iterator__Ljava_util_Spliterator_00024OfInt_2 = go_seq_get_static_method_id(clazz, "iterator", "(Ljava/util/Spliterator$OfInt;)Ljava/util/PrimitiveIterator$OfInt;");
-	m_s_java_util_Spliterators_iterator__Ljava_util_Spliterator_00024OfLong_2 = go_seq_get_static_method_id(clazz, "iterator", "(Ljava/util/Spliterator$OfLong;)Ljava/util/PrimitiveIterator$OfLong;");
-	m_s_java_util_Spliterators_iterator__Ljava_util_Spliterator_00024OfDouble_2 = go_seq_get_static_method_id(clazz, "iterator", "(Ljava/util/Spliterator$OfDouble;)Ljava/util/PrimitiveIterator$OfDouble;");
-	m_java_util_Spliterators_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
-	clazz = (*env)->FindClass(env, "java/lang/System");
-	class_java_lang_System = (*env)->NewGlobalRef(env, clazz);
-	m_s_java_lang_System_console = go_seq_get_static_method_id(clazz, "console", "()Ljava/io/Console;");
-	m_java_lang_System_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
-	clazz = (*env)->FindClass(env, "java/Future");
-	class_java_Future = (*env)->NewGlobalRef(env, clazz);
-	sclass_java_Future = (*env)->GetSuperclass(env, clazz);
-	sclass_java_Future = (*env)->NewGlobalRef(env, sclass_java_Future);
-	m_java_Future_get__ = go_seq_get_method_id(clazz, "get", "()Ljava/lang/Object;");
-	sm_java_Future_get__ = go_seq_get_method_id(sclass_java_Future, "get", "()Ljava/lang/Object;");
-	m_java_Future_get__JLjava_util_concurrent_TimeUnit_2 = go_seq_get_method_id(clazz, "get", "(JLjava/util/concurrent/TimeUnit;)Ljava/lang/Object;");
-	sm_java_Future_get__JLjava_util_concurrent_TimeUnit_2 = go_seq_get_method_id(sclass_java_Future, "get", "(JLjava/util/concurrent/TimeUnit;)Ljava/lang/Object;");
-	clazz = (*env)->FindClass(env, "java/InputStream");
-	class_java_InputStream = (*env)->NewGlobalRef(env, clazz);
-	sclass_java_InputStream = (*env)->GetSuperclass(env, clazz);
-	sclass_java_InputStream = (*env)->NewGlobalRef(env, sclass_java_InputStream);
-	m_java_InputStream_read__ = go_seq_get_method_id(clazz, "read", "()I");
-	sm_java_InputStream_read__ = go_seq_get_method_id(sclass_java_InputStream, "read", "()I");
-	m_java_InputStream_read___3B = go_seq_get_method_id(clazz, "read", "([B)I");
-	sm_java_InputStream_read___3B = go_seq_get_method_id(sclass_java_InputStream, "read", "([B)I");
-	m_java_InputStream_read___3BII = go_seq_get_method_id(clazz, "read", "([BII)I");
-	sm_java_InputStream_read___3BII = go_seq_get_method_id(sclass_java_InputStream, "read", "([BII)I");
-	m_java_InputStream_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
-	sm_java_InputStream_toString = go_seq_get_method_id(sclass_java_InputStream, "toString", "()Ljava/lang/String;");
-	clazz = (*env)->FindClass(env, "java/Object");
-	class_java_Object = (*env)->NewGlobalRef(env, clazz);
-	sclass_java_Object = (*env)->GetSuperclass(env, clazz);
-	sclass_java_Object = (*env)->NewGlobalRef(env, sclass_java_Object);
-	m_java_Object_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
-	sm_java_Object_toString = go_seq_get_method_id(sclass_java_Object, "toString", "()Ljava/lang/String;");
-	clazz = (*env)->FindClass(env, "java/Runnable");
-	class_java_Runnable = (*env)->NewGlobalRef(env, clazz);
-	sclass_java_Runnable = (*env)->GetSuperclass(env, clazz);
-	sclass_java_Runnable = (*env)->NewGlobalRef(env, sclass_java_Runnable);
-	m_java_Runnable_run = go_seq_get_method_id(clazz, "run", "()V");
-	sm_java_Runnable_run = go_seq_get_method_id(sclass_java_Runnable, "run", "()V");
-	clazz = (*env)->FindClass(env, "java/util/Iterator");
-	class_java_util_Iterator = (*env)->NewGlobalRef(env, clazz);
-	clazz = (*env)->FindClass(env, "java/util/Spliterator");
-	class_java_util_Spliterator = (*env)->NewGlobalRef(env, clazz);
-	clazz = (*env)->FindClass(env, "java/util/PrimitiveIterator$OfInt");
-	class_java_util_PrimitiveIterator_OfInt = (*env)->NewGlobalRef(env, clazz);
-	clazz = (*env)->FindClass(env, "java/util/Spliterator$OfInt");
-	class_java_util_Spliterator_OfInt = (*env)->NewGlobalRef(env, clazz);
-	clazz = (*env)->FindClass(env, "java/util/PrimitiveIterator$OfLong");
-	class_java_util_PrimitiveIterator_OfLong = (*env)->NewGlobalRef(env, clazz);
-	clazz = (*env)->FindClass(env, "java/util/Spliterator$OfLong");
-	class_java_util_Spliterator_OfLong = (*env)->NewGlobalRef(env, clazz);
-	clazz = (*env)->FindClass(env, "java/util/PrimitiveIterator$OfDouble");
-	class_java_util_PrimitiveIterator_OfDouble = (*env)->NewGlobalRef(env, clazz);
-	clazz = (*env)->FindClass(env, "java/util/Spliterator$OfDouble");
-	class_java_util_Spliterator_OfDouble = (*env)->NewGlobalRef(env, clazz);
-	clazz = (*env)->FindClass(env, "java/io/Console");
-	class_java_io_Console = (*env)->NewGlobalRef(env, clazz);
-	m_java_io_Console_flush = go_seq_get_method_id(clazz, "flush", "()V");
-	m_java_io_Console_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
+	clazz = go_seq_find_class("java/lang/Runnable");
+	if (clazz != NULL) {
+		class_java_lang_Runnable = (*env)->NewGlobalRef(env, clazz);
+		m_java_lang_Runnable_run = go_seq_get_method_id(clazz, "run", "()V");
+	}
+	clazz = go_seq_find_class("java/io/InputStream");
+	if (clazz != NULL) {
+		class_java_io_InputStream = (*env)->NewGlobalRef(env, clazz);
+		m_java_io_InputStream_read__ = go_seq_get_method_id(clazz, "read", "()I");
+		m_java_io_InputStream_read___3B = go_seq_get_method_id(clazz, "read", "([B)I");
+		m_java_io_InputStream_read___3BII = go_seq_get_method_id(clazz, "read", "([BII)I");
+		m_java_io_InputStream_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
+	}
+	clazz = go_seq_find_class("java/util/concurrent/Future");
+	if (clazz != NULL) {
+		class_java_util_concurrent_Future = (*env)->NewGlobalRef(env, clazz);
+		m_java_util_concurrent_Future_get__ = go_seq_get_method_id(clazz, "get", "()Ljava/lang/Object;");
+		m_java_util_concurrent_Future_get__JLjava_util_concurrent_TimeUnit_2 = go_seq_get_method_id(clazz, "get", "(JLjava/util/concurrent/TimeUnit;)Ljava/lang/Object;");
+	}
+	clazz = go_seq_find_class("java/lang/Object");
+	if (clazz != NULL) {
+		class_java_lang_Object = (*env)->NewGlobalRef(env, clazz);
+		m_java_lang_Object_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
+	}
+	clazz = go_seq_find_class("java/util/concurrent/TimeUnit");
+	if (clazz != NULL) {
+		class_java_util_concurrent_TimeUnit = (*env)->NewGlobalRef(env, clazz);
+		m_java_util_concurrent_TimeUnit_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
+	}
+	clazz = go_seq_find_class("java/util/Spliterators");
+	if (clazz != NULL) {
+		class_java_util_Spliterators = (*env)->NewGlobalRef(env, clazz);
+		m_s_java_util_Spliterators_iterator__Ljava_util_Spliterator_2 = go_seq_get_static_method_id(clazz, "iterator", "(Ljava/util/Spliterator;)Ljava/util/Iterator;");
+		m_s_java_util_Spliterators_iterator__Ljava_util_Spliterator_00024OfInt_2 = go_seq_get_static_method_id(clazz, "iterator", "(Ljava/util/Spliterator$OfInt;)Ljava/util/PrimitiveIterator$OfInt;");
+		m_s_java_util_Spliterators_iterator__Ljava_util_Spliterator_00024OfLong_2 = go_seq_get_static_method_id(clazz, "iterator", "(Ljava/util/Spliterator$OfLong;)Ljava/util/PrimitiveIterator$OfLong;");
+		m_s_java_util_Spliterators_iterator__Ljava_util_Spliterator_00024OfDouble_2 = go_seq_get_static_method_id(clazz, "iterator", "(Ljava/util/Spliterator$OfDouble;)Ljava/util/PrimitiveIterator$OfDouble;");
+		m_java_util_Spliterators_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
+	}
+	clazz = go_seq_find_class("java/lang/System");
+	if (clazz != NULL) {
+		class_java_lang_System = (*env)->NewGlobalRef(env, clazz);
+		m_s_java_lang_System_console = go_seq_get_static_method_id(clazz, "console", "()Ljava/io/Console;");
+		m_java_lang_System_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
+	}
+	clazz = go_seq_find_class("java/Future");
+	if (clazz != NULL) {
+		class_java_Future = (*env)->NewGlobalRef(env, clazz);
+		sclass_java_Future = (*env)->GetSuperclass(env, clazz);
+		sclass_java_Future = (*env)->NewGlobalRef(env, sclass_java_Future);
+		m_java_Future_get__ = go_seq_get_method_id(clazz, "get", "()Ljava/lang/Object;");
+		sm_java_Future_get__ = go_seq_get_method_id(sclass_java_Future, "get", "()Ljava/lang/Object;");
+		m_java_Future_get__JLjava_util_concurrent_TimeUnit_2 = go_seq_get_method_id(clazz, "get", "(JLjava/util/concurrent/TimeUnit;)Ljava/lang/Object;");
+		sm_java_Future_get__JLjava_util_concurrent_TimeUnit_2 = go_seq_get_method_id(sclass_java_Future, "get", "(JLjava/util/concurrent/TimeUnit;)Ljava/lang/Object;");
+	}
+	clazz = go_seq_find_class("java/InputStream");
+	if (clazz != NULL) {
+		class_java_InputStream = (*env)->NewGlobalRef(env, clazz);
+		sclass_java_InputStream = (*env)->GetSuperclass(env, clazz);
+		sclass_java_InputStream = (*env)->NewGlobalRef(env, sclass_java_InputStream);
+		m_java_InputStream_read__ = go_seq_get_method_id(clazz, "read", "()I");
+		sm_java_InputStream_read__ = go_seq_get_method_id(sclass_java_InputStream, "read", "()I");
+		m_java_InputStream_read___3B = go_seq_get_method_id(clazz, "read", "([B)I");
+		sm_java_InputStream_read___3B = go_seq_get_method_id(sclass_java_InputStream, "read", "([B)I");
+		m_java_InputStream_read___3BII = go_seq_get_method_id(clazz, "read", "([BII)I");
+		sm_java_InputStream_read___3BII = go_seq_get_method_id(sclass_java_InputStream, "read", "([BII)I");
+		m_java_InputStream_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
+		sm_java_InputStream_toString = go_seq_get_method_id(sclass_java_InputStream, "toString", "()Ljava/lang/String;");
+	}
+	clazz = go_seq_find_class("java/Object");
+	if (clazz != NULL) {
+		class_java_Object = (*env)->NewGlobalRef(env, clazz);
+		sclass_java_Object = (*env)->GetSuperclass(env, clazz);
+		sclass_java_Object = (*env)->NewGlobalRef(env, sclass_java_Object);
+		m_java_Object_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
+		sm_java_Object_toString = go_seq_get_method_id(sclass_java_Object, "toString", "()Ljava/lang/String;");
+	}
+	clazz = go_seq_find_class("java/Runnable");
+	if (clazz != NULL) {
+		class_java_Runnable = (*env)->NewGlobalRef(env, clazz);
+		sclass_java_Runnable = (*env)->GetSuperclass(env, clazz);
+		sclass_java_Runnable = (*env)->NewGlobalRef(env, sclass_java_Runnable);
+		m_java_Runnable_run = go_seq_get_method_id(clazz, "run", "()V");
+		sm_java_Runnable_run = go_seq_get_method_id(sclass_java_Runnable, "run", "()V");
+	}
+	clazz = go_seq_find_class("java/util/Iterator");
+	if (clazz != NULL) {
+		class_java_util_Iterator = (*env)->NewGlobalRef(env, clazz);
+	}
+	clazz = go_seq_find_class("java/util/Spliterator");
+	if (clazz != NULL) {
+		class_java_util_Spliterator = (*env)->NewGlobalRef(env, clazz);
+	}
+	clazz = go_seq_find_class("java/util/PrimitiveIterator$OfInt");
+	if (clazz != NULL) {
+		class_java_util_PrimitiveIterator_OfInt = (*env)->NewGlobalRef(env, clazz);
+	}
+	clazz = go_seq_find_class("java/util/Spliterator$OfInt");
+	if (clazz != NULL) {
+		class_java_util_Spliterator_OfInt = (*env)->NewGlobalRef(env, clazz);
+	}
+	clazz = go_seq_find_class("java/util/PrimitiveIterator$OfLong");
+	if (clazz != NULL) {
+		class_java_util_PrimitiveIterator_OfLong = (*env)->NewGlobalRef(env, clazz);
+	}
+	clazz = go_seq_find_class("java/util/Spliterator$OfLong");
+	if (clazz != NULL) {
+		class_java_util_Spliterator_OfLong = (*env)->NewGlobalRef(env, clazz);
+	}
+	clazz = go_seq_find_class("java/util/PrimitiveIterator$OfDouble");
+	if (clazz != NULL) {
+		class_java_util_PrimitiveIterator_OfDouble = (*env)->NewGlobalRef(env, clazz);
+	}
+	clazz = go_seq_find_class("java/util/Spliterator$OfDouble");
+	if (clazz != NULL) {
+		class_java_util_Spliterator_OfDouble = (*env)->NewGlobalRef(env, clazz);
+	}
+	clazz = go_seq_find_class("java/io/Console");
+	if (clazz != NULL) {
+		class_java_io_Console = (*env)->NewGlobalRef(env, clazz);
+		m_java_io_Console_flush = go_seq_get_method_id(clazz, "flush", "()V");
+		m_java_io_Console_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
+	}
 	go_seq_pop_local_frame(env);
 }
 
