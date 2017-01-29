@@ -75,7 +75,7 @@ func TestAndroidBuild(t *testing.T) {
 	buildN = true
 	buildX = true
 	buildO = "basic.apk"
-	buildTarget = "android"
+	buildTarget = "android/arm"
 	ndkRoot = "/NDK"
 	gopath = filepath.ToSlash(filepath.SplitList(os.Getenv("GOPATH"))[0])
 	if goos == "windows" {
@@ -105,7 +105,7 @@ GOOS=android GOARCH=arm CC=/NDK/toolchains/llvm/prebuilt/{{.GOOS}}-{{.NDKARCH}}/
 `))
 
 func TestParseBuildTargetFlag(t *testing.T) {
-	androidArchs := "arm"
+	androidArchs := "arm,arm64,386,amd64"
 	iosArchs := "arm,arm64,amd64"
 
 	tests := []struct {

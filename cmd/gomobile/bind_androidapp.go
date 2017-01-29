@@ -21,12 +21,9 @@ func goAndroidBind(pkgs []*build.Package, androidArchs []string) error {
 	if sdkDir := os.Getenv("ANDROID_HOME"); sdkDir == "" {
 		return fmt.Errorf("this command requires ANDROID_HOME environment variable (path to the Android SDK)")
 	}
-	var androidArgs []string
-	if goVersion == go1_6 {
-		// Ideally this would be -buildmode=c-shared.
-		// https://golang.org/issue/13234.
-		androidArgs = []string{"-gcflags=-shared", "-ldflags=-shared"}
-	}
+	// Ideally this would be -buildmode=c-shared.
+	// https://golang.org/issue/13234.
+	androidArgs := []string{"-gcflags=-shared", "-ldflags=-shared"}
 
 	paths := make([]string, len(pkgs))
 	for i, p := range pkgs {

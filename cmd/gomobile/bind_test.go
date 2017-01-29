@@ -36,7 +36,7 @@ func TestBindAndroid(t *testing.T) {
 	buildN = true
 	buildX = true
 	buildO = "asset.aar"
-	buildTarget = "android"
+	buildTarget = "android/arm"
 	ndkRoot = "/NDK"
 
 	tests := []struct {
@@ -107,7 +107,7 @@ mkdir -p $WORK/gomobile_bind
 mkdir -p $WORK/gomobile_bind
 mkdir -p $WORK/gomobile_bind
 mkdir -p $WORK/gen/src/Java
-GOOS=android GOARCH=arm CC=/NDK/toolchains/llvm/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin/clang{{.EXE}} CXX=/NDK/toolchains/llvm/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin/clang++{{.EXE}} CGO_CFLAGS=-target armv7a-none-linux-androideabi --sysroot /NDK/platforms/android-15/arch-arm -gcc-toolchain /NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}} -I$GOMOBILE/include CGO_CPPFLAGS=-target armv7a-none-linux-androideabi --sysroot /NDK/platforms/android-15/arch-arm -gcc-toolchain /NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}} -I$GOMOBILE/include CGO_LDFLAGS=-target armv7a-none-linux-androideabi --sysroot /NDK/platforms/android-15/arch-arm -gcc-toolchain /NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}} -L/NDK/platforms/android-15/arch-arm/usr/lib -L$GOMOBILE/lib/arm CGO_ENABLED=1 GOARM=7 GOPATH=$WORK/gen:$GOPATH go install -pkgdir=$GOMOBILE/pkg_android_arm -x golang.org/x/mobile/asset
+GOOS=android GOARCH=arm CC=/NDK/toolchains/llvm/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin/clang{{.EXE}} CXX=/NDK/toolchains/llvm/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin/clang++{{.EXE}} CGO_CFLAGS=-target armv7a-none-linux-androideabi --sysroot /NDK/platforms/android-15/arch-arm -gcc-toolchain /NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}} -I$GOMOBILE/include CGO_CPPFLAGS=-target armv7a-none-linux-androideabi --sysroot /NDK/platforms/android-15/arch-arm -gcc-toolchain /NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}} -I$GOMOBILE/include CGO_LDFLAGS=-target armv7a-none-linux-androideabi --sysroot /NDK/platforms/android-15/arch-arm -gcc-toolchain /NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}} -L/NDK/platforms/android-15/arch-arm/usr/lib -L$GOMOBILE/lib/arm CGO_ENABLED=1 GOARM=7 GOPATH=$WORK/gen:$GOPATH go install -pkgdir=$GOMOBILE/pkg_android_arm -x -gcflags=-shared -ldflags=-shared golang.org/x/mobile/asset
 rm -r -f "$WORK/fakegopath"
 mkdir -p $WORK/fakegopath/pkg
 cp $GOMOBILE/pkg_android_arm/golang.org/x/mobile/asset.a $WORK/fakegopath/pkg/android_arm/golang.org/x/mobile/asset.a
