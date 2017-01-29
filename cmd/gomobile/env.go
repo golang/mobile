@@ -116,10 +116,6 @@ func envInit() (err error) {
 	if ndkRoot != "" {
 		androidEnv = make(map[string][]string)
 		for arch, toolchain := range ndk {
-			if goVersion < toolchain.minGoVer {
-				continue
-			}
-
 			// Emulate the flags in the clang wrapper scripts generated
 			// by make_standalone_toolchain.py
 			s := strings.SplitN(toolchain.toolPrefix, "-", 3)
@@ -313,7 +309,6 @@ type ndkToolchain struct {
 	platform   string
 	gcc        string
 	toolPrefix string
-	minGoVer   goToolVersion
 }
 
 func (tc *ndkToolchain) Path(toolName string) string {
@@ -337,7 +332,7 @@ type ndkConfig map[string]ndkToolchain // map: GOOS->androidConfig.
 
 func (nc ndkConfig) Toolchain(arch string) ndkToolchain {
 	tc, ok := nc[arch]
-	if !ok || tc.minGoVer > goVersion {
+	if !ok {
 		panic(`unsupported architecture: ` + arch)
 	}
 	return tc
@@ -350,7 +345,6 @@ var ndk = ndkConfig{
 		platform:   "android-15",
 		gcc:        "arm-linux-androideabi-4.9",
 		toolPrefix: "arm-linux-androideabi",
-		minGoVer:   go1_5,
 	},
 	"arm64": {
 		arch:       "arm64",
@@ -358,7 +352,6 @@ var ndk = ndkConfig{
 		platform:   "android-21",
 		gcc:        "aarch64-linux-android-4.9",
 		toolPrefix: "aarch64-linux-android",
-		minGoVer:   go1_6,
 	},
 
 	"386": {
@@ -367,7 +360,6 @@ var ndk = ndkConfig{
 		platform:   "android-15",
 		gcc:        "x86-4.9",
 		toolPrefix: "i686-linux-android",
-		minGoVer:   go1_6,
 	},
 	"amd64": {
 		arch:       "x86_64",
@@ -375,7 +367,6 @@ var ndk = ndkConfig{
 		platform:   "android-21",
 		gcc:        "x86_64-4.9",
 		toolPrefix: "x86_64-linux-android",
-		minGoVer:   go1_6,
 	},
 }
 

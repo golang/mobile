@@ -330,11 +330,7 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 	case "ios":
 		supported = []string{"arm", "arm64", "amd64"}
 	case "android":
-		for arch, tc := range ndk {
-			if tc.minGoVer <= goVersion {
-				supported = append(supported, arch)
-			}
-		}
+		supported = []string{"arm", "arm64", "386", "amd64"}
 	}
 
 	isSupported := func(arch string) bool {
