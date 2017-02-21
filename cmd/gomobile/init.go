@@ -195,14 +195,14 @@ func installOpenAL(gomobilepath string) error {
 	if ndkRoot == "" || initOpenAL == "" {
 		return nil
 	}
-	sdkRoot := os.Getenv("ANDROID_HOME")
-	if sdkRoot == "" {
-		return nil
-	}
 	var cmake string
 	if buildN {
 		cmake = "cmake"
 	} else {
+		sdkRoot := os.Getenv("ANDROID_HOME")
+		if sdkRoot == "" {
+			return nil
+		}
 		var err error
 		cmake, err = exec.LookPath("cmake")
 		if err != nil {
