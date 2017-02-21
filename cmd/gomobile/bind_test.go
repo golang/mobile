@@ -7,6 +7,7 @@ package main
 import (
 	"bytes"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -14,6 +15,18 @@ import (
 )
 
 // TODO(crawshaw): TestBindIOS
+
+func TestImportPackagesPathCleaning(t *testing.T) {
+	slashPath := "golang.org/x/mobile/example/bind/hello/"
+	pkgs, err := importPackages([]string{slashPath})
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := pkgs[0]
+	if c := path.Clean(slashPath); p.ImportPath != c {
+		t.Errorf("expected %s; got %s", c, p.ImportPath)
+	}
+}
 
 func TestBindAndroid(t *testing.T) {
 	androidHome := os.Getenv("ANDROID_HOME")

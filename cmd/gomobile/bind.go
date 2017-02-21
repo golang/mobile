@@ -139,10 +139,11 @@ func runBind(cmd *command) error {
 
 func importPackages(args []string) ([]*build.Package, error) {
 	pkgs := make([]*build.Package, len(args))
-	for i, path := range args {
+	for i, a := range args {
+		a = path.Clean(a)
 		var err error
-		if pkgs[i], err = ctx.Import(path, cwd, build.ImportComment); err != nil {
-			return nil, fmt.Errorf("package %q: %v", path, err)
+		if pkgs[i], err = ctx.Import(a, cwd, build.ImportComment); err != nil {
+			return nil, fmt.Errorf("package %q: %v", a, err)
 		}
 	}
 	return pkgs, nil
