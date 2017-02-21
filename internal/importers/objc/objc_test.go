@@ -22,14 +22,14 @@ func TestImport(t *testing.T) {
 		methods []*Func
 	}{
 		{
-			ref:  importers.PkgRef{"Foundation/NSObjectP", "Hash"},
+			ref:  importers.PkgRef{Pkg: "Foundation/NSObjectP", Name: "Hash"},
 			name: "NSObject",
 			methods: []*Func{
 				&Func{Sig: "hash", GoName: "Hash", Ret: &Type{Kind: Uint, Decl: "NSUInteger"}},
 			},
 		},
 		{
-			ref:  importers.PkgRef{"Foundation/NSString", "StringWithContentsOfFileEncodingError"},
+			ref:  importers.PkgRef{Pkg: "Foundation/NSString", Name: "StringWithContentsOfFileEncodingError"},
 			name: "NSString",
 			methods: []*Func{
 				&Func{

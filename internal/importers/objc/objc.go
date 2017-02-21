@@ -415,7 +415,7 @@ func importModule(sdkPath, module string, identifiers []string, typeMap map[stri
 	clang := exec.Command("xcrun", "--sdk", "iphonesimulator", "clang", "-cc1", "-isysroot", sdkPath, "-ast-dump", "-fblocks", "-fobjc-arc", "-x", "objective-c", hFile)
 	out, err := clang.CombinedOutput()
 	if err != nil {
-		return nil, fmt.Errorf("clang failed to parse module: %v", err)
+		return nil, fmt.Errorf("clang failed to parse module: %v: %s", err, out)
 	}
 	p := &parser{
 		sdkPath: sdkPath,
