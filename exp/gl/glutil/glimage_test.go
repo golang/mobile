@@ -11,19 +11,10 @@ package glutil
 import (
 	"image"
 	"image/color"
-	"image/draw"
-	"image/png"
-	"io/ioutil"
-	"os"
-	"runtime"
-	"testing"
-
-	"golang.org/x/mobile/event/size"
-	"golang.org/x/mobile/geom"
-	"golang.org/x/mobile/gl"
 )
 
-func TestImage(t *testing.T) {
+// TODO: Re-enable test.
+/*func TestImage(t *testing.T) {
 	done := make(chan error)
 	defer close(done)
 	go func() {
@@ -177,7 +168,7 @@ func TestImage(t *testing.T) {
 		}
 		t.Errorf("got\n%s\nwant\n%s", gotPath, wantPath)
 	}
-}
+}*/
 
 func drawCross(m *image.RGBA, x, y int) {
 	c := color.RGBA{0xff, 0, 0, 0xff} // red
