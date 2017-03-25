@@ -150,16 +150,18 @@ func (v *refsSaver) findEmbeddingStructs(pkgpath string, pkg *ast.Package) {
 		}
 		var refs []PkgRef
 		for _, f := range t.Fields.List {
-			if len(f.Names) > 0 && !f.Names[0].IsExported() {
-				continue
-			}
 			sel, ok := f.Type.(*ast.SelectorExpr)
 			if !ok {
 				continue
 			}
-			if ref, ok := v.parseRef(sel); ok {
-				refs = append(refs, ref)
+			ref, ok := v.addRef(sel)
+			if !ok {
+				continue
 			}
+			if len(f.Names) > 0 && !f.Names[0].IsExported() {
+				continue
+			}
+			refs = append(refs, ref)
 		}
 		if len(refs) > 0 {
 			v.Embedders = append(v.Embedders, Struct{
@@ -197,7 +199,7 @@ func (v *refsSaver) importer() ast.Importer {
 	}
 }
 
-func (v *refsSaver) parseRef(sel *ast.SelectorExpr) (PkgRef, bool) {
+func (v *refsSaver) addRef(sel *ast.SelectorExpr) (PkgRef, bool) {
 	x, ok := sel.X.(*ast.Ident)
 	if !ok || x.Obj == nil {
 		return PkgRef{}, false
@@ -214,7 +216,12 @@ func (v *refsSaver) parseRef(sel *ast.SelectorExpr) (PkgRef, bool) {
 		return PkgRef{}, false
 	}
 	pkgPath = pkgPath[len(v.pkgPrefix):]
-	return PkgRef{Pkg: pkgPath, Name: sel.Sel.Name}, true
+	ref := PkgRef{Pkg: pkgPath, Name: sel.Sel.Name}
+	if _, exists := v.refMap[ref]; !exists {
+		v.refMap[ref] = struct{}{}
+		v.Refs = append(v.Refs, ref)
+	}
+	return ref, true
 }
 
 func (v *refsSaver) Visit(n ast.Node) ast.Visitor {
@@ -231,11 +238,7 @@ func (v *refsSaver) Visit(n ast.Node) ast.Visitor {
 		}
 	case *ast.SelectorExpr:
 		v.Names[n.Sel.Name] = struct{}{}
-		if ref, ok := v.parseRef(n); ok {
-			if _, exists := v.refMap[ref]; !exists {
-				v.refMap[ref] = struct{}{}
-				v.Refs = append(v.Refs, ref)
-			}
+		if _, ok := v.addRef(n); ok {
 			return nil
 		}
 	case *ast.FuncDecl:
