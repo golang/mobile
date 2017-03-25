@@ -17,7 +17,7 @@ const c = Name.Constant
 
 type T struct {
 	Name.Type
-	hidden Name.Type2
+	unexported Name.Type2
 }
 
 func f() {
@@ -37,6 +37,7 @@ func f() {
 		{Pkg: "some/pkg/Name", Name: "Constant"},
 		{Pkg: "some/pkg/Name", Name: "Type"},
 		{Pkg: "some/pkg/Name2", Name: "Func"},
+		{Pkg: "some/pkg/Name", Name: "Type2"},
 	}
 	if len(refs.Refs) != len(exps) {
 		t.Fatalf("expected %d references; got %d", len(exps), len(refs.Refs))
