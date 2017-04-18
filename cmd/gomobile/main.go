@@ -191,7 +191,7 @@ To install:
 	$ go get golang.org/x/mobile/cmd/gomobile
 	$ gomobile init
 
-At least Go 1.5 is required.
+At least Go 1.7 is required.
 For detailed instructions, see https://golang.org/wiki/Mobile.
 
 Usage:
