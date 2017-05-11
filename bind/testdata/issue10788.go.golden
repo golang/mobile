@@ -46,8 +46,10 @@ func proxyissue10788_TestInterface_DoSomeWork(refnum C.int32_t, param_s C.int32_
 	ref := _seq.FromRefNum(int32(refnum))
 	v := ref.Get().(issue10788.TestInterface)
 	// Must be a Go object
-	_param_s_ref := _seq.FromRefNum(int32(param_s))
-	_param_s := _param_s_ref.Get().(*issue10788.TestStruct)
+	var _param_s *issue10788.TestStruct
+	if _param_s_ref := _seq.FromRefNum(int32(param_s)); _param_s_ref != nil {
+		_param_s = _param_s_ref.Get().(*issue10788.TestStruct)
+	}
 	v.DoSomeWork(_param_s)
 }
 

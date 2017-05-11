@@ -101,8 +101,10 @@ func var_getvars_AString() C.nstring {
 //export var_setvars_AStructPtr
 func var_setvars_AStructPtr(v C.int32_t) {
 	// Must be a Go object
-	_v_ref := _seq.FromRefNum(int32(v))
-	_v := _v_ref.Get().(*vars.S)
+	var _v *vars.S
+	if _v_ref := _seq.FromRefNum(int32(v)); _v_ref != nil {
+		_v = _v_ref.Get().(*vars.S)
+	}
 	vars.AStructPtr = _v
 }
 

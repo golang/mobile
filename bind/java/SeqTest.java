@@ -448,8 +448,11 @@ public class SeqTest extends InstrumentationTestCase {
         return null;
       }
     }));
-	assertEquals("Go nil interface is null", null, Testpkg.newNullInterface());
-	assertEquals("Go nil struct pointer is null", null, Testpkg.newNullStruct());
+    assertEquals("Go nil interface is null", null, Testpkg.newNullInterface());
+    assertEquals("Go nil struct pointer is null", null, Testpkg.newNullStruct());
+
+    Issue20330 nullArger = new Issue20330();
+    assertTrue(nullArger.callWithNull(null));
   }
 
   public void testPassByteArray() {

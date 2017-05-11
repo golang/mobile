@@ -413,8 +413,10 @@ func (g *goGen) genRead(toVar, fromVar string, typ types.Type, mode varMode) {
 				return
 			}
 			g.Printf("// Must be a Go object\n")
-			g.Printf("%s_ref := _seq.FromRefNum(int32(%s))\n", toVar, fromVar)
-			g.Printf("%s := %s_ref.Get().(*%s%s)\n", toVar, toVar, g.pkgName(oPkg), o.Name())
+			g.Printf("var %s *%s%s\n", toVar, g.pkgName(oPkg), o.Name())
+			g.Printf("if %s_ref := _seq.FromRefNum(int32(%s)); %s_ref != nil {\n", toVar, fromVar, toVar)
+			g.Printf("  %s = %s_ref.Get().(*%s%s)\n", toVar, toVar, g.pkgName(oPkg), o.Name())
+			g.Printf("}\n")
 		default:
 			g.errorf("unsupported pointer type %s", t)
 		}

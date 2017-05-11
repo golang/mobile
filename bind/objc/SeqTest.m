@@ -395,6 +395,8 @@ static int numI = 0;
 	XCTAssertNil(i, @"NewNullInterface() returned %p; expected nil", i);
 	TestpkgS *s = TestpkgNewNullStruct();
 	XCTAssertNil(s, @"NewNullStruct() returned %p; expected nil", s);
+	TestpkgIssue20330 *nullArger = TestpkgNewIssue20330();
+	XCTAssertTrue([nullArger callWithNull:nil], @"Issue20330.CallWithNull failed");
 }
 
 - (void)testReturnsError {
