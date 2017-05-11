@@ -120,8 +120,10 @@ func (p *proxystructs_I) M() {
 //export proxystructs__Identity
 func proxystructs__Identity(param_s C.int32_t) C.int32_t {
 	// Must be a Go object
-	_param_s_ref := _seq.FromRefNum(int32(param_s))
-	_param_s := _param_s_ref.Get().(*structs.S)
+	var _param_s *structs.S
+	if _param_s_ref := _seq.FromRefNum(int32(param_s)); _param_s_ref != nil {
+		_param_s = _param_s_ref.Get().(*structs.S)
+	}
 	res_0 := structs.Identity(_param_s)
 	var _res_0 C.int32_t = _seq.NullRefNum
 	if res_0 != nil {
@@ -133,8 +135,10 @@ func proxystructs__Identity(param_s C.int32_t) C.int32_t {
 //export proxystructs__IdentityWithError
 func proxystructs__IdentityWithError(param_s C.int32_t) (C.int32_t, C.int32_t) {
 	// Must be a Go object
-	_param_s_ref := _seq.FromRefNum(int32(param_s))
-	_param_s := _param_s_ref.Get().(*structs.S)
+	var _param_s *structs.S
+	if _param_s_ref := _seq.FromRefNum(int32(param_s)); _param_s_ref != nil {
+		_param_s = _param_s_ref.Get().(*structs.S)
+	}
 	res_0, res_1 := structs.IdentityWithError(_param_s)
 	var _res_0 C.int32_t = _seq.NullRefNum
 	if res_0 != nil {

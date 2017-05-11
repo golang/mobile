@@ -266,6 +266,16 @@ func CallWithNull(_null NullTest, nuller NullTest) bool {
 	return _null == nil && nuller.Null() == nil
 }
 
+type Issue20330 struct{}
+
+func NewIssue20330() *Issue20330 {
+	return new(Issue20330)
+}
+
+func (i *Issue20330) CallWithNull(_null *Issue20330) bool {
+	return _null == nil
+}
+
 type Issue14168 interface {
 	F(seq int32)
 }
