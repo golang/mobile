@@ -232,7 +232,9 @@ func (g *Generator) cgoType(t types.Type) string {
 			return "int64_t"
 		case types.Uint8: // types.Byte
 			return "uint8_t"
-		// TODO(crawshaw): case types.Uint, types.Uint16, types.Uint32, types.Uint64:
+		// TODO(crawshaw): case types.Uint, types.Uint16, types.Uint32:
+		case types.Uint64:
+			return "uint64_t"
 		case types.Float32:
 			return "float"
 		case types.Float64, types.UntypedFloat:
