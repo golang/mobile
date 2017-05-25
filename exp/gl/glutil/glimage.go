@@ -151,9 +151,6 @@ func (img *Image) Upload() {
 // Release invalidates the Image and removes any underlying data structures.
 // The Image cannot be used after being deleted.
 func (img *Image) Release() {
-	if img.gltex == (gl.Texture{}) {
-		return
-	}
 
 	img.images.glctx.DeleteTexture(img.gltex)
 	img.gltex = gl.Texture{}
