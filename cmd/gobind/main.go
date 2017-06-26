@@ -92,6 +92,7 @@ func main() {
 	cmd := exec.Command("go", "install")
 	cmd.Args = append(cmd.Args, flag.Args()...)
 	cmd.Env = append(os.Environ(), "GOPATH="+ctx.GOPATH)
+	cmd.Env = append(cmd.Env, "GOROOT="+ctx.GOROOT)
 	if err := cmd.Run(); err != nil {
 		// Only report I/O errors. Errors from go install is expected for as-yet
 		// undefined Java wrappers.
