@@ -180,7 +180,8 @@ func genJavaPackages(ctx *build.Context, dir string, classes []*java.Class, embe
 		"-pkgdir="+filepath.Join(dir, "pkg", ctx.GOOS+"_"+ctx.GOARCH),
 		"Java/...",
 	)
-	cmd.Env = append(cmd.Env, "GOPATH="+dir)
+	cmd.Env = append(os.Environ(), "GOPATH="+dir)
+	cmd.Env = append(cmd.Env, "GOROOT="+ctx.GOROOT)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to go install the generated Java wrappers: %v: %s", err, string(out))
 	}
