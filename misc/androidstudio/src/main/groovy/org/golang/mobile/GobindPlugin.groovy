@@ -216,9 +216,11 @@ class GomobileTask extends BindTask implements OutputFileTask {
 		}
 		def cmd = ["bind", "-i"]
 		// Add the generated R and databinding classes to the classpath.
-		def classpath = project.files(javaCompile.classpath, javaCompile.destinationDir)
-		cmd << "-classpath"
-		cmd << classpath.join(File.pathSeparator)
+		if (javaCompile) {
+			def classpath = project.files(javaCompile.classpath, javaCompile.destinationDir)
+			cmd << "-classpath"
+			cmd << classpath.join(File.pathSeparator)
+		}
 		cmd << "-o"
 		cmd << outputFile.getAbsolutePath()
 		cmd << "-target"
