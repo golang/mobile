@@ -1051,7 +1051,7 @@ func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 			continue
 		}
 		s := g.funcSummary(obj, m)
-		g.Printf("- %s;\n", objcNameReplacer(lowerFirst(s.asMethod(g))))
+		g.Printf("- %s;\n", s.asMethod(g))
 	}
 	g.Printf("@end\n")
 }
