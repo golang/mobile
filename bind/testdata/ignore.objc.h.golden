@@ -14,7 +14,14 @@
 @protocol IgnoreI;
 @class IgnoreI;
 
-@interface IgnoreS : NSObject <goSeqRefInterface> {
+@protocol IgnoreI <NSObject>
+// skipped method I.Argument with unsupported parameter or return types
+
+// skipped method I.Result with unsupported parameter or return types
+
+@end
+
+@interface IgnoreS : NSObject <goSeqRefInterface, IgnoreI> {
 }
 @property(strong, readonly) id _ref;
 
@@ -25,13 +32,6 @@
 // skipped method S.Argument with unsupported parameter or return types
 
 // skipped method S.Result with unsupported parameter or return types
-
-@end
-
-@protocol IgnoreI <NSObject>
-// skipped method I.Argument with unsupported parameter or return types
-
-// skipped method I.Result with unsupported parameter or return types
 
 @end
 
