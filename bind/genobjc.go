@@ -178,12 +178,12 @@ func (g *ObjcGen) GenH() error {
 	}
 
 	// @interfaces
-	for _, s := range g.structs {
-		g.genStructH(s.obj, s.t)
-		g.Printf("\n")
-	}
 	for _, i := range g.interfaces {
 		g.genInterfaceH(i.obj, i.t)
+		g.Printf("\n")
+	}
+	for _, s := range g.structs {
+		g.genStructH(s.obj, s.t)
 		g.Printf("\n")
 	}
 
@@ -1041,8 +1041,8 @@ func (g *ObjcGen) genRelease(varName string, t types.Type, mode varMode) {
 func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 	g.Printf("@interface %s%s : ", g.namePrefix, obj.Name())
 	oinf := g.ostructs[obj]
+	var prots []string
 	if oinf != nil {
-		var prots []string
 		for _, sup := range oinf.supers {
 			if !sup.Protocol {
 				g.Printf(sup.Name)
@@ -1050,11 +1050,21 @@ func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 				prots = append(prots, sup.Name)
 			}
 		}
-		if len(prots) > 0 {
-			g.Printf(" <%s>", strings.Join(prots, ", "))
-		}
 	} else {
-		g.Printf("NSObject <goSeqRefInterface>")
+		g.Printf("NSObject")
+		prots = append(prots, "goSeqRefInterface")
+	}
+	pT := types.NewPointer(obj.Type())
+	for _, iface := range g.allIntf {
+		obj := iface.obj
+		if types.AssignableTo(pT, obj.Type()) {
+			n := fmt.Sprintf("%s%s", g.namePrefixOf(obj.Pkg()), obj.Name())
+			prots = append(prots, n)
+		}
+	}
+
+	if len(prots) > 0 {
+		g.Printf(" <%s>", strings.Join(prots, ", "))
 	}
 	g.Printf(" {\n")
 	g.Printf("}\n")

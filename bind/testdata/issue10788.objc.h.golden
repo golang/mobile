@@ -14,6 +14,11 @@
 @protocol Issue10788TestInterface;
 @class Issue10788TestInterface;
 
+@protocol Issue10788TestInterface <NSObject>
+- (void)doSomeWork:(Issue10788TestStruct*)s;
+- (void)multipleUnnamedParams:(long)p0 p1:(NSString*)p1 日本:(int64_t)日本;
+@end
+
 @interface Issue10788TestStruct : NSObject <goSeqRefInterface> {
 }
 @property(strong, readonly) id _ref;
@@ -22,11 +27,6 @@
 - (instancetype)init;
 - (NSString*)value;
 - (void)setValue:(NSString*)v;
-@end
-
-@protocol Issue10788TestInterface <NSObject>
-- (void)doSomeWork:(Issue10788TestStruct*)s;
-- (void)multipleUnnamedParams:(long)p0 p1:(NSString*)p1 日本:(int64_t)日本;
 @end
 
 @class Issue10788TestInterface;
