@@ -18,7 +18,8 @@
 }
 @property(strong, readonly) id _ref;
 
-- (id)initWithRef:(id)ref;
+- (instancetype)initWithRef:(id)ref;
+- (instancetype)init;
 - (NSString*)value;
 - (void)setValue:(NSString*)v;
 @end

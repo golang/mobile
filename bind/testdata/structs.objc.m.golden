@@ -12,9 +12,17 @@
 @implementation StructsS {
 }
 
-- (id)initWithRef:(id)ref {
+- (instancetype)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
+	return self;
+}
+
+- (instancetype)init {
+	self = [super init];
+	if (self) {
+		__ref = go_seq_from_refnum(new_structs_S());
+	}
 	return self;
 }
 
@@ -86,9 +94,17 @@
 @implementation StructsS2 {
 }
 
-- (id)initWithRef:(id)ref {
+- (instancetype)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
+	return self;
+}
+
+- (instancetype)init {
+	self = [super init];
+	if (self) {
+		__ref = go_seq_from_refnum(new_structs_S2());
+	}
 	return self;
 }
 

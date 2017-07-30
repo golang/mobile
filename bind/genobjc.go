@@ -33,6 +33,10 @@ type ObjcGen struct {
 	// Structs that embeds Objc wrapper types.
 	ostructs map[*types.TypeName]*objcClassInfo
 	modules  []string
+	// Constructors is a map from Go struct types to a list
+	// of exported constructor functions for the type, on the form
+	// func New<Type>(...) *Type
+	constructors map[*types.TypeName][]*types.Func
 }
 
 type objcClassInfo struct {
@@ -47,6 +51,7 @@ func (g *ObjcGen) Init(wrappers []*objc.Named) {
 	g.Generator.Init()
 	g.namePrefix = g.namePrefixOf(g.Pkg)
 	g.wrapMap = make(map[string]*objc.Named)
+	g.constructors = make(map[*types.TypeName][]*types.Func)
 	modMap := make(map[string]struct{})
 	for _, w := range wrappers {
 		g.wrapMap[w.GoName] = w
@@ -83,6 +88,11 @@ func (g *ObjcGen) Init(wrappers []*objc.Named) {
 			}
 		}
 		g.ostructs[s.obj] = inf
+	}
+	for _, f := range g.funcs {
+		if t := g.constructorType(f); t != nil {
+			g.constructors[t] = append(g.constructors[t], f)
+		}
 	}
 }
 
@@ -407,6 +417,7 @@ type funcSummary struct {
 	sig               *types.Signature
 	params, retParams []paramInfo
 	hasself           bool
+	initName          string
 }
 
 type paramInfo struct {
@@ -461,6 +472,11 @@ func (g *ObjcGen) funcSummary(obj *types.TypeName, f *types.Func) *funcSummary {
 			v.name = g.paramName(params, i)
 		}
 		s.params = append(s.params, v)
+	}
+	if obj != nil {
+		if pref := "New" + obj.Name(); strings.Index(f.Name(), pref) != -1 {
+			s.initName = "init" + f.Name()[len(pref):]
+		}
 	}
 	res := sig.Results()
 	switch res.Len() {
@@ -532,6 +548,10 @@ func (s *funcSummary) asFunc(g *ObjcGen) string {
 }
 
 func (s *funcSummary) asMethod(g *ObjcGen) string {
+	return fmt.Sprintf("(%s)%s%s", s.ret, objcNameReplacer(lowerFirst(s.name)), s.asSignature(g))
+}
+
+func (s *funcSummary) asSignature(g *ObjcGen) string {
 	var params []string
 	skip := 0
 	if s.hasself {
@@ -555,7 +575,19 @@ func (s *funcSummary) asMethod(g *ObjcGen) string {
 		}
 		params = append(params, fmt.Sprintf("%s:(%s)%s", key, g.objcType(p.typ)+"*", p.name))
 	}
-	return fmt.Sprintf("(%s)%s%s", s.ret, objcNameReplacer(lowerFirst(s.name)), strings.Join(params, " "))
+	return strings.Join(params, " ")
+}
+
+func (s *funcSummary) asInitSignature(g *ObjcGen) string {
+	var params []string
+	for i, p := range s.params {
+		var key string
+		if i > 0 {
+			key = p.name
+		}
+		params = append(params, fmt.Sprintf("%s:(%s)%s", key, g.objcType(p.typ), p.name))
+	}
+	return strings.Join(params, " ")
 }
 
 func (s *funcSummary) callMethod(g *ObjcGen) string {
@@ -1028,9 +1060,19 @@ func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 	g.Printf("}\n")
 	g.Printf("@property(strong, readonly) id _ref;\n")
 	g.Printf("\n")
-	g.Printf("- (id)initWithRef:(id)ref;\n")
-	if oinf != nil {
-		g.Printf("- (id)init;\n")
+	g.Printf("- (instancetype)initWithRef:(id)ref;\n")
+	cons := g.constructors[obj]
+	if oinf == nil {
+		for _, f := range cons {
+			if !g.isSigSupported(f.Type()) {
+				g.Printf("// skipped constructor %s.%s with unsupported parameter or return types\n\n", obj.Name(), f.Name())
+				continue
+			}
+			g.genInitH(obj, f)
+		}
+	}
+	if oinf != nil || len(cons) == 0 {
+		g.Printf("- (instancetype)init;\n")
 	}
 
 	// accessors to exported fields.
@@ -1064,15 +1106,21 @@ func (g *ObjcGen) genStructM(obj *types.TypeName, t *types.Struct) {
 	oinf := g.ostructs[obj]
 	g.Printf("@implementation %s%s {\n", g.namePrefix, obj.Name())
 	g.Printf("}\n\n")
-	g.Printf("- (id)initWithRef:(id)ref {\n")
+	g.Printf("- (instancetype)initWithRef:(id)ref {\n")
 	g.Indent()
 	g.Printf("self = [super init];\n")
 	g.Printf("if (self) { __ref = ref; }\n")
 	g.Printf("return self;\n")
 	g.Outdent()
 	g.Printf("}\n\n")
-	if oinf != nil {
-		g.Printf("- (id)init {\n")
+	cons := g.constructors[obj]
+	if oinf == nil {
+		for _, f := range cons {
+			g.genInitM(obj, f)
+		}
+	}
+	if oinf != nil || len(cons) == 0 {
+		g.Printf("- (instancetype)init {\n")
 		g.Indent()
 		g.Printf("self = [super init];\n")
 		g.Printf("if (self) {\n")
@@ -1107,6 +1155,51 @@ func (g *ObjcGen) genStructM(obj *types.TypeName, t *types.Struct) {
 		g.Printf("}\n\n")
 	}
 	g.Printf("@end\n\n")
+}
+
+func (g *ObjcGen) genInitH(obj *types.TypeName, f *types.Func) {
+	s := g.funcSummary(obj, f)
+	g.Printf("- (instancetype)%s%s;\n", s.initName, s.asInitSignature(g))
+}
+
+func (g *ObjcGen) genInitM(obj *types.TypeName, f *types.Func) {
+	s := g.funcSummary(obj, f)
+	g.Printf("- (instancetype)%s%s {\n", s.initName, s.asInitSignature(g))
+	g.Indent()
+	g.Printf("self = [super init];\n")
+	g.Printf("if (!self) return nil;\n")
+	for _, p := range s.params {
+		g.genWrite(p.name, p.typ, modeTransient)
+	}
+	// Constructors always return a mandatory *T and an optional error
+	if len(s.retParams) == 1 {
+		g.Printf("%s refnum = ", g.cgoType(s.retParams[0].typ))
+	} else {
+		g.Printf("struct proxy%s__%s_return res = ", g.pkgPrefix, s.goname)
+	}
+	g.Printf("proxy%s__%s(", g.pkgPrefix, s.goname)
+	for i, p := range s.params {
+		if i > 0 {
+			g.Printf(", ")
+		}
+		g.Printf("_%s", p.name)
+	}
+	g.Printf(");\n")
+	for _, p := range s.params {
+		g.genRelease(p.name, p.typ, modeTransient)
+	}
+	if len(s.retParams) == 2 {
+		g.Printf("int32_t refnum = res.r0;\n")
+		g.Printf("GoSeqRef *_err = go_seq_from_refnum(res.r1);\n")
+	}
+	g.Printf("__ref = go_seq_from_refnum(refnum);\n")
+	if len(s.retParams) == 2 {
+		g.Printf("if (_err != NULL)\n")
+		g.Printf("	return nil;\n")
+	}
+	g.Printf("return self;\n")
+	g.Outdent()
+	g.Printf("}\n\n")
 }
 
 func (g *ObjcGen) errorf(format string, args ...interface{}) {

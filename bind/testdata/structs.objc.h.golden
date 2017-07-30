@@ -19,7 +19,8 @@
 }
 @property(strong, readonly) id _ref;
 
-- (id)initWithRef:(id)ref;
+- (instancetype)initWithRef:(id)ref;
+- (instancetype)init;
 - (double)x;
 - (void)setX:(double)v;
 - (double)y;
@@ -32,7 +33,8 @@
 }
 @property(strong, readonly) id _ref;
 
-- (id)initWithRef:(id)ref;
+- (instancetype)initWithRef:(id)ref;
+- (instancetype)init;
 - (void)m;
 - (NSString*)string;
 @end

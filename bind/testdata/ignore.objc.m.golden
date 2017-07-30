@@ -12,9 +12,17 @@
 @implementation IgnoreS {
 }
 
-- (id)initWithRef:(id)ref {
+- (instancetype)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
+	return self;
+}
+
+- (instancetype)init {
+	self = [super init];
+	if (self) {
+		__ref = go_seq_from_refnum(new_ignore_S());
+	}
 	return self;
 }
 
