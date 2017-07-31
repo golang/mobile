@@ -7,6 +7,7 @@ package bind
 import (
 	"bytes"
 	"fmt"
+	"go/ast"
 	"go/token"
 	"go/types"
 	"io"
@@ -80,6 +81,7 @@ type Generator struct {
 	*Printer
 	Fset   *token.FileSet
 	AllPkg []*types.Package
+	AST    *ast.Package
 	Pkg    *types.Package
 	err    ErrorList
 
@@ -95,6 +97,17 @@ type Generator struct {
 	otherNames []*types.TypeName
 	// allIntf contains interfaces from all bound packages.
 	allIntf []interfaceInfo
+
+	docs pkgDocs
+}
+
+// A pkgDocs maps identifier names to its extracted documentation for a package.
+type pkgDocs map[string]*pkgDoc
+
+type pkgDoc struct {
+	doc string
+	// Struct or interface fields and methods.
+	members map[string]string
 }
 
 // pkgPrefix returns a prefix that disambiguates symbol names for binding
@@ -118,6 +131,7 @@ func (g *Generator) Init() {
 	g.pkgPrefix = pkgPrefix(g.Pkg)
 
 	if g.Pkg != nil {
+		g.parseDocs()
 		scope := g.Pkg.Scope()
 		hasExported := false
 		for _, name := range scope.Names() {
@@ -173,6 +187,128 @@ func (g *Generator) Init() {
 			}
 		}
 	}
+}
+
+func (d pkgDocs) Visit(n ast.Node) ast.Visitor {
+	switch n := n.(type) {
+	case *ast.GenDecl:
+		outerDoc := n.Doc
+		for _, spec := range n.Specs {
+			switch t := spec.(type) {
+			case *ast.TypeSpec:
+				d.addType(t, outerDoc)
+			case *ast.ValueSpec:
+				d.addValue(t, outerDoc)
+			}
+		}
+		return nil
+	case *ast.FuncDecl:
+		d.addFunc(n)
+		return nil
+	default:
+		return d
+	}
+}
+
+func (d pkgDocs) addValue(t *ast.ValueSpec, outerDoc *ast.CommentGroup) {
+	for _, n := range t.Names {
+		doc := t.Doc
+		if doc == nil {
+			doc = outerDoc
+		}
+		if doc != nil {
+			d[n.Name] = &pkgDoc{doc: doc.Text()}
+		}
+	}
+}
+
+func (d pkgDocs) addFunc(f *ast.FuncDecl) {
+	doc := f.Doc
+	if doc == nil {
+		return
+	}
+	fn := f.Name.Name
+	if r := f.Recv; r != nil {
+		// f is a method.
+		switch t := r.List[0].Type.(type) {
+		case *ast.Ident:
+			d.addMethod(t.Name, fn, doc.Text())
+		case *ast.StarExpr:
+			sname := t.X.(*ast.Ident).Name
+			d.addMethod(sname, fn, doc.Text())
+		}
+	} else {
+		// f is a function.
+		d[fn] = &pkgDoc{doc: doc.Text()}
+	}
+}
+
+func (d pkgDocs) addType(t *ast.TypeSpec, outerDoc *ast.CommentGroup) {
+	doc := t.Doc
+	if doc == nil {
+		doc = outerDoc
+	}
+	pd, exists := d[t.Name.Name]
+	if !exists {
+		pd = &pkgDoc{members: make(map[string]string)}
+		d[t.Name.Name] = pd
+	}
+	if doc != nil {
+		pd.doc = doc.Text()
+	}
+	var fields *ast.FieldList
+	switch t := t.Type.(type) {
+	case *ast.StructType:
+		fields = t.Fields
+	case *ast.InterfaceType:
+		fields = t.Methods
+	}
+	if fields != nil {
+		for _, field := range fields.List {
+			if field.Doc != nil {
+				pd.members[field.Names[0].Name] = field.Doc.Text()
+			}
+		}
+	}
+}
+
+func (d pkgDocs) addMethod(sname, fname, doc string) {
+	pd, exists := d[sname]
+	if !exists {
+		pd = &pkgDoc{members: make(map[string]string)}
+		d[sname] = pd
+	}
+	pd.members[fname] = doc
+}
+
+// parseDocs extracts documentation from a package in a form useful for lookups.
+func (g *Generator) parseDocs() {
+	g.docs = make(pkgDocs)
+	if g.AST != nil {
+		ast.Walk(g.docs, g.AST)
+	}
+}
+
+func (d *pkgDoc) Visit(n ast.Node) ast.Visitor {
+	switch n := n.(type) {
+	case *ast.Field:
+		d.members[n.Names[0].Name] = n.Doc.Text()
+	}
+	return d
+}
+
+func (d *pkgDoc) Doc() string {
+	if d == nil {
+		return ""
+	}
+	return d.doc
+}
+
+func (d *pkgDoc) Member(n string) string {
+	if d == nil {
+		return ""
+	}
+	return d.members[n]
 }
 
 // constructorType returns the type T for a function of the forms:

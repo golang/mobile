@@ -33,6 +33,9 @@
 - (int32_t)rand;
 @end
 
+/**
+ * not implementable
+ */
 @interface InterfacesI1 : NSObject <goSeqRefInterface> {
 }
 @property(strong, readonly) id _ref;
@@ -41,6 +44,9 @@
 - (void)j;
 @end
 
+/**
+ * not implementable
+ */
 @interface InterfacesI2 : NSObject <goSeqRefInterface> {
 }
 @property(strong, readonly) id _ref;
@@ -100,6 +106,10 @@ FOUNDATION_EXPORT id<InterfacesI> InterfacesSeven();
 - (int32_t)rand;
 @end
 
+/**
+ * implementable
+(the implementor has to find a source of I1s)
+ */
 @interface InterfacesI3 : NSObject <goSeqRefInterface, InterfacesI3> {
 }
 @property(strong, readonly) id _ref;

@@ -73,7 +73,12 @@ func goAndroidBind(pkgs []*build.Package, androidArchs []string) error {
 
 		typesPkgs, err := loadExportData(pkgs, env, androidArgs...)
 		if err != nil {
-			return fmt.Errorf("loadExportData failed %v", err)
+			return fmt.Errorf("loadExportData failed: %v", err)
+		}
+
+		astPkgs, err := parseAST(pkgs)
+		if err != nil {
+			return fmt.Errorf("parseAST failed: %v", err)
 		}
 
 		binder, err := newBinder(typesPkgs)
@@ -106,12 +111,12 @@ func goAndroidBind(pkgs []*build.Package, androidArchs []string) error {
 		repo := filepath.Clean(filepath.Join(p.Dir, "..")) // golang.org/x/mobile directory.
 
 		jclsDir := filepath.Join(androidDir, "src", "main", "java")
-		for _, pkg := range binder.pkgs {
-			if err := binder.GenJava(pkg, binder.pkgs, classes, srcDir, jclsDir); err != nil {
+		for i, pkg := range binder.pkgs {
+			if err := binder.GenJava(pkg, astPkgs[i], binder.pkgs, classes, srcDir, jclsDir); err != nil {
 				return err
 			}
 		}
-		if err := binder.GenJava(nil, binder.pkgs, classes, srcDir, jclsDir); err != nil {
+		if err := binder.GenJava(nil, nil, binder.pkgs, classes, srcDir, jclsDir); err != nil {
 			return err
 		}
 		if err := binder.GenJavaSupport(srcDir); err != nil {
@@ -145,7 +150,10 @@ func goAndroidBind(pkgs []*build.Package, androidArchs []string) error {
 		}
 	}
 
-	return buildAAR(androidDir, pkgs, androidArchs)
+	if err := buildAAR(androidDir, pkgs, androidArchs); err != nil {
+		return err
+	}
+	return buildSrcJar(androidDir)
 }
 
 var androidMainFile = []byte(`
@@ -158,6 +166,26 @@ import (
 
 func main() {}
 `)
+
+func buildSrcJar(androidDir string) error {
+	var out io.Writer = ioutil.Discard
+	if !buildN {
+		ext := filepath.Ext(buildO)
+		f, err := os.Create(buildO[:len(buildO)-len(ext)] + "-sources.jar")
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if cerr := f.Close(); err == nil {
+				err = cerr
+			}
+		}()
+		out = f
+	}
+
+	src := filepath.Join(androidDir, "src/main/java")
+	return writeJar(out, src)
+}
 
 // AAR is the format for the binary distribution of an Android Library Project
 // and it is a ZIP archive with extension .aar.
@@ -362,6 +390,10 @@ func buildJar(w io.Writer, srcDir string) error {
 	if buildX {
 		printcmd("jar c -C %s .", dst)
 	}
+	return writeJar(w, dst)
+}
+
+func writeJar(w io.Writer, dir string) error {
 	if buildN {
 		return nil
 	}
@@ -378,14 +410,14 @@ func buildJar(w io.Writer, srcDir string) error {
 	}
 	fmt.Fprintf(f, manifestHeader)
 
-	err = filepath.Walk(dst, func(path string, info os.FileInfo, err error) error {
+	err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 		if info.IsDir() {
 			return nil
 		}
-		out, err := jarwcreate(filepath.ToSlash(path[len(dst)+1:]))
+		out, err := jarwcreate(filepath.ToSlash(path[len(dir)+1:]))
 		if err != nil {
 			return err
 		}
