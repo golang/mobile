@@ -31,6 +31,11 @@ func goIOSBind(pkgs []*build.Package) error {
 		return err
 	}
 
+	astPkgs, err := parseAST(pkgs)
+	if err != nil {
+		return err
+	}
+
 	binder, err := newBinder(typesPkgs)
 	if err != nil {
 		return err
@@ -65,11 +70,11 @@ func goIOSBind(pkgs []*build.Package) error {
 
 	fileBases := make([]string, len(typesPkgs)+1)
 	for i, pkg := range binder.pkgs {
-		if fileBases[i], err = binder.GenObjc(pkg, binder.pkgs, srcDir, wrappers); err != nil {
+		if fileBases[i], err = binder.GenObjc(pkg, astPkgs[i], binder.pkgs, srcDir, wrappers); err != nil {
 			return err
 		}
 	}
-	if fileBases[len(fileBases)-1], err = binder.GenObjc(nil, binder.pkgs, srcDir, wrappers); err != nil {
+	if fileBases[len(fileBases)-1], err = binder.GenObjc(nil, nil, binder.pkgs, srcDir, wrappers); err != nil {
 		return err
 	}
 	if err := binder.GenObjcSupport(srcDir); err != nil {

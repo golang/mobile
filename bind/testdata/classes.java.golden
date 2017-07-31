@@ -27,6 +27,9 @@ public final class Future implements Seq.GoObject, java.util.concurrent.Future {
     public final native void setFuture(java.util.concurrent.Future v);
     
     @Override public native java.lang.Object get() throws java.lang.InterruptedException, java.util.concurrent.ExecutionException;
+    /**
+     * Use a trailing underscore to override multiple overloaded methods.
+     */
     @Override public native java.lang.Object get(long p0, java.util.concurrent.TimeUnit p1) throws java.lang.InterruptedException, java.util.concurrent.ExecutionException, java.util.concurrent.TimeoutException;
 }
 

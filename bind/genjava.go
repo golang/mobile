@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"go/constant"
 	"go/types"
+	"html"
 	"math"
 	"reflect"
 	"regexp"
@@ -271,6 +272,8 @@ func (g *JavaGen) genStruct(s structInfo) {
 		}
 	}
 
+	doc := g.docs[n]
+	g.javadoc(doc.Doc())
 	g.Printf("public final class %s", n)
 	if jinf != nil {
 		if jinf.extends != nil {
@@ -308,7 +311,11 @@ func (g *JavaGen) genStruct(s structInfo) {
 			g.Printf("// skipped field %s.%s with unsupported type: %T\n\n", n, f.Name(), t)
 			continue
 		}
+
+		fdoc := doc.Member(f.Name())
+		g.javadoc(fdoc)
 		g.Printf("public final native %s get%s();\n", g.javaType(f.Type()), f.Name())
+		g.javadoc(fdoc)
 		g.Printf("public final native void set%s(%s v);\n\n", f.Name(), g.javaType(f.Type()))
 	}
 
@@ -318,6 +325,7 @@ func (g *JavaGen) genStruct(s structInfo) {
 			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", n, m.Name())
 			continue
 		}
+		g.javadoc(doc.Member(m.Name()))
 		var jm *java.Func
 		hasThis := false
 		if jinf != nil {
@@ -340,6 +348,14 @@ func (g *JavaGen) genStruct(s structInfo) {
 
 	g.Outdent()
 	g.Printf("}\n\n")
+}
+
+func (g *JavaGen) javadoc(doc string) {
+	if doc == "" {
+		return
+	}
+	// JavaDoc expects HTML-escaped documentation.
+	g.Printf("/**\n * %s */\n", html.EscapeString(doc))
 }
 
 // hasThis returns whether a method has an implicit "this" parameter.
@@ -372,6 +388,7 @@ func (g *JavaGen) hasThis(sName string, m *types.Func) bool {
 }
 
 func (g *JavaGen) genConstructor(f *types.Func, n string, jcls bool) {
+	g.javadoc(g.docs[f.Name()].Doc())
 	g.Printf("public %s(", n)
 	g.genFuncArgs(f, nil, false)
 	g.Printf(") {\n")
@@ -511,6 +528,8 @@ func (g *JavaGen) genInterface(iface interfaceInfo) {
 			exts = append(exts, n)
 		}
 	}
+	doc := g.docs[iface.obj.Name()]
+	g.javadoc(doc.Doc())
 	g.Printf("public interface %s", iface.obj.Name())
 	if len(exts) > 0 {
 		g.Printf(" extends %s", strings.Join(exts, ", "))
@@ -523,6 +542,7 @@ func (g *JavaGen) genInterface(iface interfaceInfo) {
 			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", iface.obj.Name(), m.Name())
 			continue
 		}
+		g.javadoc(doc.Member(m.Name()))
 		g.Printf("public ")
 		g.genFuncSignature(m, nil, false)
 	}
@@ -804,10 +824,13 @@ func (g *JavaGen) genVar(o *types.Var) {
 	}
 	jType := g.javaType(o.Type())
 
+	doc := g.docs[o.Name()].Doc()
 	// setter
+	g.javadoc(doc)
 	g.Printf("public static native void set%s(%s v);\n", o.Name(), jType)
 
 	// getter
+	g.javadoc(doc)
 	g.Printf("public static native %s get%s();\n\n", jType, o.Name())
 }
 
@@ -1005,6 +1028,7 @@ func (g *JavaGen) genConst(o *types.Const) {
 		}
 		val = fmt.Sprintf("%g", f)
 	}
+	g.javadoc(g.docs[o.Name()].Doc())
 	g.Printf("public static final %s %s = %s;\n", g.javaType(o.Type()), o.Name(), val)
 }
 

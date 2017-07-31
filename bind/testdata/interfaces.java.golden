@@ -32,6 +32,9 @@ package interfaces;
 
 import go.Seq;
 
+/**
+ * not implementable
+ */
 public interface I1 {
     public void j();
     
@@ -45,6 +48,9 @@ package interfaces;
 
 import go.Seq;
 
+/**
+ * not implementable
+ */
 public interface I2 {
     public void g();
     
@@ -58,6 +64,10 @@ package interfaces;
 
 import go.Seq;
 
+/**
+ * implementable
+(the implementor has to find a source of I1s)
+ */
 public interface I3 {
     public I1 f();
     

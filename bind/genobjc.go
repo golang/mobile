@@ -194,6 +194,7 @@ func (g *ObjcGen) GenH() error {
 			g.Printf("// skipped const %s with unsupported type: %T\n\n", obj.Name(), obj)
 			continue
 		}
+		g.objcdoc(g.docs[obj.Name()].Doc())
 		switch b := obj.Type().(*types.Basic); b.Kind() {
 		case types.String, types.UntypedString:
 			g.Printf("FOUNDATION_EXPORT NSString* const %s%s;\n", g.namePrefix, obj.Name())
@@ -214,6 +215,7 @@ func (g *ObjcGen) GenH() error {
 				continue
 			}
 			objcType := g.objcType(obj.Type())
+			g.objcdoc(g.docs[obj.Name()].Doc())
 			g.Printf("+ (%s) %s;\n", objcType, objcNameReplacer(lowerFirst(obj.Name())))
 			g.Printf("+ (void) set%s:(%s)v;\n", obj.Name(), objcType)
 			g.Printf("\n")
@@ -628,6 +630,7 @@ func (g *ObjcGen) genFuncH(obj *types.Func) {
 		return
 	}
 	if s := g.funcSummary(nil, obj); s != nil {
+		g.objcdoc(g.docs[obj.Name()].Doc())
 		g.Printf("FOUNDATION_EXPORT %s;\n", s.asFunc(g))
 	}
 }
@@ -856,6 +859,7 @@ func (g *ObjcGen) genFunc(s *funcSummary, objName string) {
 }
 
 func (g *ObjcGen) genInterfaceInterface(obj *types.TypeName, summary ifaceSummary, isProtocol bool) {
+	g.objcdoc(g.docs[obj.Name()].Doc())
 	g.Printf("@interface %[1]s%[2]s : ", g.namePrefix, obj.Name())
 	if isErrorType(obj.Type()) {
 		g.Printf("NSError")
@@ -1039,6 +1043,8 @@ func (g *ObjcGen) genRelease(varName string, t types.Type, mode varMode) {
 }
 
 func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
+	doc := g.docs[obj.Name()]
+	g.objcdoc(doc.Doc())
 	g.Printf("@interface %s%s : ", g.namePrefix, obj.Name())
 	oinf := g.ostructs[obj]
 	var prots []string
@@ -1092,6 +1098,7 @@ func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 			continue
 		}
 		name, typ := f.Name(), g.objcFieldType(f.Type())
+		g.objcdoc(doc.Member(f.Name()))
 		g.Printf("- (%s)%s;\n", typ, objcNameReplacer(lowerFirst(name)))
 		g.Printf("- (void)set%s:(%s)v;\n", name, typ)
 	}
@@ -1103,9 +1110,17 @@ func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 			continue
 		}
 		s := g.funcSummary(obj, m)
+		g.objcdoc(doc.Member(m.Name()))
 		g.Printf("- %s;\n", s.asMethod(g))
 	}
 	g.Printf("@end\n")
+}
+
+func (g *ObjcGen) objcdoc(doc string) {
+	if doc == "" {
+		return
+	}
+	g.Printf("/**\n * %s */\n", doc)
 }
 
 func (g *ObjcGen) genStructM(obj *types.TypeName, t *types.Struct) {
@@ -1169,6 +1184,8 @@ func (g *ObjcGen) genStructM(obj *types.TypeName, t *types.Struct) {
 
 func (g *ObjcGen) genInitH(obj *types.TypeName, f *types.Func) {
 	s := g.funcSummary(obj, f)
+	doc := g.docs[f.Name()]
+	g.objcdoc(doc.Doc())
 	g.Printf("- (instancetype)%s%s;\n", s.initName, s.asInitSignature(g))
 }
 
