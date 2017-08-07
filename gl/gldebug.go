@@ -1123,8 +1123,6 @@ func (v Enum) String() string {
 		return "TEXTURE_WRAP_R"
 	case 0x911b:
 		return "TIMEOUT_EXPIRED"
-	case 0xffffffffffffffff:
-		return "TIMEOUT_IGNORED"
 	case 0x8e22:
 		return "TRANSFORM_FEEDBACK"
 	case 0x8e24:
