@@ -198,7 +198,7 @@ func (b *binder) GenObjcSupport(outdir string) error {
 	return copyFile(filepath.Join(outdir, "seq.h"), filepath.Join(objcPkg.Dir, "seq.h"))
 }
 
-func (b *binder) GenObjc(pkg *types.Package, astPkg *ast.Package, allPkg []*types.Package, outdir string, wrappers []*objc.Named) (string, error) {
+func (b *binder) GenObjc(pkg *types.Package, files []*ast.File, allPkg []*types.Package, outdir string, wrappers []*objc.Named) (string, error) {
 	if pkg == nil {
 		bindPrefix = ""
 	}
@@ -227,7 +227,7 @@ func (b *binder) GenObjc(pkg *types.Package, astPkg *ast.Package, allPkg []*type
 			Fset:    b.fset,
 			AllPkg:  allPkg,
 			Pkg:     pkg,
-			AST:     astPkg,
+			Files:   files,
 		},
 		Prefix: bindPrefix,
 	}
@@ -495,7 +495,7 @@ func GenClasses(pkgs []*build.Package, srcDir, jpkgSrc string) ([]*java.Class, e
 	return classes, nil
 }
 
-func (b *binder) GenJava(pkg *types.Package, astPkg *ast.Package, allPkg []*types.Package, classes []*java.Class, outdir, androidDir string) error {
+func (b *binder) GenJava(pkg *types.Package, files []*ast.File, allPkg []*types.Package, classes []*java.Class, outdir, androidDir string) error {
 	jpkgname := bind.JavaPkgName(bindJavaPkg, pkg)
 	javadir := filepath.Join(androidDir, strings.Replace(jpkgname, ".", "/", -1))
 	var className string
@@ -525,7 +525,7 @@ func (b *binder) GenJava(pkg *types.Package, astPkg *ast.Package, allPkg []*type
 			Fset:    b.fset,
 			AllPkg:  allPkg,
 			Pkg:     pkg,
-			AST:     astPkg,
+			Files:   files,
 		},
 	}
 	g.Init(classes)
@@ -723,22 +723,20 @@ func loadExportData(pkgs []*build.Package, env []string, args ...string) ([]*typ
 	return typePkgs, nil
 }
 
-func parseAST(pkgs []*build.Package) ([]*ast.Package, error) {
+func parse(pkgs []*build.Package) ([][]*ast.File, error) {
 	fset := token.NewFileSet()
-	var astPkgs []*ast.Package
+	var astPkgs [][]*ast.File
 	for _, pkg := range pkgs {
 		fileNames := append(append([]string{}, pkg.GoFiles...), pkg.CgoFiles...)
-		files := make(map[string]*ast.File)
+		var files []*ast.File
 		for _, name := range fileNames {
 			f, err := parser.ParseFile(fset, filepath.Join(pkg.Dir, name), nil, parser.ParseComments)
 			if err != nil {
 				return nil, err
 			}
-			files[name] = f
+			files = append(files, f)
 		}
-		// Ignore errors (from unknown packages).
-		astPkg, _ := ast.NewPackage(fset, files, nil, nil)
-		astPkgs = append(astPkgs, astPkg)
+		astPkgs = append(astPkgs, files)
 	}
 	return astPkgs, nil
 }

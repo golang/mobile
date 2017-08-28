@@ -49,12 +49,24 @@
 - (NSString*)sf;
 - (void)setSF:(NSString*)v;
 /**
+ * Anonymous field.
+ */
+- (DocS2*)s2;
+- (void)setS2:(DocS2*)v;
+/**
+ * Multiple fields.
+ */
+- (NSString*)f1;
+- (void)setF1:(NSString*)v;
+/**
+ * Multiple fields.
+ */
+- (NSString*)f2;
+- (void)setF2:(NSString*)v;
+/**
  * After is another method.
  */
 - (void)after;
-/**
- * Before is a method.
- */
 - (void)before;
 @end
 

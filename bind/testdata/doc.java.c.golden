@@ -90,6 +90,51 @@ Java_doc_S_getSF(JNIEnv *env, jobject this) {
     return _r0;
 }
 
+JNIEXPORT void JNICALL
+Java_doc_S_setS2(JNIEnv *env, jobject this, jobject v) {
+    int32_t o = go_seq_to_refnum_go(env, this);
+    int32_t _v = go_seq_to_refnum(env, v);
+    proxydoc_S_S2_Set(o, _v);
+}
+
+JNIEXPORT jobject JNICALL
+Java_doc_S_getS2(JNIEnv *env, jobject this) {
+    int32_t o = go_seq_to_refnum_go(env, this);
+    int32_t r0 = proxydoc_S_S2_Get(o);
+    jobject _r0 = go_seq_from_refnum(env, r0, proxy_class_doc_S2, proxy_class_doc_S2_cons);
+    return _r0;
+}
+
+JNIEXPORT void JNICALL
+Java_doc_S_setF1(JNIEnv *env, jobject this, jstring v) {
+    int32_t o = go_seq_to_refnum_go(env, this);
+    nstring _v = go_seq_from_java_string(env, v);
+    proxydoc_S_F1_Set(o, _v);
+}
+
+JNIEXPORT jstring JNICALL
+Java_doc_S_getF1(JNIEnv *env, jobject this) {
+    int32_t o = go_seq_to_refnum_go(env, this);
+    nstring r0 = proxydoc_S_F1_Get(o);
+    jstring _r0 = go_seq_to_java_string(env, r0);
+    return _r0;
+}
+
+JNIEXPORT void JNICALL
+Java_doc_S_setF2(JNIEnv *env, jobject this, jstring v) {
+    int32_t o = go_seq_to_refnum_go(env, this);
+    nstring _v = go_seq_from_java_string(env, v);
+    proxydoc_S_F2_Set(o, _v);
+}
+
+JNIEXPORT jstring JNICALL
+Java_doc_S_getF2(JNIEnv *env, jobject this) {
+    int32_t o = go_seq_to_refnum_go(env, this);
+    nstring r0 = proxydoc_S_F2_Get(o);
+    jstring _r0 = go_seq_to_java_string(env, r0);
+    return _r0;
+}
+
 JNIEXPORT jobject JNICALL
 Java_doc_S2__1_1New(JNIEnv *env, jclass clazz) {
     int32_t refnum = new_doc_S2();

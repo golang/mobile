@@ -76,7 +76,7 @@ func goAndroidBind(pkgs []*build.Package, androidArchs []string) error {
 			return fmt.Errorf("loadExportData failed: %v", err)
 		}
 
-		astPkgs, err := parseAST(pkgs)
+		astPkgs, err := parse(pkgs)
 		if err != nil {
 			return fmt.Errorf("parseAST failed: %v", err)
 		}
