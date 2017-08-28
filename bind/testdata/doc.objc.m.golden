@@ -60,6 +60,58 @@
 	proxydoc_S_SF_Set(refnum, _v);
 }
 
+- (DocS2*)s2 {
+	int32_t refnum = go_seq_go_to_refnum(self._ref);
+	int32_t r0 = proxydoc_S_S2_Get(refnum);
+	DocS2* _r0 = nil;
+	GoSeqRef* _r0_ref = go_seq_from_refnum(r0);
+	if (_r0_ref != NULL) {
+		_r0 = _r0_ref.obj;
+		if (_r0 == nil) {
+			_r0 = [[DocS2 alloc] initWithRef:_r0_ref];
+		}
+	}
+	return _r0;
+}
+
+- (void)setS2:(DocS2*)v {
+	int32_t refnum = go_seq_go_to_refnum(self._ref);
+	int32_t _v;
+	if ([v conformsToProtocol:@protocol(goSeqRefInterface)]) {
+		id<goSeqRefInterface> v_proxy = (id<goSeqRefInterface>)(v);
+		_v = go_seq_go_to_refnum(v_proxy._ref);
+	} else {
+		_v = go_seq_to_refnum(v);
+	}
+	proxydoc_S_S2_Set(refnum, _v);
+}
+
+- (NSString*)f1 {
+	int32_t refnum = go_seq_go_to_refnum(self._ref);
+	nstring r0 = proxydoc_S_F1_Get(refnum);
+	NSString *_r0 = go_seq_to_objc_string(r0);
+	return _r0;
+}
+
+- (void)setF1:(NSString*)v {
+	int32_t refnum = go_seq_go_to_refnum(self._ref);
+	nstring _v = go_seq_from_objc_string(v);
+	proxydoc_S_F1_Set(refnum, _v);
+}
+
+- (NSString*)f2 {
+	int32_t refnum = go_seq_go_to_refnum(self._ref);
+	nstring r0 = proxydoc_S_F2_Get(refnum);
+	NSString *_r0 = go_seq_to_objc_string(r0);
+	return _r0;
+}
+
+- (void)setF2:(NSString*)v {
+	int32_t refnum = go_seq_go_to_refnum(self._ref);
+	nstring _v = go_seq_from_objc_string(v);
+	proxydoc_S_F2_Set(refnum, _v);
+}
+
 - (void)after {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	proxydoc_S_After(refnum);

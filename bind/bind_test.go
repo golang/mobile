@@ -74,7 +74,7 @@ func fileRefs(t *testing.T, filename string, pkgPrefix string) *importers.Refere
 	return refs
 }
 
-func typeCheck(t *testing.T, filename string, gopath string) (*types.Package, *ast.Package) {
+func typeCheck(t *testing.T, filename string, gopath string) (*types.Package, *ast.File) {
 	f, err := parser.ParseFile(fset, filename, nil, parser.AllErrors|parser.ParseComments)
 	if err != nil {
 		t.Fatalf("%s: %v", filename, err)
@@ -98,9 +98,7 @@ func typeCheck(t *testing.T, filename string, gopath string) (*types.Package, *a
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Ignore errors (probably from unknown imports): we only need the package documentation.
-	astPkg, _ := ast.NewPackage(fset, map[string]*ast.File{filename: f}, nil, nil)
-	return pkg, astPkg
+	return pkg, f
 }
 
 // diff runs the command "diff a b" and returns its output
@@ -136,9 +134,9 @@ func writeTempFile(t *testing.T, name string, contents []byte) string {
 func TestGenObjc(t *testing.T) {
 	for _, filename := range tests {
 		var pkg *types.Package
-		var astPkg *ast.Package
+		var file *ast.File
 		if filename != "" {
-			pkg, astPkg = typeCheck(t, filename, "")
+			pkg, file = typeCheck(t, filename, "")
 		}
 
 		var buf bytes.Buffer
@@ -146,7 +144,7 @@ func TestGenObjc(t *testing.T) {
 			Generator: &Generator{
 				Printer: &Printer{Buf: &buf, IndentEach: []byte("\t")},
 				Fset:    fset,
-				AST:     astPkg,
+				Files:   []*ast.File{file},
 				Pkg:     pkg,
 			},
 		}
@@ -285,7 +283,7 @@ func TestGenJava(t *testing.T) {
 	}
 	for _, filename := range allTests {
 		var pkg *types.Package
-		var astPkg *ast.Package
+		var file *ast.File
 		var buf bytes.Buffer
 		var cg *ClassGen
 		var classes []*java.Class
@@ -314,13 +312,13 @@ func TestGenJava(t *testing.T) {
 				genJavaPackages(t, tmpGopath, cg)
 				cg.Buf = &buf
 			}
-			pkg, astPkg = typeCheck(t, filename, tmpGopath)
+			pkg, file = typeCheck(t, filename, tmpGopath)
 		}
 		g := &JavaGen{
 			Generator: &Generator{
 				Printer: &Printer{Buf: &buf, IndentEach: []byte("    ")},
 				Fset:    fset,
-				AST:     astPkg,
+				Files:   []*ast.File{file},
 				Pkg:     pkg,
 			},
 		}
@@ -503,7 +501,7 @@ func testGenGo(t *testing.T, filename string, buf *bytes.Buffer, pkg *types.Pack
 
 func TestCustomPrefix(t *testing.T) {
 	const datafile = "testdata/customprefix.go"
-	pkg, astPkg := typeCheck(t, datafile, "")
+	pkg, file := typeCheck(t, datafile, "")
 
 	type testCase struct {
 		golden string
@@ -516,7 +514,7 @@ func TestCustomPrefix(t *testing.T) {
 			Printer: &Printer{Buf: &buf, IndentEach: []byte("    ")},
 			Fset:    fset,
 			AllPkg:  []*types.Package{pkg},
-			AST:     astPkg,
+			Files:   []*ast.File{file},
 			Pkg:     pkg,
 		},
 	}
@@ -647,5 +645,17 @@ func TestLowerFirst(t *testing.T) {
 		if got := lowerFirst(tc.in); got != tc.want {
 			t.Errorf("lowerFirst(%q) = %q; want %q", tc.in, got, tc.want)
 		}
+	}
+}
+
+// Test that typeName work for anonymous qualified fields.
+func TestSelectorExprTypeName(t *testing.T) {
+	e, err := parser.ParseExprFrom(fset, "", "struct { bytes.Buffer }", 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ft := e.(*ast.StructType).Fields.List[0].Type
+	if got, want := typeName(ft), "Buffer"; got != want {
+		t.Errorf("got: %q; want %q", got, want)
 	}
 }

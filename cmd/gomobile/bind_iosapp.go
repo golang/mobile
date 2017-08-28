@@ -31,7 +31,7 @@ func goIOSBind(pkgs []*build.Package) error {
 		return err
 	}
 
-	astPkgs, err := parseAST(pkgs)
+	astPkgs, err := parse(pkgs)
 	if err != nil {
 		return err
 	}

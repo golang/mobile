@@ -41,6 +41,58 @@ func proxydoc_S_SF_Get(refnum C.int32_t) C.nstring {
 	return _v
 }
 
+//export proxydoc_S_S2_Set
+func proxydoc_S_S2_Set(refnum C.int32_t, v C.int32_t) {
+	ref := _seq.FromRefNum(int32(refnum))
+	// Must be a Go object
+	var _v *doc.S2
+	if _v_ref := _seq.FromRefNum(int32(v)); _v_ref != nil {
+		_v = _v_ref.Get().(*doc.S2)
+	}
+	ref.Get().(*doc.S).S2 = _v
+}
+
+//export proxydoc_S_S2_Get
+func proxydoc_S_S2_Get(refnum C.int32_t) C.int32_t {
+	ref := _seq.FromRefNum(int32(refnum))
+	v := ref.Get().(*doc.S).S2
+	var _v C.int32_t = _seq.NullRefNum
+	if v != nil {
+		_v = C.int32_t(_seq.ToRefNum(v))
+	}
+	return _v
+}
+
+//export proxydoc_S_F1_Set
+func proxydoc_S_F1_Set(refnum C.int32_t, v C.nstring) {
+	ref := _seq.FromRefNum(int32(refnum))
+	_v := decodeString(v)
+	ref.Get().(*doc.S).F1 = _v
+}
+
+//export proxydoc_S_F1_Get
+func proxydoc_S_F1_Get(refnum C.int32_t) C.nstring {
+	ref := _seq.FromRefNum(int32(refnum))
+	v := ref.Get().(*doc.S).F1
+	_v := encodeString(v)
+	return _v
+}
+
+//export proxydoc_S_F2_Set
+func proxydoc_S_F2_Set(refnum C.int32_t, v C.nstring) {
+	ref := _seq.FromRefNum(int32(refnum))
+	_v := decodeString(v)
+	ref.Get().(*doc.S).F2 = _v
+}
+
+//export proxydoc_S_F2_Get
+func proxydoc_S_F2_Get(refnum C.int32_t) C.nstring {
+	ref := _seq.FromRefNum(int32(refnum))
+	v := ref.Get().(*doc.S).F2
+	_v := encodeString(v)
+	return _v
+}
+
 //export proxydoc_S_After
 func proxydoc_S_After(refnum C.int32_t) {
 	ref := _seq.FromRefNum(int32(refnum))

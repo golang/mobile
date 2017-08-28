@@ -81,7 +81,7 @@ type Generator struct {
 	*Printer
 	Fset   *token.FileSet
 	AllPkg []*types.Package
-	AST    *ast.Package
+	Files  []*ast.File
 	Pkg    *types.Package
 	err    ErrorList
 
@@ -101,7 +101,7 @@ type Generator struct {
 	docs pkgDocs
 }
 
-// A pkgDocs maps identifier names to its extracted documentation for a package.
+// A pkgDocs maps the name of each exported package-level declaration to its extracted documentation.
 type pkgDocs map[string]*pkgDoc
 
 type pkgDoc struct {
@@ -189,29 +189,34 @@ func (g *Generator) Init() {
 	}
 }
 
-func (d pkgDocs) Visit(n ast.Node) ast.Visitor {
-	switch n := n.(type) {
-	case *ast.GenDecl:
-		outerDoc := n.Doc
-		for _, spec := range n.Specs {
-			switch t := spec.(type) {
-			case *ast.TypeSpec:
-				d.addType(t, outerDoc)
-			case *ast.ValueSpec:
-				d.addValue(t, outerDoc)
+// parseDocs extracts documentation from a package in a form useful for lookups.
+func (g *Generator) parseDocs() {
+	d := make(pkgDocs)
+	for _, f := range g.Files {
+		for _, decl := range f.Decls {
+			switch decl := decl.(type) {
+			case *ast.GenDecl:
+				for _, spec := range decl.Specs {
+					switch spec := spec.(type) {
+					case *ast.TypeSpec:
+						d.addType(spec, decl.Doc)
+					case *ast.ValueSpec:
+						d.addValue(spec, decl.Doc)
+					}
+				}
+			case *ast.FuncDecl:
+				d.addFunc(decl)
 			}
 		}
-		return nil
-	case *ast.FuncDecl:
-		d.addFunc(n)
-		return nil
-	default:
-		return d
 	}
+	g.docs = d
 }
 
 func (d pkgDocs) addValue(t *ast.ValueSpec, outerDoc *ast.CommentGroup) {
 	for _, n := range t.Names {
+		if !ast.IsExported(n.Name) {
+			continue
+		}
 		doc := t.Doc
 		if doc == nil {
 			doc = outerDoc
@@ -228,15 +233,18 @@ func (d pkgDocs) addFunc(f *ast.FuncDecl) {
 		return
 	}
 	fn := f.Name.Name
+	if !ast.IsExported(fn) {
+		return
+	}
 	if r := f.Recv; r != nil {
 		// f is a method.
-		switch t := r.List[0].Type.(type) {
-		case *ast.Ident:
-			d.addMethod(t.Name, fn, doc.Text())
-		case *ast.StarExpr:
-			sname := t.X.(*ast.Ident).Name
-			d.addMethod(sname, fn, doc.Text())
+		n := typeName(r.List[0].Type)
+		pd, exists := d[n]
+		if !exists {
+			pd = &pkgDoc{members: make(map[string]string)}
+			d[n] = pd
 		}
+		pd.members[fn] = doc.Text()
 	} else {
 		// f is a function.
 		d[fn] = &pkgDoc{doc: doc.Text()}
@@ -244,15 +252,16 @@ func (d pkgDocs) addFunc(f *ast.FuncDecl) {
 }
 
 func (d pkgDocs) addType(t *ast.TypeSpec, outerDoc *ast.CommentGroup) {
+	if !ast.IsExported(t.Name.Name) {
+		return
+	}
 	doc := t.Doc
 	if doc == nil {
 		doc = outerDoc
 	}
-	pd, exists := d[t.Name.Name]
-	if !exists {
-		pd = &pkgDoc{members: make(map[string]string)}
-		d[t.Name.Name] = pd
-	}
+	pd := d[t.Name.Name]
+	pd = &pkgDoc{members: make(map[string]string)}
+	d[t.Name.Name] = pd
 	if doc != nil {
 		pd.doc = doc.Text()
 	}
@@ -266,35 +275,35 @@ func (d pkgDocs) addType(t *ast.TypeSpec, outerDoc *ast.CommentGroup) {
 	if fields != nil {
 		for _, field := range fields.List {
 			if field.Doc != nil {
-				pd.members[field.Names[0].Name] = field.Doc.Text()
+				if field.Names == nil {
+					// Anonymous field. Extract name from its type.
+					if n := typeName(field.Type); ast.IsExported(n) {
+						pd.members[n] = field.Doc.Text()
+					}
+				}
+				for _, n := range field.Names {
+					if ast.IsExported(n.Name) {
+						pd.members[n.Name] = field.Doc.Text()
+					}
+				}
 			}
 		}
 	}
 }
 
-func (d pkgDocs) addMethod(sname, fname, doc string) {
-	pd, exists := d[sname]
-	if !exists {
-		pd = &pkgDoc{members: make(map[string]string)}
-		d[sname] = pd
+// typeName returns the type name T for expressions on the
+// T, *T, **T (etc.) form.
+func typeName(t ast.Expr) string {
+	switch t := t.(type) {
+	case *ast.StarExpr:
+		return typeName(t.X)
+	case *ast.Ident:
+		return t.Name
+	case *ast.SelectorExpr:
+		return t.Sel.Name
+	default:
+		return ""
 	}
-	pd.members[fname] = doc
-}
-
-// parseDocs extracts documentation from a package in a form useful for lookups.
-func (g *Generator) parseDocs() {
-	g.docs = make(pkgDocs)
-	if g.AST != nil {
-		ast.Walk(g.docs, g.AST)
-	}
-}
-
-func (d *pkgDoc) Visit(n ast.Node) ast.Visitor {
-	switch n := n.(type) {
-	case *ast.Field:
-		d.members[n.Names[0].Name] = n.Doc.Text()
-	}
-	return d
 }
 
 func (d *pkgDoc) Doc() string {

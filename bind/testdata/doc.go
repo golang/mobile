@@ -29,6 +29,12 @@ func (_ *S) Before() {}
 type S struct {
 	// SF is a field.
 	SF string
+	// blank (unexported) field.
+	_ string
+	// Anonymous field.
+	*S2
+	// Multiple fields.
+	F1, F2 string
 }
 
 // After is another method.
