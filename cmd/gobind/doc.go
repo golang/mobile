@@ -79,7 +79,7 @@ Similarly, the same Go package will generate the Objective-C interface
 	- (void)setValue:(int64_t)v;
 	@end
 
-	FOUNDATION_EXPORT GoMypkgCounter* GoMypkgNewCounter();
+	FOUNDATION_EXPORT GoMypkgCounter* GoMypkgNewCounter(void);
 
 The equivalent of calling newCounter in Go is GoMypkgNewCounter in Objective-C.
 The returned GoMypkgCounter* holds a reference to an underlying Go

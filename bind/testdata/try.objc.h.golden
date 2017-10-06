@@ -10,6 +10,6 @@
 #include "Universe.objc.h"
 
 
-FOUNDATION_EXPORT NSString* TryThis();
+FOUNDATION_EXPORT NSString* TryThis(void);
 
 #endif

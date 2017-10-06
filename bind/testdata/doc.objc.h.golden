@@ -110,12 +110,12 @@ FOUNDATION_EXPORT const BOOL DocC;
 /**
  * F is a function.
  */
-FOUNDATION_EXPORT void DocF();
+FOUNDATION_EXPORT void DocF(void);
 
 /**
  * NewS is a constructor.
  */
-FOUNDATION_EXPORT DocS* DocNewS();
+FOUNDATION_EXPORT DocS* DocNewS(void);
 
 @class DocI;
 

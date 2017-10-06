@@ -202,11 +202,11 @@ const BOOL DocC = YES;
 @end
 
 
-void DocF() {
+void DocF(void) {
 	proxydoc__F();
 }
 
-DocS* DocNewS() {
+DocS* DocNewS(void) {
 	int32_t r0 = proxydoc__NewS();
 	DocS* _ret0_ = nil;
 	GoSeqRef* _ret0__ref = go_seq_from_refnum(r0);

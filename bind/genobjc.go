@@ -546,7 +546,11 @@ func (s *funcSummary) asFunc(g *ObjcGen) string {
 	for _, p := range s.retParams[skip:] {
 		params = append(params, g.objcType(p.typ)+"* "+p.name)
 	}
-	return fmt.Sprintf("%s %s%s(%s)", s.ret, g.namePrefix, s.name, strings.Join(params, ", "))
+	paramContents := "void"
+	if len(params) > 0 {
+		paramContents = strings.Join(params, ", ")
+	}
+	return fmt.Sprintf("%s %s%s(%s)", s.ret, g.namePrefix, s.name, paramContents)
 }
 
 func (s *funcSummary) asMethod(g *ObjcGen) string {
