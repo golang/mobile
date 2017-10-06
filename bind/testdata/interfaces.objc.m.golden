@@ -214,7 +214,7 @@ BOOL InterfacesCallErr(id<InterfacesError> e, NSError** error) {
 	return (_error == nil);
 }
 
-id<InterfacesI> InterfacesSeven() {
+id<InterfacesI> InterfacesSeven(void) {
 	int32_t r0 = proxyinterfaces__Seven();
 	InterfacesI* _ret0_ = nil;
 	GoSeqRef* _ret0__ref = go_seq_from_refnum(r0);

@@ -10,6 +10,6 @@
 #include "Universe.objc.h"
 
 
-FOUNDATION_EXPORT void CustomprefixF();
+FOUNDATION_EXPORT void CustomprefixF(void);
 
 #endif

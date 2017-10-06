@@ -9,7 +9,7 @@
 #include "Customprefix.objc.h"
 
 
-void CustomprefixF() {
+void CustomprefixF(void) {
     proxycustomprefix__F();
 }
 

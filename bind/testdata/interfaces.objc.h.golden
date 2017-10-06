@@ -76,7 +76,7 @@ FOUNDATION_EXPORT int32_t InterfacesAdd3(id<InterfacesI> r);
 
 FOUNDATION_EXPORT BOOL InterfacesCallErr(id<InterfacesError> e, NSError** error);
 
-FOUNDATION_EXPORT id<InterfacesI> InterfacesSeven();
+FOUNDATION_EXPORT id<InterfacesI> InterfacesSeven(void);
 
 @class InterfacesError;
 
