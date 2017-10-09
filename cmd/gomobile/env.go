@@ -123,12 +123,12 @@ func envInit() (err error) {
 			if a == "arm" {
 				a = "armv7a"
 			}
+			androidApi := strings.TrimPrefix(toolchain.platform, "android-")
 			target := strings.Join([]string{a, "none", os, env}, "-")
-			sysroot := filepath.Join(ndkRoot, "platforms", toolchain.platform, "arch-"+toolchain.arch)
 			gcctoolchain := filepath.Join(ndkRoot, "toolchains", toolchain.gcc, "prebuilt", archNDK())
-			flags := fmt.Sprintf("-target %s --sysroot %s -gcc-toolchain %s", target, sysroot, gcctoolchain)
-			cflags := fmt.Sprintf("%s -I%s/include", flags, gomobilepath)
-			ldflags := fmt.Sprintf("%s -L%s/usr/lib -L%s/lib/%s", flags, sysroot, gomobilepath, arch)
+			flags := fmt.Sprintf("-target %s -gcc-toolchain %s", target, gcctoolchain)
+			cflags := fmt.Sprintf("%s --sysroot %s/sysroot -isystem %s/sysroot/usr/include/%s -D__ANDROID_API__=%s -I%s/include", flags, ndkRoot, ndkRoot, toolchain.toolPrefix, androidApi, gomobilepath)
+			ldflags := fmt.Sprintf("%s --sysroot %s/platforms/%s/arch-%s -L%s/lib/%s", flags, ndkRoot, toolchain.platform, toolchain.arch, gomobilepath, arch)
 			androidEnv[arch] = []string{
 				"GOOS=android",
 				"GOARCH=" + arch,
