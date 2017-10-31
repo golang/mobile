@@ -204,7 +204,7 @@ to import java.lang.System and call the static method currentTimeMillis:
 
 Similarly, to import NSDate and call the static method [NSDate date]:
 
-	import "ObjC/Foundation/NSDate
+	import "ObjC/Foundation/NSDate"
 
 	d := NSDate.Date()
 
