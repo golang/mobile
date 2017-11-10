@@ -6,6 +6,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"go/build"
 	"io/ioutil"
@@ -17,7 +19,7 @@ import (
 	"text/template"
 )
 
-func goIOSBuild(pkg *build.Package) (map[string]bool, error) {
+func goIOSBuild(pkg *build.Package, bundleID string) (map[string]bool, error) {
 	src := pkg.ImportPath
 	if buildO != "" && !strings.HasSuffix(buildO, ".app") {
 		return nil, fmt.Errorf("-o must have an .app for -target=ios")
@@ -31,7 +33,7 @@ func goIOSBuild(pkg *build.Package) (map[string]bool, error) {
 	infoplist := new(bytes.Buffer)
 	if err := infoplistTmpl.Execute(infoplist, infoplistTmplData{
 		// TODO: better bundle id.
-		BundleID: "org.golang.todo." + productName,
+		BundleID: bundleID + "." + productName,
 		Name:     strings.Title(path.Base(pkg.ImportPath)),
 	}); err != nil {
 		return nil, err
@@ -94,12 +96,22 @@ func goIOSBuild(pkg *build.Package) (map[string]bool, error) {
 		return nil, err
 	}
 
+	// Detect the team ID
+	teamID, err := detectTeamID()
+	if err != nil {
+		return nil, err
+	}
+
 	// Build and move the release build to the output directory.
-	cmd = exec.Command(
-		"xcrun", "xcodebuild",
+	cmdStrings := []string{
+		"xcodebuild",
 		"-configuration", "Release",
-		"-project", tmpdir+"/main.xcodeproj",
-	)
+		"-project", tmpdir + "/main.xcodeproj",
+		"-allowProvisioningUpdates",
+		"DEVELOPMENT_TEAM=" + teamID,
+	}
+
+	cmd = exec.Command("xcrun", cmdStrings...)
 	if err := runCmd(cmd); err != nil {
 		return nil, err
 	}
@@ -131,6 +143,39 @@ func goIOSBuild(pkg *build.Package) (map[string]bool, error) {
 		}
 	}
 	return nmpkgs, nil
+}
+
+func detectTeamID() (string, error) {
+	// Grabs the first certificate for "iPhone Developer"; will not work if there
+	// are multiple certificates and the first is not desired.
+	cmd := exec.Command(
+		"security", "find-certificate",
+		"-c", "iPhone Developer", "-p",
+	)
+	pemString, err := cmd.Output()
+	if err != nil {
+		err = fmt.Errorf("failed to pull the signing certificate to determine your team ID: %v", err)
+		return "", err
+	}
+
+	block, _ := pem.Decode(pemString)
+	if block == nil {
+		err = fmt.Errorf("failed to decode the PEM to determine your team ID: %s", pemString)
+		return "", err
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		err = fmt.Errorf("failed to parse your signing certificate to determine your team ID: %v", err)
+		return "", err
+	}
+
+	if len(cert.Subject.OrganizationalUnit) == 0 {
+		err = fmt.Errorf("the signing certificate has no organizational unit (team ID).")
+		return "", err
+	}
+
+	return cert.Subject.OrganizationalUnit[0], nil
 }
 
 func iosCopyAssets(pkg *build.Package, xcodeProjDir string) error {

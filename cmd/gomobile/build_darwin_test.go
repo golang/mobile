@@ -33,7 +33,29 @@ func TestIOSBuild(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	diff, err := diffOutput(buf.String(), iosBuildTmpl)
+	teamID, err := detectTeamID()
+	if err != nil {
+		t.Fatalf("detecting team ID failed: %v", err)
+	}
+
+	data := struct {
+		outputData
+		TeamID string
+	}{
+		outputData: defaultOutputData(),
+		TeamID:     teamID,
+	}
+
+	got := filepath.ToSlash(buf.String())
+
+	wantBuf := new(bytes.Buffer)
+
+	if err := iosBuildTmpl.Execute(wantBuf, data); err != nil {
+		t.Fatalf("computing diff failed: %v", err)
+	}
+
+	diff, err := diff(got, wantBuf.String())
+
 	if err != nil {
 		t.Fatalf("computing diff failed: %v", err)
 	}
@@ -54,6 +76,6 @@ GOOS=darwin GOARCH=arm GOARM=7 CC=clang-iphoneos CXX=clang-iphoneos CGO_CFLAGS=-
 GOOS=darwin GOARCH=arm64 CC=clang-iphoneos CXX=clang-iphoneos CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=6.1 -arch arm64 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=6.1 -arch arm64 CGO_ENABLED=1 go build -pkgdir=$GOMOBILE/pkg_darwin_arm64 -tags tag1 ios -x -o=$WORK/arm64 golang.org/x/mobile/example/basic
 xcrun lipo -create $WORK/arm $WORK/arm64 -o $WORK/main/main
 mkdir -p $WORK/main/assets
-xcrun xcodebuild -configuration Release -project $WORK/main.xcodeproj
+xcrun xcodebuild -configuration Release -project $WORK/main.xcodeproj -allowProvisioningUpdates DEVELOPMENT_TEAM={{.TeamID}}
 mv $WORK/build/Release-iphoneos/main.app basic.app
 `))

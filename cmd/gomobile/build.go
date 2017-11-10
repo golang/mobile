@@ -24,7 +24,7 @@ var tmpdir string
 var cmdBuild = &command{
 	run:   runBuild,
 	Name:  "build",
-	Usage: "[-target android|ios] [-o output] [build flags] [package]",
+	Usage: "[-target android|ios] [-o output] [-bundleid bundleId] [build flags] [package]",
 	Short: "compile android APK and iOS app",
 	Long: `
 Build compiles and encodes the app named by the import path.
@@ -46,6 +46,9 @@ installed. Support is not complete.
 
 If the package directory contains an assets subdirectory, its contents
 are copied into the output.
+
+The -bundleid flag is for -target ios only and sets the bundle ID to use 
+with the app; defaults to "org.golang.todo".
 
 The -o flag specifies the output file name. If not specified, the
 output file name depends on the package built.
@@ -118,7 +121,7 @@ func runBuild(cmd *command) (err error) {
 			}
 			return goBuild(pkg.ImportPath, darwinArm64Env)
 		}
-		nmpkgs, err = goIOSBuild(pkg)
+		nmpkgs, err = goIOSBuild(pkg, buildBundleID)
 		if err != nil {
 			return err
 		}
@@ -205,16 +208,17 @@ func printcmd(format string, args ...interface{}) {
 
 // "Build flags", used by multiple commands.
 var (
-	buildA       bool   // -a
-	buildI       bool   // -i
-	buildN       bool   // -n
-	buildV       bool   // -v
-	buildX       bool   // -x
-	buildO       string // -o
-	buildGcflags string // -gcflags
-	buildLdflags string // -ldflags
-	buildTarget  string // -target
-	buildWork    bool   // -work
+	buildA        bool   // -a
+	buildI        bool   // -i
+	buildN        bool   // -n
+	buildV        bool   // -v
+	buildX        bool   // -x
+	buildO        string // -o
+	buildGcflags  string // -gcflags
+	buildLdflags  string // -ldflags
+	buildTarget   string // -target
+	buildWork     bool   // -work
+	buildBundleID string // -bundleid
 )
 
 func addBuildFlags(cmd *command) {
@@ -222,6 +226,7 @@ func addBuildFlags(cmd *command) {
 	cmd.flag.StringVar(&buildGcflags, "gcflags", "", "")
 	cmd.flag.StringVar(&buildLdflags, "ldflags", "", "")
 	cmd.flag.StringVar(&buildTarget, "target", "android", "")
+	cmd.flag.StringVar(&buildBundleID, "bundleid", "org.golang.todo", "")
 
 	cmd.flag.BoolVar(&buildA, "a", false, "")
 	cmd.flag.BoolVar(&buildI, "i", false, "")
