@@ -24,7 +24,7 @@ var tmpdir string
 var cmdBuild = &command{
 	run:   runBuild,
 	Name:  "build",
-	Usage: "[-target android|ios] [-o output] [-bundleid bundleId] [build flags] [package]",
+	Usage: "[-target android|ios] [-o output] [-bundleid bundleID] [build flags] [package]",
 	Short: "compile android APK and iOS app",
 	Long: `
 Build compiles and encodes the app named by the import path.
