@@ -120,7 +120,7 @@ func main() {
 			}
 			files = append(files, f)
 		}
-		tpkg, _ := conf.Check(pkg.Name, fset, files, nil)
+		tpkg, _ := conf.Check(pkg.ImportPath, fset, files, nil)
 		typePkgs[i] = tpkg
 	}
 	build.Default = oldCtx
