@@ -79,7 +79,7 @@ func genPkg(p *types.Package, allPkg []*types.Package, classes []*java.Class) {
 		if p == nil {
 			p, err := build.Default.Import("golang.org/x/mobile/bind", ".", build.ImportComment)
 			if err != nil {
-				errorf(`"golang.org/x/mobile/bind" is not found; run go get golang.org/x/mobile/bind: %v`)
+				errorf(`"golang.org/x/mobile/bind" is not found; run go get golang.org/x/mobile/bind: %v`, err)
 				return
 			}
 			repo := filepath.Clean(filepath.Join(p.Dir, "..")) // golang.org/x/mobile directory.
