@@ -12,6 +12,7 @@
 
 @class StructsS;
 @class StructsS2;
+@class StructsStructs;
 @protocol StructsI;
 @class StructsI;
 
@@ -41,6 +42,18 @@
 - (instancetype)init;
 - (void)m;
 - (NSString*)string;
+@end
+
+/**
+ * Structs is a struct with the same name as its package.
+ */
+@interface StructsStructs : NSObject <goSeqRefInterface, StructsI> {
+}
+@property(strong, readonly) id _ref;
+
+- (instancetype)initWithRef:(id)ref;
+- (instancetype)init;
+- (void)m;
 @end
 
 FOUNDATION_EXPORT StructsS* StructsIdentity(StructsS* s);

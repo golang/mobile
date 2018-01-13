@@ -31,3 +31,14 @@ const HelloString = "secondpkg string"
 func Hello() string {
 	return HelloString
 }
+
+type Secondpkg struct {
+	V string
+}
+
+func (_ *Secondpkg) M() {
+}
+
+func NewSecondpkg() *Secondpkg {
+	return new(Secondpkg)
+}

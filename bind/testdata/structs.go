@@ -38,3 +38,9 @@ func (s *S2) M() {
 func (_ *S2) String() string {
 	return ""
 }
+
+// Structs is a struct with the same name as its package.
+type Structs struct{}
+
+func (_ *Structs) M() {
+}

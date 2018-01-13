@@ -24,6 +24,9 @@ static jmethodID mid_I2_G;
 jclass proxy_class_interfaces_I3;
 jmethodID proxy_class_interfaces_I3_cons;
 static jmethodID mid_I3_F;
+jclass proxy_class_interfaces_Interfaces;
+jmethodID proxy_class_interfaces_Interfaces_cons;
+static jmethodID mid_Interfaces_SomeMethod;
 jclass proxy_class_interfaces_LargerI;
 jmethodID proxy_class_interfaces_LargerI_cons;
 static jmethodID mid_LargerI_AnotherFunc;
@@ -67,6 +70,12 @@ Java_interfaces_Interfaces__1init(JNIEnv *env, jclass _unused) {
     proxy_class_interfaces_I3_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
     clazz = (*env)->FindClass(env, "interfaces/I3");
     mid_I3_F = (*env)->GetMethodID(env, clazz, "f", "()Linterfaces/I1;");
+    
+    clazz = (*env)->FindClass(env, "interfaces/Interfaces$proxyInterfaces");
+    proxy_class_interfaces_Interfaces = (*env)->NewGlobalRef(env, clazz);
+    proxy_class_interfaces_Interfaces_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    clazz = (*env)->FindClass(env, "interfaces/Interfaces_");
+    mid_Interfaces_SomeMethod = (*env)->GetMethodID(env, clazz, "someMethod", "()V");
     
     clazz = (*env)->FindClass(env, "interfaces/Interfaces$proxyLargerI");
     proxy_class_interfaces_LargerI = (*env)->NewGlobalRef(env, clazz);
@@ -188,6 +197,19 @@ int32_t cproxyinterfaces_I3_F(int32_t refnum) {
     int32_t _res = go_seq_to_refnum(env, res);
     go_seq_pop_local_frame(env);
     return _res;
+}
+
+JNIEXPORT void JNICALL
+Java_interfaces_Interfaces_00024proxyInterfaces_someMethod(JNIEnv* env, jobject __this__) {
+    int32_t o = go_seq_to_refnum_go(env, __this__);
+    proxyinterfaces_Interfaces_SomeMethod(o);
+}
+
+void cproxyinterfaces_Interfaces_SomeMethod(int32_t refnum) {
+    JNIEnv *env = go_seq_push_local_frame(0);
+    jobject o = go_seq_from_refnum(env, refnum, proxy_class_interfaces_Interfaces, proxy_class_interfaces_Interfaces_cons);
+    (*env)->CallVoidMethod(env, o, mid_Interfaces_SomeMethod);
+    go_seq_pop_local_frame(env);
 }
 
 JNIEXPORT void JNICALL

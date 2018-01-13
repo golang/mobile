@@ -112,6 +112,21 @@ func (p *proxyinterfaces_I3) F() interfaces.I1 {
 	return _res
 }
 
+//export proxyinterfaces_Interfaces_SomeMethod
+func proxyinterfaces_Interfaces_SomeMethod(refnum C.int32_t) {
+	ref := _seq.FromRefNum(int32(refnum))
+	v := ref.Get().(interfaces.Interfaces)
+	v.SomeMethod()
+}
+
+type proxyinterfaces_Interfaces _seq.Ref
+
+func (p *proxyinterfaces_Interfaces) Bind_proxy_refnum__() int32 { return (*_seq.Ref)(p).Bind_IncNum() }
+
+func (p *proxyinterfaces_Interfaces) SomeMethod() {
+	C.cproxyinterfaces_Interfaces_SomeMethod(C.int32_t(p.Bind_proxy_refnum__()))
+}
+
 //export proxyinterfaces_LargerI_AnotherFunc
 func proxyinterfaces_LargerI_AnotherFunc(refnum C.int32_t) {
 	ref := _seq.FromRefNum(int32(refnum))

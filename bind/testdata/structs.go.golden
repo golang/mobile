@@ -102,6 +102,18 @@ func new_structs_S2() C.int32_t {
 	return C.int32_t(_seq.ToRefNum(new(structs.S2)))
 }
 
+//export proxystructs_Structs_M
+func proxystructs_Structs_M(refnum C.int32_t) {
+	ref := _seq.FromRefNum(int32(refnum))
+	v := ref.Get().(*structs.Structs)
+	v.M()
+}
+
+//export new_structs_Structs
+func new_structs_Structs() C.int32_t {
+	return C.int32_t(_seq.ToRefNum(new(structs.Structs)))
+}
+
 //export proxystructs_I_M
 func proxystructs_I_M(refnum C.int32_t) {
 	ref := _seq.FromRefNum(int32(refnum))

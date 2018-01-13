@@ -62,3 +62,8 @@ type I3 interface {
 // not bound
 func F() seven  { return seven{} }
 func G(u seven) {}
+
+// Interfaces is an interface with the same name as its package.
+type Interfaces interface {
+	SomeMethod()
+}

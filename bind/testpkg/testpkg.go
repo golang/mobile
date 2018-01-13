@@ -606,3 +606,8 @@ func TestSIGPIPE() {
 		panic(fmt.Errorf("got %v, expected EPIPE", err))
 	}
 }
+
+// Testpkg is an empty interface with the same name as its package.
+type Testpkg interface{}
+
+func ClashingParameterFromOtherPackage(_ *secondpkg.Secondpkg) {}
