@@ -98,17 +98,32 @@ func genPkg(p *types.Package, allPkg []*types.Package, classes []*java.Class) {
 				}
 			}
 		}
+		// Copy support files
+		javaPkg, err := build.Default.Import("golang.org/x/mobile/bind/java", "", build.FindOnly)
+		if err != nil {
+			errorf("unable to import bind/java: %v", err)
+			return
+		}
+		copyFile("seq_android.c", filepath.Join(javaPkg.Dir, "seq_android.c.support"))
+		copyFile("seq_android.go", filepath.Join(javaPkg.Dir, "seq_android.go.support"))
+		copyFile("seq.h", filepath.Join(javaPkg.Dir, "seq.h"))
 	case "go":
 		w, closer := writer(fname)
 		conf.Writer = w
 		processErr(bind.GenGo(conf))
 		closer()
+		bindPkg, err := build.Default.Import("golang.org/x/mobile/bind", "", build.FindOnly)
+		if err != nil {
+			errorf("unable to import bind: %v", err)
+			return
+		}
+		copyFile("seq.go", filepath.Join(bindPkg.Dir, "seq.go.support"))
 	case "objc":
 		var gohname string
 		if p != nil {
 			gohname = p.Name() + ".h"
 		} else {
-			gohname = "GoUniverse.h"
+			gohname = "universe.h"
 		}
 		var buf bytes.Buffer
 		g := &bind.ObjcGen{
@@ -126,7 +141,7 @@ func genPkg(p *types.Package, allPkg []*types.Package, classes []*java.Class) {
 		processErr(g.GenGoH())
 		io.Copy(w, &buf)
 		closer()
-		hname := fname[:len(fname)-2] + ".h"
+		hname := strings.Title(fname[:len(fname)-2]) + ".objc.h"
 		w, closer = writer(hname)
 		processErr(g.GenH())
 		io.Copy(w, &buf)
@@ -136,6 +151,16 @@ func genPkg(p *types.Package, allPkg []*types.Package, classes []*java.Class) {
 		processErr(g.GenM())
 		io.Copy(w, &buf)
 		closer()
+		// Copy support files
+		objcPkg, err := build.Default.Import("golang.org/x/mobile/bind/objc", "", build.FindOnly)
+		if err != nil {
+			errorf("unable to import bind/objc: %v", err)
+			return
+		}
+		copyFile("seq_darwin.m", filepath.Join(objcPkg.Dir, "seq_darwin.m.support"))
+		copyFile("seq_darwin.go", filepath.Join(objcPkg.Dir, "seq_darwin.go.support"))
+		copyFile("ref.h", filepath.Join(objcPkg.Dir, "ref.h"))
+		copyFile("seq.h", filepath.Join(objcPkg.Dir, "seq.h"))
 	default:
 		errorf("unknown target language: %q", *lang)
 	}
@@ -227,6 +252,24 @@ func writer(fname string) (w io.Writer, closer func()) {
 	return f, closer
 }
 
+func copyFile(dst, src string) {
+	w, closer := writer(dst)
+	f, err := os.Open(src)
+	if err != nil {
+		errorf("unable to open file: %v", err)
+		closer()
+		os.Exit(exitStatus)
+	}
+	if _, err := io.Copy(w, f); err != nil {
+		errorf("unable to copy file: %v", err)
+		f.Close()
+		closer()
+		os.Exit(exitStatus)
+	}
+	f.Close()
+	closer()
+}
+
 func defaultFileName(lang string, pkg *types.Package) string {
 	switch lang {
 	case "java":
@@ -238,16 +281,16 @@ func defaultFileName(lang string, pkg *types.Package) string {
 		return className + ".java"
 	case "go":
 		if pkg == nil {
-			return "go_universe.go"
+			return "go_main.go"
 		}
-		return "go_" + pkg.Name() + ".go"
+		return "go_" + pkg.Name() + "main.go"
 	case "objc":
 		if pkg == nil {
-			return "GoUniverse.m"
+			return "Universe.m"
 		}
 		firstRune, size := utf8.DecodeRuneInString(pkg.Name())
 		className := string(unicode.ToUpper(firstRune)) + pkg.Name()[size:]
-		return "Go" + className + ".m"
+		return className + ".m"
 	}
 	errorf("unknown target language: %q", lang)
 	os.Exit(exitStatus)
