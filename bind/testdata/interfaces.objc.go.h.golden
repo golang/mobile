@@ -14,6 +14,8 @@ int32_t cproxyinterfaces_I_Rand(int32_t refnum);
 
 int32_t cproxyinterfaces_I3_F(int32_t refnum);
 
+void cproxyinterfaces_Interfaces_SomeMethod(int32_t refnum);
+
 void cproxyinterfaces_LargerI_AnotherFunc(int32_t refnum);
 
 int32_t cproxyinterfaces_LargerI_Rand(int32_t refnum);

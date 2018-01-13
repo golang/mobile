@@ -123,6 +123,32 @@
 @end
 
 
+
+@implementation StructsStructs {
+}
+
+- (instancetype)initWithRef:(id)ref {
+	self = [super init];
+	if (self) { __ref = ref; }
+	return self;
+}
+
+- (instancetype)init {
+	self = [super init];
+	if (self) {
+		__ref = go_seq_from_refnum(new_structs_Structs());
+	}
+	return self;
+}
+
+- (void)m {
+	int32_t refnum = go_seq_go_to_refnum(self._ref);
+	proxystructs_Structs_M(refnum);
+}
+
+@end
+
+
 @implementation StructsI {
 }
 

@@ -17,4 +17,6 @@ extern jclass proxy_class_structs_S;
 extern jmethodID proxy_class_structs_S_cons;
 extern jclass proxy_class_structs_S2;
 extern jmethodID proxy_class_structs_S2_cons;
+extern jclass proxy_class_structs_Structs;
+extern jmethodID proxy_class_structs_Structs_cons;
 #endif

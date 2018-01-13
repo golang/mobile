@@ -18,6 +18,8 @@
 @protocol InterfacesI2;
 @protocol InterfacesI3;
 @class InterfacesI3;
+@protocol InterfacesInterfaces;
+@class InterfacesInterfaces;
 @protocol InterfacesLargerI;
 @class InterfacesLargerI;
 @protocol InterfacesSameI;
@@ -59,6 +61,10 @@
 - (InterfacesI1*)f;
 @end
 
+@protocol InterfacesInterfaces <NSObject>
+- (void)someMethod;
+@end
+
 @protocol InterfacesLargerI <NSObject>
 - (void)anotherFunc;
 - (int32_t)rand;
@@ -83,6 +89,8 @@ FOUNDATION_EXPORT id<InterfacesI> InterfacesSeven(void);
 @class InterfacesI;
 
 @class InterfacesI3;
+
+@class InterfacesInterfaces;
 
 @class InterfacesLargerI;
 
@@ -116,6 +124,17 @@ FOUNDATION_EXPORT id<InterfacesI> InterfacesSeven(void);
 
 - (instancetype)initWithRef:(id)ref;
 - (InterfacesI1*)f;
+@end
+
+/**
+ * Interfaces is an interface with the same name as its package.
+ */
+@interface InterfacesInterfaces : NSObject <goSeqRefInterface, InterfacesInterfaces> {
+}
+@property(strong, readonly) id _ref;
+
+- (instancetype)initWithRef:(id)ref;
+- (void)someMethod;
 @end
 
 @interface InterfacesLargerI : NSObject <goSeqRefInterface, InterfacesLargerI> {

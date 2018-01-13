@@ -116,6 +116,23 @@
 @end
 
 
+@implementation InterfacesInterfaces {
+}
+
+- (instancetype)initWithRef:(id)ref {
+	self = [super init];
+	if (self) { __ref = ref; }
+	return self;
+}
+
+- (void)someMethod {
+	int32_t refnum = go_seq_go_to_refnum(self._ref);
+	proxyinterfaces_Interfaces_SomeMethod(refnum);
+}
+
+@end
+
+
 @implementation InterfacesLargerI {
 }
 
@@ -284,6 +301,13 @@ int32_t cproxyinterfaces_I3_F(int32_t refnum) {
 			_ret0_ = go_seq_to_refnum(ret0_);
 		}
 		return _ret0_;
+	}
+}
+
+void cproxyinterfaces_Interfaces_SomeMethod(int32_t refnum) {
+	@autoreleasepool {
+		InterfacesInterfaces* o = go_seq_objc_from_refnum(refnum);
+		[o someMethod];
 	}
 }
 
