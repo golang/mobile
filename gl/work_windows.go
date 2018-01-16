@@ -129,7 +129,7 @@ func (ctx *context) doWork(c call) (ret uintptr) {
 	case glfnBindTexture:
 		syscall.Syscall(glBindTexture.Addr(), 2, c.args.a0, c.args.a1, 0)
 	case glfnBindVertexArray:
-		syscall.Syscall(glBindVertexArray.Addr(), 1, c.args.a0, 0)
+		syscall.Syscall(glBindVertexArray.Addr(), 1, c.args.a0, 0, 0)
 	case glfnBlendColor:
 		syscall.Syscall6(glBlendColor.Addr(), 4, c.args.a0, c.args.a1, c.args.a2, c.args.a3, 0, 0)
 	case glfnBlendEquation:
@@ -223,7 +223,7 @@ func (ctx *context) doWork(c call) (ret uintptr) {
 	case glfnGenRenderbuffer:
 		syscall.Syscall(glGenRenderbuffers.Addr(), 2, 1, uintptr(unsafe.Pointer(&ret)), 0)
 	case glfnGenVertexArray:
-		syscall.Syscall(glVertexArrays.Addr(), 2, 1, uintptr(unsafe.Pointer(&ret)), 0)
+		syscall.Syscall(glGenVertexArrays.Addr(), 2, 1, uintptr(unsafe.Pointer(&ret)), 0)
 	case glfnGenTexture:
 		syscall.Syscall(glGenTextures.Addr(), 2, 1, uintptr(unsafe.Pointer(&ret)), 0)
 	case glfnGenerateMipmap:
@@ -395,7 +395,7 @@ func (ctx *context) doWork(c call) (ret uintptr) {
 	case glfnVertexAttrib3fv:
 		syscall.Syscall(glVertexAttrib3fv.Addr(), 2, c.args.a0, uintptr(c.parg), 0)
 	case glfnVertexAttrib4f:
-		syscall.Syscall6(glVertexAttrib3f.Addr(), 5, c.args.a0, c.args.a1, c.args.a2, c.args.a3, c.args.a4, c.args.a5)
+		syscall.Syscall6(glVertexAttrib4f.Addr(), 5, c.args.a0, c.args.a1, c.args.a2, c.args.a3, c.args.a4, c.args.a5)
 	case glfnVertexAttrib4fv:
 		syscall.Syscall(glVertexAttrib4fv.Addr(), 2, c.args.a0, uintptr(c.parg), 0)
 	case glfnVertexAttribPointer:
@@ -458,7 +458,7 @@ var (
 	glDeleteRenderbuffers                 = libGLESv2.NewProc("glDeleteRenderbuffers")
 	glDeleteShader                        = libGLESv2.NewProc("glDeleteShader")
 	glDeleteTextures                      = libGLESv2.NewProc("glDeleteTextures")
-	glVertexArrays                        = libGLESv2.NewProc("glVertexArrays")
+	glDeleteVertexArrays                  = libGLESv2.NewProc("glDeleteVertexArrays")
 	glDepthFunc                           = libGLESv2.NewProc("glDepthFunc")
 	glDepthRangef                         = libGLESv2.NewProc("glDepthRangef")
 	glDepthMask                           = libGLESv2.NewProc("glDepthMask")

@@ -5,7 +5,7 @@
 // Generated from gl.go using go generate. DO NOT EDIT.
 // See doc.go for details.
 
-// +build linux darwin windows
+// +build linux darwin windows openbsd
 // +build gldebug
 
 package gl
@@ -1337,15 +1337,15 @@ func (ctx *context) BindTexture(target Enum, t Texture) {
 		blocking: true})
 }
 
-func (ctx *context) BindVertexArray(t VertexArray) {
+func (ctx *context) BindVertexArray(va VertexArray) {
 	defer func() {
 		errstr := ctx.errDrain()
-		log.Printf("gl.BindVertexArray(%v) %v", t, errstr)
+		log.Printf("gl.BindVertexArray(%v) %v", va, errstr)
 	}()
 	ctx.enqueueDebug(call{
 		args: fnargs{
 			fn: glfnBindVertexArray,
-			a0: t.c(),
+			a0: va.c(),
 		},
 		blocking: true})
 }
@@ -1774,7 +1774,7 @@ func (ctx *context) DeleteBuffer(v Buffer) {
 	ctx.enqueueDebug(call{
 		args: fnargs{
 			fn: glfnDeleteBuffer,
-			a0: uintptr(v.Value),
+			a0: v.c(),
 		},
 		blocking: true})
 }
@@ -1787,7 +1787,7 @@ func (ctx *context) DeleteFramebuffer(v Framebuffer) {
 	ctx.enqueueDebug(call{
 		args: fnargs{
 			fn: glfnDeleteFramebuffer,
-			a0: uintptr(v.Value),
+			a0: v.c(),
 		},
 		blocking: true})
 }
