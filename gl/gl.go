@@ -411,7 +411,7 @@ func (ctx *context) DeleteBuffer(v Buffer) {
 	ctx.enqueue(call{
 		args: fnargs{
 			fn: glfnDeleteBuffer,
-			a0: uintptr(v.Value),
+			a0: v.c(),
 		},
 	})
 }
@@ -420,7 +420,7 @@ func (ctx *context) DeleteFramebuffer(v Framebuffer) {
 	ctx.enqueue(call{
 		args: fnargs{
 			fn: glfnDeleteFramebuffer,
-			a0: uintptr(v.Value),
+			a0: v.c(),
 		},
 	})
 }
@@ -465,7 +465,7 @@ func (ctx *context) DeleteVertexArray(v VertexArray) {
 	ctx.enqueue(call{
 		args: fnargs{
 			fn: glfnDeleteVertexArray,
-			a0: uintptr(v.Value),
+			a0: v.c(),
 		},
 	})
 }
