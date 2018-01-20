@@ -371,6 +371,6 @@ var ndk = ndkConfig{
 }
 
 func xcodeAvailable() bool {
-	_, err := exec.LookPath("xcrun")
+	err := exec.Command("xcrun", "xcodebuild", "-version").Run()
 	return err == nil
 }
