@@ -1066,6 +1066,22 @@ func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 	}
 	pT := types.NewPointer(obj.Type())
 	for _, iface := range g.allIntf {
+		p := iface.obj.Pkg()
+		if g.Pkg != nil && g.Pkg != p {
+			// To avoid header include cycles, only declare implementation of interfaces
+			// from imported packages. TODO(elias.naur): Include every interface that
+			// doesn't introduce an include cycle.
+			found := false
+			for _, imp := range g.Pkg.Imports() {
+				if imp == p {
+					found = true
+					break
+				}
+			}
+			if !found {
+				continue
+			}
+		}
 		obj := iface.obj
 		if types.AssignableTo(pT, obj.Type()) {
 			n := fmt.Sprintf("%s%s", g.namePrefixOf(obj.Pkg()), obj.Name())
