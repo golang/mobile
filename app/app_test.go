@@ -28,6 +28,7 @@ import (
 // helper libraries that make tests like these easy to write. Hopefully
 // having a user of such a fictional package will help illuminate the way.
 func TestAndroidApp(t *testing.T) {
+	t.Skip("see issue #23835")
 	if _, err := exec.Command("which", "adb").CombinedOutput(); err != nil {
 		t.Skip("command adb not found, skipping")
 	}
