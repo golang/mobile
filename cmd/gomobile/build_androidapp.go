@@ -152,7 +152,7 @@ func goAndroidBuild(pkg *build.Package, androidArchs []string) (map[string]bool,
 	}
 	dexData, err := base64.StdEncoding.DecodeString(dexStr)
 	if err != nil {
-		log.Fatal("internal error bad dexStr: %v", err)
+		log.Fatalf("internal error bad dexStr: %v", err)
 	}
 	if _, err := w.Write(dexData); err != nil {
 		return nil, err
