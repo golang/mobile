@@ -494,10 +494,7 @@ func TestOpenTable(t *testing.T) {
 }
 
 func TestTableRefByName(t *testing.T) {
-	sdkdir := os.Getenv("ANDROID_HOME")
-	if sdkdir == "" {
-		t.Skip("ANDROID_HOME env var not set")
-	}
+	checkResources(t)
 	tbl, err := OpenSDKTable()
 	if err != nil {
 		t.Fatal(err)
@@ -517,10 +514,7 @@ func TestTableRefByName(t *testing.T) {
 }
 
 func TestTableMarshal(t *testing.T) {
-	sdkdir := os.Getenv("ANDROID_HOME")
-	if sdkdir == "" {
-		t.Skip("ANDROID_HOME env var not set")
-	}
+	checkResources(t)
 	tbl, err := OpenSDKTable()
 	if err != nil {
 		t.Fatal(err)
@@ -630,6 +624,21 @@ func TestTableMarshal(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+func checkResources(t *testing.T) {
+	t.Helper()
+	sdkdir := os.Getenv("ANDROID_HOME")
+	if sdkdir == "" {
+		t.Skip("ANDROID_HOME env var not set")
+	}
+	rscPath, err := apiResourcesPath()
+	if err != nil {
+		t.Skipf("failed to find resources: %v", err)
+	}
+	if _, err := os.Stat(rscPath); err != nil {
+		t.Skipf("failed to find resources: %v", err)
 	}
 }
 
