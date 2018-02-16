@@ -92,7 +92,8 @@ class GobindPlugin implements Plugin<Project> {
 		// TODO: Detect when building the existing JNI libraries is redundant.
 		libTask.outputs.upToDateWhen { false }
 		libTask.dependsOn(bindTask)
-		variant.javaCompile.finalizedBy(libTask)
+		// Ensure gomobile bind completes before depending on its output.
+		variant.javaCompile.dependsOn(libTask)
 	}
 }
 
