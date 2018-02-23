@@ -158,13 +158,15 @@ func runInit(cmd *command) error {
 
 	// Install standard libraries for cross compilers.
 	start := time.Now()
-	// Ideally this would be -buildmode=c-shared.
-	// https://golang.org/issue/13234.
-	androidArgs := []string{"-gcflags=-shared", "-ldflags=-shared"}
-	for _, arch := range archs {
-		env := androidEnv[arch]
-		if err := installStd(env, androidArgs...); err != nil {
-			return err
+	if ndkRoot != "" {
+		// Ideally this would be -buildmode=c-shared.
+		// https://golang.org/issue/13234.
+		androidArgs := []string{"-gcflags=-shared", "-ldflags=-shared"}
+		for _, arch := range archs {
+			env := androidEnv[arch]
+			if err := installStd(env, androidArgs...); err != nil {
+				return err
+			}
 		}
 	}
 
