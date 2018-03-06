@@ -44,9 +44,6 @@ func goAndroidBind(pkgs []*build.Package, androidArchs []string) error {
 		toolchain := ndk.Toolchain(arch)
 
 		if !first {
-			if err := goInstall(paths, env, androidArgs...); err != nil {
-				return err
-			}
 			err := goBuild(
 				mainFile,
 				env,
