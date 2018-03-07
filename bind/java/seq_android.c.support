@@ -19,6 +19,10 @@
 
 #define NULL_REFNUM 41
 
+// initClasses are only exported from Go if reverse bindings are used.
+// If they're not, weakly define a no-op function.
+__attribute__((weak)) void initClasses(void) { }
+
 static JavaVM *jvm;
 // jnienvs holds the per-thread JNIEnv* for Go threads where we called AttachCurrentThread.
 // A pthread key destructor is supplied to call DetachCurrentThread on exit. This trick is
