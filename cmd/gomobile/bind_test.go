@@ -55,16 +55,13 @@ func TestBindAndroid(t *testing.T) {
 	tests := []struct {
 		javaPkg    string
 		wantGobind string
-		wantPkgDir string
 	}{
 		{
 			wantGobind: "gobind -lang=java",
-			wantPkgDir: "asset",
 		},
 		{
 			javaPkg:    "com.example.foo",
 			wantGobind: "gobind -lang=java -javapkg=com.example.foo",
-			wantPkgDir: "com/example/foo/asset",
 		},
 	}
 	for _, tc := range tests {
@@ -88,12 +85,12 @@ func TestBindAndroid(t *testing.T) {
 			outputData
 			AndroidPlatform string
 			GobindJavaCmd   string
-			JavaPkgDir      string
+			JavaPkg         string
 		}{
 			outputData:      defaultOutputData(),
 			AndroidPlatform: platform,
 			GobindJavaCmd:   tc.wantGobind,
-			JavaPkgDir:      tc.wantPkgDir,
+			JavaPkg:         tc.javaPkg,
 		}
 
 		wantBuf := new(bytes.Buffer)
@@ -115,44 +112,8 @@ func TestBindAndroid(t *testing.T) {
 
 var bindAndroidTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
 WORK=$WORK
-mkdir -p $WORK/gomobile_bind
-mkdir -p $WORK/gomobile_bind
-mkdir -p $WORK/gomobile_bind
-mkdir -p $WORK/gomobile_bind
-mkdir -p $WORK/gen/src/Java
-GOOS=android GOARCH=arm CC=/NDK/toolchains/llvm/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin/clang{{.EXE}} CXX=/NDK/toolchains/llvm/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin/clang++{{.EXE}} CGO_CFLAGS=-target armv7a-none-linux-androideabi -gcc-toolchain /NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}} --sysroot /NDK/sysroot -isystem /NDK/sysroot/usr/include/arm-linux-androideabi -D__ANDROID_API__=15 -I$GOMOBILE/include CGO_CPPFLAGS=-target armv7a-none-linux-androideabi -gcc-toolchain /NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}} --sysroot /NDK/sysroot -isystem /NDK/sysroot/usr/include/arm-linux-androideabi -D__ANDROID_API__=15 -I$GOMOBILE/include CGO_LDFLAGS=-target armv7a-none-linux-androideabi -gcc-toolchain /NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}} --sysroot /NDK/platforms/android-15/arch-arm -L$GOMOBILE/lib/arm CGO_ENABLED=1 GOARM=7 GOPATH=$WORK/gen:$GOPATH go install -pkgdir=$GOMOBILE/pkg_android_arm -x -gcflags=-shared -ldflags=-shared golang.org/x/mobile/asset
-rm -r -f "$WORK/fakegopath"
-mkdir -p $WORK/fakegopath/pkg
-cp $GOMOBILE/pkg_android_arm/golang.org/x/mobile/asset.a $WORK/fakegopath/pkg/android_arm/golang.org/x/mobile/asset.a
-mkdir -p $WORK/fakegopath/pkg/android_arm/golang.org/x/mobile
-mkdir -p $WORK/gomobile_bind
-gobind -lang=go -outdir=$WORK/gomobile_bind golang.org/x/mobile/asset
-mkdir -p $WORK/gomobile_bind
-gobind -lang=go -outdir=$WORK/gomobile_bind 
-mkdir -p $WORK/androidlib
-mkdir -p $WORK/android/src/main/java/{{.JavaPkgDir}}
-{{.GobindJavaCmd}} -outdir=$WORK/android/src/main/java/{{.JavaPkgDir}} golang.org/x/mobile/asset
-mkdir -p $WORK/gomobile_bind
-mkdir -p $WORK/gomobile_bind
-mkdir -p $WORK/android/src/main/java/go
-{{.GobindJavaCmd}} -outdir=$WORK/android/src/main/java/go 
-mkdir -p $WORK/android/src/main/java/go
-mkdir -p $WORK/gomobile_bind
-mkdir -p $WORK/gomobile_bind
-cp $GOPATH/src/golang.org/x/mobile/bind/java/seq_android.go.support $WORK/gomobile_bind/seq_android.go
-mkdir -p $WORK/gomobile_bind
-cp $GOPATH/src/golang.org/x/mobile/bind/java/seq_android.c.support $WORK/gomobile_bind/seq_android.c
-mkdir -p $WORK/gomobile_bind
-cp $GOPATH/src/golang.org/x/mobile/bind/java/seq.h $WORK/gomobile_bind/seq.h
-mkdir -p $WORK/gomobile_bind
-cp $GOPATH/src/golang.org/x/mobile/bind/seq.go.support $WORK/gomobile_bind/seq.go
-mkdir -p $WORK/gomobile_bind
-mkdir -p $WORK/android/src/main/java/go
-GOOS=android GOARCH=arm CC=/NDK/toolchains/llvm/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin/clang{{.EXE}} CXX=/NDK/toolchains/llvm/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin/clang++{{.EXE}} CGO_CFLAGS=-target armv7a-none-linux-androideabi -gcc-toolchain /NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}} --sysroot /NDK/sysroot -isystem /NDK/sysroot/usr/include/arm-linux-androideabi -D__ANDROID_API__=15 -I$GOMOBILE/include CGO_CPPFLAGS=-target armv7a-none-linux-androideabi -gcc-toolchain /NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}} --sysroot /NDK/sysroot -isystem /NDK/sysroot/usr/include/arm-linux-androideabi -D__ANDROID_API__=15 -I$GOMOBILE/include CGO_LDFLAGS=-target armv7a-none-linux-androideabi -gcc-toolchain /NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}} --sysroot /NDK/platforms/android-15/arch-arm -L$GOMOBILE/lib/arm CGO_ENABLED=1 GOARM=7 GOPATH=$WORK/gen:$GOPATH go build -pkgdir=$GOMOBILE/pkg_android_arm -x -buildmode=c-shared -o=$WORK/android/src/main/jniLibs/armeabi-v7a/libgojni.so $WORK/androidlib/main.go
-rm $WORK/android/src/main/java/go/Seq.java
-ln -s $GOPATH/src/golang.org/x/mobile/bind/java/Seq.java $WORK/android/src/main/java/go/Seq.java
-rm $WORK/android/src/main/java/go/LoadJNI.java
-ln -s $GOPATH/src/golang.org/x/mobile/bind/java/LoadJNI.java $WORK/android/src/main/java/go/LoadJNI.java
-PWD=$WORK/android/src/main/java javac -d $WORK/javac-output -source 1.7 -target 1.7 -bootclasspath {{.AndroidPlatform}}/android.jar *.java
+gobind -lang=go,java -outdir=$WORK{{if .JavaPkg}} -javapkg={{.JavaPkg}}{{end}} golang.org/x/mobile/asset
+GOOS=android GOARCH=arm CC=/NDK/toolchains/llvm/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin/clang{{.EXE}} CXX=/NDK/toolchains/llvm/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin/clang++{{.EXE}} CGO_CFLAGS=-target armv7a-none-linux-androideabi -gcc-toolchain /NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}} --sysroot /NDK/sysroot -isystem /NDK/sysroot/usr/include/arm-linux-androideabi -D__ANDROID_API__=15 -I$GOMOBILE/include CGO_CPPFLAGS=-target armv7a-none-linux-androideabi -gcc-toolchain /NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}} --sysroot /NDK/sysroot -isystem /NDK/sysroot/usr/include/arm-linux-androideabi -D__ANDROID_API__=15 -I$GOMOBILE/include CGO_LDFLAGS=-target armv7a-none-linux-androideabi -gcc-toolchain /NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}} --sysroot /NDK/platforms/android-15/arch-arm -L$GOMOBILE/lib/arm CGO_ENABLED=1 GOARM=7 GOPATH=$WORK:$GOPATH go build -pkgdir=$GOMOBILE/pkg_android_arm -x -buildmode=c-shared -o=$WORK/android/src/main/jniLibs/armeabi-v7a/libgojni.so gobind
+PWD=$WORK/java javac -d $WORK/javac-output -source 1.7 -target 1.7 -bootclasspath {{.AndroidPlatform}}/android.jar *.java
 jar c -C $WORK/javac-output .
 `))
