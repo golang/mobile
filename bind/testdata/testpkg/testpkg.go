@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build darwin linux
-
 // Package testpkg contains bound functions for testing the cgo-JNI interface.
 // This is used in tests of golang.org/x/mobile/bind/java.
 package testpkg
@@ -23,9 +21,9 @@ import (
 
 	"golang.org/x/mobile/asset"
 
-	"golang.org/x/mobile/bind/testpkg/secondpkg"
-	"golang.org/x/mobile/bind/testpkg/simplepkg"
-	"golang.org/x/mobile/bind/testpkg/unboundpkg"
+	"golang.org/x/mobile/bind/testdata/testpkg/secondpkg"
+	"golang.org/x/mobile/bind/testdata/testpkg/simplepkg"
+	"golang.org/x/mobile/bind/testdata/testpkg/unboundpkg"
 )
 
 const (

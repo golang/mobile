@@ -39,9 +39,9 @@ var destination = flag.String("device", "platform=iOS Simulator,name=iPhone 6s P
 // This requires the xcode command lines tools.
 func TestObjcSeqTest(t *testing.T) {
 	runTest(t, []string{
-		"golang.org/x/mobile/bind/testpkg",
-		"golang.org/x/mobile/bind/testpkg/secondpkg",
-		"golang.org/x/mobile/bind/testpkg/simplepkg",
+		"golang.org/x/mobile/bind/testdata/testpkg",
+		"golang.org/x/mobile/bind/testdata/testpkg/secondpkg",
+		"golang.org/x/mobile/bind/testdata/testpkg/simplepkg",
 	}, "xcodetest", "SeqTest.m", false)
 }
 
@@ -57,7 +57,7 @@ func TestObjcSeqBench(t *testing.T) {
 // TestObjcSeqWrappers runs ObjC test SeqWrappers.m.
 // This requires the xcode command lines tools.
 func TestObjcSeqWrappers(t *testing.T) {
-	runTest(t, []string{"golang.org/x/mobile/bind/testpkg/objcpkg"}, "xcodewrappers", "SeqWrappers.m", false)
+	runTest(t, []string{"golang.org/x/mobile/bind/testdata/testpkg/objcpkg"}, "xcodewrappers", "SeqWrappers.m", false)
 }
 
 func runTest(t *testing.T, pkgNames []string, project, testfile string, dumpOutput bool) {
