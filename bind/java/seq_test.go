@@ -23,21 +23,21 @@ func TestClasses(t *testing.T) {
 		t.Skipf("java importer is not available")
 	}
 	runTest(t, []string{
-		"golang.org/x/mobile/bind/testpkg/javapkg",
+		"golang.org/x/mobile/bind/testdata/testpkg/javapkg",
 	}, "", "ClassesTest")
 }
 
 func TestCustomPkg(t *testing.T) {
 	runTest(t, []string{
-		"golang.org/x/mobile/bind/testpkg",
+		"golang.org/x/mobile/bind/testdata/testpkg",
 	}, "org.golang.custompkg", "CustomPkgTest")
 }
 
 func TestJavaSeqTest(t *testing.T) {
 	runTest(t, []string{
-		"golang.org/x/mobile/bind/testpkg",
-		"golang.org/x/mobile/bind/testpkg/secondpkg",
-		"golang.org/x/mobile/bind/testpkg/simplepkg",
+		"golang.org/x/mobile/bind/testdata/testpkg",
+		"golang.org/x/mobile/bind/testdata/testpkg/secondpkg",
+		"golang.org/x/mobile/bind/testdata/testpkg/simplepkg",
 	}, "", "SeqTest")
 }
 

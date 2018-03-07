@@ -17,11 +17,11 @@ var tests = []struct {
 	pkg  string
 	goos string
 }{
-	{"ObjC-Testpkg", "objc", "golang.org/x/mobile/bind/testpkg", ""},
-	{"Java-Testpkg", "java", "golang.org/x/mobile/bind/testpkg", ""},
-	{"Go-Testpkg", "go", "golang.org/x/mobile/bind/testpkg", ""},
-	{"Java-Javapkg", "java", "golang.org/x/mobile/bind/testpkg/javapkg", "android"},
-	{"Go-Javapkg", "go", "golang.org/x/mobile/bind/testpkg/javapkg", "android"},
+	{"ObjC-Testpkg", "objc", "golang.org/x/mobile/bind/testdata/testpkg", ""},
+	{"Java-Testpkg", "java", "golang.org/x/mobile/bind/testdata/testpkg", ""},
+	{"Go-Testpkg", "go", "golang.org/x/mobile/bind/testdata/testpkg", ""},
+	{"Java-Javapkg", "java", "golang.org/x/mobile/bind/testdata/testpkg/javapkg", "android"},
+	{"Go-Javapkg", "go", "golang.org/x/mobile/bind/testdata/testpkg/javapkg", "android"},
 }
 
 func installGobind() error {
