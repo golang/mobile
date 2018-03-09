@@ -97,6 +97,10 @@ func runBind(cmd *command) error {
 		return errors.New("no Android NDK path is set. Please run gomobile init with the ndk-bundle installed through the Android SDK manager or with the -ndk flag set.")
 	}
 
+	if ctx.GOOS == "darwin" {
+		ctx.BuildTags = append(ctx.BuildTags, "ios")
+	}
+
 	var gobind string
 	if !buildN {
 		gobind, err = exec.LookPath("gobind")

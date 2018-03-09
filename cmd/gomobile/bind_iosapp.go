@@ -21,6 +21,7 @@ func goIOSBind(gobind string, pkgs []*build.Package, archs []string) error {
 		"-lang=go,objc",
 		"-outdir="+tmpdir,
 	)
+	cmd.Env = append(cmd.Env, "GOOS=darwin")
 	if len(ctx.BuildTags) > 0 {
 		cmd.Args = append(cmd.Args, "-tags="+strings.Join(ctx.BuildTags, ","))
 	}
@@ -33,8 +34,6 @@ func goIOSBind(gobind string, pkgs []*build.Package, archs []string) error {
 	if err := runCmd(cmd); err != nil {
 		return err
 	}
-
-	ctx.BuildTags = append(ctx.BuildTags, "ios")
 
 	srcDir := filepath.Join(tmpdir, "src", "gobind")
 	gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
