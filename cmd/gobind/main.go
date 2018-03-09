@@ -51,8 +51,7 @@ func run() {
 	} else {
 		langs = []string{"go", "java", "objc"}
 	}
-	oldCtx := build.Default
-	ctx := &build.Default
+	ctx := build.Default
 	if *tags != "" {
 		ctx.BuildTags = append(ctx.BuildTags, strings.Split(*tags, ",")...)
 	}
@@ -130,19 +129,14 @@ func run() {
 		}
 	}
 
-	// Make sure the export data for any imported packages are up to date.
-	cmd := exec.Command("go", "install", "-tags", strings.Join(ctx.BuildTags, " "))
-	cmd.Args = append(cmd.Args, flag.Args()...)
-	cmd.Env = append(os.Environ(), "GOPATH="+ctx.GOPATH)
-	cmd.Env = append(cmd.Env, "GOROOT="+ctx.GOROOT)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		fmt.Fprintf(os.Stderr, "%s", out)
-		exitStatus = 1
-		return
-	}
-
 	typePkgs := make([]*types.Package, len(allPkg))
-	imp := importer.Default()
+	// The "source" go/importer package implicitly uses build.Default.
+	oldCtx := build.Default
+	build.Default = ctx
+	defer func() {
+		build.Default = oldCtx
+	}()
+	imp := importer.For("source", nil)
 	for i, pkg := range allPkg {
 		var err error
 		typePkgs[i], err = imp.Import(pkg.ImportPath)
@@ -151,7 +145,6 @@ func run() {
 			return
 		}
 	}
-	build.Default = oldCtx
 	for _, l := range langs {
 		for _, pkg := range typePkgs {
 			genPkg(l, pkg, typePkgs, classes, otypes)

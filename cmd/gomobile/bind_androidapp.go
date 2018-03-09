@@ -33,6 +33,7 @@ func goAndroidBind(gobind string, pkgs []*build.Package, androidArchs []string) 
 		"-lang=go,java",
 		"-outdir="+tmpdir,
 	)
+	cmd.Env = append(cmd.Env, "GOOS=android")
 	if len(ctx.BuildTags) > 0 {
 		cmd.Args = append(cmd.Args, "-tags="+strings.Join(ctx.BuildTags, ","))
 	}
