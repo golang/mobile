@@ -80,7 +80,7 @@ class GobindPlugin implements Plugin<Project> {
 		bindTask.bootClasspath = variant.javaCompile.options.bootClasspath
 		// TODO: Detect when updating the Java classes is redundant.
 		bindTask.outputs.upToDateWhen { false }
-		variant.registerJavaGeneratingTask(bindTask, outputDir)
+		variant.registerJavaGeneratingTask(bindTask, new File(outputDir, "java"))
 		// Then, generate the JNI libraries with the gomobile tool.
 		Task libTask = project.tasks.create("gomobile${variant.name.capitalize()}", GomobileTask)
 		libTask.bootClasspath = variant.javaCompile.options.bootClasspath
