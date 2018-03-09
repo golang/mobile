@@ -52,9 +52,7 @@ func TestSignPKCS7(t *testing.T) {
 			"-i",
 			"-in", sigPath,
 		)
-		out, err := cmd.CombinedOutput()
-		t.Logf("%v:\n%s", cmd.Args, out)
-		if err != nil {
+		if err := cmd.Run(); err != nil {
 			t.Errorf("bad asn.1: %v", err)
 		}
 	}
