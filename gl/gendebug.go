@@ -881,7 +881,7 @@ const preamble = `// Copyright 2014 The Go Authors.  All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Generated from gl.go using go generate. DO NOT EDIT.
+// Code generated from gl.go using go generate. DO NOT EDIT.
 // See doc.go for details.
 
 // +build linux darwin windows openbsd
