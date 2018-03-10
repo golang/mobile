@@ -47,7 +47,7 @@ installed. Support is not complete.
 If the package directory contains an assets subdirectory, its contents
 are copied into the output.
 
-The -bundleid flag is for -target ios only and sets the bundle ID to use 
+The -bundleid flag is for -target ios only and sets the bundle ID to use
 with the app; defaults to "org.golang.todo".
 
 The -o flag specifies the output file name. If not specified, the
