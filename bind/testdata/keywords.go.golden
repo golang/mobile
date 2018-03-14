@@ -35,6 +35,13 @@ func proxykeywords_KeywordCaller_Assert(refnum C.int32_t) {
 	v.Assert()
 }
 
+//export proxykeywords_KeywordCaller_Bool
+func proxykeywords_KeywordCaller_Bool(refnum C.int32_t) {
+	ref := _seq.FromRefNum(int32(refnum))
+	v := ref.Get().(keywords.KeywordCaller)
+	v.Bool()
+}
+
 //export proxykeywords_KeywordCaller_Boolean
 func proxykeywords_KeywordCaller_Boolean(refnum C.int32_t) {
 	ref := _seq.FromRefNum(int32(refnum))
@@ -245,6 +252,13 @@ func proxykeywords_KeywordCaller_New(refnum C.int32_t) {
 	v.New()
 }
 
+//export proxykeywords_KeywordCaller_Nil
+func proxykeywords_KeywordCaller_Nil(refnum C.int32_t) {
+	ref := _seq.FromRefNum(int32(refnum))
+	v := ref.Get().(keywords.KeywordCaller)
+	v.Nil()
+}
+
 //export proxykeywords_KeywordCaller_Null
 func proxykeywords_KeywordCaller_Null(refnum C.int32_t) {
 	ref := _seq.FromRefNum(int32(refnum))
@@ -404,6 +418,10 @@ func (p *proxykeywords_KeywordCaller) Assert() {
 	C.cproxykeywords_KeywordCaller_Assert(C.int32_t(p.Bind_proxy_refnum__()))
 }
 
+func (p *proxykeywords_KeywordCaller) Bool() {
+	C.cproxykeywords_KeywordCaller_Bool(C.int32_t(p.Bind_proxy_refnum__()))
+}
+
 func (p *proxykeywords_KeywordCaller) Boolean() {
 	C.cproxykeywords_KeywordCaller_Boolean(C.int32_t(p.Bind_proxy_refnum__()))
 }
@@ -522,6 +540,10 @@ func (p *proxykeywords_KeywordCaller) Native() {
 
 func (p *proxykeywords_KeywordCaller) New() {
 	C.cproxykeywords_KeywordCaller_New(C.int32_t(p.Bind_proxy_refnum__()))
+}
+
+func (p *proxykeywords_KeywordCaller) Nil() {
+	C.cproxykeywords_KeywordCaller_Nil(C.int32_t(p.Bind_proxy_refnum__()))
 }
 
 func (p *proxykeywords_KeywordCaller) Null() {

@@ -16,6 +16,7 @@
 @protocol KeywordsKeywordCaller <NSObject>
 - (void)abstract;
 - (void)assert;
+- (void)bool_;
 - (void)boolean;
 - (void)break;
 - (void)byte;
@@ -46,6 +47,7 @@
 - (void)long_;
 - (void)native;
 - (void)new;
+- (void)nil_;
 - (void)null;
 - (void)package;
 - (void)private;
@@ -82,6 +84,7 @@ FOUNDATION_EXPORT void KeywordsStatic(NSString* strictfp);
 - (instancetype)initWithRef:(id)ref;
 - (void)abstract;
 - (void)assert;
+- (void)bool_;
 - (void)boolean;
 - (void)break;
 - (void)byte;
@@ -112,6 +115,7 @@ FOUNDATION_EXPORT void KeywordsStatic(NSString* strictfp);
 - (void)long_;
 - (void)native;
 - (void)new;
+- (void)nil_;
 - (void)null;
 - (void)package;
 - (void)private;

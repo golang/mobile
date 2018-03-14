@@ -1392,9 +1392,10 @@ func isObjcType(t types.Type) bool {
 }
 
 var objcNameReplacer = newNameSanitizer([]string{
-	"void", "char", "short", "int", "long", "float", "double", "signed",
-	"unsigned", "id", "const", "volatile", "in", "out", "inout", "bycopy",
-	"byref", "oneway", "self", "super", "init"})
+	"bool", "bycopy", "byref", "char", "const", "double", "float",
+	"id", "in", "init", "inout", "int", "long", "nil", "oneway",
+	"out", "self", "short", "signed", "super", "unsigned", "void",
+	"volatile"})
 
 const (
 	objcPreamble = `// Objective-C API for talking to %[1]s Go package.
