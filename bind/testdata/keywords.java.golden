@@ -9,6 +9,7 @@ import go.Seq;
 public interface KeywordCaller {
     public void abstract_();
     public void assert_();
+    public void bool();
     public void boolean_();
     public void break_();
     public void byte_();
@@ -39,6 +40,7 @@ public interface KeywordCaller {
     public void long_();
     public void native_();
     public void new_();
+    public void nil();
     public void null_();
     public void package_();
     public void private_();
@@ -97,6 +99,7 @@ public abstract class Keywords {
         
         public native void abstract_();
         public native void assert_();
+        public native void bool();
         public native void boolean_();
         public native void break_();
         public native void byte_();
@@ -127,6 +130,7 @@ public abstract class Keywords {
         public native void long_();
         public native void native_();
         public native void new_();
+        public native void nil();
         public native void null_();
         public native void package_();
         public native void private_();

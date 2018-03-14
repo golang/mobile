@@ -58,6 +58,8 @@ type KeywordCaller interface {
 	False()
 	Null()
 	True()
+	Bool()
+	Nil()
 }
 
 func Const(id string)        {}

@@ -13,6 +13,7 @@ jclass proxy_class_keywords_KeywordCaller;
 jmethodID proxy_class_keywords_KeywordCaller_cons;
 static jmethodID mid_KeywordCaller_Abstract;
 static jmethodID mid_KeywordCaller_Assert;
+static jmethodID mid_KeywordCaller_Bool;
 static jmethodID mid_KeywordCaller_Boolean;
 static jmethodID mid_KeywordCaller_Break;
 static jmethodID mid_KeywordCaller_Byte;
@@ -43,6 +44,7 @@ static jmethodID mid_KeywordCaller_Interface;
 static jmethodID mid_KeywordCaller_Long;
 static jmethodID mid_KeywordCaller_Native;
 static jmethodID mid_KeywordCaller_New;
+static jmethodID mid_KeywordCaller_Nil;
 static jmethodID mid_KeywordCaller_Null;
 static jmethodID mid_KeywordCaller_Package;
 static jmethodID mid_KeywordCaller_Private;
@@ -74,6 +76,7 @@ Java_keywords_Keywords__1init(JNIEnv *env, jclass _unused) {
     clazz = (*env)->FindClass(env, "keywords/KeywordCaller");
     mid_KeywordCaller_Abstract = (*env)->GetMethodID(env, clazz, "abstract_", "()V");
     mid_KeywordCaller_Assert = (*env)->GetMethodID(env, clazz, "assert_", "()V");
+    mid_KeywordCaller_Bool = (*env)->GetMethodID(env, clazz, "bool", "()V");
     mid_KeywordCaller_Boolean = (*env)->GetMethodID(env, clazz, "boolean_", "()V");
     mid_KeywordCaller_Break = (*env)->GetMethodID(env, clazz, "break_", "()V");
     mid_KeywordCaller_Byte = (*env)->GetMethodID(env, clazz, "byte_", "()V");
@@ -104,6 +107,7 @@ Java_keywords_Keywords__1init(JNIEnv *env, jclass _unused) {
     mid_KeywordCaller_Long = (*env)->GetMethodID(env, clazz, "long_", "()V");
     mid_KeywordCaller_Native = (*env)->GetMethodID(env, clazz, "native_", "()V");
     mid_KeywordCaller_New = (*env)->GetMethodID(env, clazz, "new_", "()V");
+    mid_KeywordCaller_Nil = (*env)->GetMethodID(env, clazz, "nil", "()V");
     mid_KeywordCaller_Null = (*env)->GetMethodID(env, clazz, "null_", "()V");
     mid_KeywordCaller_Package = (*env)->GetMethodID(env, clazz, "package_", "()V");
     mid_KeywordCaller_Private = (*env)->GetMethodID(env, clazz, "private_", "()V");
@@ -163,6 +167,19 @@ void cproxykeywords_KeywordCaller_Assert(int32_t refnum) {
     JNIEnv *env = go_seq_push_local_frame(0);
     jobject o = go_seq_from_refnum(env, refnum, proxy_class_keywords_KeywordCaller, proxy_class_keywords_KeywordCaller_cons);
     (*env)->CallVoidMethod(env, o, mid_KeywordCaller_Assert);
+    go_seq_pop_local_frame(env);
+}
+
+JNIEXPORT void JNICALL
+Java_keywords_Keywords_00024proxyKeywordCaller_bool(JNIEnv* env, jobject __this__) {
+    int32_t o = go_seq_to_refnum_go(env, __this__);
+    proxykeywords_KeywordCaller_Bool(o);
+}
+
+void cproxykeywords_KeywordCaller_Bool(int32_t refnum) {
+    JNIEnv *env = go_seq_push_local_frame(0);
+    jobject o = go_seq_from_refnum(env, refnum, proxy_class_keywords_KeywordCaller, proxy_class_keywords_KeywordCaller_cons);
+    (*env)->CallVoidMethod(env, o, mid_KeywordCaller_Bool);
     go_seq_pop_local_frame(env);
 }
 
@@ -553,6 +570,19 @@ void cproxykeywords_KeywordCaller_New(int32_t refnum) {
     JNIEnv *env = go_seq_push_local_frame(0);
     jobject o = go_seq_from_refnum(env, refnum, proxy_class_keywords_KeywordCaller, proxy_class_keywords_KeywordCaller_cons);
     (*env)->CallVoidMethod(env, o, mid_KeywordCaller_New);
+    go_seq_pop_local_frame(env);
+}
+
+JNIEXPORT void JNICALL
+Java_keywords_Keywords_00024proxyKeywordCaller_nil(JNIEnv* env, jobject __this__) {
+    int32_t o = go_seq_to_refnum_go(env, __this__);
+    proxykeywords_KeywordCaller_Nil(o);
+}
+
+void cproxykeywords_KeywordCaller_Nil(int32_t refnum) {
+    JNIEnv *env = go_seq_push_local_frame(0);
+    jobject o = go_seq_from_refnum(env, refnum, proxy_class_keywords_KeywordCaller, proxy_class_keywords_KeywordCaller_cons);
+    (*env)->CallVoidMethod(env, o, mid_KeywordCaller_Nil);
     go_seq_pop_local_frame(env);
 }
 
