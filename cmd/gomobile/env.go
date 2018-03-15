@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -27,8 +26,6 @@ var (
 	androidArmNM string
 	darwinArmNM  string
 
-	ndkRoot string
-
 	archs = []string{"arm", "arm64", "386", "amd64"}
 )
 
@@ -52,22 +49,6 @@ func buildEnvInit() (cleanup func(), err error) {
 		return nil, errors.New("toolchain not installed, run `gomobile init`")
 	}
 
-	// Read the NDK root path stored by gomobile init -ndk, if any.
-	if !buildN {
-		root, err := ioutil.ReadFile(filepath.Join(gomobilepath, "android_ndk_root"))
-		if err != nil && !os.IsNotExist(err) {
-			return nil, err
-		}
-		ndkRoot = string(root)
-		if ndkRoot != "" {
-			if _, err := os.Stat(filepath.Join(ndkRoot, "toolchains")); err != nil {
-				if os.IsNotExist(err) {
-					return nil, fmt.Errorf("The ndk path %q doesn't exist. Please re-run gomobile with the ndk-bundle install through the Android SDK manager or with the -ndk flag set.", ndkRoot)
-				}
-				return nil, err
-			}
-		}
-	}
 	if err := envInit(); err != nil {
 		return nil, err
 	}
@@ -83,15 +64,6 @@ func buildEnvInit() (cleanup func(), err error) {
 		tmpdir = "$WORK"
 		cleanupFn = func() {}
 	} else {
-		verpath := filepath.Join(gomobilepath, "version")
-		installedVersion, err := ioutil.ReadFile(verpath)
-		if err != nil {
-			return nil, errors.New("toolchain partially installed, run `gomobile init`")
-		}
-		if !bytes.Equal(installedVersion, goVersionOut) {
-			return nil, errors.New("toolchain out of date, run `gomobile init`")
-		}
-
 		tmpdir, err = ioutil.TempDir("", "gomobile-work-")
 		if err != nil {
 			return nil, err
@@ -112,31 +84,14 @@ func envInit() (err error) {
 	}
 
 	// Setup the cross-compiler environments.
-
-	if ndkRoot != "" {
+	if hasNDK() {
 		androidEnv = make(map[string][]string)
 		for arch, toolchain := range ndk {
-			// Emulate the flags in the clang wrapper scripts generated
-			// by make_standalone_toolchain.py
-			s := strings.SplitN(toolchain.toolPrefix, "-", 3)
-			a, os, env := s[0], s[1], s[2]
-			if a == "arm" {
-				a = "armv7a"
-			}
-			androidApi := strings.TrimPrefix(toolchain.platform, "android-")
-			target := strings.Join([]string{a, "none", os, env}, "-")
-			gcctoolchain := filepath.Join(ndkRoot, "toolchains", toolchain.gcc, "prebuilt", archNDK())
-			flags := fmt.Sprintf("-target %s -gcc-toolchain %s", target, gcctoolchain)
-			cflags := fmt.Sprintf("%s --sysroot %s/sysroot -isystem %s/sysroot/usr/include/%s -D__ANDROID_API__=%s -I%s/include", flags, ndkRoot, ndkRoot, toolchain.toolPrefix, androidApi, gomobilepath)
-			ldflags := fmt.Sprintf("%s --sysroot %s/platforms/%s/arch-%s -L%s/lib/%s", flags, ndkRoot, toolchain.platform, toolchain.arch, gomobilepath, arch)
 			androidEnv[arch] = []string{
 				"GOOS=android",
 				"GOARCH=" + arch,
 				"CC=" + toolchain.Path("clang"),
 				"CXX=" + toolchain.Path("clang++"),
-				"CGO_CFLAGS=" + cflags,
-				"CGO_CPPFLAGS=" + cflags,
-				"CGO_LDFLAGS=" + ldflags,
 				"CGO_ENABLED=1",
 			}
 			if arch == "arm" {
@@ -198,6 +153,15 @@ func envInit() (err error) {
 	}
 
 	return nil
+}
+
+func hasNDK() bool {
+	if buildN {
+		return true
+	}
+	tcPath := filepath.Join(gomobilepath, "ndk-toolchains")
+	_, err := os.Stat(tcPath)
+	return err == nil
 }
 
 func envClang(sdkName string) (clang, cflags string, err error) {
@@ -282,10 +246,6 @@ func getenv(env []string, key string) string {
 	return ""
 }
 
-func pkgdir(env []string) string {
-	return gomobilepath + "/pkg_" + getenv(env, "GOOS") + "_" + getenv(env, "GOARCH")
-}
-
 func archNDK() string {
 	if runtime.GOOS == "windows" && runtime.GOARCH == "386" {
 		return "windows"
@@ -312,20 +272,7 @@ type ndkToolchain struct {
 }
 
 func (tc *ndkToolchain) Path(toolName string) string {
-	// The nm tool is located in the GCC directory structure.
-	isUtil := toolName == "nm"
-	if goos == "windows" {
-		toolName += ".exe"
-	}
-	path := filepath.Join(ndkRoot, "toolchains")
-	if isUtil {
-		toolName = tc.toolPrefix + "-" + toolName
-		path = filepath.Join(path, tc.gcc)
-	} else {
-		path = filepath.Join(path, "llvm")
-	}
-	path = filepath.Join(path, "prebuilt")
-	return filepath.Join(path, archNDK(), "bin", toolName)
+	return filepath.Join(gomobilepath, "ndk-toolchains", tc.arch, "bin", tc.toolPrefix+"-"+toolName)
 }
 
 type ndkConfig map[string]ndkToolchain // map: GOOS->androidConfig.

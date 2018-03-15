@@ -92,7 +92,7 @@ func runBind(cmd *command) error {
 		return fmt.Errorf("-prefix is supported only for ios target")
 	}
 
-	if ctx.GOOS == "android" && ndkRoot == "" {
+	if ctx.GOOS == "android" && !hasNDK() {
 		return errors.New("no Android NDK path is set. Please run gomobile init with the ndk-bundle installed through the Android SDK manager or with the -ndk flag set.")
 	}
 
