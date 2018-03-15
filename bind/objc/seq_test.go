@@ -14,7 +14,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 )
 
 // Use the Xcode XCTestCase framework to run the SeqTest.m tests and the SeqBench.m benchmarks.
@@ -69,12 +68,6 @@ func runTest(t *testing.T, pkgNames []string, project, testfile string, dumpOutp
 		if _, err := run("go install golang.org/x/mobile/cmd/gomobile"); err != nil {
 			t.Fatalf("gomobile install failed: %v", err)
 		}
-		t.Log("gomobile init")
-		start := time.Now()
-		if _, err := run("gomobile init"); err != nil {
-			t.Fatalf("gomobile init failed: %v", err)
-		}
-		t.Logf("gomobile init took %v", time.Since(start))
 	}
 
 	cwd, err := os.Getwd()

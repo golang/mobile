@@ -272,7 +272,6 @@ func goCmd(subcmd string, srcs []string, env []string, args ...string) error {
 	cmd := exec.Command(
 		"go",
 		subcmd,
-		"-pkgdir="+pkgdir(env),
 	)
 	if len(ctx.BuildTags) > 0 {
 		cmd.Args = append(cmd.Args, "-tags", strings.Join(ctx.BuildTags, " "))

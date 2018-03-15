@@ -50,7 +50,6 @@ func TestBindAndroid(t *testing.T) {
 	buildX = true
 	buildO = "asset.aar"
 	buildTarget = "android/arm"
-	ndkRoot = "/NDK"
 
 	tests := []struct {
 		javaPkg    string
@@ -113,7 +112,7 @@ func TestBindAndroid(t *testing.T) {
 var bindAndroidTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
 WORK=$WORK
 gobind -lang=go,java -outdir=$WORK{{if .JavaPkg}} -javapkg={{.JavaPkg}}{{end}} golang.org/x/mobile/asset
-GOOS=android GOARCH=arm CC=/NDK/toolchains/llvm/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin/clang{{.EXE}} CXX=/NDK/toolchains/llvm/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin/clang++{{.EXE}} CGO_CFLAGS=-target armv7a-none-linux-androideabi -gcc-toolchain /NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}} --sysroot /NDK/sysroot -isystem /NDK/sysroot/usr/include/arm-linux-androideabi -D__ANDROID_API__=15 -I$GOMOBILE/include CGO_CPPFLAGS=-target armv7a-none-linux-androideabi -gcc-toolchain /NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}} --sysroot /NDK/sysroot -isystem /NDK/sysroot/usr/include/arm-linux-androideabi -D__ANDROID_API__=15 -I$GOMOBILE/include CGO_LDFLAGS=-target armv7a-none-linux-androideabi -gcc-toolchain /NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/{{.GOOS}}-{{.NDKARCH}} --sysroot /NDK/platforms/android-15/arch-arm -L$GOMOBILE/lib/arm CGO_ENABLED=1 GOARM=7 GOPATH=$WORK:$GOPATH go build -pkgdir=$GOMOBILE/pkg_android_arm -x -buildmode=c-shared -o=$WORK/android/src/main/jniLibs/armeabi-v7a/libgojni.so gobind
+GOOS=android GOARCH=arm CC=$GOMOBILE/ndk-toolchains/arm/bin/arm-linux-androideabi-clang CXX=$GOMOBILE/ndk-toolchains/arm/bin/arm-linux-androideabi-clang++ CGO_ENABLED=1 GOARM=7 GOPATH=$WORK:$GOPATH go build -x -buildmode=c-shared -o=$WORK/android/src/main/jniLibs/armeabi-v7a/libgojni.so gobind
 PWD=$WORK/java javac -d $WORK/javac-output -source 1.7 -target 1.7 -bootclasspath {{.AndroidPlatform}}/android.jar *.java
 jar c -C $WORK/javac-output .
 `))
