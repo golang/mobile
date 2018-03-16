@@ -749,10 +749,7 @@ func (g *JavaGen) genJNIFuncSignature(o *types.Func, sName string, jm *java.Func
 		g.Printf(jm.JNIName)
 	} else {
 		oName := javaNameReplacer(lowerFirst(o.Name()))
-		if strings.HasSuffix(oName, "_") {
-			oName += "1" // JNI doesn't like methods ending with underscore, needs the _1 suffixing
-		}
-		g.Printf(oName)
+		g.Printf(java.JNIMangle(oName))
 	}
 	g.Printf("(JNIEnv* env, ")
 	if sName != "" {
@@ -777,7 +774,7 @@ func (g *JavaGen) genJNIFuncSignature(o *types.Func, sName string, jm *java.Func
 }
 
 func (g *JavaGen) jniPkgName() string {
-	return strings.Replace(g.javaPkgName(g.Pkg), ".", "_", -1)
+	return strings.Replace(java.JNIMangle(g.javaPkgName(g.Pkg)), ".", "_", -1)
 }
 
 var javaLetterDigitRE = regexp.MustCompile(`[0-9a-zA-Z$_]`)
@@ -1064,7 +1061,7 @@ func (g *JavaGen) genJNIField(o *types.TypeName, f *types.Var) {
 	n := java.JNIMangle(g.javaTypeName(o.Name()))
 	// setter
 	g.Printf("JNIEXPORT void JNICALL\n")
-	g.Printf("Java_%s_%s_set%s(JNIEnv *env, jobject this, %s v) {\n", g.jniPkgName(), n, f.Name(), g.jniType(f.Type()))
+	g.Printf("Java_%s_%s_set%s(JNIEnv *env, jobject this, %s v) {\n", g.jniPkgName(), n, java.JNIMangle(f.Name()), g.jniType(f.Type()))
 	g.Indent()
 	g.Printf("int32_t o = go_seq_to_refnum_go(env, this);\n")
 	g.genJavaToC("v", f.Type(), modeRetained)
@@ -1075,7 +1072,7 @@ func (g *JavaGen) genJNIField(o *types.TypeName, f *types.Var) {
 
 	// getter
 	g.Printf("JNIEXPORT %s JNICALL\n", g.jniType(f.Type()))
-	g.Printf("Java_%s_%s_get%s(JNIEnv *env, jobject this) {\n", g.jniPkgName(), n, f.Name())
+	g.Printf("Java_%s_%s_get%s(JNIEnv *env, jobject this) {\n", g.jniPkgName(), n, java.JNIMangle(f.Name()))
 	g.Indent()
 	g.Printf("int32_t o = go_seq_to_refnum_go(env, this);\n")
 	g.Printf("%s r0 = ", g.cgoType(f.Type()))
@@ -1471,7 +1468,7 @@ func (g *JavaGen) GenC() error {
 	}
 	g.Printf("\n")
 	g.Printf("JNIEXPORT void JNICALL\n")
-	g.Printf("Java_%s_%s__1init(JNIEnv *env, jclass _unused) {\n", g.jniPkgName(), g.className())
+	g.Printf("Java_%s_%s__1init(JNIEnv *env, jclass _unused) {\n", g.jniPkgName(), java.JNIMangle(g.className()))
 	g.Indent()
 	g.Printf("jclass clazz;\n")
 	for _, s := range g.structs {

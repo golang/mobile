@@ -44,6 +44,7 @@ var tests = []string{
 	"testdata/vars.go",
 	"testdata/ignore.go",
 	"testdata/doc.go",
+	"testdata/underscores.go",
 }
 
 var javaTests = []string{
