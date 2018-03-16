@@ -9,6 +9,7 @@ package testpkg
 //go:generate gobind -lang=go -outdir=go_testpkg .
 //go:generate gobind -lang=java -outdir=. .
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -609,3 +610,11 @@ func TestSIGPIPE() {
 type Testpkg interface{}
 
 func ClashingParameterFromOtherPackage(_ *secondpkg.Secondpkg) {}
+
+type MyStruct struct {
+}
+
+// Test that constructors with incompatible signatures are ignored.
+func NewMyStruct(ctx context.Context) *MyStruct {
+	return nil
+}
