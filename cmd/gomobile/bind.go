@@ -11,6 +11,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 )
@@ -96,6 +97,16 @@ func runBind(cmd *command) error {
 		return errors.New("no Android NDK path is set. Please run gomobile init with the ndk-bundle installed through the Android SDK manager or with the -ndk flag set.")
 	}
 
+	var gobind string
+	if !buildN {
+		gobind, err = exec.LookPath("gobind")
+		if err != nil {
+			return errors.New("gobind was not found. Please run gomobile init before trying again.")
+		}
+	} else {
+		gobind = "gobind"
+	}
+
 	var pkgs []*build.Package
 	switch len(args) {
 	case 0:
@@ -117,10 +128,10 @@ func runBind(cmd *command) error {
 
 	switch targetOS {
 	case "android":
-		return goAndroidBind(pkgs, targetArchs)
+		return goAndroidBind(gobind, pkgs, targetArchs)
 	case "darwin":
 		// TODO: use targetArchs?
-		return goIOSBind(pkgs)
+		return goIOSBind(gobind, pkgs)
 	default:
 		return fmt.Errorf(`invalid -target=%q`, buildTarget)
 	}

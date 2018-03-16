@@ -16,10 +16,10 @@ import (
 	"text/template"
 )
 
-func goIOSBind(pkgs []*build.Package) error {
+func goIOSBind(gobind string, pkgs []*build.Package) error {
 	// Run gobind to generate the bindings
 	cmd := exec.Command(
-		"gobind",
+		gobind,
 		"-lang=go,objc",
 		"-outdir="+tmpdir,
 	)
