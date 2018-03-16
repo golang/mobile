@@ -170,9 +170,13 @@ func installNDKToolchains(gomobilepath string) error {
 }
 
 func installOpenAL(gomobilepath string) error {
-	if initNDK == "" || initOpenAL == "" {
+	if initOpenAL == "" {
 		return nil
 	}
+	if !hasNDK() {
+		return errors.New("The Android NDK is needed to build OpenAL but it was not found. Please run gomobile init with the ndk-bundle installed through the Android SDK manager or with the -ndk flag set.")
+	}
+
 	var cmake string
 	if buildN {
 		cmake = "cmake"
