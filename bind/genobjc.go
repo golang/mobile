@@ -1161,6 +1161,10 @@ func (g *ObjcGen) genStructM(obj *types.TypeName, t *types.Struct) {
 	cons := g.constructors[obj]
 	if oinf == nil {
 		for _, f := range cons {
+			if !g.isSigSupported(f.Type()) {
+				g.Printf("// skipped constructor %s.%s with unsupported parameter or return types\n\n", obj, f.Name())
+				continue
+			}
 			g.genInitM(obj, f)
 		}
 	}
