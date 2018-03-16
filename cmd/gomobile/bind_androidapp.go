@@ -53,7 +53,7 @@ func goAndroidBind(gobind string, pkgs []*build.Package, androidArchs []string) 
 	for _, arch := range androidArchs {
 		env := androidEnv[arch]
 		// Add the generated packages to GOPATH
-		gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, os.Getenv("GOPATH"))
+		gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
 		env = append(env, gopath)
 		toolchain := ndk.Toolchain(arch)
 

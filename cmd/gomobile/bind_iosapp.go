@@ -9,7 +9,6 @@ import (
 	"go/build"
 	"io"
 	"io/ioutil"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -37,7 +36,7 @@ func goIOSBind(gobind string, pkgs []*build.Package) error {
 	}
 
 	srcDir := filepath.Join(tmpdir, "src", "gobind")
-	gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, os.Getenv("GOPATH"))
+	gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
 
 	name := pkgs[0].Name
 	title := strings.Title(name)

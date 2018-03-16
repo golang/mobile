@@ -24,7 +24,7 @@ func TestIOSBuild(t *testing.T) {
 	buildX = true
 	buildO = "basic.app"
 	buildTarget = "ios"
-	gopath = filepath.SplitList(os.Getenv("GOPATH"))[0]
+	gopath = filepath.SplitList(goEnv("GOPATH"))[0]
 	cmdBuild.flag.Parse([]string{"golang.org/x/mobile/example/basic"})
 	oldTags := ctx.BuildTags
 	ctx.BuildTags = []string{"tag1"}

@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"go/build"
@@ -89,6 +90,13 @@ func run() {
 		if err != nil {
 			log.Fatal(err)
 		}
+	}
+	// Determine GOPATH from go env GOPATH in case the default $HOME/go GOPATH
+	// is in effect.
+	if out, err := exec.Command("go", "env", "GOPATH").Output(); err != nil {
+		log.Fatal(err)
+	} else {
+		ctx.GOPATH = string(bytes.TrimSpace(out))
 	}
 	if len(classes) > 0 || len(otypes) > 0 {
 		// After generation, reverse bindings needs to be in the GOPATH

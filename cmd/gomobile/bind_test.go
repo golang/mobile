@@ -68,7 +68,7 @@ func TestBindAndroid(t *testing.T) {
 
 		buf := new(bytes.Buffer)
 		xout = buf
-		gopath = filepath.SplitList(os.Getenv("GOPATH"))[0]
+		gopath = filepath.SplitList(goEnv("GOPATH"))[0]
 		if goos == "windows" {
 			os.Setenv("HOMEDRIVE", "C:")
 		}
