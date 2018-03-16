@@ -110,8 +110,8 @@ func (g *ObjcGen) GenGoH() error {
 		pkgPath = g.Pkg.Path()
 	}
 	g.Printf(objcPreamble, pkgPath, g.gobindOpts(), pkgPath)
-	g.Printf("#ifndef __%s_H__\n", g.pkgName)
-	g.Printf("#define __%s_H__\n\n", g.pkgName)
+	g.Printf("#ifndef __GO_%s_H__\n", g.pkgName)
+	g.Printf("#define __GO_%s_H__\n\n", g.pkgName)
 	g.Printf("#include <stdint.h>\n")
 	g.Printf("#include <objc/objc.h>\n")
 
