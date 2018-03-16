@@ -17,14 +17,14 @@ import (
 	"strings"
 )
 
-func goAndroidBind(pkgs []*build.Package, androidArchs []string) error {
+func goAndroidBind(gobind string, pkgs []*build.Package, androidArchs []string) error {
 	if sdkDir := os.Getenv("ANDROID_HOME"); sdkDir == "" {
 		return fmt.Errorf("this command requires ANDROID_HOME environment variable (path to the Android SDK)")
 	}
 
 	// Run gobind to generate the bindings
 	cmd := exec.Command(
-		"gobind",
+		gobind,
 		"-lang=go,java",
 		"-outdir="+tmpdir,
 	)
