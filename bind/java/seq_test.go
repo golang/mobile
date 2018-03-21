@@ -55,7 +55,7 @@ func TestJavaSeqBench(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping benchmark in short mode.")
 	}
-	runTest(t, []string{"golang.org/x/mobile/bind/benchmark"}, "", "SeqBench")
+	runTest(t, []string{"golang.org/x/mobile/bind/testdata/benchmark"}, "", "SeqBench")
 }
 
 // runTest runs the Android java test class specified with javaCls. If javaPkg is
