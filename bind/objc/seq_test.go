@@ -51,7 +51,7 @@ func TestObjcSeqBench(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping benchmark in short mode.")
 	}
-	runTest(t, []string{"golang.org/x/mobile/bind/benchmark"}, "xcodebench", "SeqBench.m", true)
+	runTest(t, []string{"golang.org/x/mobile/bind/testdata/benchmark"}, "xcodebench", "SeqBench.m", true)
 }
 
 // TestObjcSeqWrappers runs ObjC test SeqWrappers.m.
