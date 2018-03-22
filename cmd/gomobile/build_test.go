@@ -146,3 +146,33 @@ func TestParseBuildTargetFlag(t *testing.T) {
 		}
 	}
 }
+
+func TestRegexImportGolangXPackage(t *testing.T) {
+	tests := []struct {
+		in      string
+		want    string
+		wantLen int
+	}{
+		{"ffffffff t golang.org/x/mobile", "golang.org/x/mobile", 2},
+		{"ffffffff t github.com/example/repo/vendor/golang.org/x/mobile", "golang.org/x/mobile", 2},
+		{"ffffffff t github.com/example/golang.org/x/mobile", "", 0},
+		{"ffffffff t github.com/example/repo", "", 0},
+		{"ffffffff t github.com/example/repo/vendor", "", 0},
+	}
+
+	for _, tc := range tests {
+		res := nmRE.FindStringSubmatch(tc.in)
+		if len(res) != tc.wantLen {
+			t.Errorf("nmRE returned unexpected result for %q: want len(res) = %d, got %d",
+				tc.in, tc.wantLen, len(res))
+			continue
+		}
+		if tc.wantLen == 0 {
+			continue
+		}
+		if res[1] != tc.want {
+			t.Errorf("nmRE returned unexpected result. want (%v), got (%v)",
+				tc.want, res[1])
+		}
+	}
+}
