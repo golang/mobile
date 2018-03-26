@@ -54,6 +54,7 @@ func TestAndroidPkgName(t *testing.T) {
 		{".-.", "go___"},
 		{"abstract", "abstract_"},
 		{"Abstract", "Abstract"},
+		{"12345", "go12345"},
 	}
 
 	for _, tc := range tests {
