@@ -151,7 +151,7 @@ func installNDKToolchains(gomobilepath string) error {
 	}
 	toolsDir := filepath.Join(initNDK, "prebuilt", archNDK(), "bin")
 	py27 := filepath.Join(toolsDir, "python2.7")
-	for _, arch := range archs {
+	for _, arch := range allArchs {
 		t := ndk[arch]
 		// Split android-XX to get the api version.
 		platform := strings.SplitN(t.platform, "-", 2)
@@ -226,7 +226,7 @@ func installOpenAL(gomobilepath string) error {
 		}
 	}
 
-	for _, arch := range archs {
+	for _, arch := range allArchs {
 		t := ndk[arch]
 		abi := t.arch
 		if abi == "arm" {

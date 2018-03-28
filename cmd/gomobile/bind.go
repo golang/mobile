@@ -133,8 +133,7 @@ func runBind(cmd *command) error {
 		if !xcodeAvailable() {
 			return fmt.Errorf("-target=ios requires XCode")
 		}
-		// TODO: use targetArchs?
-		return goIOSBind(gobind, pkgs)
+		return goIOSBind(gobind, pkgs, targetArchs)
 	default:
 		return fmt.Errorf(`invalid -target=%q`, buildTarget)
 	}

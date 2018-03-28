@@ -18,15 +18,12 @@ var (
 
 	androidEnv map[string][]string // android arch -> []string
 
-	darwinArmEnv   []string
-	darwinArm64Env []string
-	darwin386Env   []string
-	darwinAmd64Env []string
+	darwinEnv map[string][]string
 
 	androidArmNM string
 	darwinArmNM  string
 
-	archs = []string{"arm", "arm64", "386", "amd64"}
+	allArchs = []string{"arm", "arm64", "386", "amd64"}
 )
 
 func buildEnvInit() (cleanup func(), err error) {
@@ -104,52 +101,38 @@ func envInit() (err error) {
 		return nil
 	}
 
-	clang, cflags, err := envClang("iphoneos")
-	if err != nil {
-		return err
-	}
-	darwinArmEnv = []string{
-		"GOOS=darwin",
-		"GOARCH=arm",
-		"GOARM=7",
-		"CC=" + clang,
-		"CXX=" + clang,
-		"CGO_CFLAGS=" + cflags + " -miphoneos-version-min=6.1 -arch " + archClang("arm"),
-		"CGO_LDFLAGS=" + cflags + " -miphoneos-version-min=6.1 -arch " + archClang("arm"),
-		"CGO_ENABLED=1",
-	}
 	darwinArmNM = "nm"
-	darwinArm64Env = []string{
-		"GOOS=darwin",
-		"GOARCH=arm64",
-		"CC=" + clang,
-		"CXX=" + clang,
-		"CGO_CFLAGS=" + cflags + " -miphoneos-version-min=6.1 -arch " + archClang("arm64"),
-		"CGO_LDFLAGS=" + cflags + " -miphoneos-version-min=6.1 -arch " + archClang("arm64"),
-		"CGO_ENABLED=1",
-	}
-
-	clang, cflags, err = envClang("iphonesimulator")
-	if err != nil {
-		return err
-	}
-	darwin386Env = []string{
-		"GOOS=darwin",
-		"GOARCH=386",
-		"CC=" + clang,
-		"CXX=" + clang,
-		"CGO_CFLAGS=" + cflags + " -mios-simulator-version-min=6.1 -arch " + archClang("386"),
-		"CGO_LDFLAGS=" + cflags + " -mios-simulator-version-min=6.1 -arch " + archClang("386"),
-		"CGO_ENABLED=1",
-	}
-	darwinAmd64Env = []string{
-		"GOOS=darwin",
-		"GOARCH=amd64",
-		"CC=" + clang,
-		"CXX=" + clang,
-		"CGO_CFLAGS=" + cflags + " -mios-simulator-version-min=6.1 -arch x86_64",
-		"CGO_LDFLAGS=" + cflags + " -mios-simulator-version-min=6.1 -arch x86_64",
-		"CGO_ENABLED=1",
+	darwinEnv = make(map[string][]string)
+	for _, arch := range allArchs {
+		var env []string
+		var err error
+		var clang, cflags string
+		switch arch {
+		case "arm":
+			env = append(env, "GOARM=7")
+			fallthrough
+		case "arm64":
+			clang, cflags, err = envClang("iphoneos")
+			cflags += " -miphoneos-version-min=6.1"
+		case "386", "amd64":
+			clang, cflags, err = envClang("iphonesimulator")
+			cflags += " -mios-simulator-version-min=6.1"
+		default:
+			panic(fmt.Errorf("unknown GOARCH: %q", arch))
+		}
+		if err != nil {
+			return err
+		}
+		env = append(env,
+			"GOOS=darwin",
+			"GOARCH="+arch,
+			"CC="+clang,
+			"CXX="+clang,
+			"CGO_CFLAGS="+cflags+" -arch "+archClang(arch),
+			"CGO_LDFLAGS="+cflags+" -arch "+archClang(arch),
+			"CGO_ENABLED=1",
+		)
+		darwinEnv[arch] = env
 	}
 
 	return nil
@@ -181,7 +164,6 @@ func envClang(sdkName string) (clang, cflags string, err error) {
 		return "", "", fmt.Errorf("xcrun --show-sdk-path: %v\n%s", err, out)
 	}
 	sdk := strings.TrimSpace(string(out))
-
 	return clang, "-isysroot " + sdk, nil
 }
 
