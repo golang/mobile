@@ -130,6 +130,9 @@ func runBind(cmd *command) error {
 	case "android":
 		return goAndroidBind(gobind, pkgs, targetArchs)
 	case "darwin":
+		if !xcodeAvailable() {
+			return fmt.Errorf("-target=ios requires XCode")
+		}
 		// TODO: use targetArchs?
 		return goIOSBind(gobind, pkgs)
 	default:
