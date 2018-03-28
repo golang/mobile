@@ -111,17 +111,19 @@ func runBuild(cmd *command) (err error) {
 			return err
 		}
 	case "darwin":
-		// TODO: use targetArchs?
 		if !xcodeAvailable() {
 			return fmt.Errorf("-target=ios requires XCode")
 		}
 		if pkg.Name != "main" {
-			if err := goBuild(pkg.ImportPath, darwinArmEnv); err != nil {
-				return err
+			for _, arch := range targetArchs {
+				env := darwinEnv[arch]
+				if err := goBuild(pkg.ImportPath, env); err != nil {
+					return err
+				}
 			}
-			return goBuild(pkg.ImportPath, darwinArm64Env)
+			return nil
 		}
-		nmpkgs, err = goIOSBuild(pkg, buildBundleID)
+		nmpkgs, err = goIOSBuild(pkg, buildBundleID, targetArchs)
 		if err != nil {
 			return err
 		}
@@ -329,16 +331,8 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 	}
 
 	// verify all archs are supported one while deduping.
-	var supported []string
-	switch os {
-	case "ios":
-		supported = []string{"arm", "arm64", "amd64"}
-	case "android":
-		supported = []string{"arm", "arm64", "386", "amd64"}
-	}
-
 	isSupported := func(arch string) bool {
-		for _, a := range supported {
+		for _, a := range allArchs {
 			if a == arch {
 				return true
 			}
@@ -364,7 +358,7 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 		targetOS = "darwin"
 	}
 	if all {
-		return targetOS, supported, nil
+		return targetOS, allArchs, nil
 	}
 	return targetOS, archs, nil
 }

@@ -109,8 +109,7 @@ GOOS=android GOARCH=arm CC=$GOMOBILE/ndk-toolchains/arm/bin/arm-linux-androideab
 `))
 
 func TestParseBuildTargetFlag(t *testing.T) {
-	androidArchs := "arm,arm64,386,amd64"
-	iosArchs := "arm,arm64,amd64"
+	archs := strings.Join(allArchs, ",")
 
 	tests := []struct {
 		in        string
@@ -118,12 +117,12 @@ func TestParseBuildTargetFlag(t *testing.T) {
 		wantOS    string
 		wantArchs string
 	}{
-		{"android", false, "android", androidArchs},
-		{"android,android/arm", false, "android", androidArchs},
+		{"android", false, "android", archs},
+		{"android,android/arm", false, "android", archs},
 		{"android/arm", false, "android", "arm"},
 
-		{"ios", false, "darwin", iosArchs},
-		{"ios,ios/arm", false, "darwin", iosArchs},
+		{"ios", false, "darwin", archs},
+		{"ios,ios/arm", false, "darwin", archs},
 		{"ios/arm", false, "darwin", "arm"},
 		{"ios/amd64", false, "darwin", "amd64"},
 

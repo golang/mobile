@@ -15,7 +15,7 @@ import (
 	"text/template"
 )
 
-func goIOSBind(gobind string, pkgs []*build.Package) error {
+func goIOSBind(gobind string, pkgs []*build.Package, archs []string) error {
 	// Run gobind to generate the bindings
 	cmd := exec.Command(
 		gobind,
@@ -56,14 +56,14 @@ func goIOSBind(gobind string, pkgs []*build.Package) error {
 
 	cmd = exec.Command("xcrun", "lipo", "-create")
 
-	for _, env := range [][]string{darwinArmEnv, darwinArm64Env, darwinAmd64Env} {
+	for _, arch := range archs {
+		env := darwinEnv[arch]
 		env = append(env, gopath)
-		arch := archClang(getenv(env, "GOARCH"))
 		path, err := goIOSBindArchive(name, env)
 		if err != nil {
 			return fmt.Errorf("darwin-%s: %v", arch, err)
 		}
-		cmd.Args = append(cmd.Args, "-arch", arch, path)
+		cmd.Args = append(cmd.Args, "-arch", archClang(arch), path)
 	}
 
 	// Build static framework output directory.
