@@ -35,18 +35,13 @@ static jmethodID find_method(JNIEnv *env, jclass clazz, const char *name, const 
 	return m;
 }
 
-jmethodID key_rune_method;
+static jmethodID key_rune_method;
 
 jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	JNIEnv* env;
 	if ((*vm)->GetEnv(vm, (void**)&env, JNI_VERSION_1_6) != JNI_OK) {
 		return -1;
 	}
-
-	// Load classes here, which uses the correct ClassLoader.
-	current_ctx_clazz = find_class(env, "org/golang/app/GoNativeActivity");
-	current_ctx_clazz = (jclass)(*env)->NewGlobalRef(env, current_ctx_clazz);
-	key_rune_method =  find_method(env, current_ctx_clazz, "getRune", "(III)I");
 
 	return JNI_VERSION_1_6;
 }
@@ -69,10 +64,13 @@ void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_
 		current_vm = activity->vm;
 		current_ctx = activity->clazz;
 
+		jclass clazz = (*env)->GetObjectClass(env, current_ctx);
+		key_rune_method = find_method(env, clazz, "getRune", "(III)I");
+
 		setCurrentContext(current_vm, (*env)->NewGlobalRef(env, current_ctx));
 
 		// Set TMPDIR.
-		jmethodID gettmpdir = find_method(env, current_ctx_clazz, "getTmpdir", "()Ljava/lang/String;");
+		jmethodID gettmpdir = find_method(env, clazz, "getTmpdir", "()Ljava/lang/String;");
 		jstring jpath = (jstring)(*env)->CallObjectMethod(env, current_ctx, gettmpdir, NULL);
 		const char* tmpdir = (*env)->GetStringUTFChars(env, jpath, NULL);
 		if (setenv("TMPDIR", tmpdir, 1) != 0) {
