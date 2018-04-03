@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"go/build"
 	"io"
-	"io/ioutil"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -34,6 +33,8 @@ func goIOSBind(gobind string, pkgs []*build.Package, archs []string) error {
 	if err := runCmd(cmd); err != nil {
 		return err
 	}
+
+	ctx.BuildTags = append(ctx.BuildTags, "ios")
 
 	srcDir := filepath.Join(tmpdir, "src", "gobind")
 	gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
@@ -134,7 +135,11 @@ func goIOSBind(gobind string, pkgs []*build.Package, archs []string) error {
 	if err := symlink("Versions/Current/Resources", buildO+"/Resources"); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(buildO+"/Resources/Info.plist", []byte(iosBindInfoPlist), 0666); err != nil {
+	err := writeFile(buildO+"/Resources/Info.plist", func(w io.Writer) error {
+		_, err := w.Write([]byte(iosBindInfoPlist))
+		return err
+	})
+	if err != nil {
 		return err
 	}
 
@@ -145,7 +150,7 @@ func goIOSBind(gobind string, pkgs []*build.Package, archs []string) error {
 		Module:  title,
 		Headers: headerFiles,
 	}
-	err := writeFile(buildO+"/Versions/A/Modules/module.modulemap", func(w io.Writer) error {
+	err = writeFile(buildO+"/Versions/A/Modules/module.modulemap", func(w io.Writer) error {
 		return iosModuleMapTmpl.Execute(w, mmVals)
 	})
 	if err != nil {

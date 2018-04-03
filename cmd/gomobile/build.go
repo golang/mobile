@@ -74,6 +74,10 @@ func runBuild(cmd *command) (err error) {
 		return fmt.Errorf(`invalid -target=%q: %v`, buildTarget, err)
 	}
 
+	oldCtx := ctx
+	defer func() {
+		ctx = oldCtx
+	}()
 	ctx.GOARCH = targetArchs[0]
 	ctx.GOOS = targetOS
 
