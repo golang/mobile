@@ -79,12 +79,12 @@ func runBind(cmd *command) error {
 		return fmt.Errorf(`invalid -target=%q: %v`, buildTarget, err)
 	}
 
+	oldCtx := ctx
+	defer func() {
+		ctx = oldCtx
+	}()
 	ctx.GOARCH = "arm"
 	ctx.GOOS = targetOS
-
-	if ctx.GOOS == "darwin" {
-		ctx.BuildTags = append(ctx.BuildTags, "ios")
-	}
 
 	if bindJavaPkg != "" && ctx.GOOS != "android" {
 		return fmt.Errorf("-javapkg is supported only for android target")
