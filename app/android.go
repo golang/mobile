@@ -37,7 +37,6 @@ package app
 
 JavaVM* current_vm;
 jobject current_ctx;
-jclass current_ctx_clazz;
 
 jclass app_find_class(JNIEnv* env, const char* name);
 
