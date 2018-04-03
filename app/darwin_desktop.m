@@ -3,6 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // +build darwin
+// +build !ios
 
 #include "_cgo_export.h"
 #include <pthread.h>
