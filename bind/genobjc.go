@@ -190,8 +190,8 @@ func (g *ObjcGen) GenH() error {
 	// const
 	// TODO: prefix with k?, or use a class method?
 	for _, obj := range g.constants {
-		if _, ok := obj.Type().(*types.Basic); !ok {
-			g.Printf("// skipped const %s with unsupported type: %T\n\n", obj.Name(), obj)
+		if _, ok := obj.Type().(*types.Basic); !ok || !g.isSupported(obj.Type()) {
+			g.Printf("// skipped const %s with unsupported type: %s\n\n", obj.Name(), obj.Type())
 			continue
 		}
 		g.objcdoc(g.docs[obj.Name()].Doc())
@@ -211,7 +211,7 @@ func (g *ObjcGen) GenH() error {
 		g.Printf("@interface %s : NSObject\n", g.namePrefix)
 		for _, obj := range g.vars {
 			if t := obj.Type(); !g.isSupported(t) {
-				g.Printf("// skipped variable %s with unsupported type: %T\n\n", obj.Name(), t)
+				g.Printf("// skipped variable %s with unsupported type: %s\n\n", obj.Name(), t)
 				continue
 			}
 			objcType := g.objcType(obj.Type())
@@ -338,7 +338,7 @@ func (g *ObjcGen) GenM() error {
 
 func (g *ObjcGen) genVarM(o *types.Var) {
 	if t := o.Type(); !g.isSupported(t) {
-		g.Printf("// skipped variable %s with unsupported type: %T\n\n", o.Name(), t)
+		g.Printf("// skipped variable %s with unsupported type: %s\n\n", o.Name(), t)
 		return
 	}
 	objcType := g.objcType(o.Type())
@@ -364,8 +364,8 @@ func (g *ObjcGen) genVarM(o *types.Var) {
 }
 
 func (g *ObjcGen) genConstM(o *types.Const) {
-	if _, ok := o.Type().(*types.Basic); !ok {
-		g.Printf("// skipped const %s with unsupported type: %T\n\n", o.Name(), o)
+	if _, ok := o.Type().(*types.Basic); !ok || !g.isSupported(o.Type()) {
+		g.Printf("// skipped const %s with unsupported type: %s\n\n", o.Name(), o.Type())
 		return
 	}
 	cName := fmt.Sprintf("%s%s", g.namePrefix, o.Name())
@@ -1114,7 +1114,7 @@ func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 	// accessors to exported fields.
 	for _, f := range exportedFields(t) {
 		if t := f.Type(); !g.isSupported(t) {
-			g.Printf("// skipped field %s.%s with unsupported type: %T\n\n", obj.Name(), f.Name(), t)
+			g.Printf("// skipped field %s.%s with unsupported type: %s\n\n", obj.Name(), f.Name(), t)
 			continue
 		}
 		name, typ := f.Name(), g.objcFieldType(f.Type())
@@ -1184,7 +1184,7 @@ func (g *ObjcGen) genStructM(obj *types.TypeName, t *types.Struct) {
 
 	for _, f := range fields {
 		if !g.isSupported(f.Type()) {
-			g.Printf("// skipped unsupported field %s with type %T\n\n", f.Name(), f)
+			g.Printf("// skipped unsupported field %s with type %s\n\n", f.Name(), f.Type())
 			continue
 		}
 		g.genGetter(obj.Name(), f)

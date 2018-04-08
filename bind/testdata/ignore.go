@@ -43,3 +43,17 @@ type I interface {
 	Argument(_ interface{})
 	Result() interface{}
 }
+
+var (
+	Uint   uint
+	Uint32 uint32
+	Uint64 uint64
+	C64    complex64  = 0
+	C128   complex128 = 0
+)
+
+const (
+	Cuint   uint   = 0
+	Cuint32 uint32 = 0
+	Cuint64 uint64 = 0
+)
