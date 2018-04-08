@@ -206,7 +206,7 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 
 	for _, f := range fields {
 		if t := f.Type(); !g.isSupported(t) {
-			g.Printf("// skipped field %s.%s with unsupported type: %T\n\n", obj.Name(), f.Name(), t)
+			g.Printf("// skipped field %s.%s with unsupported type: %s\n\n", obj.Name(), f.Name(), t)
 			continue
 		}
 		g.Printf("//export proxy%s_%s_%s_Set\n", g.pkgPrefix, obj.Name(), f.Name())
@@ -253,7 +253,7 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 
 func (g *goGen) genVar(o *types.Var) {
 	if t := o.Type(); !g.isSupported(t) {
-		g.Printf("// skipped variable %s with unsupported type %T\n\n", o.Name(), t)
+		g.Printf("// skipped variable %s with unsupported type %s\n\n", o.Name(), t)
 		return
 	}
 	// TODO(hyangah): non-struct pointer types (*int), struct type.

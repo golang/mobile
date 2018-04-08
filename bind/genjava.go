@@ -313,7 +313,7 @@ func (g *JavaGen) genStruct(s structInfo) {
 
 	for _, f := range fields {
 		if t := f.Type(); !g.isSupported(t) {
-			g.Printf("// skipped field %s.%s with unsupported type: %T\n\n", n, f.Name(), t)
+			g.Printf("// skipped field %s.%s with unsupported type: %s\n\n", n, f.Name(), t)
 			continue
 		}
 
@@ -465,7 +465,7 @@ func (g *JavaGen) genObjectMethods(n string, fields []*types.Var, isStringer boo
 	g.Printf("%s that = (%s)o;\n", n, n)
 	for _, f := range fields {
 		if t := f.Type(); !g.isSupported(t) {
-			g.Printf("// skipped field %s.%s with unsupported type: %T\n\n", n, f.Name(), t)
+			g.Printf("// skipped field %s.%s with unsupported type: %s\n\n", n, f.Name(), t)
 			continue
 		}
 		nf := f.Name()
@@ -840,7 +840,7 @@ func (g *JavaGen) genFuncSignature(o *types.Func, jm *java.Func, hasThis bool) {
 
 func (g *JavaGen) genVar(o *types.Var) {
 	if t := o.Type(); !g.isSupported(t) {
-		g.Printf("// skipped variable %s with unsupported type: %T\n\n", o.Name(), t)
+		g.Printf("// skipped variable %s with unsupported type: %s\n\n", o.Name(), t)
 		return
 	}
 	jType := g.javaType(o.Type())
@@ -1020,8 +1020,8 @@ func JavaClassName(pkg *types.Package) string {
 }
 
 func (g *JavaGen) genConst(o *types.Const) {
-	if _, ok := o.Type().(*types.Basic); !ok {
-		g.Printf("// skipped const %s with unsupported type: %T\n\n", o.Name(), o)
+	if _, ok := o.Type().(*types.Basic); !ok || !g.isSupported(o.Type()) {
+		g.Printf("// skipped const %s with unsupported type: %s\n\n", o.Name(), o.Type())
 		return
 	}
 	// TODO(hyangah): should const names use upper cases + "_"?
@@ -1055,7 +1055,7 @@ func (g *JavaGen) genConst(o *types.Const) {
 
 func (g *JavaGen) genJNIField(o *types.TypeName, f *types.Var) {
 	if t := f.Type(); !g.isSupported(t) {
-		g.Printf("// skipped field %s with unsupported type: %T\n\n", o.Name(), t)
+		g.Printf("// skipped field %s with unsupported type: %s\n\n", o.Name(), t)
 		return
 	}
 	n := java.JNIMangle(g.javaTypeName(o.Name()))
@@ -1085,7 +1085,7 @@ func (g *JavaGen) genJNIField(o *types.TypeName, f *types.Var) {
 
 func (g *JavaGen) genJNIVar(o *types.Var) {
 	if t := o.Type(); !g.isSupported(t) {
-		g.Printf("// skipped variable %s with unsupported type: %T\n\n", o.Name(), t)
+		g.Printf("// skipped variable %s with unsupported type: %s\n\n", o.Name(), t)
 		return
 	}
 	n := java.JNIMangle(g.javaTypeName(o.Name()))

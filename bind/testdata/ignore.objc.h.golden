@@ -27,7 +27,7 @@
 
 - (instancetype)initWithRef:(id)ref;
 - (instancetype)init;
-// skipped field S.F with unsupported type: *types.Interface
+// skipped field S.F with unsupported type: interface{}
 
 // skipped method S.Argument with unsupported parameter or return types
 
@@ -35,13 +35,29 @@
 
 @end
 
-// skipped const NamedConst with unsupported type: *types.Const
+// skipped const Cuint with unsupported type: uint
+
+// skipped const Cuint32 with unsupported type: uint32
+
+// skipped const Cuint64 with unsupported type: uint64
+
+// skipped const NamedConst with unsupported type: ignore.NamedString
 
 
 @interface Ignore : NSObject
-// skipped variable V with unsupported type: *types.Interface
+// skipped variable C128 with unsupported type: complex128
 
-// skipped variable Var with unsupported type: *types.Interface
+// skipped variable C64 with unsupported type: complex64
+
+// skipped variable Uint with unsupported type: uint
+
+// skipped variable Uint32 with unsupported type: uint32
+
+// skipped variable Uint64 with unsupported type: uint64
+
+// skipped variable V with unsupported type: interface{}
+
+// skipped variable Var with unsupported type: interface{}
 
 @end
 
