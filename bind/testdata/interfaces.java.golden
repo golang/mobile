@@ -159,7 +159,7 @@ public abstract class Interfaces {
               return refnum;
         }
         
-        proxyError(Seq.Ref ref) { this.ref = ref; }
+        proxyError(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
         public native void err() throws Exception;
     }
@@ -172,7 +172,7 @@ public abstract class Interfaces {
               return refnum;
         }
         
-        proxyI(Seq.Ref ref) { this.ref = ref; }
+        proxyI(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
         public native int rand();
     }
@@ -185,7 +185,7 @@ public abstract class Interfaces {
               return refnum;
         }
         
-        proxyI1(Seq.Ref ref) { this.ref = ref; }
+        proxyI1(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
         public native void j();
     }
@@ -198,7 +198,7 @@ public abstract class Interfaces {
               return refnum;
         }
         
-        proxyI2(Seq.Ref ref) { this.ref = ref; }
+        proxyI2(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
         public native void g();
     }
@@ -211,7 +211,7 @@ public abstract class Interfaces {
               return refnum;
         }
         
-        proxyI3(Seq.Ref ref) { this.ref = ref; }
+        proxyI3(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
         public native I1 f();
     }
@@ -224,7 +224,7 @@ public abstract class Interfaces {
               return refnum;
         }
         
-        proxyInterfaces(Seq.Ref ref) { this.ref = ref; }
+        proxyInterfaces(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
         public native void someMethod();
     }
@@ -237,7 +237,7 @@ public abstract class Interfaces {
               return refnum;
         }
         
-        proxyLargerI(Seq.Ref ref) { this.ref = ref; }
+        proxyLargerI(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
         public native void anotherFunc();
         public native int rand();
@@ -251,7 +251,7 @@ public abstract class Interfaces {
               return refnum;
         }
         
-        proxySameI(Seq.Ref ref) { this.ref = ref; }
+        proxySameI(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
         public native int rand();
     }
@@ -264,7 +264,7 @@ public abstract class Interfaces {
               return refnum;
         }
         
-        proxyWithParam(Seq.Ref ref) { this.ref = ref; }
+        proxyWithParam(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
         public native void hasParam(boolean p0);
     }

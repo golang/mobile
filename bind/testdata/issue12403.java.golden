@@ -42,7 +42,7 @@ public abstract class Issue12403 {
               return refnum;
         }
         
-        proxyParsable(Seq.Ref ref) { this.ref = ref; }
+        proxyParsable(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
         public native String fromJSON(String jstr);
         public native String toJSON() throws Exception;

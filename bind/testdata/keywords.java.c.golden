@@ -72,7 +72,7 @@ Java_keywords_Keywords__1init(JNIEnv *env, jclass _unused) {
     jclass clazz;
     clazz = (*env)->FindClass(env, "keywords/Keywords$proxyKeywordCaller");
     proxy_class_keywords_KeywordCaller = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_keywords_KeywordCaller_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_keywords_KeywordCaller_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "keywords/KeywordCaller");
     mid_KeywordCaller_Abstract = (*env)->GetMethodID(env, clazz, "abstract_", "()V");
     mid_KeywordCaller_Assert = (*env)->GetMethodID(env, clazz, "assert_", "()V");

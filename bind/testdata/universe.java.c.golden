@@ -18,7 +18,7 @@ Java_go_Universe__1init(JNIEnv *env, jclass _unused) {
     jclass clazz;
     clazz = (*env)->FindClass(env, "go/Universe$proxyerror");
     proxy_class__error = (*env)->NewGlobalRef(env, clazz);
-    proxy_class__error_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class__error_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "java/lang/Throwable");
     mid_error_Error = (*env)->GetMethodID(env, clazz, "getMessage", "()Ljava/lang/String;");
 }

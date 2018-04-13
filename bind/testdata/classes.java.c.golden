@@ -752,13 +752,13 @@ Java_java_Java__1init(JNIEnv *env, jclass _unused) {
     jclass clazz;
     clazz = (*env)->FindClass(env, "java/Future");
     proxy_class_java_Future = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_java_Future_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_java_Future_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "java/Object");
     proxy_class_java_Object = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_java_Object_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_java_Object_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "java/Runnable");
     proxy_class_java_Runnable = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_java_Runnable_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_java_Runnable_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
 }
 
 JNIEXPORT jobject JNICALL
@@ -768,10 +768,9 @@ Java_java_Java_newInputStream(JNIEnv* env, jclass _clazz) {
     return _r0;
 }
 
-JNIEXPORT jobject JNICALL
+JNIEXPORT jint JNICALL
 Java_java_Future__1_1New(JNIEnv *env, jclass clazz) {
-    int32_t refnum = new_java_Future();
-    return go_seq_from_refnum(env, refnum, NULL, NULL);
+    return new_java_Future();
 }
 
 JNIEXPORT jobject JNICALL
@@ -811,10 +810,10 @@ Java_java_Future_getFuture(JNIEnv *env, jobject this) {
     return _r0;
 }
 
-JNIEXPORT jobject JNICALL
+JNIEXPORT jint JNICALL
 Java_java_InputStream__1_1NewInputStream(JNIEnv *env, jclass clazz) {
     int32_t refnum = proxyjava__NewInputStream();
-    return go_seq_from_refnum(env, refnum, NULL, NULL);
+    return refnum;
 }
 
 JNIEXPORT jint JNICALL
@@ -842,10 +841,9 @@ Java_java_InputStream_getInputStream(JNIEnv *env, jobject this) {
     return _r0;
 }
 
-JNIEXPORT jobject JNICALL
+JNIEXPORT jint JNICALL
 Java_java_Object__1_1New(JNIEnv *env, jclass clazz) {
-    int32_t refnum = new_java_Object();
-    return go_seq_from_refnum(env, refnum, NULL, NULL);
+    return new_java_Object();
 }
 
 JNIEXPORT void JNICALL
@@ -863,10 +861,9 @@ Java_java_Object_getObject(JNIEnv *env, jobject this) {
     return _r0;
 }
 
-JNIEXPORT jobject JNICALL
+JNIEXPORT jint JNICALL
 Java_java_Runnable__1_1New(JNIEnv *env, jclass clazz) {
-    int32_t refnum = new_java_Runnable();
-    return go_seq_from_refnum(env, refnum, NULL, NULL);
+    return new_java_Runnable();
 }
 
 JNIEXPORT void JNICALL

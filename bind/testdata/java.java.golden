@@ -92,7 +92,7 @@ public abstract class Java {
               return refnum;
         }
         
-        proxyF(Seq.Ref ref) { this.ref = ref; }
+        proxyF(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
         public native String toString();
     }
@@ -105,7 +105,7 @@ public abstract class Java {
               return refnum;
         }
         
-        proxyL(Seq.Ref ref) { this.ref = ref; }
+        proxyL(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
         public native String toString();
     }
@@ -118,7 +118,7 @@ public abstract class Java {
               return refnum;
         }
         
-        proxyO(Seq.Ref ref) { this.ref = ref; }
+        proxyO(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
         public native String toString();
     }
@@ -131,7 +131,7 @@ public abstract class Java {
               return refnum;
         }
         
-        proxyR(Seq.Ref ref) { this.ref = ref; }
+        proxyR(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
     }
     private static final class proxyS implements Seq.Proxy, S {
@@ -143,7 +143,7 @@ public abstract class Java {
               return refnum;
         }
         
-        proxyS(Seq.Ref ref) { this.ref = ref; }
+        proxyS(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
         public native String toString();
     }

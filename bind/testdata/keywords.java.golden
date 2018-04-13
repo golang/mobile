@@ -95,7 +95,7 @@ public abstract class Keywords {
               return refnum;
         }
         
-        proxyKeywordCaller(Seq.Ref ref) { this.ref = ref; }
+        proxyKeywordCaller(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
         public native void abstract_();
         public native void assert_();

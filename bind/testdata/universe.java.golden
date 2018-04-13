@@ -41,7 +41,7 @@ public abstract class Universe {
               return refnum;
         }
         
-        proxyerror(Seq.Ref ref) { this.ref = ref; }
+        proxyerror(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
         @Override public String getMessage() { return error(); }
         

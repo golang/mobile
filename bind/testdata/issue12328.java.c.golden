@@ -17,13 +17,12 @@ Java_issue12328_Issue12328__1init(JNIEnv *env, jclass _unused) {
     jclass clazz;
     clazz = (*env)->FindClass(env, "issue12328/T");
     proxy_class_issue12328_T = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_issue12328_T_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_issue12328_T_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
 }
 
-JNIEXPORT jobject JNICALL
+JNIEXPORT jint JNICALL
 Java_issue12328_T__1_1New(JNIEnv *env, jclass clazz) {
-    int32_t refnum = new_issue12328_T();
-    return go_seq_from_refnum(env, refnum, NULL, NULL);
+    return new_issue12328_T();
 }
 
 JNIEXPORT void JNICALL

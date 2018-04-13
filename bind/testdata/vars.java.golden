@@ -17,11 +17,11 @@ public final class S implements Seq.Proxy, I {
           return refnum;
     }
     
-    S(Seq.Ref ref) { this.ref = ref; }
+    S(int refnum) { this.ref = Seq.trackGoRef(refnum); }
     
-    public S() { this.ref = __New(); }
+    public S() { this.ref = Seq.trackGoRef(__New()); }
     
-    private static native Seq.Ref __New();
+    private static native int __New();
     
     @Override public boolean equals(Object o) {
         if (o == null || !(o instanceof S)) {
@@ -84,7 +84,7 @@ public abstract class Vars {
               return refnum;
         }
         
-        proxyI(Seq.Ref ref) { this.ref = ref; }
+        proxyI(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
     }
     

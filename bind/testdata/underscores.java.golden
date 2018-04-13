@@ -17,11 +17,11 @@ public final class Underscore_struct implements Seq.Proxy {
           return refnum;
     }
     
-    Underscore_struct(Seq.Ref ref) { this.ref = ref; }
+    Underscore_struct(int refnum) { this.ref = Seq.trackGoRef(refnum); }
     
-    public Underscore_struct() { this.ref = __New(); }
+    public Underscore_struct() { this.ref = Seq.trackGoRef(__New()); }
     
-    private static native Seq.Ref __New();
+    private static native int __New();
     
     public final native String getUnderscore_field();
     public final native void setUnderscore_field(String v);

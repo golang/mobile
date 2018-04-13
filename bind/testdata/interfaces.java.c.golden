@@ -43,56 +43,56 @@ Java_interfaces_Interfaces__1init(JNIEnv *env, jclass _unused) {
     jclass clazz;
     clazz = (*env)->FindClass(env, "interfaces/Interfaces$proxyError");
     proxy_class_interfaces_Error = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_interfaces_Error_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_interfaces_Error_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "interfaces/Error");
     mid_Error_Err = (*env)->GetMethodID(env, clazz, "err", "()V");
     
     clazz = (*env)->FindClass(env, "interfaces/Interfaces$proxyI");
     proxy_class_interfaces_I = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_interfaces_I_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_interfaces_I_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "interfaces/I");
     mid_I_Rand = (*env)->GetMethodID(env, clazz, "rand", "()I");
     
     clazz = (*env)->FindClass(env, "interfaces/Interfaces$proxyI1");
     proxy_class_interfaces_I1 = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_interfaces_I1_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_interfaces_I1_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "interfaces/I1");
     mid_I1_J = (*env)->GetMethodID(env, clazz, "j", "()V");
     
     clazz = (*env)->FindClass(env, "interfaces/Interfaces$proxyI2");
     proxy_class_interfaces_I2 = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_interfaces_I2_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_interfaces_I2_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "interfaces/I2");
     mid_I2_G = (*env)->GetMethodID(env, clazz, "g", "()V");
     
     clazz = (*env)->FindClass(env, "interfaces/Interfaces$proxyI3");
     proxy_class_interfaces_I3 = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_interfaces_I3_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_interfaces_I3_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "interfaces/I3");
     mid_I3_F = (*env)->GetMethodID(env, clazz, "f", "()Linterfaces/I1;");
     
     clazz = (*env)->FindClass(env, "interfaces/Interfaces$proxyInterfaces");
     proxy_class_interfaces_Interfaces = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_interfaces_Interfaces_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_interfaces_Interfaces_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "interfaces/Interfaces_");
     mid_Interfaces_SomeMethod = (*env)->GetMethodID(env, clazz, "someMethod", "()V");
     
     clazz = (*env)->FindClass(env, "interfaces/Interfaces$proxyLargerI");
     proxy_class_interfaces_LargerI = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_interfaces_LargerI_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_interfaces_LargerI_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "interfaces/LargerI");
     mid_LargerI_AnotherFunc = (*env)->GetMethodID(env, clazz, "anotherFunc", "()V");
     mid_LargerI_Rand = (*env)->GetMethodID(env, clazz, "rand", "()I");
     
     clazz = (*env)->FindClass(env, "interfaces/Interfaces$proxySameI");
     proxy_class_interfaces_SameI = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_interfaces_SameI_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_interfaces_SameI_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "interfaces/SameI");
     mid_SameI_Rand = (*env)->GetMethodID(env, clazz, "rand", "()I");
     
     clazz = (*env)->FindClass(env, "interfaces/Interfaces$proxyWithParam");
     proxy_class_interfaces_WithParam = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_interfaces_WithParam_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_interfaces_WithParam_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "interfaces/WithParam");
     mid_WithParam_HasParam = (*env)->GetMethodID(env, clazz, "hasParam", "(Z)V");
     

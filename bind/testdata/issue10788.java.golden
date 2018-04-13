@@ -17,11 +17,11 @@ public final class TestStruct implements Seq.Proxy {
           return refnum;
     }
     
-    TestStruct(Seq.Ref ref) { this.ref = ref; }
+    TestStruct(int refnum) { this.ref = Seq.trackGoRef(refnum); }
     
-    public TestStruct() { this.ref = __New(); }
+    public TestStruct() { this.ref = Seq.trackGoRef(__New()); }
     
-    private static native Seq.Ref __New();
+    private static native int __New();
     
     public final native String getValue();
     public final native void setValue(String v);
@@ -99,7 +99,7 @@ public abstract class Issue10788 {
               return refnum;
         }
         
-        proxyTestInterface(Seq.Ref ref) { this.ref = ref; }
+        proxyTestInterface(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
         public native void doSomeWork(TestStruct s);
         public native void multipleUnnamedParams(long p0, String p1, long p2);

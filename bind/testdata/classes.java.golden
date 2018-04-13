@@ -17,11 +17,11 @@ public final class Future implements Seq.GoObject, java.util.concurrent.Future {
           return refnum;
     }
     
-    Future(Seq.Ref ref) { this.ref = ref; }
+    Future(int refnum) { this.ref = Seq.trackGoRef(refnum); }
     
-    public Future() { this.ref = __New(); }
+    public Future() { this.ref = Seq.trackGoRef(__New()); }
     
-    private static native Seq.Ref __New();
+    private static native int __New();
     
     public final native java.util.concurrent.Future getFuture();
     public final native void setFuture(java.util.concurrent.Future v);
@@ -54,10 +54,10 @@ public final class InputStream extends java.io.InputStream implements Seq.GoObje
     
     public InputStream() {
         super();
-        this.ref = __NewInputStream();
+        this.ref = Seq.trackGoRef(__NewInputStream());
     }
     
-    private static native Seq.Ref __NewInputStream();
+    private static native int __NewInputStream();
     
     public final native java.io.InputStream getInputStream();
     public final native void setInputStream(java.io.InputStream v);
@@ -84,11 +84,11 @@ public final class Object extends java.lang.Object implements Seq.GoObject {
           return refnum;
     }
     
-    Object(Seq.Ref ref) { this.ref = ref; }
+    Object(int refnum) { this.ref = Seq.trackGoRef(refnum); }
     
-    public Object() { this.ref = __New(); }
+    public Object() { this.ref = Seq.trackGoRef(__New()); }
     
-    private static native Seq.Ref __New();
+    private static native int __New();
     
     public final native java.lang.Object getObject();
     public final native void setObject(java.lang.Object v);
@@ -114,11 +114,11 @@ public final class Runnable implements Seq.GoObject, java.lang.Runnable {
           return refnum;
     }
     
-    Runnable(Seq.Ref ref) { this.ref = ref; }
+    Runnable(int refnum) { this.ref = Seq.trackGoRef(refnum); }
     
-    public Runnable() { this.ref = __New(); }
+    public Runnable() { this.ref = Seq.trackGoRef(__New()); }
     
-    private static native Seq.Ref __New();
+    private static native int __New();
     
     public final native java.lang.Runnable getRunnable();
     public final native void setRunnable(java.lang.Runnable v);
