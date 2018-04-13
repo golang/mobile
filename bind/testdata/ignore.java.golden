@@ -17,11 +17,11 @@ public final class S implements Seq.Proxy, I {
           return refnum;
     }
     
-    S(Seq.Ref ref) { this.ref = ref; }
+    S(int refnum) { this.ref = Seq.trackGoRef(refnum); }
     
-    public S() { this.ref = __New(); }
+    public S() { this.ref = Seq.trackGoRef(__New()); }
     
-    private static native Seq.Ref __New();
+    private static native int __New();
     
     // skipped field S.F with unsupported type: interface{}
     
@@ -96,7 +96,7 @@ public abstract class Ignore {
               return refnum;
         }
         
-        proxyI(Seq.Ref ref) { this.ref = ref; }
+        proxyI(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
         // skipped method I.Argument with unsupported parameter or return types
         

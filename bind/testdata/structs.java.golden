@@ -17,11 +17,11 @@ public final class S implements Seq.Proxy {
           return refnum;
     }
     
-    S(Seq.Ref ref) { this.ref = ref; }
+    S(int refnum) { this.ref = Seq.trackGoRef(refnum); }
     
-    public S() { this.ref = __New(); }
+    public S() { this.ref = Seq.trackGoRef(__New()); }
     
-    private static native Seq.Ref __New();
+    private static native int __New();
     
     public final native double getX();
     public final native void setX(double v);
@@ -81,11 +81,11 @@ public final class S2 implements Seq.Proxy, I {
           return refnum;
     }
     
-    S2(Seq.Ref ref) { this.ref = ref; }
+    S2(int refnum) { this.ref = Seq.trackGoRef(refnum); }
     
-    public S2() { this.ref = __New(); }
+    public S2() { this.ref = Seq.trackGoRef(__New()); }
     
-    private static native Seq.Ref __New();
+    private static native int __New();
     
     public native void m();
     public native String string();
@@ -125,11 +125,11 @@ public final class Structs_ implements Seq.Proxy, I {
           return refnum;
     }
     
-    Structs_(Seq.Ref ref) { this.ref = ref; }
+    Structs_(int refnum) { this.ref = Seq.trackGoRef(refnum); }
     
-    public Structs_() { this.ref = __New(); }
+    public Structs_() { this.ref = Seq.trackGoRef(__New()); }
     
-    private static native Seq.Ref __New();
+    private static native int __New();
     
     public native void m();
     @Override public boolean equals(Object o) {
@@ -194,7 +194,7 @@ public abstract class Structs {
               return refnum;
         }
         
-        proxyI(Seq.Ref ref) { this.ref = ref; }
+        proxyI(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
         public native void m();
     }

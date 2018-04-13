@@ -24,16 +24,16 @@ Java_doc_Doc__1init(JNIEnv *env, jclass _unused) {
     jclass clazz;
     clazz = (*env)->FindClass(env, "doc/NoDoc");
     proxy_class_doc_NoDoc = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_doc_NoDoc_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_doc_NoDoc_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "doc/S");
     proxy_class_doc_S = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_doc_S_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_doc_S_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "doc/S2");
     proxy_class_doc_S2 = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_doc_S2_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_doc_S2_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "doc/Doc$proxyI");
     proxy_class_doc_I = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_doc_I_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_doc_I_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "doc/I");
     mid_I_IM = (*env)->GetMethodID(env, clazz, "im", "()V");
     
@@ -51,16 +51,15 @@ Java_doc_Doc_newS(JNIEnv* env, jclass _clazz) {
     return _r0;
 }
 
-JNIEXPORT jobject JNICALL
+JNIEXPORT jint JNICALL
 Java_doc_NoDoc__1_1New(JNIEnv *env, jclass clazz) {
-    int32_t refnum = new_doc_NoDoc();
-    return go_seq_from_refnum(env, refnum, NULL, NULL);
+    return new_doc_NoDoc();
 }
 
-JNIEXPORT jobject JNICALL
+JNIEXPORT jint JNICALL
 Java_doc_S__1_1NewS(JNIEnv *env, jclass clazz) {
     int32_t refnum = proxydoc__NewS();
-    return go_seq_from_refnum(env, refnum, NULL, NULL);
+    return refnum;
 }
 
 JNIEXPORT void JNICALL
@@ -135,10 +134,9 @@ Java_doc_S_getF2(JNIEnv *env, jobject this) {
     return _r0;
 }
 
-JNIEXPORT jobject JNICALL
+JNIEXPORT jint JNICALL
 Java_doc_S2__1_1New(JNIEnv *env, jclass clazz) {
-    int32_t refnum = new_doc_S2();
-    return go_seq_from_refnum(env, refnum, NULL, NULL);
+    return new_doc_S2();
 }
 
 JNIEXPORT void JNICALL

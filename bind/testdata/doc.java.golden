@@ -20,11 +20,11 @@ public final class NoDoc implements Seq.Proxy {
           return refnum;
     }
     
-    NoDoc(Seq.Ref ref) { this.ref = ref; }
+    NoDoc(int refnum) { this.ref = Seq.trackGoRef(refnum); }
     
-    public NoDoc() { this.ref = __New(); }
+    public NoDoc() { this.ref = Seq.trackGoRef(__New()); }
     
-    private static native Seq.Ref __New();
+    private static native int __New();
     
     @Override public boolean equals(Object o) {
         if (o == null || !(o instanceof NoDoc)) {
@@ -71,12 +71,12 @@ public final class S implements Seq.Proxy {
      * NewS is a constructor.
      */
     public S() {
-        this.ref = __NewS();
+        this.ref = Seq.trackGoRef(__NewS());
     }
     
-    private static native Seq.Ref __NewS();
+    private static native int __NewS();
     
-    S(Seq.Ref ref) { this.ref = ref; }
+    S(int refnum) { this.ref = Seq.trackGoRef(refnum); }
     
     /**
      * SF is a field.
@@ -200,11 +200,11 @@ public final class S2 implements Seq.Proxy {
           return refnum;
     }
     
-    S2(Seq.Ref ref) { this.ref = ref; }
+    S2(int refnum) { this.ref = Seq.trackGoRef(refnum); }
     
-    public S2() { this.ref = __New(); }
+    public S2() { this.ref = Seq.trackGoRef(__New()); }
     
-    private static native Seq.Ref __New();
+    private static native int __New();
     
     @Override public boolean equals(Object o) {
         if (o == null || !(o instanceof S2)) {
@@ -274,7 +274,7 @@ public abstract class Doc {
               return refnum;
         }
         
-        proxyI(Seq.Ref ref) { this.ref = ref; }
+        proxyI(int refnum) { this.ref = Seq.trackGoRef(refnum); }
         
         public native void im();
     }

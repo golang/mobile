@@ -17,11 +17,11 @@ public final class T implements Seq.Proxy {
           return refnum;
     }
     
-    T(Seq.Ref ref) { this.ref = ref; }
+    T(int refnum) { this.ref = Seq.trackGoRef(refnum); }
     
-    public T() { this.ref = __New(); }
+    public T() { this.ref = Seq.trackGoRef(__New()); }
     
-    private static native Seq.Ref __New();
+    private static native int __New();
     
     public final native java.lang.Exception getErr();
     public final native void setErr(java.lang.Exception v);

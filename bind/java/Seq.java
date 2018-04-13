@@ -66,6 +66,22 @@ public class Seq {
 		return o.incRefnum();
 	}
 
+	// trackGoRef returns a Ref for a Go refnum.
+	//
+	// TODO(crawshaw): We could cut down allocations for frequently
+	// sent Go objects by maintaining a map to weak references. This
+	// however, would require allocating two objects per reference
+	// instead of one. It also introduces weak references, the bane
+	// of any Java debugging session.
+	//
+	// When we have real code, examine the tradeoffs.
+	public static Ref trackGoRef(int refnum) {
+		if (refnum > 0) {
+			throw new RuntimeException("trackGoRef called with Java refnum " + refnum);
+		}
+		return new Ref(refnum, null);
+	}
+
 	public static Ref getRef(int refnum) {
 		return tracker.get(refnum);
 	}
@@ -116,6 +132,9 @@ public class Seq {
 		public final Object obj;  // for Java obj: pointers to the Java obj.
 
 		Ref(int refnum, Object o) {
+			if (refnum < 0) {
+				throw new RuntimeException("Ref instantiated with a Go refnum " + refnum);
+			}
 			this.refnum = refnum;
 			this.refcnt = 0;
 			this.obj = o;
@@ -221,29 +240,19 @@ public class Seq {
 			}
 		}
 
-		// get returns an existing Ref to either a Java or Go object.
-		// It may be the first time we have seen the Go object.
-		//
-		// TODO(crawshaw): We could cut down allocations for frequently
-		// sent Go objects by maintaining a map to weak references. This
-		// however, would require allocating two objects per reference
-		// instead of one. It also introduces weak references, the bane
-		// of any Java debugging session.
-		//
-		// When we have real code, examine the tradeoffs.
+		// get returns an existing Ref to a Java object.
 		synchronized Ref get(int refnum) {
+			if (refnum < 0) {
+				throw new RuntimeException("ref called with Go refnum " + refnum);
+			}
 			if (refnum == NULL_REFNUM) {
 				return nullRef;
-			} else if (refnum > 0) {
-				Ref ref = javaObjs.get(refnum);
-				if (ref == null) {
-					throw new RuntimeException("unknown java Ref: "+refnum);
-				}
-				return ref;
-			} else {
-				// Go object.
-				return new Ref(refnum, null);
 			}
+			Ref ref = javaObjs.get(refnum);
+			if (ref == null) {
+				throw new RuntimeException("unknown java Ref: "+refnum);
+			}
+			return ref;
 		}
 	}
 

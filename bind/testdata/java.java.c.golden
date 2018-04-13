@@ -162,30 +162,30 @@ Java_java_Java__1init(JNIEnv *env, jclass _unused) {
     jclass clazz;
     clazz = (*env)->FindClass(env, "java/Java$proxyF");
     proxy_class_java_F = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_java_F_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_java_F_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "java/F");
     mid_F_ToString = (*env)->GetMethodID(env, clazz, "toString", "()Ljava/lang/String;");
     
     clazz = (*env)->FindClass(env, "java/Java$proxyL");
     proxy_class_java_L = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_java_L_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_java_L_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "java/L");
     mid_L_ToString = (*env)->GetMethodID(env, clazz, "toString", "()Ljava/lang/String;");
     
     clazz = (*env)->FindClass(env, "java/Java$proxyO");
     proxy_class_java_O = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_java_O_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_java_O_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "java/O");
     mid_O_ToString = (*env)->GetMethodID(env, clazz, "toString", "()Ljava/lang/String;");
     
     clazz = (*env)->FindClass(env, "java/Java$proxyR");
     proxy_class_java_R = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_java_R_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_java_R_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "java/R");
     
     clazz = (*env)->FindClass(env, "java/Java$proxyS");
     proxy_class_java_S = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_java_S_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_java_S_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "java/S");
     mid_S_ToString = (*env)->GetMethodID(env, clazz, "toString", "()Ljava/lang/String;");
     

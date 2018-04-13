@@ -19,7 +19,7 @@ Java_issue12403_Issue12403__1init(JNIEnv *env, jclass _unused) {
     jclass clazz;
     clazz = (*env)->FindClass(env, "issue12403/Issue12403$proxyParsable");
     proxy_class_issue12403_Parsable = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_issue12403_Parsable_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_issue12403_Parsable_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "issue12403/Parsable");
     mid_Parsable_FromJSON = (*env)->GetMethodID(env, clazz, "fromJSON", "(Ljava/lang/String;)Ljava/lang/String;");
     mid_Parsable_ToJSON = (*env)->GetMethodID(env, clazz, "toJSON", "()Ljava/lang/String;");

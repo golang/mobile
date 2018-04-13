@@ -17,7 +17,7 @@ Java_underscore_1pkg_Underscore_1pkg__1init(JNIEnv *env, jclass _unused) {
     jclass clazz;
     clazz = (*env)->FindClass(env, "underscore_pkg/Underscore_struct");
     proxy_class_underscore_pkg_Underscore_struct = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_underscore_pkg_Underscore_struct_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_underscore_pkg_Underscore_struct_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
 }
 
 JNIEXPORT void JNICALL
@@ -25,10 +25,9 @@ Java_underscore_1pkg_Underscore_pkg_underscore_1func(JNIEnv* env, jclass _clazz)
     proxyunderscore_pkg__Underscore_func();
 }
 
-JNIEXPORT jobject JNICALL
+JNIEXPORT jint JNICALL
 Java_underscore_1pkg_Underscore_1struct__1_1New(JNIEnv *env, jclass clazz) {
-    int32_t refnum = new_underscore_pkg_Underscore_struct();
-    return go_seq_from_refnum(env, refnum, NULL, NULL);
+    return new_underscore_pkg_Underscore_struct();
 }
 
 JNIEXPORT void JNICALL

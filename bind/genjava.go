@@ -303,11 +303,11 @@ func (g *JavaGen) genStruct(s structInfo) {
 	}
 	if jinf == nil || jinf.genNoargCon {
 		// constructor for Go instantiated instances.
-		g.Printf("%s(Seq.Ref ref) { this.ref = ref; }\n\n", n)
+		g.Printf("%s(int refnum) { this.ref = Seq.trackGoRef(refnum); }\n\n", n)
 		if len(cons) == 0 {
 			// Generate default no-arg constructor
-			g.Printf("public %s() { this.ref = __New(); }\n\n", n)
-			g.Printf("private static native Seq.Ref __New();\n\n")
+			g.Printf("public %s() { this.ref = Seq.trackGoRef(__New()); }\n\n", n)
+			g.Printf("private static native int __New();\n\n")
 		}
 	}
 
@@ -420,7 +420,7 @@ func (g *JavaGen) genConstructor(f *types.Func, n string, jcls bool) {
 		}
 		g.Printf(");\n")
 	}
-	g.Printf("this.ref = ")
+	g.Printf("this.ref = Seq.trackGoRef(")
 	g.Printf("__%s(", f.Name())
 	for i := 0; i < params.Len(); i++ {
 		if i > 0 {
@@ -428,10 +428,10 @@ func (g *JavaGen) genConstructor(f *types.Func, n string, jcls bool) {
 		}
 		g.Printf(g.paramName(params, i))
 	}
-	g.Printf(");\n")
+	g.Printf("));\n")
 	g.Outdent()
 	g.Printf("}\n\n")
-	g.Printf("private static native Seq.Ref __%s(", f.Name())
+	g.Printf("private static native int __%s(", f.Name())
 	g.genFuncArgs(f, nil, false)
 	g.Printf(");\n\n")
 }
@@ -1118,7 +1118,7 @@ func (g *JavaGen) genJNIConstructor(f *types.Func, sName string) {
 	sig := f.Type().(*types.Signature)
 	res := sig.Results()
 
-	g.Printf("JNIEXPORT jobject JNICALL\n")
+	g.Printf("JNIEXPORT jint JNICALL\n")
 	g.Printf("Java_%s_%s_%s(JNIEnv *env, jclass clazz", g.jniPkgName(), java.JNIMangle(g.javaTypeName(sName)), java.JNIMangle("__"+f.Name()))
 	params := sig.Params()
 	for i := 0; i < params.Len(); i++ {
@@ -1154,8 +1154,7 @@ func (g *JavaGen) genJNIConstructor(f *types.Func, sName string) {
 		g.genCToJava("_err", "res.r1", res.At(1).Type(), modeRetained)
 		g.Printf("go_seq_maybe_throw_exception(env, _err);\n")
 	}
-	// Pass no proxy class so that the Seq.Ref is returned instead.
-	g.Printf("return go_seq_from_refnum(env, refnum, NULL, NULL);\n")
+	g.Printf("return refnum;\n")
 	g.Outdent()
 	g.Printf("}\n\n")
 }
@@ -1481,13 +1480,13 @@ func (g *JavaGen) GenC() error {
 		}
 		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigPrefix(s.obj.Pkg())+g.javaTypeName(s.obj.Name()))
 		g.Printf("proxy_class_%s_%s = (*env)->NewGlobalRef(env, clazz);\n", g.pkgPrefix, s.obj.Name())
-		g.Printf("proxy_class_%s_%s_cons = (*env)->GetMethodID(env, clazz, \"<init>\", \"(Lgo/Seq$Ref;)V\");\n", g.pkgPrefix, s.obj.Name())
+		g.Printf("proxy_class_%s_%s_cons = (*env)->GetMethodID(env, clazz, \"<init>\", \"(I)V\");\n", g.pkgPrefix, s.obj.Name())
 	}
 	for _, iface := range g.interfaces {
 		pkg := iface.obj.Pkg()
 		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigPrefix(pkg)+JavaClassName(pkg)+"$proxy"+iface.obj.Name())
 		g.Printf("proxy_class_%s_%s = (*env)->NewGlobalRef(env, clazz);\n", g.pkgPrefix, iface.obj.Name())
-		g.Printf("proxy_class_%s_%s_cons = (*env)->GetMethodID(env, clazz, \"<init>\", \"(Lgo/Seq$Ref;)V\");\n", g.pkgPrefix, iface.obj.Name())
+		g.Printf("proxy_class_%s_%s_cons = (*env)->GetMethodID(env, clazz, \"<init>\", \"(I)V\");\n", g.pkgPrefix, iface.obj.Name())
 		if isErrorType(iface.obj.Type()) {
 			// As a special case, Java Exceptions are passed to Go pretending to implement the Go error interface.
 			// To complete the illusion, use the Throwable.getMessage method for proxied calls to the error.Error method.
@@ -1532,12 +1531,10 @@ func (g *JavaGen) GenC() error {
 			g.genJNIConstructor(f, sName)
 		}
 		if len(cons) == 0 && (jinf == nil || jinf.genNoargCon) {
-			g.Printf("JNIEXPORT jobject JNICALL\n")
+			g.Printf("JNIEXPORT jint JNICALL\n")
 			g.Printf("Java_%s_%s_%s(JNIEnv *env, jclass clazz) {\n", g.jniPkgName(), java.JNIMangle(g.javaTypeName(sName)), java.JNIMangle("__New"))
 			g.Indent()
-			g.Printf("int32_t refnum = new_%s_%s();\n", g.pkgPrefix, sName)
-			// Pass no proxy class so that the Seq.Ref is returned instead.
-			g.Printf("return go_seq_from_refnum(env, refnum, NULL, NULL);\n")
+			g.Printf("return new_%s_%s();\n", g.pkgPrefix, sName)
 			g.Outdent()
 			g.Printf("}\n\n")
 		}
@@ -1604,7 +1601,7 @@ func (g *JavaGen) GenJava() error {
 		g.Printf(" implements Seq.Proxy, %s {\n", g.javaTypeName(n))
 		g.Indent()
 		g.genProxyImpl("proxy" + n)
-		g.Printf("proxy%s(Seq.Ref ref) { this.ref = ref; }\n\n", n)
+		g.Printf("proxy%s(int refnum) { this.ref = Seq.trackGoRef(refnum); }\n\n", n)
 
 		if isErrorType(iface.obj.Type()) {
 			g.Printf("@Override public String getMessage() { return error(); }\n\n")

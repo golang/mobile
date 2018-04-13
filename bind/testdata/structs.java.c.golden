@@ -24,16 +24,16 @@ Java_structs_Structs__1init(JNIEnv *env, jclass _unused) {
     jclass clazz;
     clazz = (*env)->FindClass(env, "structs/S");
     proxy_class_structs_S = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_structs_S_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_structs_S_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "structs/S2");
     proxy_class_structs_S2 = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_structs_S2_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_structs_S2_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "structs/Structs_");
     proxy_class_structs_Structs = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_structs_Structs_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_structs_Structs_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "structs/Structs$proxyI");
     proxy_class_structs_I = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_structs_I_cons = (*env)->GetMethodID(env, clazz, "<init>", "(Lgo/Seq$Ref;)V");
+    proxy_class_structs_I_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "structs/I");
     mid_I_M = (*env)->GetMethodID(env, clazz, "m", "()V");
     
@@ -57,10 +57,9 @@ Java_structs_Structs_identityWithError(JNIEnv* env, jclass _clazz, jobject s) {
     return _r0;
 }
 
-JNIEXPORT jobject JNICALL
+JNIEXPORT jint JNICALL
 Java_structs_S__1_1New(JNIEnv *env, jclass clazz) {
-    int32_t refnum = new_structs_S();
-    return go_seq_from_refnum(env, refnum, NULL, NULL);
+    return new_structs_S();
 }
 
 JNIEXPORT jobject JNICALL
@@ -111,10 +110,9 @@ Java_structs_S_getY(JNIEnv *env, jobject this) {
     return _r0;
 }
 
-JNIEXPORT jobject JNICALL
+JNIEXPORT jint JNICALL
 Java_structs_S2__1_1New(JNIEnv *env, jclass clazz) {
-    int32_t refnum = new_structs_S2();
-    return go_seq_from_refnum(env, refnum, NULL, NULL);
+    return new_structs_S2();
 }
 
 JNIEXPORT void JNICALL
@@ -131,10 +129,9 @@ Java_structs_S2_string(JNIEnv* env, jobject __this__) {
     return _r0;
 }
 
-JNIEXPORT jobject JNICALL
+JNIEXPORT jint JNICALL
 Java_structs_Structs_1__1_1New(JNIEnv *env, jclass clazz) {
-    int32_t refnum = new_structs_Structs();
-    return go_seq_from_refnum(env, refnum, NULL, NULL);
+    return new_structs_Structs();
 }
 
 JNIEXPORT void JNICALL
