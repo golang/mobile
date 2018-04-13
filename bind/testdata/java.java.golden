@@ -84,66 +84,61 @@ public abstract class Java {
     private static native void _init();
     
     private static final class proxyF implements Seq.Proxy, F {
-        private final Seq.Ref ref;
+        private final int refnum;
         
         @Override public final int incRefnum() {
-              int refnum = ref.refnum;
               Seq.incGoRef(refnum);
               return refnum;
         }
         
-        proxyF(int refnum) { this.ref = Seq.trackGoRef(refnum); }
+        proxyF(int refnum) { this.refnum = refnum; Seq.trackGoRef(refnum, this); }
         
         public native String toString();
     }
     private static final class proxyL implements Seq.Proxy, L {
-        private final Seq.Ref ref;
+        private final int refnum;
         
         @Override public final int incRefnum() {
-              int refnum = ref.refnum;
               Seq.incGoRef(refnum);
               return refnum;
         }
         
-        proxyL(int refnum) { this.ref = Seq.trackGoRef(refnum); }
+        proxyL(int refnum) { this.refnum = refnum; Seq.trackGoRef(refnum, this); }
         
         public native String toString();
     }
     private static final class proxyO implements Seq.Proxy, O {
-        private final Seq.Ref ref;
+        private final int refnum;
         
         @Override public final int incRefnum() {
-              int refnum = ref.refnum;
               Seq.incGoRef(refnum);
               return refnum;
         }
         
-        proxyO(int refnum) { this.ref = Seq.trackGoRef(refnum); }
+        proxyO(int refnum) { this.refnum = refnum; Seq.trackGoRef(refnum, this); }
         
         public native String toString();
     }
     private static final class proxyR implements Seq.Proxy, R {
-        private final Seq.Ref ref;
+        private final int refnum;
         
         @Override public final int incRefnum() {
-              int refnum = ref.refnum;
               Seq.incGoRef(refnum);
               return refnum;
         }
         
-        proxyR(int refnum) { this.ref = Seq.trackGoRef(refnum); }
+        proxyR(int refnum) { this.refnum = refnum; Seq.trackGoRef(refnum, this); }
         
     }
     private static final class proxyS implements Seq.Proxy, S {
-        private final Seq.Ref ref;
+        private final int refnum;
         
         @Override public final int incRefnum() {
-              int refnum = ref.refnum;
               Seq.incGoRef(refnum);
               return refnum;
         }
         
-        proxyS(int refnum) { this.ref = Seq.trackGoRef(refnum); }
+        proxyS(int refnum) { this.refnum = refnum; Seq.trackGoRef(refnum, this); }
         
         public native String toString();
     }

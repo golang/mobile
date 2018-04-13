@@ -9,17 +9,16 @@ import go.Seq;
 public final class S implements Seq.Proxy, I {
     static { Vars.touch(); }
     
-    private final Seq.Ref ref;
+    private final int refnum;
     
     @Override public final int incRefnum() {
-          int refnum = ref.refnum;
           Seq.incGoRef(refnum);
           return refnum;
     }
     
-    S(int refnum) { this.ref = Seq.trackGoRef(refnum); }
+    S(int refnum) { this.refnum = refnum; Seq.trackGoRef(refnum, this); }
     
-    public S() { this.ref = Seq.trackGoRef(__New()); }
+    public S() { this.refnum = __New(); Seq.trackGoRef(refnum, this); }
     
     private static native int __New();
     
@@ -76,15 +75,14 @@ public abstract class Vars {
     private static native void _init();
     
     private static final class proxyI implements Seq.Proxy, I {
-        private final Seq.Ref ref;
+        private final int refnum;
         
         @Override public final int incRefnum() {
-              int refnum = ref.refnum;
               Seq.incGoRef(refnum);
               return refnum;
         }
         
-        proxyI(int refnum) { this.ref = Seq.trackGoRef(refnum); }
+        proxyI(int refnum) { this.refnum = refnum; Seq.trackGoRef(refnum, this); }
         
     }
     

@@ -9,17 +9,16 @@ import go.Seq;
 public final class Underscore_struct implements Seq.Proxy {
     static { Underscore_pkg.touch(); }
     
-    private final Seq.Ref ref;
+    private final int refnum;
     
     @Override public final int incRefnum() {
-          int refnum = ref.refnum;
           Seq.incGoRef(refnum);
           return refnum;
     }
     
-    Underscore_struct(int refnum) { this.ref = Seq.trackGoRef(refnum); }
+    Underscore_struct(int refnum) { this.refnum = refnum; Seq.trackGoRef(refnum, this); }
     
-    public Underscore_struct() { this.ref = Seq.trackGoRef(__New()); }
+    public Underscore_struct() { this.refnum = __New(); Seq.trackGoRef(refnum, this); }
     
     private static native int __New();
     

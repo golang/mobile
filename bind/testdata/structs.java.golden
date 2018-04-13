@@ -9,17 +9,16 @@ import go.Seq;
 public final class S implements Seq.Proxy {
     static { Structs.touch(); }
     
-    private final Seq.Ref ref;
+    private final int refnum;
     
     @Override public final int incRefnum() {
-          int refnum = ref.refnum;
           Seq.incGoRef(refnum);
           return refnum;
     }
     
-    S(int refnum) { this.ref = Seq.trackGoRef(refnum); }
+    S(int refnum) { this.refnum = refnum; Seq.trackGoRef(refnum, this); }
     
-    public S() { this.ref = Seq.trackGoRef(__New()); }
+    public S() { this.refnum = __New(); Seq.trackGoRef(refnum, this); }
     
     private static native int __New();
     
@@ -73,17 +72,16 @@ import go.Seq;
 public final class S2 implements Seq.Proxy, I {
     static { Structs.touch(); }
     
-    private final Seq.Ref ref;
+    private final int refnum;
     
     @Override public final int incRefnum() {
-          int refnum = ref.refnum;
           Seq.incGoRef(refnum);
           return refnum;
     }
     
-    S2(int refnum) { this.ref = Seq.trackGoRef(refnum); }
+    S2(int refnum) { this.refnum = refnum; Seq.trackGoRef(refnum, this); }
     
-    public S2() { this.ref = Seq.trackGoRef(__New()); }
+    public S2() { this.refnum = __New(); Seq.trackGoRef(refnum, this); }
     
     private static native int __New();
     
@@ -117,17 +115,16 @@ import go.Seq;
 public final class Structs_ implements Seq.Proxy, I {
     static { Structs.touch(); }
     
-    private final Seq.Ref ref;
+    private final int refnum;
     
     @Override public final int incRefnum() {
-          int refnum = ref.refnum;
           Seq.incGoRef(refnum);
           return refnum;
     }
     
-    Structs_(int refnum) { this.ref = Seq.trackGoRef(refnum); }
+    Structs_(int refnum) { this.refnum = refnum; Seq.trackGoRef(refnum, this); }
     
-    public Structs_() { this.ref = Seq.trackGoRef(__New()); }
+    public Structs_() { this.refnum = __New(); Seq.trackGoRef(refnum, this); }
     
     private static native int __New();
     
@@ -186,15 +183,14 @@ public abstract class Structs {
     private static native void _init();
     
     private static final class proxyI implements Seq.Proxy, I {
-        private final Seq.Ref ref;
+        private final int refnum;
         
         @Override public final int incRefnum() {
-              int refnum = ref.refnum;
               Seq.incGoRef(refnum);
               return refnum;
         }
         
-        proxyI(int refnum) { this.ref = Seq.trackGoRef(refnum); }
+        proxyI(int refnum) { this.refnum = refnum; Seq.trackGoRef(refnum, this); }
         
         public native void m();
     }
