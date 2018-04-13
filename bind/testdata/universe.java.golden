@@ -33,15 +33,14 @@ public abstract class Universe {
     private static native void _init();
     
     private static final class proxyerror extends Exception implements Seq.Proxy, error {
-        private final Seq.Ref ref;
+        private final int refnum;
         
         @Override public final int incRefnum() {
-              int refnum = ref.refnum;
               Seq.incGoRef(refnum);
               return refnum;
         }
         
-        proxyerror(int refnum) { this.ref = Seq.trackGoRef(refnum); }
+        proxyerror(int refnum) { this.refnum = refnum; Seq.trackGoRef(refnum, this); }
         
         @Override public String getMessage() { return error(); }
         

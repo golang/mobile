@@ -34,15 +34,14 @@ public abstract class Issue12403 {
     private static native void _init();
     
     private static final class proxyParsable implements Seq.Proxy, Parsable {
-        private final Seq.Ref ref;
+        private final int refnum;
         
         @Override public final int incRefnum() {
-              int refnum = ref.refnum;
               Seq.incGoRef(refnum);
               return refnum;
         }
         
-        proxyParsable(int refnum) { this.ref = Seq.trackGoRef(refnum); }
+        proxyParsable(int refnum) { this.refnum = refnum; Seq.trackGoRef(refnum, this); }
         
         public native String fromJSON(String jstr);
         public native String toJSON() throws Exception;

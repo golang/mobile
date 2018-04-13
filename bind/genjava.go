@@ -229,9 +229,8 @@ func (g *JavaGen) GenClass(idx int) error {
 }
 
 func (g *JavaGen) genProxyImpl(name string) {
-	g.Printf("private final Seq.Ref ref;\n\n")
+	g.Printf("private final int refnum;\n\n")
 	g.Printf("@Override public final int incRefnum() {\n")
-	g.Printf("      int refnum = ref.refnum;\n")
 	g.Printf("      Seq.incGoRef(refnum);\n")
 	g.Printf("      return refnum;\n")
 	g.Printf("}\n\n")
@@ -303,10 +302,10 @@ func (g *JavaGen) genStruct(s structInfo) {
 	}
 	if jinf == nil || jinf.genNoargCon {
 		// constructor for Go instantiated instances.
-		g.Printf("%s(int refnum) { this.ref = Seq.trackGoRef(refnum); }\n\n", n)
+		g.Printf("%s(int refnum) { this.refnum = refnum; Seq.trackGoRef(refnum, this); }\n\n", n)
 		if len(cons) == 0 {
 			// Generate default no-arg constructor
-			g.Printf("public %s() { this.ref = Seq.trackGoRef(__New()); }\n\n", n)
+			g.Printf("public %s() { this.refnum = __New(); Seq.trackGoRef(refnum, this); }\n\n", n)
 			g.Printf("private static native int __New();\n\n")
 		}
 	}
@@ -420,7 +419,7 @@ func (g *JavaGen) genConstructor(f *types.Func, n string, jcls bool) {
 		}
 		g.Printf(");\n")
 	}
-	g.Printf("this.ref = Seq.trackGoRef(")
+	g.Printf("this.refnum = ")
 	g.Printf("__%s(", f.Name())
 	for i := 0; i < params.Len(); i++ {
 		if i > 0 {
@@ -428,7 +427,8 @@ func (g *JavaGen) genConstructor(f *types.Func, n string, jcls bool) {
 		}
 		g.Printf(g.paramName(params, i))
 	}
-	g.Printf("));\n")
+	g.Printf(");\n")
+	g.Printf("Seq.trackGoRef(refnum, this);\n")
 	g.Outdent()
 	g.Printf("}\n\n")
 	g.Printf("private static native int __%s(", f.Name())
@@ -1601,7 +1601,7 @@ func (g *JavaGen) GenJava() error {
 		g.Printf(" implements Seq.Proxy, %s {\n", g.javaTypeName(n))
 		g.Indent()
 		g.genProxyImpl("proxy" + n)
-		g.Printf("proxy%s(int refnum) { this.ref = Seq.trackGoRef(refnum); }\n\n", n)
+		g.Printf("proxy%s(int refnum) { this.refnum = refnum; Seq.trackGoRef(refnum, this); }\n\n", n)
 
 		if isErrorType(iface.obj.Type()) {
 			g.Printf("@Override public String getMessage() { return error(); }\n\n")

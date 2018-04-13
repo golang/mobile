@@ -9,17 +9,16 @@ import go.Seq;
 public final class Future implements Seq.GoObject, java.util.concurrent.Future {
     static { Java.touch(); }
     
-    private final Seq.Ref ref;
+    private final int refnum;
     
     @Override public final int incRefnum() {
-          int refnum = ref.refnum;
           Seq.incGoRef(refnum);
           return refnum;
     }
     
-    Future(int refnum) { this.ref = Seq.trackGoRef(refnum); }
+    Future(int refnum) { this.refnum = refnum; Seq.trackGoRef(refnum, this); }
     
-    public Future() { this.ref = Seq.trackGoRef(__New()); }
+    public Future() { this.refnum = __New(); Seq.trackGoRef(refnum, this); }
     
     private static native int __New();
     
@@ -44,17 +43,17 @@ import go.Seq;
 public final class InputStream extends java.io.InputStream implements Seq.GoObject {
     static { Java.touch(); }
     
-    private final Seq.Ref ref;
+    private final int refnum;
     
     @Override public final int incRefnum() {
-          int refnum = ref.refnum;
           Seq.incGoRef(refnum);
           return refnum;
     }
     
     public InputStream() {
         super();
-        this.ref = Seq.trackGoRef(__NewInputStream());
+        this.refnum = __NewInputStream();
+        Seq.trackGoRef(refnum, this);
     }
     
     private static native int __NewInputStream();
@@ -76,17 +75,16 @@ import go.Seq;
 public final class Object extends java.lang.Object implements Seq.GoObject {
     static { Java.touch(); }
     
-    private final Seq.Ref ref;
+    private final int refnum;
     
     @Override public final int incRefnum() {
-          int refnum = ref.refnum;
           Seq.incGoRef(refnum);
           return refnum;
     }
     
-    Object(int refnum) { this.ref = Seq.trackGoRef(refnum); }
+    Object(int refnum) { this.refnum = refnum; Seq.trackGoRef(refnum, this); }
     
-    public Object() { this.ref = Seq.trackGoRef(__New()); }
+    public Object() { this.refnum = __New(); Seq.trackGoRef(refnum, this); }
     
     private static native int __New();
     
@@ -106,17 +104,16 @@ import go.Seq;
 public final class Runnable implements Seq.GoObject, java.lang.Runnable {
     static { Java.touch(); }
     
-    private final Seq.Ref ref;
+    private final int refnum;
     
     @Override public final int incRefnum() {
-          int refnum = ref.refnum;
           Seq.incGoRef(refnum);
           return refnum;
     }
     
-    Runnable(int refnum) { this.ref = Seq.trackGoRef(refnum); }
+    Runnable(int refnum) { this.refnum = refnum; Seq.trackGoRef(refnum, this); }
     
-    public Runnable() { this.ref = Seq.trackGoRef(__New()); }
+    public Runnable() { this.refnum = __New(); Seq.trackGoRef(refnum, this); }
     
     private static native int __New();
     
