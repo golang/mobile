@@ -12,7 +12,7 @@ public final class S implements Seq.Proxy, I {
     private final int refnum;
     
     @Override public final int incRefnum() {
-          Seq.incGoRef(refnum);
+          Seq.incGoRef(refnum, this);
           return refnum;
     }
     
@@ -90,7 +90,7 @@ public abstract class Ignore {
         private final int refnum;
         
         @Override public final int incRefnum() {
-              Seq.incGoRef(refnum);
+              Seq.incGoRef(refnum, this);
               return refnum;
         }
         

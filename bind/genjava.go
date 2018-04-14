@@ -231,7 +231,7 @@ func (g *JavaGen) GenClass(idx int) error {
 func (g *JavaGen) genProxyImpl(name string) {
 	g.Printf("private final int refnum;\n\n")
 	g.Printf("@Override public final int incRefnum() {\n")
-	g.Printf("      Seq.incGoRef(refnum);\n")
+	g.Printf("      Seq.incGoRef(refnum, this);\n")
 	g.Printf("      return refnum;\n")
 	g.Printf("}\n\n")
 }
