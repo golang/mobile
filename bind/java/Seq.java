@@ -98,7 +98,10 @@ public class Seq {
 	}
 
 	// Increment the Go reference count before sending over a refnum.
-	public static native void incGoRef(int refnum);
+	// The ref parameter is only used to make sure the referenced
+	// object is not garbage collected before Go increments the
+	// count. It's the equivalent of Go's runtime.KeepAlive.
+	public static native void incGoRef(int refnum, GoObject ref);
 
 	// Informs the Go ref tracker that Java is done with this refnum.
 	static native void destroyRef(int refnum);

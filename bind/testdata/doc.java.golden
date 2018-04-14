@@ -15,7 +15,7 @@ public final class NoDoc implements Seq.Proxy {
     private final int refnum;
     
     @Override public final int incRefnum() {
-          Seq.incGoRef(refnum);
+          Seq.incGoRef(refnum, this);
           return refnum;
     }
     
@@ -61,7 +61,7 @@ public final class S implements Seq.Proxy {
     private final int refnum;
     
     @Override public final int incRefnum() {
-          Seq.incGoRef(refnum);
+          Seq.incGoRef(refnum, this);
           return refnum;
     }
     
@@ -194,7 +194,7 @@ public final class S2 implements Seq.Proxy {
     private final int refnum;
     
     @Override public final int incRefnum() {
-          Seq.incGoRef(refnum);
+          Seq.incGoRef(refnum, this);
           return refnum;
     }
     
@@ -267,7 +267,7 @@ public abstract class Doc {
         private final int refnum;
         
         @Override public final int incRefnum() {
-              Seq.incGoRef(refnum);
+              Seq.incGoRef(refnum, this);
               return refnum;
         }
         

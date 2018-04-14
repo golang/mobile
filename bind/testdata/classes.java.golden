@@ -12,7 +12,7 @@ public final class Future implements Seq.GoObject, java.util.concurrent.Future {
     private final int refnum;
     
     @Override public final int incRefnum() {
-          Seq.incGoRef(refnum);
+          Seq.incGoRef(refnum, this);
           return refnum;
     }
     
@@ -46,7 +46,7 @@ public final class InputStream extends java.io.InputStream implements Seq.GoObje
     private final int refnum;
     
     @Override public final int incRefnum() {
-          Seq.incGoRef(refnum);
+          Seq.incGoRef(refnum, this);
           return refnum;
     }
     
@@ -78,7 +78,7 @@ public final class Object extends java.lang.Object implements Seq.GoObject {
     private final int refnum;
     
     @Override public final int incRefnum() {
-          Seq.incGoRef(refnum);
+          Seq.incGoRef(refnum, this);
           return refnum;
     }
     
@@ -107,7 +107,7 @@ public final class Runnable implements Seq.GoObject, java.lang.Runnable {
     private final int refnum;
     
     @Override public final int incRefnum() {
-          Seq.incGoRef(refnum);
+          Seq.incGoRef(refnum, this);
           return refnum;
     }
     

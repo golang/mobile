@@ -12,7 +12,7 @@ public final class T implements Seq.Proxy {
     private final int refnum;
     
     @Override public final int incRefnum() {
-          Seq.incGoRef(refnum);
+          Seq.incGoRef(refnum, this);
           return refnum;
     }
     
