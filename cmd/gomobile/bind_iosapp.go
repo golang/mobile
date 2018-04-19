@@ -22,6 +22,7 @@ func goIOSBind(gobind string, pkgs []*build.Package, archs []string) error {
 		"-outdir="+tmpdir,
 	)
 	cmd.Env = append(cmd.Env, "GOOS=darwin")
+	cmd.Env = append(cmd.Env, "CGO_ENABLED=1")
 	if len(ctx.BuildTags) > 0 {
 		cmd.Args = append(cmd.Args, "-tags="+strings.Join(ctx.BuildTags, ","))
 	}
