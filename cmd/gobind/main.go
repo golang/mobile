@@ -141,7 +141,7 @@ func run() {
 		var err error
 		typePkgs[i], err = imp.Import(pkg.ImportPath)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "%v\n", err)
+			errorf("%v\n", err)
 			return
 		}
 	}
