@@ -22,6 +22,7 @@ var tests = []struct {
 	{"Go-Testpkg", "go", "golang.org/x/mobile/bind/testdata/testpkg", ""},
 	{"Java-Javapkg", "java", "golang.org/x/mobile/bind/testdata/testpkg/javapkg", "android"},
 	{"Go-Javapkg", "go", "golang.org/x/mobile/bind/testdata/testpkg/javapkg", "android"},
+	{"Go-Javapkg", "go,java,objc", "golang.org/x/mobile/bind/testdata/cgopkg", "android"},
 }
 
 func installGobind() error {
@@ -35,6 +36,7 @@ func runGobind(lang, pkg, goos string) error {
 	cmd := exec.Command("gobind", "-lang", lang, pkg)
 	if goos != "" {
 		cmd.Env = append(os.Environ(), "GOOS="+goos)
+		cmd.Env = append(os.Environ(), "CGO_ENABLED=1")
 	}
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("gobind -lang %s %s failed: %v: %s", lang, pkg, err, out)
