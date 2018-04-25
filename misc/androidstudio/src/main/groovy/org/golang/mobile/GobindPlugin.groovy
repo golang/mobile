@@ -215,7 +215,7 @@ class GomobileTask extends BindTask implements OutputFileTask {
 		if (outputFile == null) {
 			outputFile = File.createTempFile("gobind-", ".aar")
 		}
-		def cmd = ["bind", "-i"]
+		def cmd = ["bind"]
 		// Add the generated R and databinding classes to the classpath.
 		if (javaCompile) {
 			def classpath = project.files(javaCompile.classpath, javaCompile.destinationDir)
