@@ -27,7 +27,7 @@ dependencies {
   testCompile 'junit:junit:4.11'
 }
 
-version = '0.2.11'
+version = '0.2.12'
 
 pluginBundle {
   website = 'https://golang.org/x/mobile'
