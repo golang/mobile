@@ -368,7 +368,7 @@ func defaultFileName(lang string, pkg *types.Package) string {
 		}
 		firstRune, size := utf8.DecodeRuneInString(pkg.Name())
 		className := string(unicode.ToUpper(firstRune)) + pkg.Name()[size:]
-		return className + ".m"
+		return *prefix + className + ".m"
 	}
 	errorf("unknown target language: %q", lang)
 	os.Exit(exitStatus)
