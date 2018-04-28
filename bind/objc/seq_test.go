@@ -29,35 +29,39 @@ import (
 //   Project => Schemes => Manage Schemes from the Xcode menu and selecting "Shared".
 // - Remove files not needed for xcodebuild (determined empirically). In particular, the empty
 //   tests Xcode creates can be removed and the unused user scheme.
+//
+// All tests here require the Xcode command line tools.
 
 var destination = flag.String("device", "platform=iOS Simulator,name=iPhone 6s Plus", "Specify the -destination flag to xcodebuild")
 
 // TestObjcSeqTest runs ObjC test SeqTest.m.
-// This requires the xcode command lines tools.
 func TestObjcSeqTest(t *testing.T) {
 	runTest(t, []string{
 		"golang.org/x/mobile/bind/testdata/testpkg",
 		"golang.org/x/mobile/bind/testdata/testpkg/secondpkg",
 		"golang.org/x/mobile/bind/testdata/testpkg/simplepkg",
-	}, "SeqTest.m", "Testpkg.framework", false, false)
+	}, "", "SeqTest.m", "Testpkg.framework", false, false)
 }
 
 // TestObjcSeqBench runs ObjC test SeqBench.m.
-// This requires the xcode command lines tools.
 func TestObjcSeqBench(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping benchmark in short mode.")
 	}
-	runTest(t, []string{"golang.org/x/mobile/bind/testdata/benchmark"}, "SeqBench.m", "Benchmark.framework", true, true)
+	runTest(t, []string{"golang.org/x/mobile/bind/testdata/benchmark"}, "", "SeqBench.m", "Benchmark.framework", true, true)
 }
 
 // TestObjcSeqWrappers runs ObjC test SeqWrappers.m.
-// This requires the xcode command lines tools.
 func TestObjcSeqWrappers(t *testing.T) {
-	runTest(t, []string{"golang.org/x/mobile/bind/testdata/testpkg/objcpkg"}, "SeqWrappers.m", "Objcpkg.framework", false, false)
+	runTest(t, []string{"golang.org/x/mobile/bind/testdata/testpkg/objcpkg"}, "", "SeqWrappers.m", "Objcpkg.framework", false, false)
 }
 
-func runTest(t *testing.T, pkgNames []string, testfile, framework string, uitest, dumpOutput bool) {
+// TestObjcCustomPkg runs the ObjC test SeqCustom.m.
+func TestObjcCustomPkg(t *testing.T) {
+	runTest(t, []string{"golang.org/x/mobile/bind/testdata/testpkg"}, "Custom", "SeqCustom.m", "Testpkg.framework", false, false)
+}
+
+func runTest(t *testing.T, pkgNames []string, prefix, testfile, framework string, uitest, dumpOutput bool) {
 	if _, err := run("which xcodebuild"); err != nil {
 		t.Skip("command xcodebuild not found, skipping")
 	}
@@ -84,6 +88,9 @@ func runTest(t *testing.T, pkgNames []string, testfile, framework string, uitest
 	}
 
 	cmd := exec.Command("gomobile", "bind", "-target", "ios", "-tags", "aaa bbb")
+	if prefix != "" {
+		cmd.Args = append(cmd.Args, "-prefix", prefix)
+	}
 	cmd.Args = append(cmd.Args, pkgNames...)
 	cmd.Dir = filepath.Join(tmpdir, "xcodetest")
 	buf, err := cmd.CombinedOutput()
