@@ -68,7 +68,7 @@ import (
 
 //export setCurrentContext
 func setCurrentContext(vm *C.JavaVM, ctx C.jobject) {
-	mobileinit.SetCurrentContext(unsafe.Pointer(vm), unsafe.Pointer(ctx))
+	mobileinit.SetCurrentContext(unsafe.Pointer(vm), uintptr(ctx))
 }
 
 //export callMain
