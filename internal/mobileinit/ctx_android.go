@@ -78,7 +78,7 @@ import (
 // SetCurrentContext populates the global Context object with the specified
 // current JavaVM instance (vm) and android.context.Context object (ctx).
 // The android.context.Context object must be a global reference.
-func SetCurrentContext(vm, ctx unsafe.Pointer) {
+func SetCurrentContext(vm unsafe.Pointer, ctx uintptr) {
 	C.current_vm = (*C.JavaVM)(vm)
 	C.current_ctx = (C.jobject)(ctx)
 }
