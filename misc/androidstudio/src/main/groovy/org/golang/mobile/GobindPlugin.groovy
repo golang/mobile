@@ -65,10 +65,6 @@ class GobindPlugin implements Plugin<Project> {
 			'mylib',
 			null,
 			gomobileTask))
-
-		Task cleanTask = project.tasks.create("clean", {
-			project.delete(project.name+".aar")
-		})
 	}
 
 	private static void handleVariant(Project project, def variant) {
