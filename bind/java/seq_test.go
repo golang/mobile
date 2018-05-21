@@ -191,10 +191,11 @@ const androidmanifest = `<?xml version="1.0" encoding="utf-8"?>
 
 const buildgradle = `buildscript {
     repositories {
+        google()
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:1.5.0'
+        classpath 'com.android.tools.build:gradle:3.0.1'
     }
 }
 
