@@ -127,6 +127,9 @@ FOUNDATION_EXPORT DocS* DocNewS(void);
 @property(strong, readonly) id _ref;
 
 - (instancetype)initWithRef:(id)ref;
+/**
+ * IM is a method.
+ */
 - (void)im;
 @end
 
