@@ -863,7 +863,8 @@ func (g *ObjcGen) genFunc(s *funcSummary, objName string) {
 }
 
 func (g *ObjcGen) genInterfaceInterface(obj *types.TypeName, summary ifaceSummary, isProtocol bool) {
-	g.objcdoc(g.docs[obj.Name()].Doc())
+	doc := g.docs[obj.Name()]
+	g.objcdoc(doc.Doc())
 	g.Printf("@interface %[1]s%[2]s : ", g.namePrefix, obj.Name())
 	if isErrorType(obj.Type()) {
 		g.Printf("NSError")
@@ -885,6 +886,7 @@ func (g *ObjcGen) genInterfaceInterface(obj *types.TypeName, summary ifaceSummar
 			continue
 		}
 		s := g.funcSummary(nil, m)
+		g.objcdoc(doc.Member(m.Name()))
 		g.Printf("- %s;\n", s.asMethod(g))
 	}
 	g.Printf("@end\n")
