@@ -7,6 +7,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"go/ast"
 	"go/build"
 	"go/token"
 	"go/types"
@@ -24,7 +25,7 @@ import (
 	"golang.org/x/mobile/internal/importers/objc"
 )
 
-func genPkg(lang string, p *types.Package, allPkg []*types.Package, classes []*java.Class, otypes []*objc.Named) {
+func genPkg(lang string, p *types.Package, astFiles []*ast.File, allPkg []*types.Package, classes []*java.Class, otypes []*objc.Named) {
 	fname := defaultFileName(lang, p)
 	conf := &bind.GeneratorConfig{
 		Fset:   fset,
@@ -37,17 +38,19 @@ func genPkg(lang string, p *types.Package, allPkg []*types.Package, classes []*j
 	} else {
 		pname = "universe"
 	}
+	var buf bytes.Buffer
+	generator := &bind.Generator{
+		Printer: &bind.Printer{Buf: &buf, IndentEach: []byte("\t")},
+		Fset:    conf.Fset,
+		AllPkg:  conf.AllPkg,
+		Pkg:     conf.Pkg,
+		Files:   astFiles,
+	}
 	switch lang {
 	case "java":
-		var buf bytes.Buffer
 		g := &bind.JavaGen{
-			JavaPkg: *javaPkg,
-			Generator: &bind.Generator{
-				Printer: &bind.Printer{Buf: &buf, IndentEach: []byte("    ")},
-				Fset:    conf.Fset,
-				AllPkg:  conf.AllPkg,
-				Pkg:     conf.Pkg,
-			},
+			JavaPkg:   *javaPkg,
+			Generator: generator,
 		}
 		g.Init(classes)
 
@@ -112,7 +115,6 @@ func genPkg(lang string, p *types.Package, allPkg []*types.Package, classes []*j
 		conf.Writer = w
 		processErr(bind.GenGo(conf))
 		closer()
-		var buf bytes.Buffer
 		w, closer = writer(filepath.Join("src", "gobind", pname+".h"))
 		genPkgH(w, pname)
 		io.Copy(w, &buf)
@@ -128,15 +130,9 @@ func genPkg(lang string, p *types.Package, allPkg []*types.Package, classes []*j
 		}
 		copyFile(filepath.Join("src", "gobind", "seq.go"), filepath.Join(bindPkg.Dir, "seq.go.support"))
 	case "objc":
-		var buf bytes.Buffer
 		g := &bind.ObjcGen{
-			Generator: &bind.Generator{
-				Printer: &bind.Printer{Buf: &buf, IndentEach: []byte("\t")},
-				Fset:    conf.Fset,
-				AllPkg:  conf.AllPkg,
-				Pkg:     conf.Pkg,
-			},
-			Prefix: *prefix,
+			Generator: generator,
+			Prefix:    *prefix,
 		}
 		g.Init(otypes)
 		w, closer := writer(filepath.Join("src", "gobind", pname+"_darwin.h"))
