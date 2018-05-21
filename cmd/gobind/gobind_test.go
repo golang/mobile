@@ -5,9 +5,12 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"testing"
 )
 
@@ -54,6 +57,45 @@ func TestGobind(t *testing.T) {
 				t.Error(err)
 			}
 		})
+	}
+}
+
+func TestDocs(t *testing.T) {
+	if err := installGobind(); err != nil {
+		t.Fatal(err)
+	}
+	// Create a fake package for doc.go
+	tmpdir, err := ioutil.TempDir("", "gobind-test-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpdir)
+	docPkg := filepath.Join(tmpdir, "src", "doctest")
+	if err := os.MkdirAll(docPkg, 0700); err != nil {
+		t.Fatal(err)
+	}
+	const docsrc = `
+package doctest
+
+// This is a comment.
+type Struct struct{
+}`
+	if err := ioutil.WriteFile(filepath.Join(docPkg, "doc.go"), []byte(docsrc), 0700); err != nil {
+		t.Fatal(err)
+	}
+
+	const comment = "This is a comment."
+	for _, lang := range []string{"java", "objc"} {
+		cmd := exec.Command("gobind", "-lang", lang, "doctest")
+		cmd.Env = append(os.Environ(), "GOROOT="+tmpdir)
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Errorf("gobind -lang %s failed: %v: %s", lang, err, out)
+			continue
+		}
+		if bytes.Index(out, []byte(comment)) == -1 {
+			t.Errorf("gobind output for language %s did not contain the comment %q", lang, comment)
+		}
 	}
 }
 

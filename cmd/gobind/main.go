@@ -8,8 +8,10 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"go/ast"
 	"go/build"
 	"go/importer"
+	"go/parser"
 	"go/types"
 	"io/ioutil"
 	"log"
@@ -130,6 +132,7 @@ func run() {
 	}
 
 	typePkgs := make([]*types.Package, len(allPkg))
+	astPkgs := make([][]*ast.File, len(allPkg))
 	// The "source" go/importer package implicitly uses build.Default.
 	oldCtx := build.Default
 	build.Default = ctx
@@ -144,14 +147,32 @@ func run() {
 			errorf("%v\n", err)
 			return
 		}
+		astPkgs[i], err = parse(pkg)
+		if err != nil {
+			errorf("%v\n", err)
+			return
+		}
 	}
 	for _, l := range langs {
-		for _, pkg := range typePkgs {
-			genPkg(l, pkg, typePkgs, classes, otypes)
+		for i, pkg := range typePkgs {
+			genPkg(l, pkg, astPkgs[i], typePkgs, classes, otypes)
 		}
 		// Generate the error package and support files
-		genPkg(l, nil, typePkgs, classes, otypes)
+		genPkg(l, nil, nil, typePkgs, classes, otypes)
 	}
+}
+
+func parse(pkg *build.Package) ([]*ast.File, error) {
+	fileNames := append(append([]string{}, pkg.GoFiles...), pkg.CgoFiles...)
+	var files []*ast.File
+	for _, name := range fileNames {
+		f, err := parser.ParseFile(fset, filepath.Join(pkg.Dir, name), nil, parser.ParseComments)
+		if err != nil {
+			return nil, err
+		}
+		files = append(files, f)
+	}
+	return files, nil
 }
 
 var exitStatus = 0
