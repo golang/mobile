@@ -2,15 +2,17 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build darwin linux,!android
+// +build darwin linux,!android windows
 
 package al
 
 /*
 #cgo darwin   CFLAGS:  -DGOOS_darwin
 #cgo linux    CFLAGS:  -DGOOS_linux
+#cgo windows  CFLAGS:  -DGOOS_windows
 #cgo darwin   LDFLAGS: -framework OpenAL
 #cgo linux    LDFLAGS: -lopenal
+#cgo windows  LDFLAGS: -lOpenAL32
 
 #ifdef GOOS_darwin
 #include <stdlib.h>
@@ -18,6 +20,12 @@ package al
 #endif
 
 #ifdef GOOS_linux
+#include <stdlib.h>
+#include <AL/alc.h>
+#endif
+
+#ifdef GOOS_windows
+#include <windows.h>
 #include <stdlib.h>
 #include <AL/alc.h>
 #endif
