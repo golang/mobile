@@ -81,6 +81,10 @@ func runBuild(cmd *command) (err error) {
 	ctx.GOARCH = targetArchs[0]
 	ctx.GOOS = targetOS
 
+	if ctx.GOOS == "darwin" {
+		ctx.BuildTags = append(ctx.BuildTags, "ios")
+	}
+
 	switch len(args) {
 	case 0:
 		pkg, err = ctx.ImportDir(cwd, build.ImportComment)
