@@ -35,15 +35,9 @@ package app
 #include <pthread.h>
 #include <stdlib.h>
 
-JavaVM* current_vm;
-jobject current_ctx;
-
-jclass app_find_class(JNIEnv* env, const char* name);
-
 EGLDisplay display;
 EGLSurface surface;
 
-char* initEGLDisplay();
 char* createEGLSurface(ANativeWindow* window);
 char* destroyEGLSurface();
 int32_t getKeyRune(JNIEnv* env, AInputEvent* e);
