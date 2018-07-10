@@ -15,6 +15,8 @@
 #define LOG_INFO(...) __android_log_print(ANDROID_LOG_INFO, "Go", __VA_ARGS__)
 #define LOG_FATAL(...) __android_log_print(ANDROID_LOG_FATAL, "Go", __VA_ARGS__)
 
+static jobject current_ctx;
+
 static jclass find_class(JNIEnv *env, const char *class_name) {
 	jclass clazz = (*env)->FindClass(env, class_name);
 	if (clazz == NULL) {
@@ -46,7 +48,7 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	return JNI_VERSION_1_6;
 }
 
-int main_running = 0;
+static int main_running = 0;
 
 // Entry point from our subclassed NativeActivity.
 //
@@ -61,13 +63,12 @@ void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_
 		JNIEnv* env = activity->env;
 
 		// Note that activity->clazz is mis-named.
-		current_vm = activity->vm;
 		current_ctx = activity->clazz;
 
 		jclass clazz = (*env)->GetObjectClass(env, current_ctx);
 		key_rune_method = find_method(env, clazz, "getRune", "(III)I");
 
-		setCurrentContext(current_vm, (*env)->NewGlobalRef(env, current_ctx));
+		setCurrentContext(activity->vm, (*env)->NewGlobalRef(env, current_ctx));
 
 		// Set TMPDIR.
 		jmethodID gettmpdir = find_method(env, clazz, "getTmpdir", "()Ljava/lang/String;");
@@ -111,7 +112,7 @@ void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_
 }
 
 // TODO(crawshaw): Test configuration on more devices.
-const EGLint RGB_888[] = {
+static const EGLint RGB_888[] = {
 	EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
 	EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
 	EGL_BLUE_SIZE, 8,
@@ -125,7 +126,7 @@ const EGLint RGB_888[] = {
 EGLDisplay display = NULL;
 EGLSurface surface = NULL;
 
-char* initEGLDisplay() {
+static char* initEGLDisplay() {
 	display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 	if (!eglInitialize(display, 0, 0)) {
 		return "EGL initialize failed";
