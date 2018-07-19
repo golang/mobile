@@ -11,10 +11,7 @@ package asset
 #include <jni.h>
 #include <stdlib.h>
 
-// asset_manager is the asset manager of the app.
-AAssetManager* asset_manager;
-
-void asset_manager_init(uintptr_t java_vm, uintptr_t jni_env, jobject ctx) {
+static AAssetManager* asset_manager_init(uintptr_t java_vm, uintptr_t jni_env, jobject ctx) {
 	JavaVM* vm = (JavaVM*)java_vm;
 	JNIEnv* env = (JNIEnv*)jni_env;
 
@@ -29,7 +26,7 @@ void asset_manager_init(uintptr_t java_vm, uintptr_t jni_env, jobject ctx) {
 
 	// Pin the AssetManager and load an AAssetManager from it.
 	am = (*env)->NewGlobalRef(env, am);
-	asset_manager = AAssetManager_fromJava(env, am);
+	return AAssetManager_fromJava(env, am);
 }
 */
 import "C"
@@ -46,9 +43,12 @@ import (
 
 var assetOnce sync.Once
 
+// asset_manager is the asset manager of the app.
+var assetManager *C.AAssetManager
+
 func assetInit() {
 	err := mobileinit.RunOnJVM(func(vm, env, ctx uintptr) error {
-		C.asset_manager_init(C.uintptr_t(vm), C.uintptr_t(env), C.jobject(ctx))
+		assetManager = C.asset_manager_init(C.uintptr_t(vm), C.uintptr_t(env), C.jobject(ctx))
 		return nil
 	})
 	if err != nil {
@@ -61,7 +61,7 @@ func openAsset(name string) (File, error) {
 	cname := C.CString(name)
 	defer C.free(unsafe.Pointer(cname))
 	a := &asset{
-		ptr:  C.AAssetManager_open(C.asset_manager, cname, C.AASSET_MODE_UNKNOWN),
+		ptr:  C.AAssetManager_open(assetManager, cname, C.AASSET_MODE_UNKNOWN),
 		name: name,
 	}
 	if a.ptr == nil {
