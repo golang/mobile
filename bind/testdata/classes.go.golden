@@ -624,7 +624,7 @@ func init_java_lang_Runnable() {
 	cls := C.CString("java/lang/Runnable")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_lang_Runnable = clazz
@@ -663,7 +663,7 @@ func init_java_io_InputStream() {
 	cls := C.CString("java/io/InputStream")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_io_InputStream = clazz
@@ -761,7 +761,7 @@ func init_java_util_concurrent_Future() {
 	cls := C.CString("java/util/concurrent/Future")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_util_concurrent_Future = clazz
@@ -843,7 +843,7 @@ func init_java_lang_Object() {
 	cls := C.CString("java/lang/Object")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_lang_Object = clazz
@@ -884,7 +884,7 @@ func init_java_util_concurrent_TimeUnit() {
 	cls := C.CString("java/util/concurrent/TimeUnit")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_util_concurrent_TimeUnit = clazz
@@ -925,7 +925,7 @@ func init_java_util_Spliterators() {
 	cls := C.CString("java/util/Spliterators")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_util_Spliterators = clazz
@@ -1087,7 +1087,7 @@ func init_java_lang_System() {
 	cls := C.CString("java/lang/System")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_lang_System = clazz
@@ -1152,7 +1152,7 @@ func init_java_Future() {
 	cls := C.CString("java/Future")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_Future = clazz
@@ -1302,7 +1302,7 @@ func init_java_InputStream() {
 	cls := C.CString("java/InputStream")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_InputStream = clazz
@@ -1484,7 +1484,7 @@ func init_java_Object() {
 	cls := C.CString("java/Object")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_Object = clazz
@@ -1552,7 +1552,7 @@ func init_java_Runnable() {
 	cls := C.CString("java/Runnable")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_Runnable = clazz
@@ -1616,7 +1616,7 @@ func init_java_util_Iterator() {
 	cls := C.CString("java/util/Iterator")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_util_Iterator = clazz
@@ -1641,7 +1641,7 @@ func init_java_util_Spliterator() {
 	cls := C.CString("java/util/Spliterator")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_util_Spliterator = clazz
@@ -1666,7 +1666,7 @@ func init_java_util_PrimitiveIterator_OfInt() {
 	cls := C.CString("java/util/PrimitiveIterator$OfInt")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_util_PrimitiveIterator_OfInt = clazz
@@ -1691,7 +1691,7 @@ func init_java_util_Spliterator_OfInt() {
 	cls := C.CString("java/util/Spliterator$OfInt")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_util_Spliterator_OfInt = clazz
@@ -1716,7 +1716,7 @@ func init_java_util_PrimitiveIterator_OfLong() {
 	cls := C.CString("java/util/PrimitiveIterator$OfLong")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_util_PrimitiveIterator_OfLong = clazz
@@ -1741,7 +1741,7 @@ func init_java_util_Spliterator_OfLong() {
 	cls := C.CString("java/util/Spliterator$OfLong")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_util_Spliterator_OfLong = clazz
@@ -1766,7 +1766,7 @@ func init_java_util_PrimitiveIterator_OfDouble() {
 	cls := C.CString("java/util/PrimitiveIterator$OfDouble")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_util_PrimitiveIterator_OfDouble = clazz
@@ -1791,7 +1791,7 @@ func init_java_util_Spliterator_OfDouble() {
 	cls := C.CString("java/util/Spliterator$OfDouble")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_util_Spliterator_OfDouble = clazz
@@ -1816,7 +1816,7 @@ func init_java_io_Console() {
 	cls := C.CString("java/io/Console")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_io_Console = clazz
