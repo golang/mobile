@@ -271,7 +271,7 @@ func init_java_lang_Float() {
 	cls := C.CString("java/lang/Float")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_lang_Float = clazz
@@ -312,7 +312,7 @@ func init_java_lang_Long() {
 	cls := C.CString("java/lang/Long")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_lang_Long = clazz
@@ -353,7 +353,7 @@ func init_java_lang_Object() {
 	cls := C.CString("java/lang/Object")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_lang_Object = clazz
@@ -394,7 +394,7 @@ func init_java_lang_Runnable() {
 	cls := C.CString("java/lang/Runnable")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_lang_Runnable = clazz
@@ -419,7 +419,7 @@ func init_java_lang_Character() {
 	cls := C.CString("java/lang/Character")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_lang_Character = clazz
@@ -460,7 +460,7 @@ func init_java_lang_Character_Subset() {
 	cls := C.CString("java/lang/Character$Subset")
 	clazz := C.go_seq_find_class(cls)
 	C.free(unsafe.Pointer(cls))
-	if clazz == nil {
+	if uintptr(clazz) == 0 {
 		return
 	}
 	class_java_lang_Character_Subset = clazz
