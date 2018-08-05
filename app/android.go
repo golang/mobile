@@ -60,6 +60,18 @@ import (
 	"golang.org/x/mobile/internal/mobileinit"
 )
 
+// RunOnJVM runs fn on a new goroutine locked to an OS thread with a JNIEnv.
+//
+// RunOnJVM blocks until the call to fn is complete. Any Java
+// exception or failure to attach to the JVM is returned as an error.
+//
+// The function fn takes vm, the current JavaVM*,
+// env, the current JNIEnv*, and
+// ctx, a jobject representing the global android.context.Context.
+func RunOnJVM(fn func(vm, jniEnv, ctx uintptr) error) error {
+	return mobileinit.RunOnJVM(fn)
+}
+
 //export setCurrentContext
 func setCurrentContext(vm *C.JavaVM, ctx C.jobject) {
 	mobileinit.SetCurrentContext(unsafe.Pointer(vm), uintptr(ctx))
