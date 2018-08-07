@@ -137,7 +137,7 @@ func onDestroy(activity *C.ANativeActivity) {
 }
 
 //export onWindowFocusChanged
-func onWindowFocusChanged(activity *C.ANativeActivity, hasFocus int) {
+func onWindowFocusChanged(activity *C.ANativeActivity, hasFocus C.int) {
 }
 
 //export onNativeWindowCreated
