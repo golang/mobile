@@ -150,13 +150,14 @@ func pump(dst chan interface{}) (src chan interface{}) {
 		const initialSize = 16
 		i, j, buf, mask := 0, 0, make([]interface{}, initialSize), initialSize-1
 
-		maybeSrc := src
+		srcActive := true
 		for {
 			maybeDst := dst
 			if i == j {
 				maybeDst = nil
 			}
-			if maybeDst == nil && maybeSrc == nil {
+			if maybeDst == nil && !srcActive {
+				// Pump is stopped and empty.
 				break
 			}
 
@@ -165,9 +166,13 @@ func pump(dst chan interface{}) (src chan interface{}) {
 				buf[i&mask] = nil
 				i++
 
-			case e := <-maybeSrc:
+			case e := <-src:
 				if _, ok := e.(stopPumping); ok {
-					maybeSrc = nil
+					srcActive = false
+					continue
+				}
+
+				if !srcActive {
 					continue
 				}
 
