@@ -124,7 +124,7 @@ func (p *Images) NewImage(w, h int) *Image {
 	img.gltex = p.glctx.CreateTexture()
 
 	p.glctx.BindTexture(gl.TEXTURE_2D, img.gltex)
-	p.glctx.TexImage2D(gl.TEXTURE_2D, 0, img.width, img.height, gl.RGBA, gl.UNSIGNED_BYTE, nil)
+	p.glctx.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, img.width, img.height, gl.RGBA, gl.UNSIGNED_BYTE, nil)
 	p.glctx.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 	p.glctx.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 	p.glctx.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
