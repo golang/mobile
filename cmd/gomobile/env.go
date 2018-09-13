@@ -127,8 +127,9 @@ func envInit() (err error) {
 			"GOOS=darwin",
 			"GOARCH="+arch,
 			"CC="+clang,
-			"CXX="+clang,
+			"CXX="+clang+"++",
 			"CGO_CFLAGS="+cflags+" -arch "+archClang(arch),
+			"CGO_CXXFLAGS="+cflags+" -arch "+archClang(arch),
 			"CGO_LDFLAGS="+cflags+" -arch "+archClang(arch),
 			"CGO_ENABLED=1",
 		)
