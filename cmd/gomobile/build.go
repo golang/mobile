@@ -47,8 +47,7 @@ installed. Support is not complete.
 If the package directory contains an assets subdirectory, its contents
 are copied into the output.
 
-Flags -iosversion and -iossimversion control minimal version of iOS and iOS simulator
-respectively to compile against.
+Flag -iosversion controls minimal version of iOS and iOS simulator to compile against. Defaults to 6.1
 
 The -bundleid flag is for -target ios only and sets the bundle ID to use
 with the app; defaults to "org.golang.todo".
@@ -233,7 +232,6 @@ var (
 	buildWork     bool   // -work
 	buildBundleID string // -bundleid
 	buildIosVersion string // -iosversion
-	buildIosSimVersion string // -iossimversion
 )
 
 func addBuildFlags(cmd *command) {
@@ -243,7 +241,6 @@ func addBuildFlags(cmd *command) {
 	cmd.flag.StringVar(&buildTarget, "target", "android", "")
 	cmd.flag.StringVar(&buildBundleID, "bundleid", "org.golang.todo", "")
 	cmd.flag.StringVar(&buildIosVersion, "iosversion", "6.1", "")
-	cmd.flag.StringVar(&buildIosSimVersion, "iossimversion", "6.1", "")
 
 	cmd.flag.BoolVar(&buildA, "a", false, "")
 	cmd.flag.BoolVar(&buildI, "i", false, "")
