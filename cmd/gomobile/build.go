@@ -47,7 +47,8 @@ installed. Support is not complete.
 If the package directory contains an assets subdirectory, its contents
 are copied into the output.
 
-Flag -iosversion controls minimal version of iOS and iOS simulator to compile against. Defaults to 6.1
+Flag -iosversion sets the minimal version of the iOS SDK to compile against.
+The default version is 6.1.
 
 The -bundleid flag is for -target ios only and sets the bundle ID to use
 with the app; defaults to "org.golang.todo".
@@ -220,18 +221,18 @@ func printcmd(format string, args ...interface{}) {
 
 // "Build flags", used by multiple commands.
 var (
-	buildA        bool   // -a
-	buildI        bool   // -i
-	buildN        bool   // -n
-	buildV        bool   // -v
-	buildX        bool   // -x
-	buildO        string // -o
-	buildGcflags  string // -gcflags
-	buildLdflags  string // -ldflags
-	buildTarget   string // -target
-	buildWork     bool   // -work
-	buildBundleID string // -bundleid
-	buildIosVersion string // -iosversion
+	buildA          bool   // -a
+	buildI          bool   // -i
+	buildN          bool   // -n
+	buildV          bool   // -v
+	buildX          bool   // -x
+	buildO          string // -o
+	buildGcflags    string // -gcflags
+	buildLdflags    string // -ldflags
+	buildTarget     string // -target
+	buildWork       bool   // -work
+	buildBundleID   string // -bundleid
+	buildIOSVersion string // -iosversion
 )
 
 func addBuildFlags(cmd *command) {
