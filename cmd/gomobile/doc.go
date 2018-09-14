@@ -98,7 +98,7 @@ be selected by specifying target type with the architecture name. E.g.
 -target=android/arm,android/386.
 
 For -target ios, gomobile must be run on an OS X machine with Xcode
-installed. Support is not complete.
+installed.
 
 If the package directory contains an assets subdirectory, its contents
 are copied into the output.
