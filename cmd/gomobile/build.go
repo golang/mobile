@@ -241,7 +241,7 @@ func addBuildFlags(cmd *command) {
 	cmd.flag.StringVar(&buildLdflags, "ldflags", "", "")
 	cmd.flag.StringVar(&buildTarget, "target", "android", "")
 	cmd.flag.StringVar(&buildBundleID, "bundleid", "org.golang.todo", "")
-	cmd.flag.StringVar(&buildIosVersion, "iosversion", "6.1", "")
+	cmd.flag.StringVar(&buildIOSVersion, "iosversion", "6.1", "")
 
 	cmd.flag.BoolVar(&buildA, "a", false, "")
 	cmd.flag.BoolVar(&buildI, "i", false, "")

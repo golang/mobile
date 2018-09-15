@@ -113,10 +113,10 @@ func envInit() (err error) {
 			fallthrough
 		case "arm64":
 			clang, cflags, err = envClang("iphoneos")
-			cflags += " -miphoneos-version-min=" + buildIosVersion
+			cflags += " -miphoneos-version-min=" + buildIOSVersion
 		case "386", "amd64":
 			clang, cflags, err = envClang("iphonesimulator")
-			cflags += " -mios-simulator-version-min=" + buildIosVersion
+			cflags += " -mios-simulator-version-min=" + buildIOSVersion
 		default:
 			panic(fmt.Errorf("unknown GOARCH: %q", arch))
 		}
