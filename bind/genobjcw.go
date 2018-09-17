@@ -473,7 +473,7 @@ func (g *ObjcWrapper) genWrite(a *objc.Param) {
 	case objc.String:
 		g.Printf("_%s := encodeString(%s)\n", a.Name, a.Name)
 	case objc.Data:
-		g.Printf("_%s := fromSlice(%s, 0)\n", a.Name, a.Name)
+		g.Printf("_%s := fromSlice(%s, false)\n", a.Name, a.Name)
 	case objc.Bool:
 		g.Printf("_%s := %s(0)\n", a.Name, g.cgoType(a.Type))
 		g.Printf("if %s {\n", a.Name)
@@ -500,7 +500,7 @@ func (g *ObjcWrapper) genRead(to, from string, t *objc.Type) {
 	case objc.String:
 		g.Printf("%s := decodeString(%s)\n", to, from)
 	case objc.Data:
-		g.Printf("%s := toSlice(%s, 1)\n", to, from)
+		g.Printf("%s := toSlice(%s, true)\n", to, from)
 	case objc.Protocol, objc.Class:
 		var proxyName string
 		if n := g.lookupImported(t); n != nil {
