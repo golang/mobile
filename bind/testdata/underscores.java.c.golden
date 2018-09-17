@@ -21,7 +21,7 @@ Java_underscore_1pkg_Underscore_1pkg__1init(JNIEnv *env, jclass _unused) {
 }
 
 JNIEXPORT void JNICALL
-Java_underscore_1pkg_Underscore_pkg_underscore_1func(JNIEnv* env, jclass _clazz) {
+Java_underscore_1pkg_Underscore_1pkg_underscore_1func(JNIEnv* env, jclass _clazz) {
     proxyunderscore_pkg__Underscore_func();
 }
 
@@ -46,13 +46,13 @@ Java_underscore_1pkg_Underscore_1struct_getUnderscore_1field(JNIEnv *env, jobjec
 }
 
 JNIEXPORT void JNICALL
-Java_underscore_1pkg_Underscore_pkg_setUnderscore_1var(JNIEnv *env, jclass clazz, jlong v) {
+Java_underscore_1pkg_Underscore_1pkg_setUnderscore_1var(JNIEnv *env, jclass clazz, jlong v) {
     nint _v = (nint)v;
     var_setunderscore_pkg_Underscore_var(_v);
 }
 
 JNIEXPORT jlong JNICALL
-Java_underscore_1pkg_Underscore_pkg_getUnderscore_1var(JNIEnv *env, jclass clazz) {
+Java_underscore_1pkg_Underscore_1pkg_getUnderscore_1var(JNIEnv *env, jclass clazz) {
     nint r0 = var_getunderscore_pkg_Underscore_var();
     jlong _r0 = (jlong)r0;
     return _r0;
