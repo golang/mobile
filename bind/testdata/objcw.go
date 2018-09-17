@@ -6,6 +6,7 @@ package objc
 
 import (
 	"ObjC/Foundation"
+	"ObjC/Foundation/NSMutableString"
 	"ObjC/UIKit"
 )
 
@@ -36,4 +37,16 @@ type GoUIResponder struct {
 }
 
 func (r *GoUIResponder) PressesBegan(_ Foundation.NSSet, _ UIKit.UIPressesEvent) {
+}
+
+const NSUTF8StringEncoding = 8
+
+func CreateReadeMutableString() {
+	myData := []byte{'A', 'B'}
+	//we are using NSMutableString here, because NSString is automatically converted to string in go
+	//but we want to access NSString object directly
+	//forces generator to use fromSlice under the hood
+	mString := NSMutableString.NewWithData(myData, uint(NSUTF8StringEncoding))
+	//forces generator to use toSlice under the hood
+	_ = mString.DataUsingEncoding(uint(NSUTF8StringEncoding))
 }
