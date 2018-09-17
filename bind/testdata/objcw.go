@@ -41,12 +41,13 @@ func (r *GoUIResponder) PressesBegan(_ Foundation.NSSet, _ UIKit.UIPressesEvent)
 
 const NSUTF8StringEncoding = 8
 
-func CreateReadeMutableString() {
+func CreateReadNSMutableString() {
 	myData := []byte{'A', 'B'}
-	//we are using NSMutableString here, because NSString is automatically converted to string in go
-	//but we want to access NSString object directly
-	//forces generator to use fromSlice under the hood
+	// we are using NSMutableString here,
+	// because NSString is automatically converted to string in go,
+	// but we want to access NSString object directly.
+	// forces generator to use fromSlice under the hood
 	mString := NSMutableString.NewWithData(myData, uint(NSUTF8StringEncoding))
-	//forces generator to use toSlice under the hood
+	// forces generator to use toSlice under the hood
 	_ = mString.DataUsingEncoding(uint(NSUTF8StringEncoding))
 }

@@ -549,9 +549,9 @@ func new_objc_GoUIResponder() C.int32_t {
 	return C.int32_t(_seq.ToRefNum(new(objc.GoUIResponder)))
 }
 
-//export proxyobjc__CreateReadeMutableString
-func proxyobjc__CreateReadeMutableString() {
-	objc.CreateReadeMutableString()
+//export proxyobjc__CreateReadNSMutableString
+func proxyobjc__CreateReadNSMutableString() {
+	objc.CreateReadNSMutableString()
 }
 
 //export proxyobjc__DupNSDate
