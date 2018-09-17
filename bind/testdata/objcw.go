@@ -43,11 +43,10 @@ const NSUTF8StringEncoding = 8
 
 func CreateReadNSMutableString() {
 	myData := []byte{'A', 'B'}
-	// we are using NSMutableString here,
-	// because NSString is automatically converted to string in go,
-	// but we want to access NSString object directly.
-	// forces generator to use fromSlice under the hood
+	// Test byte slices. Use NSMutableString because NSString is
+	// represented as Go strings in bindings.
+	// Pass slice from Go to native.
 	mString := NSMutableString.NewWithData(myData, uint(NSUTF8StringEncoding))
-	// forces generator to use toSlice under the hood
+	// Pass slice from native to Go.
 	_ = mString.DataUsingEncoding(uint(NSUTF8StringEncoding))
 }
