@@ -590,9 +590,9 @@ func new_objc_GoUIResponder() C.int32_t {
 	return C.int32_t(_seq.ToRefNum(new(objc.GoUIResponder)))
 }
 
-//export proxyobjc__CreateNSPacket
-func proxyobjc__CreateNSPacket() {
-	objc.CreateNSPacket()
+//export proxyobjc__CallUcharFunction
+func proxyobjc__CallUcharFunction() {
+	objc.CallUcharFunction()
 }
 
 //export proxyobjc__CreateReadNSMutableString
