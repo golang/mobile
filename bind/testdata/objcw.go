@@ -7,6 +7,7 @@ package objc
 import (
 	"ObjC/Foundation"
 	"ObjC/Foundation/NSMutableString"
+	"ObjC/NetworkExtension/NEPacket"
 	"ObjC/UIKit"
 )
 
@@ -49,4 +50,14 @@ func CreateReadNSMutableString() {
 	mString := NSMutableString.NewWithData(myData, uint(NSUTF8StringEncoding))
 	// Pass slice from native to Go.
 	_ = mString.DataUsingEncoding(uint(NSUTF8StringEncoding))
+}
+
+// From <sys/socket.h>
+const PF_INET = 2
+
+func CreateNSPacket() {
+	data := []byte{0x1, 0x2, 0x3, 0x4}
+	// Second argument is of sa_family_t which is treated as Uchar by Obj-C.
+	// Handle it like uint8 on golang side.
+	_ = NEPacket.NewWithData(data, uint8(PF_INET))
 }
