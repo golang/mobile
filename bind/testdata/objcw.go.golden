@@ -41,6 +41,11 @@ type UIKit_UIPressesEvent interface {
 	Description() (string)
 }
 
+type NetworkExtension_NEPacket interface {
+	Hash() (uint)
+	Description() (string)
+}
+
 type Objc_GoNSDate interface {
 	Hash() (uint)
 	Description() (string)
@@ -69,6 +74,7 @@ import "C"
 import "ObjC"
 import _seq "golang.org/x/mobile/bind/seq"
 import "ObjC/Foundation/NSMutableString"
+import "ObjC/NetworkExtension/NEPacket"
 
 type proxy interface { Bind_proxy_refnum__() int32 }
 
@@ -229,6 +235,41 @@ func (p *proxy_class_UIPressesEvent) Hash() (uint) {
 
 func (p *proxy_class_UIPressesEvent) Description() (string) {
 	res := C.cproxy_UIPressesEvent_Description(C.int(p.Bind_proxy_refnum__()))
+	_res := decodeString(res)
+	return _res
+}
+
+func init() {
+	NEPacket.NewWithData = func(data []byte, protocolFamily uint8) (ObjC.NetworkExtension_NEPacket) {
+		_data := fromSlice(data, false)
+		_protocolFamily := C.uchar(protocolFamily)
+		res := C.cproxy_s_NEPacket_NewWithData(_data, _protocolFamily)
+		var _res ObjC.NetworkExtension_NEPacket
+		_res_ref := _seq.FromRefNum(int32(res))
+		if _res_ref != nil {
+			if res < 0 { // go object
+				_res = _res_ref.Get().(ObjC.NetworkExtension_NEPacket)
+			} else { // foreign object
+				_res = (*proxy_class_NEPacket)(_res_ref)
+			}
+		}
+		return _res
+	}
+	
+}
+
+type proxy_class_NEPacket _seq.Ref
+
+func (p *proxy_class_NEPacket) Bind_proxy_refnum__() int32 { return (*_seq.Ref)(p).Bind_IncNum() }
+
+func (p *proxy_class_NEPacket) Hash() (uint) {
+	res := C.cproxy_NEPacket_Hash(C.int(p.Bind_proxy_refnum__()))
+	_res := uint(res)
+	return _res
+}
+
+func (p *proxy_class_NEPacket) Description() (string) {
+	res := C.cproxy_NEPacket_Description(C.int(p.Bind_proxy_refnum__()))
 	_res := decodeString(res)
 	return _res
 }
@@ -547,6 +588,11 @@ func proxyobjc_GoUIResponder_PressesBegan(refnum C.int32_t, param_p0 C.int32_t, 
 //export new_objc_GoUIResponder
 func new_objc_GoUIResponder() C.int32_t {
 	return C.int32_t(_seq.ToRefNum(new(objc.GoUIResponder)))
+}
+
+//export proxyobjc__CallUcharFunction
+func proxyobjc__CallUcharFunction() {
+	objc.CallUcharFunction()
 }
 
 //export proxyobjc__CreateReadNSMutableString

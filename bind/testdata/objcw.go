@@ -7,6 +7,7 @@ package objc
 import (
 	"ObjC/Foundation"
 	"ObjC/Foundation/NSMutableString"
+	"ObjC/NetworkExtension/NEPacket"
 	"ObjC/UIKit"
 )
 
@@ -49,4 +50,11 @@ func CreateReadNSMutableString() {
 	mString := NSMutableString.NewWithData(myData, uint(NSUTF8StringEncoding))
 	// Pass slice from native to Go.
 	_ = mString.DataUsingEncoding(uint(NSUTF8StringEncoding))
+}
+
+// From <sys/socket.h>
+const PF_INET = 2
+
+func CallUcharFunction() {
+	_ = NEPacket.NewWithData(nil, uint8(PF_INET))
 }
