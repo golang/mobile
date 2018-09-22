@@ -195,27 +195,30 @@ const buildgradle = `buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.1'
+        classpath 'com.android.tools.build:gradle:3.1.0'
     }
 }
 
 allprojects {
-    repositories { jcenter() }
+    repositories {
+		google()
+		jcenter()
+	}
 }
 
 apply plugin: 'com.android.library'
 
 android {
     compileSdkVersion 'android-19'
-    buildToolsVersion '21.1.2'
-    defaultConfig { minSdkVersion 15 }
+    defaultConfig { minSdkVersion 16 }
 }
 
 repositories {
     flatDir { dirs 'libs' }
 }
+
 dependencies {
-    compile(name: "pkg", ext: "aar")
+    implementation(name: "pkg", ext: "aar")
 }
 `
 
