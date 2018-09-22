@@ -134,6 +134,7 @@ func onCreate(activity *C.ANativeActivity) {
 
 //export onDestroy
 func onDestroy(activity *C.ANativeActivity) {
+	activityDestroyed <- struct{}{}
 }
 
 //export onWindowFocusChanged
@@ -256,6 +257,7 @@ var (
 	windowRedrawNeeded = make(chan *C.ANativeWindow)
 	windowRedrawDone   = make(chan struct{})
 	windowConfigChange = make(chan windowConfig)
+	activityDestroyed  = make(chan struct{})
 )
 
 func init() {
@@ -325,6 +327,8 @@ func mainUI(vm, jniEnv, ctx uintptr) error {
 			}
 			C.surface = nil
 			theApp.sendLifecycle(lifecycle.StageAlive)
+		case <-activityDestroyed:
+			theApp.sendLifecycle(lifecycle.StageDead)
 		case <-workAvailable:
 			theApp.worker.DoWork()
 		case <-theApp.publish:
