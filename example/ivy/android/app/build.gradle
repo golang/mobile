@@ -1,5 +1,11 @@
 apply plugin: 'com.android.application'
 
+repositories {
+    flatDir {
+        dirs '.'
+    }
+}
+
 android {
     compileSdkVersion 23
     defaultConfig {
@@ -20,7 +26,6 @@ android {
 }
 
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:23.3.0'
-    implementation project(':ivy')
+    implementation (name:'ivy', ext:'aar')
 }

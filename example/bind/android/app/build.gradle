@@ -5,6 +5,12 @@
  */
 apply plugin: 'com.android.application'
 
+repositories {
+    flatDir {
+        dirs '.'
+    }
+}
+
 android {
     compileSdkVersion 27
 
@@ -23,7 +29,6 @@ android {
 }
 
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:22.1.1'
-    implementation project(':hello')
+    implementation (name:'hello', ext:'aar')
 }
