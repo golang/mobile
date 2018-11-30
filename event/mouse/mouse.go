@@ -40,7 +40,7 @@ type Event struct {
 // Button is a mouse button.
 type Button int32
 
-// IsWheel returns whether the button is for a scroll wheel.
+// IsWheel reports whether the button is for a scroll wheel.
 func (b Button) IsWheel() bool {
 	return b < 0
 }
