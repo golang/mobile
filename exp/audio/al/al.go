@@ -37,7 +37,7 @@ func Disable(c Capability) {
 	alDisable(int32(c))
 }
 
-// Enabled returns true if the specified capability is enabled.
+// Enabled reports whether the specified capability is enabled.
 func Enabled(c Capability) bool {
 	return alIsEnabled(int32(c))
 }
@@ -450,7 +450,7 @@ func (b Buffer) BufferData(format uint32, data []byte, freq int32) {
 	alBufferData(b, format, data, freq)
 }
 
-// Valid returns true if the buffer exists and is valid.
+// Valid reports whether the buffer exists and is valid.
 func (b Buffer) Valid() bool {
 	return alIsBuffer(b)
 }

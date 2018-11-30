@@ -372,7 +372,7 @@ func (g *JavaGen) javadoc(doc string) {
 	g.Printf("/**\n * %s */\n", html.EscapeString(doc))
 }
 
-// hasThis returns whether a method has an implicit "this" parameter.
+// hasThis reports whether a method has an implicit "this" parameter.
 func (g *JavaGen) hasThis(sName string, m *types.Func) bool {
 	sig := m.Type().(*types.Signature)
 	params := sig.Params()

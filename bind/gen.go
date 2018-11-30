@@ -458,8 +458,8 @@ func (g *Generator) validPkg(pkg *types.Package) bool {
 	return false
 }
 
-// isSigSupported returns whether the generators can handle a given
-// function signature
+// isSigSupported reports whether the generators can handle a given
+// function signature.
 func (g *Generator) isSigSupported(t types.Type) bool {
 	sig := t.(*types.Signature)
 	params := sig.Params()
@@ -477,7 +477,7 @@ func (g *Generator) isSigSupported(t types.Type) bool {
 	return true
 }
 
-// isSupported returns whether the generators can handle the type.
+// isSupported reports whether the generators can handle the type.
 func (g *Generator) isSupported(t types.Type) bool {
 	if isErrorType(t) || isWrapperType(t) {
 		return true
