@@ -106,8 +106,8 @@ are copied into the output.
 Flag -iosversion sets the minimal version of the iOS SDK to compile against.
 The default version is 6.1.
 
-The -bundleid flag is for -target ios only and sets the bundle ID to use
-with the app; defaults to "org.golang.todo".
+The -bundleid flag is required for -target ios and sets the bundle ID to use
+with the app.
 
 The -o flag specifies the output file name. If not specified, the
 output file name depends on the package built.
