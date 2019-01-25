@@ -46,23 +46,19 @@
 /**
  * SF is a field.
  */
-- (NSString*)sf;
-- (void)setSF:(NSString*)v;
+@property (nonatomic) NSString* sf;
 /**
  * Anonymous field.
  */
-- (DocS2*)s2;
-- (void)setS2:(DocS2*)v;
+@property (nonatomic) DocS2* s2;
 /**
  * Multiple fields.
  */
-- (NSString*)f1;
-- (void)setF1:(NSString*)v;
+@property (nonatomic) NSString* f1;
 /**
  * Multiple fields.
  */
-- (NSString*)f2;
-- (void)setF2:(NSString*)v;
+@property (nonatomic) NSString* f2;
 /**
  * After is another method.
  */

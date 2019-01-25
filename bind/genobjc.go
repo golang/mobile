@@ -1121,8 +1121,9 @@ func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 		}
 		name, typ := f.Name(), g.objcFieldType(f.Type())
 		g.objcdoc(doc.Member(f.Name()))
-		g.Printf("- (%s)%s;\n", typ, objcNameReplacer(lowerFirst(name)))
-		g.Printf("- (void)set%s:(%s)v;\n", name, typ)
+
+		// properties are atomic by default so explicitly say otherwise
+		g.Printf("@property (nonatomic) %s %s;\n", typ, objcNameReplacer(lowerFirst(name)))
 	}
 
 	// exported methods
