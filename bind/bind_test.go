@@ -39,6 +39,7 @@ var tests = []string{
 	"testdata/issue10788.go",
 	"testdata/issue12328.go",
 	"testdata/issue12403.go",
+	"testdata/issue29559.go",
 	"testdata/keywords.go",
 	"testdata/try.go",
 	"testdata/vars.go",
