@@ -146,7 +146,10 @@ func (g *Generator) Init() {
 					g.funcs = append(g.funcs, obj)
 				}
 			case *types.TypeName:
-				named := obj.Type().(*types.Named)
+				named, ok := obj.Type().(*types.Named)
+				if !ok {
+					continue
+				}
 				switch t := named.Underlying().(type) {
 				case *types.Struct:
 					g.structs = append(g.structs, structInfo{obj, t})
@@ -180,7 +183,10 @@ func (g *Generator) Init() {
 				continue
 			}
 			if obj, ok := obj.(*types.TypeName); ok {
-				named := obj.Type().(*types.Named)
+				named, ok := obj.Type().(*types.Named)
+				if !ok {
+					continue
+				}
 				if t, ok := named.Underlying().(*types.Interface); ok {
 					g.allIntf = append(g.allIntf, interfaceInfo{obj, t, makeIfaceSummary(t)})
 				}
