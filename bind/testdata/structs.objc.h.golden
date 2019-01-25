@@ -26,10 +26,8 @@
 
 - (instancetype)initWithRef:(id)ref;
 - (instancetype)init;
-- (double)x;
-- (void)setX:(double)v;
-- (double)y;
-- (void)setY:(double)v;
+@property (nonatomic) double x;
+@property (nonatomic) double y;
 - (StructsS*)identity:(NSError**)error;
 - (double)sum;
 @end

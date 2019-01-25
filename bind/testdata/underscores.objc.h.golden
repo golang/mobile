@@ -18,8 +18,7 @@
 
 - (instancetype)initWithRef:(id)ref;
 - (instancetype)init;
-- (NSString*)underscore_field;
-- (void)setUnderscore_field:(NSString*)v;
+@property (nonatomic) NSString* underscore_field;
 @end
 
 @interface Underscore_pkg : NSObject

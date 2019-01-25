@@ -18,8 +18,7 @@
 
 - (instancetype)initWithRef:(id)ref;
 - (instancetype)init;
-- (NSError*)err;
-- (void)setErr:(NSError*)v;
+@property (nonatomic) NSError* err;
 @end
 
 #endif
