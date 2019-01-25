@@ -9,7 +9,7 @@
 #include "Issue29559.objc.h"
 
 
-void Issue29559TakesAString(NSString* s) {
+void Issue29559TakesAString(NSString* _Nullable s) {
 	nstring _s = go_seq_from_objc_string(s);
 	proxyissue29559__TakesAString(_s);
 }

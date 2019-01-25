@@ -26,7 +26,7 @@
 	return self;
 }
 
-- (NSError*)err {
+- (NSError* _Nullable)err {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	int32_t r0 = proxyissue12328_T_Err_Get(refnum);
 	Universeerror* _r0 = nil;
@@ -40,7 +40,7 @@
 	return _r0;
 }
 
-- (void)setErr:(NSError*)v {
+- (void)setErr:(NSError* _Nullable)v {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	int32_t _v;
 	if ([v conformsToProtocol:@protocol(goSeqRefInterface)]) {

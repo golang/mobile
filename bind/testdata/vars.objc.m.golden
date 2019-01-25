@@ -86,18 +86,18 @@
 	return _r0;
 }
 
-+ (void) setAString:(NSString*)v {
++ (void) setAString:(NSString* _Nonnull)v {
 	nstring _v = go_seq_from_objc_string(v);
 	var_setvars_AString(_v);
 }
 
-+ (NSString*) aString {
++ (NSString* _Nonnull) aString {
 	nstring r0 = var_getvars_AString();
 	NSString *_r0 = go_seq_to_objc_string(r0);
 	return _r0;
 }
 
-+ (void) setAStructPtr:(VarsS*)v {
++ (void) setAStructPtr:(VarsS* _Nullable)v {
 	int32_t _v;
 	if ([v conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> v_proxy = (id<goSeqRefInterface>)(v);
@@ -108,7 +108,7 @@
 	var_setvars_AStructPtr(_v);
 }
 
-+ (VarsS*) aStructPtr {
++ (VarsS* _Nullable) aStructPtr {
 	int32_t r0 = var_getvars_AStructPtr();
 	VarsS* _r0 = nil;
 	GoSeqRef* _r0_ref = go_seq_from_refnum(r0);
@@ -176,7 +176,7 @@
 	return _r0;
 }
 
-+ (void) setAnInterface:(id<VarsI>)v {
++ (void) setAnInterface:(id<VarsI> _Nullable)v {
 	int32_t _v;
 	if ([v conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> v_proxy = (id<goSeqRefInterface>)(v);
@@ -187,7 +187,7 @@
 	var_setvars_AnInterface(_v);
 }
 
-+ (id<VarsI>) anInterface {
++ (id<VarsI> _Nullable) anInterface {
 	int32_t r0 = var_getvars_AnInterface();
 	VarsI* _r0 = nil;
 	GoSeqRef* _r0_ref = go_seq_from_refnum(r0);

@@ -17,9 +17,9 @@
 }
 @property(strong, readonly) id _ref;
 
-- (instancetype)initWithRef:(id)ref;
-- (instancetype)init;
-@property (nonatomic) NSError* err;
+- (nonnull instancetype)initWithRef:(id)ref;
+- (nonnull instancetype)init;
+@property (nonatomic) NSError* _Nullable err;
 @end
 
 #endif

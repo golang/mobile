@@ -17,7 +17,7 @@
 	return self;
 }
 
-- (BOOL)err:(NSError**)error {
+- (BOOL)err:(NSError* _Nullable*)error {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	int32_t r0 = proxyinterfaces_Error_Err(refnum);
 	Universeerror* _error = nil;
@@ -99,7 +99,7 @@
 	return self;
 }
 
-- (InterfacesI1*)f {
+- (InterfacesI1* _Nullable)f {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	int32_t r0 = proxyinterfaces_I3_F(refnum);
 	InterfacesI1* _ret0_ = nil;
@@ -195,7 +195,7 @@
 
 
 
-int32_t InterfacesAdd3(id<InterfacesI> r) {
+int32_t InterfacesAdd3(id<InterfacesI> _Nullable r) {
 	int32_t _r;
 	if ([r conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> r_proxy = (id<goSeqRefInterface>)(r);
@@ -208,7 +208,7 @@ int32_t InterfacesAdd3(id<InterfacesI> r) {
 	return _ret0_;
 }
 
-BOOL InterfacesCallErr(id<InterfacesError> e, NSError** error) {
+BOOL InterfacesCallErr(id<InterfacesError> _Nullable e, NSError* _Nullable* error) {
 	int32_t _e;
 	if ([e conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> e_proxy = (id<goSeqRefInterface>)(e);
@@ -231,7 +231,7 @@ BOOL InterfacesCallErr(id<InterfacesError> e, NSError** error) {
 	return (_error == nil);
 }
 
-id<InterfacesI> InterfacesSeven(void) {
+id<InterfacesI> _Nullable InterfacesSeven(void) {
 	int32_t r0 = proxyinterfaces__Seven();
 	InterfacesI* _ret0_ = nil;
 	GoSeqRef* _ret0__ref = go_seq_from_refnum(r0);
@@ -291,7 +291,7 @@ void cproxyinterfaces_I2_G(int32_t refnum) {
 int32_t cproxyinterfaces_I3_F(int32_t refnum) {
 	@autoreleasepool {
 		InterfacesI3* o = go_seq_objc_from_refnum(refnum);
-		InterfacesI1* ret0_;
+		InterfacesI1* _Nullable ret0_;
 		ret0_ = [o f];
 		int32_t _ret0_;
 		if ([ret0_ conformsToProtocol:@protocol(goSeqRefInterface)]) {

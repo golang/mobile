@@ -17,7 +17,7 @@
 	return self;
 }
 
-- (NSString*)fromJSON:(NSString*)jstr {
+- (NSString* _Nonnull)fromJSON:(NSString* _Nullable)jstr {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	nstring _jstr = go_seq_from_objc_string(jstr);
 	nstring r0 = proxyissue12403_Parsable_FromJSON(refnum, _jstr);
@@ -25,7 +25,7 @@
 	return _ret0_;
 }
 
-- (NSString*)toJSON:(NSError**)error {
+- (NSString* _Nonnull)toJSON:(NSError* _Nullable*)error {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	struct proxyissue12403_Parsable_ToJSON_return res = proxyissue12403_Parsable_ToJSON(refnum);
 	NSString *_ret0_ = go_seq_to_objc_string(res.r0);
@@ -54,7 +54,7 @@ nstring cproxyissue12403_Parsable_FromJSON(int32_t refnum, nstring jstr) {
 	@autoreleasepool {
 		Issue12403Parsable* o = go_seq_objc_from_refnum(refnum);
 		NSString *_jstr = go_seq_to_objc_string(jstr);
-		NSString* ret0_;
+		NSString* _Nonnull ret0_;
 		ret0_ = [o fromJSON:_jstr];
 		nstring _ret0_ = go_seq_from_objc_string(ret0_);
 		return _ret0_;
@@ -64,7 +64,7 @@ nstring cproxyissue12403_Parsable_FromJSON(int32_t refnum, nstring jstr) {
 struct cproxyissue12403_Parsable_ToJSON_return cproxyissue12403_Parsable_ToJSON(int32_t refnum) {
 	@autoreleasepool {
 		Issue12403Parsable* o = go_seq_objc_from_refnum(refnum);
-		NSString* ret0_;
+		NSString* _Nonnull ret0_;
 		NSError* error = nil;
 		ret0_ = [o toJSON:&error];
 		nstring _ret0_ = go_seq_from_objc_string(ret0_);

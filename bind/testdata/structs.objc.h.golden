@@ -25,11 +25,11 @@
 }
 @property(strong, readonly) id _ref;
 
-- (instancetype)initWithRef:(id)ref;
-- (instancetype)init;
+- (nonnull instancetype)initWithRef:(id)ref;
+- (nonnull instancetype)init;
 @property (nonatomic) double x;
 @property (nonatomic) double y;
-- (StructsS*)identity:(NSError**)error;
+- (StructsS* _Nullable)identity:(NSError* _Nullable*)error;
 - (double)sum;
 @end
 
@@ -37,10 +37,10 @@
 }
 @property(strong, readonly) id _ref;
 
-- (instancetype)initWithRef:(id)ref;
-- (instancetype)init;
+- (nonnull instancetype)initWithRef:(id)ref;
+- (nonnull instancetype)init;
 - (void)m;
-- (NSString*)string;
+- (NSString* _Nonnull)string;
 @end
 
 /**
@@ -50,14 +50,14 @@
 }
 @property(strong, readonly) id _ref;
 
-- (instancetype)initWithRef:(id)ref;
-- (instancetype)init;
+- (nonnull instancetype)initWithRef:(id)ref;
+- (nonnull instancetype)init;
 - (void)m;
 @end
 
-FOUNDATION_EXPORT StructsS* StructsIdentity(StructsS* s);
+FOUNDATION_EXPORT StructsS* _Nullable StructsIdentity(StructsS* _Nullable s);
 
-FOUNDATION_EXPORT StructsS* StructsIdentityWithError(StructsS* s, NSError** error);
+FOUNDATION_EXPORT StructsS* _Nullable StructsIdentityWithError(StructsS* _Nullable s, NSError* _Nullable* error);
 
 @class StructsI;
 

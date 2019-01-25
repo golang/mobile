@@ -47,20 +47,20 @@
 	return self;
 }
 
-- (NSString*)sf {
+- (NSString* _Nonnull)sf {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	nstring r0 = proxydoc_S_SF_Get(refnum);
 	NSString *_r0 = go_seq_to_objc_string(r0);
 	return _r0;
 }
 
-- (void)setSF:(NSString*)v {
+- (void)setSF:(NSString* _Nonnull)v {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	nstring _v = go_seq_from_objc_string(v);
 	proxydoc_S_SF_Set(refnum, _v);
 }
 
-- (DocS2*)s2 {
+- (DocS2* _Nullable)s2 {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	int32_t r0 = proxydoc_S_S2_Get(refnum);
 	DocS2* _r0 = nil;
@@ -74,7 +74,7 @@
 	return _r0;
 }
 
-- (void)setS2:(DocS2*)v {
+- (void)setS2:(DocS2* _Nullable)v {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	int32_t _v;
 	if ([v conformsToProtocol:@protocol(goSeqRefInterface)]) {
@@ -86,27 +86,27 @@
 	proxydoc_S_S2_Set(refnum, _v);
 }
 
-- (NSString*)f1 {
+- (NSString* _Nonnull)f1 {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	nstring r0 = proxydoc_S_F1_Get(refnum);
 	NSString *_r0 = go_seq_to_objc_string(r0);
 	return _r0;
 }
 
-- (void)setF1:(NSString*)v {
+- (void)setF1:(NSString* _Nonnull)v {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	nstring _v = go_seq_from_objc_string(v);
 	proxydoc_S_F1_Set(refnum, _v);
 }
 
-- (NSString*)f2 {
+- (NSString* _Nonnull)f2 {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	nstring r0 = proxydoc_S_F2_Get(refnum);
 	NSString *_r0 = go_seq_to_objc_string(r0);
 	return _r0;
 }
 
-- (void)setF2:(NSString*)v {
+- (void)setF2:(NSString* _Nonnull)v {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	nstring _v = go_seq_from_objc_string(v);
 	proxydoc_S_F2_Set(refnum, _v);
@@ -177,23 +177,23 @@ const BOOL DocC = YES;
 	return _r0;
 }
 
-+ (void) setSpecific:(NSString*)v {
++ (void) setSpecific:(NSString* _Nonnull)v {
 	nstring _v = go_seq_from_objc_string(v);
 	var_setdoc_Specific(_v);
 }
 
-+ (NSString*) specific {
++ (NSString* _Nonnull) specific {
 	nstring r0 = var_getdoc_Specific();
 	NSString *_r0 = go_seq_to_objc_string(r0);
 	return _r0;
 }
 
-+ (void) setV:(NSString*)v {
++ (void) setV:(NSString* _Nonnull)v {
 	nstring _v = go_seq_from_objc_string(v);
 	var_setdoc_V(_v);
 }
 
-+ (NSString*) v {
++ (NSString* _Nonnull) v {
 	nstring r0 = var_getdoc_V();
 	NSString *_r0 = go_seq_to_objc_string(r0);
 	return _r0;
@@ -206,7 +206,7 @@ void DocF(void) {
 	proxydoc__F();
 }
 
-DocS* DocNewS(void) {
+DocS* _Nullable DocNewS(void) {
 	int32_t r0 = proxydoc__NewS();
 	DocS* _ret0_ = nil;
 	GoSeqRef* _ret0__ref = go_seq_from_refnum(r0);
