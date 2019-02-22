@@ -6,7 +6,6 @@ package java
 
 import (
 	"Java/java/lang"
-	"Java/java/lang/Character"
 )
 
 type (
@@ -14,5 +13,4 @@ type (
 	L lang.Long
 	O lang.Object
 	R lang.Runnable
-	S Character.Subset // Inner class
 )

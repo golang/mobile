@@ -11,13 +11,9 @@ static jmethodID m_java_lang_Long_toString;
 static jclass class_java_lang_Object;
 static jmethodID m_java_lang_Object_toString;
 static jclass class_java_lang_Runnable;
-static jclass class_java_lang_Character;
-static jmethodID m_java_lang_Character_toString;
-static jclass class_java_lang_Character_Subset;
-static jmethodID m_java_lang_Character_Subset_toString;
 
 void init_proxies() {
-	JNIEnv *env = go_seq_push_local_frame(6);
+	JNIEnv *env = go_seq_push_local_frame(4);
 	jclass clazz;
 	clazz = go_seq_find_class("java/lang/Float");
 	if (clazz != NULL) {
@@ -37,16 +33,6 @@ void init_proxies() {
 	clazz = go_seq_find_class("java/lang/Runnable");
 	if (clazz != NULL) {
 		class_java_lang_Runnable = (*env)->NewGlobalRef(env, clazz);
-	}
-	clazz = go_seq_find_class("java/lang/Character");
-	if (clazz != NULL) {
-		class_java_lang_Character = (*env)->NewGlobalRef(env, clazz);
-		m_java_lang_Character_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
-	}
-	clazz = go_seq_find_class("java/lang/Character$Subset");
-	if (clazz != NULL) {
-		class_java_lang_Character_Subset = (*env)->NewGlobalRef(env, clazz);
-		m_java_lang_Character_Subset_toString = go_seq_get_method_id(clazz, "toString", "()Ljava/lang/String;");
 	}
 	go_seq_pop_local_frame(env);
 }
@@ -99,38 +85,6 @@ ret_nstring cproxy_java_lang_Object_toString(jint this) {
 	return __res;
 }
 
-ret_nstring cproxy_java_lang_Character_toString(jint this) {
-	JNIEnv *env = go_seq_push_local_frame(1);
-	// Must be a Java object
-	jobject _this = go_seq_from_refnum(env, this, NULL, NULL);
-	jstring res = (*env)->CallObjectMethod(env, _this, m_java_lang_Character_toString);
-	jobject _exc = go_seq_get_exception(env);
-	int32_t _exc_ref = go_seq_to_refnum(env, _exc);
-	if (_exc != NULL) {
-		res = NULL;
-	}
-	nstring _res = go_seq_from_java_string(env, res);
-	go_seq_pop_local_frame(env);
-	ret_nstring __res = {_res, _exc_ref};
-	return __res;
-}
-
-ret_nstring cproxy_java_lang_Character_Subset_toString(jint this) {
-	JNIEnv *env = go_seq_push_local_frame(1);
-	// Must be a Java object
-	jobject _this = go_seq_from_refnum(env, this, NULL, NULL);
-	jstring res = (*env)->CallObjectMethod(env, _this, m_java_lang_Character_Subset_toString);
-	jobject _exc = go_seq_get_exception(env);
-	int32_t _exc_ref = go_seq_to_refnum(env, _exc);
-	if (_exc != NULL) {
-		res = NULL;
-	}
-	nstring _res = go_seq_from_java_string(env, res);
-	go_seq_pop_local_frame(env);
-	ret_nstring __res = {_res, _exc_ref};
-	return __res;
-}
-
 // JNI functions for the Go <=> Java bridge.
 //   gobind -lang=java java
 //
@@ -153,9 +107,6 @@ jmethodID proxy_class_java_O_cons;
 static jmethodID mid_O_ToString;
 jclass proxy_class_java_R;
 jmethodID proxy_class_java_R_cons;
-jclass proxy_class_java_S;
-jmethodID proxy_class_java_S_cons;
-static jmethodID mid_S_ToString;
 
 JNIEXPORT void JNICALL
 Java_java_Java__1init(JNIEnv *env, jclass _unused) {
@@ -182,12 +133,6 @@ Java_java_Java__1init(JNIEnv *env, jclass _unused) {
     proxy_class_java_R = (*env)->NewGlobalRef(env, clazz);
     proxy_class_java_R_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
     clazz = (*env)->FindClass(env, "java/R");
-    
-    clazz = (*env)->FindClass(env, "java/Java$proxyS");
-    proxy_class_java_S = (*env)->NewGlobalRef(env, clazz);
-    proxy_class_java_S_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
-    clazz = (*env)->FindClass(env, "java/S");
-    mid_S_ToString = (*env)->GetMethodID(env, clazz, "toString", "()Ljava/lang/String;");
     
 }
 
@@ -237,23 +182,6 @@ nstring cproxyjava_O_ToString(int32_t refnum) {
     JNIEnv *env = go_seq_push_local_frame(0);
     jobject o = go_seq_from_refnum(env, refnum, proxy_class_java_O, proxy_class_java_O_cons);
     jstring res = (*env)->CallObjectMethod(env, o, mid_O_ToString);
-    nstring _res = go_seq_from_java_string(env, res);
-    go_seq_pop_local_frame(env);
-    return _res;
-}
-
-JNIEXPORT jstring JNICALL
-Java_java_Java_00024proxyS_toString(JNIEnv* env, jobject __this__) {
-    int32_t o = go_seq_to_refnum_go(env, __this__);
-    nstring r0 = proxyjava_S_ToString(o);
-    jstring _r0 = go_seq_to_java_string(env, r0);
-    return _r0;
-}
-
-nstring cproxyjava_S_ToString(int32_t refnum) {
-    JNIEnv *env = go_seq_push_local_frame(0);
-    jobject o = go_seq_from_refnum(env, refnum, proxy_class_java_S, proxy_class_java_S_cons);
-    jstring res = (*env)->CallObjectMethod(env, o, mid_S_ToString);
     nstring _res = go_seq_from_java_string(env, res);
     go_seq_pop_local_frame(env);
     return _res;
