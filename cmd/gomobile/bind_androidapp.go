@@ -155,6 +155,13 @@ func buildAAR(srcDir, androidDir string, pkgs []*build.Package, androidArchs []s
 		return err
 	}
 	fmt.Fprintln(w, `-keep class go.** { *; }`)
+	if bindJavaPkg != "" {
+		fmt.Fprintln(w, `-keep class `+bindJavaPkg+`.** { *; }`)
+	} else {
+		for _, p := range pkgs {
+			fmt.Fprintln(w, `-keep class `+p.Name+`.** { *; }`)
+		}
+	}
 
 	w, err = aarwcreate("classes.jar")
 	if err != nil {
