@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -28,15 +29,28 @@ var tests = []struct {
 	{"Go-Javapkg", "go,java,objc", "golang.org/x/mobile/bind/testdata/cgopkg", "android"},
 }
 
-func installGobind() error {
-	if out, err := exec.Command("go", "install", "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
-		return fmt.Errorf("gobind install failed: %v: %s", err, out)
+var gobindBin string
+
+func TestMain(m *testing.M) {
+	os.Exit(testMain(m))
+}
+
+func testMain(m *testing.M) int {
+	bin, err := ioutil.TempFile("", "*.exe")
+	if err != nil {
+		log.Fatal(err)
 	}
-	return nil
+	bin.Close()
+	gobindBin = bin.Name()
+	defer os.Remove(gobindBin)
+	if out, err := exec.Command("go", "build", "-o", gobindBin, "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
+		log.Fatalf("gobind build failed: %v: %s", err, out)
+	}
+	return m.Run()
 }
 
 func runGobind(lang, pkg, goos string) error {
-	cmd := exec.Command("gobind", "-lang", lang, pkg)
+	cmd := exec.Command(gobindBin, "-lang", lang, pkg)
 	if goos != "" {
 		cmd.Env = append(os.Environ(), "GOOS="+goos)
 		cmd.Env = append(os.Environ(), "CGO_ENABLED=1")
@@ -48,9 +62,6 @@ func runGobind(lang, pkg, goos string) error {
 }
 
 func TestGobind(t *testing.T) {
-	if err := installGobind(); err != nil {
-		t.Fatal(err)
-	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			if err := runGobind(test.lang, test.pkg, test.goos); err != nil {
@@ -61,9 +72,6 @@ func TestGobind(t *testing.T) {
 }
 
 func TestDocs(t *testing.T) {
-	if err := installGobind(); err != nil {
-		t.Fatal(err)
-	}
 	// Create a fake package for doc.go
 	tmpdir, err := ioutil.TempDir("", "gobind-test-")
 	if err != nil {
@@ -86,7 +94,7 @@ type Struct struct{
 
 	const comment = "This is a comment."
 	for _, lang := range []string{"java", "objc"} {
-		cmd := exec.Command("gobind", "-lang", lang, "doctest")
+		cmd := exec.Command(gobindBin, "-lang", lang, "doctest")
 		cmd.Env = append(os.Environ(), "GOROOT="+tmpdir)
 		out, err := cmd.CombinedOutput()
 		if err != nil {
@@ -100,9 +108,6 @@ type Struct struct{
 }
 
 func BenchmarkGobind(b *testing.B) {
-	if err := installGobind(); err != nil {
-		b.Fatal(err)
-	}
 	for _, test := range tests {
 		b.Run(test.name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
