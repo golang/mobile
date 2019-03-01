@@ -213,9 +213,6 @@ func printcmd(format string, args ...interface{}) {
 	if gopath := goEnv("GOPATH"); gopath != "" {
 		cmd = strings.Replace(cmd, gopath, "$GOPATH", -1)
 	}
-	if env := os.Getenv("HOME"); env != "" {
-		cmd = strings.Replace(cmd, env, "$HOME", -1)
-	}
 	if env := os.Getenv("HOMEPATH"); env != "" {
 		cmd = strings.Replace(cmd, env, "$HOMEPATH", -1)
 	}

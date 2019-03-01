@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"math"
 	"os"
+	"runtime"
 	"testing"
 
 	"golang.org/x/mobile/event/size"
@@ -20,6 +21,9 @@ import (
 )
 
 func TestAffine(t *testing.T) {
+	if runtime.GOOS == "android" {
+		t.Skip("testdata not available on Android")
+	}
 	f, err := os.Open("../../../testdata/testpattern.png")
 	if err != nil {
 		t.Fatal(err)
@@ -100,6 +104,9 @@ func TestAffine(t *testing.T) {
 }
 
 func TestAffineMask(t *testing.T) {
+	if runtime.GOOS == "android" {
+		t.Skip("testdata not available on Android")
+	}
 	f, err := os.Open("../../../testdata/testpattern.png")
 	if err != nil {
 		t.Fatal(err)
