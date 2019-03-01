@@ -48,7 +48,7 @@ If the package directory contains an assets subdirectory, its contents
 are copied into the output.
 
 Flag -iosversion sets the minimal version of the iOS SDK to compile against.
-The default version is 6.1.
+The default version is 7.0.
 
 The -bundleid flag is required for -target ios and sets the bundle ID to use
 with the app.
@@ -244,7 +244,7 @@ func addBuildFlags(cmd *command) {
 	cmd.flag.StringVar(&buildLdflags, "ldflags", "", "")
 	cmd.flag.StringVar(&buildTarget, "target", "android", "")
 	cmd.flag.StringVar(&buildBundleID, "bundleid", "", "")
-	cmd.flag.StringVar(&buildIOSVersion, "iosversion", "6.1", "")
+	cmd.flag.StringVar(&buildIOSVersion, "iosversion", "7.0", "")
 
 	cmd.flag.BoolVar(&buildA, "a", false, "")
 	cmd.flag.BoolVar(&buildI, "i", false, "")
