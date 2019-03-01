@@ -9,12 +9,16 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"text/template"
 )
 
 func TestImportPackagesPathCleaning(t *testing.T) {
+	if runtime.GOOS == "android" {
+		t.Skip("not available on Android")
+	}
 	slashPath := "golang.org/x/mobile/example/bind/hello/"
 	pkgs, err := importPackages([]string{slashPath})
 	if err != nil {

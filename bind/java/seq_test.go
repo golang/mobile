@@ -36,20 +36,22 @@ func testMain(m *testing.M) int {
 	if runtime.GOOS == "windows" {
 		exe = ".exe"
 	}
-	gomobileBin = filepath.Join(binDir, "gomobile"+exe)
-	gobindBin := filepath.Join(binDir, "gobind"+exe)
-	if out, err := exec.Command("go", "build", "-o", gomobileBin, "golang.org/x/mobile/cmd/gomobile").CombinedOutput(); err != nil {
-		log.Fatalf("gomobile build failed: %v: %s", err, out)
+	if runtime.GOOS != "android" {
+		gomobileBin = filepath.Join(binDir, "gomobile"+exe)
+		gobindBin := filepath.Join(binDir, "gobind"+exe)
+		if out, err := exec.Command("go", "build", "-o", gomobileBin, "golang.org/x/mobile/cmd/gomobile").CombinedOutput(); err != nil {
+			log.Fatalf("gomobile build failed: %v: %s", err, out)
+		}
+		if out, err := exec.Command("go", "build", "-o", gobindBin, "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
+			log.Fatalf("gobind build failed: %v: %s", err, out)
+		}
+		PATH := os.Getenv("PATH")
+		if PATH != "" {
+			PATH += string(filepath.ListSeparator)
+		}
+		PATH += binDir
+		os.Setenv("PATH", PATH)
 	}
-	if out, err := exec.Command("go", "build", "-o", gobindBin, "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
-		log.Fatalf("gobind build failed: %v: %s", err, out)
-	}
-	PATH := os.Getenv("PATH")
-	if PATH != "" {
-		PATH += string(filepath.ListSeparator)
-	}
-	PATH += binDir
-	os.Setenv("PATH", PATH)
 	return m.Run()
 }
 
@@ -99,6 +101,9 @@ func TestJavaSeqBench(t *testing.T) {
 // This requires the gradle command in PATH and
 // the Android SDK whose path is available through ANDROID_HOME environment variable.
 func runTest(t *testing.T, pkgNames []string, javaPkg, javaCls string) {
+	if gomobileBin == "" {
+		t.Skipf("no gomobile on %s", runtime.GOOS)
+	}
 	gradle, err := exec.LookPath("gradle")
 	if err != nil {
 		t.Skip("command gradle not found, skipping")

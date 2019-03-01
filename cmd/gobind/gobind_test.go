@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -41,15 +42,20 @@ func testMain(m *testing.M) int {
 		log.Fatal(err)
 	}
 	bin.Close()
-	gobindBin = bin.Name()
-	defer os.Remove(gobindBin)
-	if out, err := exec.Command("go", "build", "-o", gobindBin, "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
-		log.Fatalf("gobind build failed: %v: %s", err, out)
+	defer os.Remove(bin.Name())
+	if runtime.GOOS != "android" {
+		if out, err := exec.Command("go", "build", "-o", bin.Name(), "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
+			log.Fatalf("gobind build failed: %v: %s", err, out)
+		}
+		gobindBin = bin.Name()
 	}
 	return m.Run()
 }
 
-func runGobind(lang, pkg, goos string) error {
+func runGobind(t testing.TB, lang, pkg, goos string) error {
+	if gobindBin == "" {
+		t.Skipf("gobind is not available on %s", runtime.GOOS)
+	}
 	cmd := exec.Command(gobindBin, "-lang", lang, pkg)
 	if goos != "" {
 		cmd.Env = append(os.Environ(), "GOOS="+goos)
@@ -64,7 +70,7 @@ func runGobind(lang, pkg, goos string) error {
 func TestGobind(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if err := runGobind(test.lang, test.pkg, test.goos); err != nil {
+			if err := runGobind(t, test.lang, test.pkg, test.goos); err != nil {
 				t.Error(err)
 			}
 		})
@@ -72,6 +78,9 @@ func TestGobind(t *testing.T) {
 }
 
 func TestDocs(t *testing.T) {
+	if gobindBin == "" {
+		t.Skipf("gobind is not available on %s", runtime.GOOS)
+	}
 	// Create a fake package for doc.go
 	tmpdir, err := ioutil.TempDir("", "gobind-test-")
 	if err != nil {
@@ -111,7 +120,7 @@ func BenchmarkGobind(b *testing.B) {
 	for _, test := range tests {
 		b.Run(test.name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				if err := runGobind(test.lang, test.pkg, test.goos); err != nil {
+				if err := runGobind(b, test.lang, test.pkg, test.goos); err != nil {
 					b.Error(err)
 				}
 			}

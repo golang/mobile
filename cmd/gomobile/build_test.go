@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"text/template"
@@ -66,6 +67,9 @@ func TestAndroidPkgName(t *testing.T) {
 }
 
 func TestAndroidBuild(t *testing.T) {
+	if runtime.GOOS == "android" {
+		t.Skip("not available on Android")
+	}
 	buf := new(bytes.Buffer)
 	defer func() {
 		xout = os.Stderr
