@@ -21,11 +21,11 @@ FOUNDATION_EXPORT const int64_t BasictypesAnInt2;
 
 FOUNDATION_EXPORT BOOL BasictypesBool(BOOL p0);
 
-FOUNDATION_EXPORT NSData* BasictypesByteArrays(NSData* x);
+FOUNDATION_EXPORT NSData* _Nullable BasictypesByteArrays(NSData* _Nullable x);
 
-FOUNDATION_EXPORT BOOL BasictypesError(NSError** error);
+FOUNDATION_EXPORT BOOL BasictypesError(NSError* _Nullable* error);
 
-FOUNDATION_EXPORT BOOL BasictypesErrorPair(long* ret0_, NSError** error);
+FOUNDATION_EXPORT BOOL BasictypesErrorPair(long* ret0_, NSError* _Nullable* error);
 
 FOUNDATION_EXPORT void BasictypesInts(int8_t x, int16_t y, int32_t z, int64_t t, long u);
 

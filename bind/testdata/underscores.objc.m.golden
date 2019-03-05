@@ -26,14 +26,14 @@
 	return self;
 }
 
-- (NSString*)underscore_field {
+- (NSString* _Nonnull)underscore_field {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	nstring r0 = proxyunderscore_pkg_Underscore_struct_Underscore_field_Get(refnum);
 	NSString *_r0 = go_seq_to_objc_string(r0);
 	return _r0;
 }
 
-- (void)setUnderscore_field:(NSString*)v {
+- (void)setUnderscore_field:(NSString* _Nonnull)v {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	nstring _v = go_seq_from_objc_string(v);
 	proxyunderscore_pkg_Underscore_struct_Underscore_field_Set(refnum, _v);

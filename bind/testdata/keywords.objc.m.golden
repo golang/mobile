@@ -296,12 +296,12 @@
 
 
 
-void KeywordsConst(NSString* id_) {
+void KeywordsConst(NSString* _Nullable id_) {
 	nstring _id_ = go_seq_from_objc_string(id_);
 	proxykeywords__Const(_id_);
 }
 
-void KeywordsStatic(NSString* strictfp) {
+void KeywordsStatic(NSString* _Nullable strictfp) {
 	nstring _strictfp = go_seq_from_objc_string(strictfp);
 	proxykeywords__Static(_strictfp);
 }

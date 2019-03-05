@@ -52,7 +52,7 @@
 	proxystructs_S_Y_Set(refnum, _v);
 }
 
-- (StructsS*)identity:(NSError**)error {
+- (StructsS* _Nullable)identity:(NSError* _Nullable*)error {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	struct proxystructs_S_Identity_return res = proxystructs_S_Identity(refnum);
 	StructsS* _ret0_ = nil;
@@ -113,7 +113,7 @@
 	proxystructs_S2_M(refnum);
 }
 
-- (NSString*)string {
+- (NSString* _Nonnull)string {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	nstring r0 = proxystructs_S2_String(refnum);
 	NSString *_ret0_ = go_seq_to_objc_string(r0);
@@ -167,7 +167,7 @@
 
 
 
-StructsS* StructsIdentity(StructsS* s) {
+StructsS* _Nullable StructsIdentity(StructsS* _Nullable s) {
 	int32_t _s;
 	if ([s conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> s_proxy = (id<goSeqRefInterface>)(s);
@@ -187,7 +187,7 @@ StructsS* StructsIdentity(StructsS* s) {
 	return _ret0_;
 }
 
-StructsS* StructsIdentityWithError(StructsS* s, NSError** error) {
+StructsS* _Nullable StructsIdentityWithError(StructsS* _Nullable s, NSError* _Nullable* error) {
 	int32_t _s;
 	if ([s conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> s_proxy = (id<goSeqRefInterface>)(s);

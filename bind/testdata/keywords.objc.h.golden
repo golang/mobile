@@ -72,9 +72,9 @@
 - (void)while;
 @end
 
-FOUNDATION_EXPORT void KeywordsConst(NSString* id_);
+FOUNDATION_EXPORT void KeywordsConst(NSString* _Nullable id_);
 
-FOUNDATION_EXPORT void KeywordsStatic(NSString* strictfp);
+FOUNDATION_EXPORT void KeywordsStatic(NSString* _Nullable strictfp);
 
 @class KeywordsKeywordCaller;
 

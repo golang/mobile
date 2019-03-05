@@ -22,8 +22,8 @@
 }
 @property(strong, readonly) id _ref;
 
-- (instancetype)initWithRef:(id)ref;
-- (instancetype)init;
+- (nonnull instancetype)initWithRef:(id)ref;
+- (nonnull instancetype)init;
 @end
 
 @interface Vars : NSObject
@@ -39,11 +39,11 @@
 + (double) aFloat64;
 + (void) setAFloat64:(double)v;
 
-+ (NSString*) aString;
-+ (void) setAString:(NSString*)v;
++ (NSString* _Nonnull) aString;
++ (void) setAString:(NSString* _Nonnull)v;
 
-+ (VarsS*) aStructPtr;
-+ (void) setAStructPtr:(VarsS*)v;
++ (VarsS* _Nullable) aStructPtr;
++ (void) setAStructPtr:(VarsS* _Nullable)v;
 
 + (long) anInt;
 + (void) setAnInt:(long)v;
@@ -60,8 +60,8 @@
 + (int8_t) anInt8;
 + (void) setAnInt8:(int8_t)v;
 
-+ (id<VarsI>) anInterface;
-+ (void) setAnInterface:(id<VarsI>)v;
++ (id<VarsI> _Nullable) anInterface;
++ (void) setAnInterface:(id<VarsI> _Nullable)v;
 
 @end
 

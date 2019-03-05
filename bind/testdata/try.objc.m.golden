@@ -9,7 +9,7 @@
 #include "Try.objc.h"
 
 
-NSString* TryThis(void) {
+NSString* _Nonnull TryThis(void) {
 	nstring r0 = proxytry__This();
 	NSString *_ret0_ = go_seq_to_objc_string(r0);
 	return _ret0_;

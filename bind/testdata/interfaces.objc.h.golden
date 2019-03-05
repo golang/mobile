@@ -29,7 +29,7 @@
 @class InterfacesWithParam;
 
 @protocol InterfacesError <NSObject>
-- (BOOL)err:(NSError**)error;
+- (BOOL)err:(NSError* _Nullable*)error;
 @end
 
 @protocol InterfacesI <NSObject>
@@ -59,7 +59,7 @@
 @end
 
 @protocol InterfacesI3 <NSObject>
-- (InterfacesI1*)f;
+- (InterfacesI1* _Nullable)f;
 @end
 
 @protocol InterfacesInterfaces <NSObject>
@@ -79,11 +79,11 @@
 - (void)hasParam:(BOOL)p0;
 @end
 
-FOUNDATION_EXPORT int32_t InterfacesAdd3(id<InterfacesI> r);
+FOUNDATION_EXPORT int32_t InterfacesAdd3(id<InterfacesI> _Nullable r);
 
-FOUNDATION_EXPORT BOOL InterfacesCallErr(id<InterfacesError> e, NSError** error);
+FOUNDATION_EXPORT BOOL InterfacesCallErr(id<InterfacesError> _Nullable e, NSError* _Nullable* error);
 
-FOUNDATION_EXPORT id<InterfacesI> InterfacesSeven(void);
+FOUNDATION_EXPORT id<InterfacesI> _Nullable InterfacesSeven(void);
 
 @class InterfacesError;
 
@@ -104,7 +104,7 @@ FOUNDATION_EXPORT id<InterfacesI> InterfacesSeven(void);
 @property(strong, readonly) id _ref;
 
 - (instancetype)initWithRef:(id)ref;
-- (BOOL)err:(NSError**)error;
+- (BOOL)err:(NSError* _Nullable*)error;
 @end
 
 @interface InterfacesI : NSObject <goSeqRefInterface, InterfacesI> {
@@ -124,7 +124,7 @@ FOUNDATION_EXPORT id<InterfacesI> InterfacesSeven(void);
 @property(strong, readonly) id _ref;
 
 - (instancetype)initWithRef:(id)ref;
-- (InterfacesI1*)f;
+- (InterfacesI1* _Nullable)f;
 @end
 
 /**
