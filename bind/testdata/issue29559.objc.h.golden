@@ -11,6 +11,6 @@
 #include "Universe.objc.h"
 
 
-FOUNDATION_EXPORT void Issue29559TakesAString(NSString* s);
+FOUNDATION_EXPORT void Issue29559TakesAString(NSString* _Nullable s);
 
 #endif

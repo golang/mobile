@@ -28,8 +28,8 @@
 }
 @property(strong, readonly) id _ref;
 
-- (instancetype)initWithRef:(id)ref;
-- (instancetype)init;
+- (nonnull instancetype)initWithRef:(id)ref;
+- (nonnull instancetype)init;
 @end
 
 /**
@@ -39,27 +39,27 @@
 }
 @property(strong, readonly) id _ref;
 
-- (instancetype)initWithRef:(id)ref;
+- (nonnull instancetype)initWithRef:(id)ref;
 /**
  * NewS is a constructor.
  */
-- (instancetype)init;
+- (nullable instancetype)init;
 /**
  * SF is a field.
  */
-@property (nonatomic) NSString* sf;
+@property (nonatomic) NSString* _Nonnull sf;
 /**
  * Anonymous field.
  */
-@property (nonatomic) DocS2* s2;
+@property (nonatomic) DocS2* _Nullable s2;
 /**
  * Multiple fields.
  */
-@property (nonatomic) NSString* f1;
+@property (nonatomic) NSString* _Nonnull f1;
 /**
  * Multiple fields.
  */
-@property (nonatomic) NSString* f2;
+@property (nonatomic) NSString* _Nonnull f2;
 /**
  * After is another method.
  */
@@ -74,8 +74,8 @@
 }
 @property(strong, readonly) id _ref;
 
-- (instancetype)initWithRef:(id)ref;
-- (instancetype)init;
+- (nonnull instancetype)initWithRef:(id)ref;
+- (nonnull instancetype)init;
 @end
 
 /**
@@ -93,14 +93,14 @@ FOUNDATION_EXPORT const BOOL DocC;
 /**
  * A specific var.
  */
-+ (NSString*) specific;
-+ (void) setSpecific:(NSString*)v;
++ (NSString* _Nonnull) specific;
++ (void) setSpecific:(NSString* _Nonnull)v;
 
 /**
  * V is a var.
  */
-+ (NSString*) v;
-+ (void) setV:(NSString*)v;
++ (NSString* _Nonnull) v;
++ (void) setV:(NSString* _Nonnull)v;
 
 @end
 
@@ -112,7 +112,7 @@ FOUNDATION_EXPORT void DocF(void);
 /**
  * NewS is a constructor.
  */
-FOUNDATION_EXPORT DocS* DocNewS(void);
+FOUNDATION_EXPORT DocS* _Nullable DocNewS(void);
 
 @class DocI;
 

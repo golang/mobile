@@ -26,14 +26,14 @@
 	return self;
 }
 
-- (NSString*)value {
+- (NSString* _Nonnull)value {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	nstring r0 = proxyissue10788_TestStruct_Value_Get(refnum);
 	NSString *_r0 = go_seq_to_objc_string(r0);
 	return _r0;
 }
 
-- (void)setValue:(NSString*)v {
+- (void)setValue:(NSString* _Nonnull)v {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	nstring _v = go_seq_from_objc_string(v);
 	proxyissue10788_TestStruct_Value_Set(refnum, _v);
@@ -51,7 +51,7 @@
 	return self;
 }
 
-- (void)doSomeWork:(Issue10788TestStruct*)s {
+- (void)doSomeWork:(Issue10788TestStruct* _Nullable)s {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	int32_t _s;
 	if ([s conformsToProtocol:@protocol(goSeqRefInterface)]) {
@@ -63,7 +63,7 @@
 	proxyissue10788_TestInterface_DoSomeWork(refnum, _s);
 }
 
-- (void)multipleUnnamedParams:(long)p0 p1:(NSString*)p1 日本:(int64_t)日本 {
+- (void)multipleUnnamedParams:(long)p0 p1:(NSString* _Nullable)p1 日本:(int64_t)日本 {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	nint _p0 = (nint)p0;
 	nstring _p1 = go_seq_from_objc_string(p1);

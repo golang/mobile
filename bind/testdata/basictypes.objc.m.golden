@@ -24,7 +24,7 @@ BOOL BasictypesBool(BOOL p0) {
 	return _ret0_;
 }
 
-NSData* BasictypesByteArrays(NSData* x) {
+NSData* _Nullable BasictypesByteArrays(NSData* _Nullable x) {
 	nbyteslice _x = go_seq_from_objc_bytearray(x, 0);
 	nbyteslice r0 = proxybasictypes__ByteArrays(_x);
 	if (![x isKindOfClass:[NSMutableData class]]) {
@@ -34,7 +34,7 @@ NSData* BasictypesByteArrays(NSData* x) {
 	return _ret0_;
 }
 
-BOOL BasictypesError(NSError** error) {
+BOOL BasictypesError(NSError* _Nullable* error) {
 	int32_t r0 = proxybasictypes__Error();
 	Universeerror* _error = nil;
 	GoSeqRef* _error_ref = go_seq_from_refnum(r0);
@@ -50,7 +50,7 @@ BOOL BasictypesError(NSError** error) {
 	return (_error == nil);
 }
 
-BOOL BasictypesErrorPair(long* ret0_, NSError** error) {
+BOOL BasictypesErrorPair(long* ret0_, NSError* _Nullable* error) {
 	struct proxybasictypes__ErrorPair_return res = proxybasictypes__ErrorPair();
 	long _ret0_ = (long)res.r0;
 	Universeerror* _error = nil;

@@ -17,9 +17,9 @@
 }
 @property(strong, readonly) id _ref;
 
-- (instancetype)initWithRef:(id)ref;
-- (instancetype)init;
-@property (nonatomic) NSString* underscore_field;
+- (nonnull instancetype)initWithRef:(id)ref;
+- (nonnull instancetype)init;
+@property (nonatomic) NSString* _Nonnull underscore_field;
 @end
 
 @interface Underscore_pkg : NSObject
