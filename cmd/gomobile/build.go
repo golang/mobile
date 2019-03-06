@@ -207,9 +207,6 @@ func printcmd(format string, args ...interface{}) {
 	if gomobilepath != "" {
 		cmd = strings.Replace(cmd, gomobilepath, "$GOMOBILE", -1)
 	}
-	if goroot := goEnv("GOROOT"); goroot != "" {
-		cmd = strings.Replace(cmd, goroot, "$GOROOT", -1)
-	}
 	if gopath := goEnv("GOPATH"); gopath != "" {
 		cmd = strings.Replace(cmd, gopath, "$GOPATH", -1)
 	}
