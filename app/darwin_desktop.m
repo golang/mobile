@@ -35,7 +35,11 @@ uint64 threadID() {
 - (void)prepareOpenGL {
 	[self setWantsBestResolutionOpenGLSurface:YES];
 	GLint swapInt = 1;
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 	[[self openGLContext] setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];
+#pragma clang diagnostic pop
 
 	// Using attribute arrays in OpenGL 3.3 requires the use of a VBA.
 	// But VBAs don't exist in ES 2. So we bind a default one.
@@ -168,7 +172,7 @@ uint64 threadID() {
 	uint8_t direction;
 	if ([theEvent isARepeat]) {
 		direction = 0;
-	} else if (theEvent.type == NSKeyDown) {
+	} else if (theEvent.type == NSEventTypeKeyDown) {
 		direction = 1;
 	} else {
 		direction = 2;
@@ -209,13 +213,13 @@ runApp(void) {
 	NSRect rect = NSMakeRect(0, 0, 600, 800);
 
 	NSWindow* window = [[[NSWindow alloc] initWithContentRect:rect
-			styleMask:NSTitledWindowMask
+			styleMask:NSWindowStyleMaskTitled
 			backing:NSBackingStoreBuffered
 			defer:NO]
 		autorelease];
-	window.styleMask |= NSResizableWindowMask;
-	window.styleMask |= NSMiniaturizableWindowMask ;
-	window.styleMask |= NSClosableWindowMask;
+	window.styleMask |= NSWindowStyleMaskResizable;
+	window.styleMask |= NSWindowStyleMaskMiniaturizable;
+	window.styleMask |= NSWindowStyleMaskClosable;
 	window.title = name;
 	[window cascadeTopLeftFromPoint:NSMakePoint(20,20)];
 
