@@ -68,9 +68,9 @@ func buildFont(f C.CTFontRef) []byte {
 }
 
 func buildDefault() ([]byte, error) {
-	return buildFont(C.CTFontCreateUIFontForLanguage(C.kCTFontSystemFontType, 0, nil)), nil
+	return buildFont(C.CTFontCreateUIFontForLanguage(C.kCTFontSystemFontType, 0, 0)), nil
 }
 
 func buildMonospace() ([]byte, error) {
-	return buildFont(C.CTFontCreateUIFontForLanguage(C.kCTFontUserFixedPitchFontType, 0, nil)), nil
+	return buildFont(C.CTFontCreateUIFontForLanguage(C.kCTFontUserFixedPitchFontType, 0, 0)), nil
 }
