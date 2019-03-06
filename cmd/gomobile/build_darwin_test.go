@@ -21,6 +21,7 @@ func TestIOSBuild(t *testing.T) {
 	buildN = true
 	buildX = true
 	buildTarget = "ios"
+	buildBundleID = "org.golang.todo"
 	gopath = filepath.SplitList(goEnv("GOPATH"))[0]
 	oldTags := ctx.BuildTags
 	ctx.BuildTags = []string{"tag1"}
@@ -93,10 +94,10 @@ mkdir -p $WORK/main
 echo "{{template "infoplist" .Xinfo}}" > $WORK/main/Info.plist
 mkdir -p $WORK/main/Images.xcassets/AppIcon.appiconset
 echo "{{.Xcontents}}" > $WORK/main/Images.xcassets/AppIcon.appiconset/Contents.json{{end}}
-GOARM=7 GOOS=darwin GOARCH=arm CC=clang-iphoneos CXX=clang-iphoneos CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=6.1 -arch armv7 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=6.1 -arch armv7 CGO_ENABLED=1 go build -tags tag1 ios -x {{if .Main}}-ldflags=-w -o=$WORK/arm {{end}}{{.Pkg}}
-GOOS=darwin GOARCH=arm64 CC=clang-iphoneos CXX=clang-iphoneos CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=6.1 -arch arm64 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=6.1 -arch arm64 CGO_ENABLED=1 go build -tags tag1 ios -x {{if .Main}}-ldflags=-w -o=$WORK/arm64 {{end}}{{.Pkg}}
-GOOS=darwin GOARCH=386 CC=clang-iphonesimulator CXX=clang-iphonesimulator CGO_CFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=6.1 -arch i386 CGO_LDFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=6.1 -arch i386 CGO_ENABLED=1 go build -tags tag1 ios -x {{if .Main}}-ldflags=-w -o=$WORK/386 {{end}}{{.Pkg}}
-GOOS=darwin GOARCH=amd64 CC=clang-iphonesimulator CXX=clang-iphonesimulator CGO_CFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=6.1 -arch x86_64 CGO_LDFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=6.1 -arch x86_64 CGO_ENABLED=1 go build -tags tag1 ios -x {{if .Main}}-ldflags=-w -o=$WORK/amd64 {{end}}{{.Pkg}}{{if .Main}}
+GOARM=7 GOOS=darwin GOARCH=arm CC=iphoneos-clang CXX=iphoneos-clang++ CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 -arch armv7 CGO_CXXFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 -arch armv7 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 -arch armv7 CGO_ENABLED=1 go build -tags tag1 ios -x {{if .Main}}-ldflags=-w -o=$WORK/arm {{end}}{{.Pkg}}
+GOOS=darwin GOARCH=arm64 CC=iphoneos-clang CXX=iphoneos-clang++ CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 -arch arm64 CGO_CXXFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 -arch arm64 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 -arch arm64 CGO_ENABLED=1 go build -tags tag1 ios -x {{if .Main}}-ldflags=-w -o=$WORK/arm64 {{end}}{{.Pkg}}
+GOOS=darwin GOARCH=386 CC=iphonesimulator-clang CXX=iphonesimulator-clang++ CGO_CFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=7.0 -arch i386 CGO_CXXFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=7.0 -arch i386 CGO_LDFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=7.0 -arch i386 CGO_ENABLED=1 go build -tags tag1 ios -x {{if .Main}}-ldflags=-w -o=$WORK/386 {{end}}{{.Pkg}}
+GOOS=darwin GOARCH=amd64 CC=iphonesimulator-clang CXX=iphonesimulator-clang++ CGO_CFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=7.0 -arch x86_64 CGO_CXXFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=7.0 -arch x86_64 CGO_LDFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=7.0 -arch x86_64 CGO_ENABLED=1 go build -tags tag1 ios -x {{if .Main}}-ldflags=-w -o=$WORK/amd64 {{end}}{{.Pkg}}{{if .Main}}
 xcrun lipo -o $WORK/main/main -create $WORK/arm $WORK/arm64 $WORK/386 $WORK/amd64
 mkdir -p $WORK/main/assets
 xcrun xcodebuild -configuration Release -project $WORK/main.xcodeproj -allowProvisioningUpdates DEVELOPMENT_TEAM={{.TeamID}}
