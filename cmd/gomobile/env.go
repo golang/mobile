@@ -85,10 +85,17 @@ func envInit() (err error) {
 	if ndkRoot, err := ndkRoot(); err == nil {
 		androidEnv = make(map[string][]string)
 		for arch, toolchain := range ndk {
+			clang := toolchain.Path(ndkRoot, "clang")
+			if !buildN {
+				_, err = os.Stat(clang)
+				if err != nil {
+					return fmt.Errorf("No compiler for %s was found in the NDK (tried %q). Make sure your NDK version is >= r19b. Use `sdkmanager --update` to update it.", arch, clang)
+				}
+			}
 			androidEnv[arch] = []string{
 				"GOOS=android",
 				"GOARCH=" + arch,
-				"CC=" + toolchain.Path(ndkRoot, "clang"),
+				"CC=" + clang,
 				"CXX=" + toolchain.Path(ndkRoot, "clang++"),
 				"CGO_ENABLED=1",
 			}
@@ -152,11 +159,6 @@ func ndkRoot() (string, error) {
 	_, err := os.Stat(ndkRoot)
 	if err != nil {
 		return "", fmt.Errorf("The NDK was not found in $ANDROID_HOME/ndk-bundle (%q). Install the NDK with `sdkmanager 'ndk-bundle'`", ndkRoot)
-	}
-	prebuiltPath := filepath.Join(androidHome, "ndk-bundle", "toolchains", "llvm", "prebuilt")
-	_, err = os.Stat(prebuiltPath)
-	if err != nil {
-		return "", fmt.Errorf("No prebuilt toolchains found in $ANDROID_HOME/ndk-bundle/toolchains/llvm/prebuilt (%q). Make sure your NDK version is >= r19b. Use `sdkmanager --update` to update it.", prebuiltPath)
 	}
 	return ndkRoot, nil
 }
