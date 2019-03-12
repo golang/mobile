@@ -21,13 +21,16 @@ var tests = []struct {
 	lang string
 	pkg  string
 	goos string
+	// reverse is true if the test needs to generate reverse bindings using
+	// external tools such as javap.
+	reverse bool
 }{
-	{"ObjC-Testpkg", "objc", "golang.org/x/mobile/bind/testdata/testpkg", ""},
-	{"Java-Testpkg", "java", "golang.org/x/mobile/bind/testdata/testpkg", ""},
-	{"Go-Testpkg", "go", "golang.org/x/mobile/bind/testdata/testpkg", ""},
-	{"Java-Javapkg", "java", "golang.org/x/mobile/bind/testdata/testpkg/javapkg", "android"},
-	{"Go-Javapkg", "go", "golang.org/x/mobile/bind/testdata/testpkg/javapkg", "android"},
-	{"Go-Javapkg", "go,java,objc", "golang.org/x/mobile/bind/testdata/cgopkg", "android"},
+	{"ObjC-Testpkg", "objc", "golang.org/x/mobile/bind/testdata/testpkg", "", false},
+	{"Java-Testpkg", "java", "golang.org/x/mobile/bind/testdata/testpkg", "", false},
+	{"Go-Testpkg", "go", "golang.org/x/mobile/bind/testdata/testpkg", "", false},
+	{"Java-Javapkg", "java", "golang.org/x/mobile/bind/testdata/testpkg/javapkg", "android", true},
+	{"Go-Javapkg", "go", "golang.org/x/mobile/bind/testdata/testpkg/javapkg", "android", true},
+	{"Go-Javapkg", "go,java,objc", "golang.org/x/mobile/bind/testdata/cgopkg", "android", false},
 }
 
 var gobindBin string
@@ -68,8 +71,12 @@ func runGobind(t testing.TB, lang, pkg, goos string) error {
 }
 
 func TestGobind(t *testing.T) {
+	_, javapErr := exec.LookPath("javap")
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			if test.reverse && javapErr != nil {
+				t.Skip("reverse bind test requires javap which is not available")
+			}
 			if err := runGobind(t, test.lang, test.pkg, test.goos); err != nil {
 				t.Error(err)
 			}
@@ -117,8 +124,12 @@ type Struct struct{
 }
 
 func BenchmarkGobind(b *testing.B) {
+	_, javapErr := exec.LookPath("javap")
 	for _, test := range tests {
 		b.Run(test.name, func(b *testing.B) {
+			if test.reverse && javapErr != nil {
+				b.Skip("reverse bind test requires javap which is not available")
+			}
 			for i := 0; i < b.N; i++ {
 				if err := runGobind(b, test.lang, test.pkg, test.goos); err != nil {
 					b.Error(err)
