@@ -36,11 +36,22 @@ func looksLikeATTF(b []byte) error {
 	return nil
 }
 
-func TestLoadFonts(t *testing.T) {
-	if err := looksLikeATTF(Default()); err != nil {
+func TestLoadDefault(t *testing.T) {
+	def, err := buildDefault()
+	if err != nil {
+		t.Skip("default font not found")
+	}
+	if err := looksLikeATTF(def); err != nil {
 		t.Errorf("default font: %v", err)
 	}
-	if err := looksLikeATTF(Monospace()); err != nil {
+}
+
+func TestLoadMonospace(t *testing.T) {
+	mono, err := buildMonospace()
+	if err != nil {
+		t.Skip("mono font not found")
+	}
+	if err := looksLikeATTF(mono); err != nil {
 		t.Errorf("monospace font: %v", err)
 	}
 }
