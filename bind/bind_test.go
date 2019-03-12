@@ -231,7 +231,7 @@ func genObjcPackages(t *testing.T, dir string, cg *ObjcWrapper) {
 		"-pkgdir="+filepath.Join(dir, "pkg", build.Default.GOOS+"_"+build.Default.GOARCH),
 		"ObjC/...",
 	)
-	cmd.Env = append(os.Environ(), "GOPATH="+dir)
+	cmd.Env = append(os.Environ(), "GOPATH="+dir, "GO111MODULE=off")
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("failed to go install the generated ObjC wrappers: %v: %s", err, string(out))
 	}
@@ -272,7 +272,7 @@ func genJavaPackages(t *testing.T, dir string, cg *ClassGen) {
 		"-pkgdir="+filepath.Join(dir, "pkg", build.Default.GOOS+"_"+build.Default.GOARCH),
 		"Java/...",
 	)
-	cmd.Env = append(os.Environ(), "GOPATH="+dir)
+	cmd.Env = append(os.Environ(), "GOPATH="+dir, "GO111MODULE=off")
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("failed to go install the generated Java wrappers: %v: %s", err, string(out))
 	}

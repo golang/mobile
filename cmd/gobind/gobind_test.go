@@ -62,7 +62,8 @@ func runGobind(t testing.TB, lang, pkg, goos string) error {
 	cmd := exec.Command(gobindBin, "-lang", lang, pkg)
 	if goos != "" {
 		cmd.Env = append(os.Environ(), "GOOS="+goos)
-		cmd.Env = append(os.Environ(), "CGO_ENABLED=1")
+		cmd.Env = append(cmd.Env, "CGO_ENABLED=1")
+		cmd.Env = append(cmd.Env, "GO111MODULE=off")
 	}
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("gobind -lang %s %s failed: %v: %s", lang, pkg, err, out)
