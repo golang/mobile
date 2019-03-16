@@ -618,3 +618,11 @@ type MyStruct struct {
 func NewMyStruct(ctx context.Context) *MyStruct {
 	return nil
 }
+
+type Int32Constructed struct{}
+
+// Test that constuctors that clash with the internal proxy constructor
+// are skipped.
+func NewInt32Constructed(i int32) *Int32Constructed {
+	return nil
+}
