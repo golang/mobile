@@ -7,6 +7,7 @@ package main
 import (
 	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -16,6 +17,9 @@ import (
 var gopath string
 
 func TestInit(t *testing.T) {
+	if _, err := exec.LookPath("diff"); err != nil {
+		t.Skip("command diff not found, skipping")
+	}
 	buf := new(bytes.Buffer)
 	gopathorig := os.Getenv("GOPATH")
 	defer func() {
@@ -102,7 +106,7 @@ var initTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/
 rm -r -f "$GOMOBILE"
 mkdir -p $GOMOBILE
 WORK={{.GOPATH}}/pkg/gomobile/work
-go install -x golang.org/x/mobile/cmd/gobind
+GO111MODULE=off go install -x golang.org/x/mobile/cmd/gobind
 cp $OPENAL_PATH/include/AL/al.h $GOMOBILE/include/AL/al.h
 mkdir -p $GOMOBILE/include/AL
 cp $OPENAL_PATH/include/AL/alc.h $GOMOBILE/include/AL/alc.h

@@ -309,6 +309,8 @@ func goCmd(subcmd string, srcs []string, env []string, args ...string) error {
 	cmd.Args = append(cmd.Args, args...)
 	cmd.Args = append(cmd.Args, srcs...)
 	cmd.Env = append([]string{}, env...)
+	// gomobile does not support modules yet.
+	cmd.Env = append(cmd.Env, "GO111MODULE=off")
 	return runCmd(cmd)
 }
 
