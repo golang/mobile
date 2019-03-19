@@ -188,7 +188,7 @@ jar c -C $WORK/javac-output .
 var bindIOSTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
 WORK=$WORK
 GOOS=darwin CGO_ENABLED=1 gobind -lang=go,objc -outdir=$WORK -tags=ios{{if .Prefix}} -prefix={{.Prefix}}{{end}} golang.org/x/mobile/asset
-GOARM=7 GOOS=darwin GOARCH=arm CC=iphoneos-clang CXX=iphoneos-clang++ CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 -arch armv7 CGO_CXXFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 -arch armv7 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 -arch armv7 CGO_ENABLED=1 GOPATH=$WORK:$GOPATH go build -tags ios -x -buildmode=c-archive -o $WORK/asset-arm.a gobind
+GOARM=7 GOOS=darwin GOARCH=arm CC=iphoneos-clang CXX=iphoneos-clang++ CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 -fembed-bitcode -arch armv7 CGO_CXXFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 -fembed-bitcode -arch armv7 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 -fembed-bitcode -arch armv7 CGO_ENABLED=1 GOPATH=$WORK:$GOPATH GO111MODULE=off go build -tags ios -x -buildmode=c-archive -o $WORK/asset-arm.a gobind
 rm -r -f "Asset.framework"
 mkdir -p Asset.framework/Versions/A/Headers
 ln -s A Asset.framework/Versions/Current
