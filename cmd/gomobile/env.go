@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -86,17 +85,27 @@ func envInit() (err error) {
 		androidEnv = make(map[string][]string)
 		for arch, toolchain := range ndk {
 			clang := toolchain.Path(ndkRoot, "clang")
+			clangpp := toolchain.Path(ndkRoot, "clang++")
 			if !buildN {
-				_, err = os.Stat(clang)
-				if err != nil {
-					return fmt.Errorf("No compiler for %s was found in the NDK (tried %q). Make sure your NDK version is >= r19b. Use `sdkmanager --update` to update it.", arch, clang)
+				tools := []string{clang, clangpp}
+				if runtime.GOOS == "windows" {
+					// Because of https://github.com/android-ndk/ndk/issues/920,
+					// we require r19c, not just r19b. Fortunately, the clang++.cmd
+					// script only exists in r19c.
+					tools = append(tools, clangpp+".cmd")
+				}
+				for _, tool := range tools {
+					_, err = os.Stat(tool)
+					if err != nil {
+						return fmt.Errorf("No compiler for %s was found in the NDK (tried %s). Make sure your NDK version is >= r19c. Use `sdkmanager --update` to update it.", arch, tool)
+					}
 				}
 			}
 			androidEnv[arch] = []string{
 				"GOOS=android",
 				"GOARCH=" + arch,
 				"CC=" + clang,
-				"CXX=" + toolchain.Path(ndkRoot, "clang++"),
+				"CXX=" + clangpp,
 				"CGO_ENABLED=1",
 			}
 			if arch == "arm" {
@@ -273,39 +282,11 @@ func (tc *ndkToolchain) Path(ndkRoot, toolName string) string {
 	var pref string
 	switch toolName {
 	case "clang", "clang++":
-		if runtime.GOOS == "windows" {
-			return tc.createNDKr19bWorkaroundTool(ndkRoot, toolName)
-		}
 		pref = tc.clangPrefix
 	default:
 		pref = tc.toolPrefix
 	}
 	return filepath.Join(ndkRoot, "toolchains", "llvm", "prebuilt", archNDK(), "bin", pref+"-"+toolName)
-}
-
-// createNDKr19bWorkaroundTool creates a Windows wrapper script for clang or clang++.
-// The scripts included in r19b are broken on Windows: https://github.com/android-ndk/ndk/issues/920.
-// TODO: Remove this when r19c is out; the code inside is hacky and panicky.
-func (tc *ndkToolchain) createNDKr19bWorkaroundTool(ndkRoot, toolName string) string {
-	toolCmd := filepath.Join(tmpdir, fmt.Sprintf("%s-%s.cmd", tc.arch, toolName))
-	tool, err := os.Create(toolCmd)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer func() {
-		if err := tool.Close(); err != nil {
-			log.Fatal(err)
-		}
-	}()
-	tcBin := filepath.Join(ndkRoot, "toolchains", "llvm", "prebuilt", archNDK(), "bin")
-	// Adapted from the NDK cmd wrappers.
-	toolCmdContent := fmt.Sprintf(`@echo off
-set _BIN_DIR=%s\
-%%_BIN_DIR%%%s.exe --target=%s -fno-addrsig %%*"`, tcBin, toolName, tc.clangPrefix)
-	if _, err = tool.Write([]byte(toolCmdContent)); err != nil {
-		log.Fatal(err)
-	}
-	return toolCmd
 }
 
 type ndkConfig map[string]ndkToolchain // map: GOOS->androidConfig.
