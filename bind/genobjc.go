@@ -198,7 +198,7 @@ func (g *ObjcGen) GenH() error {
 		g.objcdoc(g.docs[obj.Name()].Doc())
 		switch b := obj.Type().(*types.Basic); b.Kind() {
 		case types.String, types.UntypedString:
-			g.Printf("FOUNDATION_EXPORT NSString* const %s%s;\n", g.namePrefix, obj.Name())
+			g.Printf("FOUNDATION_EXPORT NSString* _Nonnull const %s%s;\n", g.namePrefix, obj.Name())
 		default:
 			g.Printf("FOUNDATION_EXPORT const %s %s%s;\n", g.objcType(obj.Type()), g.namePrefix, obj.Name())
 		}
@@ -545,7 +545,7 @@ func (s *funcSummary) asFunc(g *ObjcGen) string {
 		skip = 1
 	}
 	for _, p := range s.retParams[skip:] {
-		params = append(params, g.objcType(p.typ)+"* "+p.name)
+		params = append(params, g.objcType(p.typ)+"* _Nullable "+p.name)
 	}
 	paramContents := "void"
 	if len(params) > 0 {
@@ -580,7 +580,7 @@ func (s *funcSummary) asSignature(g *ObjcGen) string {
 		if len(params) > 0 {
 			key = p.name
 		}
-		params = append(params, fmt.Sprintf("%s:(%s)%s", key, g.objcType(p.typ)+"*", p.name))
+		params = append(params, fmt.Sprintf("%s:(%s)%s", key, g.objcType(p.typ)+"* _Nullable", p.name))
 	}
 	return strings.Join(params, " ")
 }
@@ -878,9 +878,9 @@ func (g *ObjcGen) genInterfaceInterface(obj *types.TypeName, summary ifaceSummar
 	}
 	g.Printf(" <%s>", strings.Join(prots, ", "))
 	g.Printf(" {\n}\n")
-	g.Printf("@property(strong, readonly) id _ref;\n")
+	g.Printf("@property(strong, readonly) _Nonnull id _ref;\n")
 	g.Printf("\n")
-	g.Printf("- (instancetype)initWithRef:(id)ref;\n")
+	g.Printf("- (nonnull instancetype)initWithRef:(_Nonnull id)ref;\n")
 	for _, m := range summary.callable {
 		if !g.isSigSupported(m.Type()) {
 			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", obj.Name(), m.Name())
@@ -918,7 +918,7 @@ func (g *ObjcGen) genInterfaceM(obj *types.TypeName, t *types.Interface) bool {
 	g.Printf("@implementation %s%s {\n", g.namePrefix, obj.Name())
 	g.Printf("}\n")
 	g.Printf("\n")
-	g.Printf("- (instancetype)initWithRef:(id)ref {\n")
+	g.Printf("- (nonnull instancetype)initWithRef:(id)ref {\n")
 	g.Indent()
 	if isErrorType(obj.Type()) {
 		g.Printf("if (self) {\n")
@@ -1097,9 +1097,9 @@ func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 	}
 	g.Printf(" {\n")
 	g.Printf("}\n")
-	g.Printf("@property(strong, readonly) id _ref;\n")
+	g.Printf("@property(strong, readonly) _Nonnull id _ref;\n")
 	g.Printf("\n")
-	g.Printf("- (nonnull instancetype)initWithRef:(id)ref;\n")
+	g.Printf("- (nonnull instancetype)initWithRef:(_Nonnull id)ref;\n")
 	cons := g.constructors[obj]
 	if oinf == nil {
 		for _, f := range cons {
@@ -1156,7 +1156,7 @@ func (g *ObjcGen) genStructM(obj *types.TypeName, t *types.Struct) {
 	oinf := g.ostructs[obj]
 	g.Printf("@implementation %s%s {\n", g.namePrefix, obj.Name())
 	g.Printf("}\n\n")
-	g.Printf("- (instancetype)initWithRef:(id)ref {\n")
+	g.Printf("- (nonnull instancetype)initWithRef:(_Nonnull id)ref {\n")
 	g.Indent()
 	g.Printf("self = [super init];\n")
 	g.Printf("if (self) { __ref = ref; }\n")
@@ -1174,7 +1174,7 @@ func (g *ObjcGen) genStructM(obj *types.TypeName, t *types.Struct) {
 		}
 	}
 	if oinf != nil || len(cons) == 0 {
-		g.Printf("- (instancetype)init {\n")
+		g.Printf("- (nonnull instancetype)init {\n")
 		g.Indent()
 		g.Printf("self = [super init];\n")
 		g.Printf("if (self) {\n")

@@ -11,7 +11,7 @@
 @implementation Universeerror {
 }
 
-- (instancetype)initWithRef:(id)ref {
+- (nonnull instancetype)initWithRef:(id)ref {
 	if (self) {
 		__ref = ref;
 		self = [super initWithDomain:@"go" code:1 userInfo:@{NSLocalizedDescriptionKey: [self error]}];

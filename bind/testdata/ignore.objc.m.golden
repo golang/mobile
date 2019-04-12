@@ -12,13 +12,13 @@
 @implementation IgnoreS {
 }
 
-- (instancetype)initWithRef:(id)ref {
+- (nonnull instancetype)initWithRef:(_Nonnull id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;
 }
 
-- (instancetype)init {
+- (nonnull instancetype)init {
 	self = [super init];
 	if (self) {
 		__ref = go_seq_from_refnum(new_ignore_S());
@@ -38,7 +38,7 @@
 @implementation IgnoreI {
 }
 
-- (instancetype)initWithRef:(id)ref {
+- (nonnull instancetype)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;
