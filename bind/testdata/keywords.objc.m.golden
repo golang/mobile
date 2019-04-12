@@ -11,7 +11,7 @@
 @implementation KeywordsKeywordCaller {
 }
 
-- (instancetype)initWithRef:(id)ref {
+- (nonnull instancetype)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;

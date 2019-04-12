@@ -11,7 +11,7 @@
 @implementation Issue12403Parsable {
 }
 
-- (instancetype)initWithRef:(id)ref {
+- (nonnull instancetype)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;
@@ -25,7 +25,7 @@
 	return _ret0_;
 }
 
-- (NSString* _Nonnull)toJSON:(NSError* _Nullable*)error {
+- (NSString* _Nonnull)toJSON:(NSError* _Nullable* _Nullable)error {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	struct proxyissue12403_Parsable_ToJSON_return res = proxyissue12403_Parsable_ToJSON(refnum);
 	NSString *_ret0_ = go_seq_to_objc_string(res.r0);

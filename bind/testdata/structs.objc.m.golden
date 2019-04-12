@@ -12,13 +12,13 @@
 @implementation StructsS {
 }
 
-- (instancetype)initWithRef:(id)ref {
+- (nonnull instancetype)initWithRef:(_Nonnull id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;
 }
 
-- (instancetype)init {
+- (nonnull instancetype)init {
 	self = [super init];
 	if (self) {
 		__ref = go_seq_from_refnum(new_structs_S());
@@ -52,7 +52,7 @@
 	proxystructs_S_Y_Set(refnum, _v);
 }
 
-- (StructsS* _Nullable)identity:(NSError* _Nullable*)error {
+- (StructsS* _Nullable)identity:(NSError* _Nullable* _Nullable)error {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	struct proxystructs_S_Identity_return res = proxystructs_S_Identity(refnum);
 	StructsS* _ret0_ = nil;
@@ -94,13 +94,13 @@
 @implementation StructsS2 {
 }
 
-- (instancetype)initWithRef:(id)ref {
+- (nonnull instancetype)initWithRef:(_Nonnull id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;
 }
 
-- (instancetype)init {
+- (nonnull instancetype)init {
 	self = [super init];
 	if (self) {
 		__ref = go_seq_from_refnum(new_structs_S2());
@@ -127,13 +127,13 @@
 @implementation StructsStructs {
 }
 
-- (instancetype)initWithRef:(id)ref {
+- (nonnull instancetype)initWithRef:(_Nonnull id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;
 }
 
-- (instancetype)init {
+- (nonnull instancetype)init {
 	self = [super init];
 	if (self) {
 		__ref = go_seq_from_refnum(new_structs_Structs());
@@ -152,7 +152,7 @@
 @implementation StructsI {
 }
 
-- (instancetype)initWithRef:(id)ref {
+- (nonnull instancetype)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;
@@ -187,7 +187,7 @@ StructsS* _Nullable StructsIdentity(StructsS* _Nullable s) {
 	return _ret0_;
 }
 
-StructsS* _Nullable StructsIdentityWithError(StructsS* _Nullable s, NSError* _Nullable* error) {
+StructsS* _Nullable StructsIdentityWithError(StructsS* _Nullable s, NSError* _Nullable* _Nullable error) {
 	int32_t _s;
 	if ([s conformsToProtocol:@protocol(goSeqRefInterface)]) {
 		id<goSeqRefInterface> s_proxy = (id<goSeqRefInterface>)(s);

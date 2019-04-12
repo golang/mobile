@@ -12,13 +12,13 @@
 @implementation DocNoDoc {
 }
 
-- (instancetype)initWithRef:(id)ref {
+- (nonnull instancetype)initWithRef:(_Nonnull id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;
 }
 
-- (instancetype)init {
+- (nonnull instancetype)init {
 	self = [super init];
 	if (self) {
 		__ref = go_seq_from_refnum(new_doc_NoDoc());
@@ -33,7 +33,7 @@
 @implementation DocS {
 }
 
-- (instancetype)initWithRef:(id)ref {
+- (nonnull instancetype)initWithRef:(_Nonnull id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;
@@ -129,13 +129,13 @@
 @implementation DocS2 {
 }
 
-- (instancetype)initWithRef:(id)ref {
+- (nonnull instancetype)initWithRef:(_Nonnull id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;
 }
 
-- (instancetype)init {
+- (nonnull instancetype)init {
 	self = [super init];
 	if (self) {
 		__ref = go_seq_from_refnum(new_doc_S2());
@@ -149,7 +149,7 @@
 @implementation DocI {
 }
 
-- (instancetype)initWithRef:(id)ref {
+- (nonnull instancetype)initWithRef:(id)ref {
 	self = [super init];
 	if (self) { __ref = ref; }
 	return self;
