@@ -161,16 +161,25 @@ func ndkRoot() (string, error) {
 	if buildN {
 		return "$NDK_PATH", nil
 	}
+
 	androidHome := os.Getenv("ANDROID_HOME")
-	if androidHome == "" {
-		return "", errors.New("The Android SDK was not found. Please set ANDROID_HOME to the root of the Android SDK.")
+	if androidHome != "" {
+		ndkRoot := filepath.Join(androidHome, "ndk-bundle")
+		_, err := os.Stat(ndkRoot)
+		if err == nil {
+			return ndkRoot, nil
+		}
 	}
-	ndkRoot := filepath.Join(androidHome, "ndk-bundle")
-	_, err := os.Stat(ndkRoot)
-	if err != nil {
-		return "", fmt.Errorf("The NDK was not found in $ANDROID_HOME/ndk-bundle (%q). Install the NDK with `sdkmanager 'ndk-bundle'`", ndkRoot)
+
+	ndkRoot := os.Getenv("ANDROID_NDK_HOME")
+	if ndkRoot != "" {
+		_, err := os.Stat(ndkRoot)
+		if err == nil {
+			return ndkRoot, nil
+		}
 	}
-	return ndkRoot, nil
+
+	return "", fmt.Errorf("no Android NDK found in $ANDROID_HOME/ndk-bundle nor in $ANDROID_NDK_HOME")
 }
 
 func envClang(sdkName string) (clang, cflags string, err error) {
