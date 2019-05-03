@@ -33,12 +33,13 @@ public class Seq {
 	// The singleton GoRefQueue
 	private static final GoRefQueue goRefQueue = new GoRefQueue();
 
+    // tracks if init was run
 	private static boolean didInit = false;
 
 	public static void init(Context context) {
 		if(!didInit) {
 			System.loadLibrary("gojni");
-			setContext((java.lang.Object) context);
+			setContext(context);
 			init();
 			Universe.touch();
 			didInit = true;
