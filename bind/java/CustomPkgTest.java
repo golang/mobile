@@ -9,6 +9,9 @@ import android.test.InstrumentationTestCase;
 import org.golang.custompkg.testpkg.Testpkg;
 
 public class CustomPkgTest extends InstrumentationTestCase {
+  public CustomPkgTest() {
+    Seq.init(this.getInstrumentation().getTargetContext());
+  }
   public void testHi() {
     Testpkg.hi();
   }

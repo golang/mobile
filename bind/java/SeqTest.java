@@ -15,6 +15,7 @@ import secondpkg.Secondpkg;
 
 public class SeqTest extends InstrumentationTestCase {
   public SeqTest() {
+      Seq.init(this.getInstrumentation().getTargetContext());
   }
 
   public void testConst() {

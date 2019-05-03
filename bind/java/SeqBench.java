@@ -16,6 +16,9 @@ import java.util.concurrent.ExecutorService;
 import benchmark.*;
 
 public class SeqBench extends InstrumentationTestCase {
+    public SeqBench() {
+        Seq.init(this.getInstrumentation().getTargetContext());
+    }
 
   public static class AnI implements I {
     @Override public void f() {
