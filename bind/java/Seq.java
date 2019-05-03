@@ -39,9 +39,9 @@ public class Seq {
 		Universe.touch();
 	}
 
-	// setContext sets the context in the go-library to be used in RunOnJvm. 
+	// setContext sets the context in the go-library to be used in RunOnJvm.
 	public static void setContext(Context context) {
-			setContext(context);
+		setContext(context);
 	}
 
 	private static native void init();
