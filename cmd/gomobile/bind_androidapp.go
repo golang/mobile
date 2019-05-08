@@ -148,7 +148,7 @@ func buildAAR(srcDir, androidDir string, pkgs []*build.Package, androidArchs []s
 	}
 	const manifestFmt = `<manifest xmlns:android="http://schemas.android.com/apk/res/android" package=%q>
 <uses-sdk android:minSdkVersion="%d"/></manifest>`
-	fmt.Fprintf(w, manifestFmt, "go."+pkgs[0].Name+".gojni", minAndroidAPI)
+	fmt.Fprintf(w, manifestFmt, "go."+pkgs[0].Name+".gojni", buildAndroidAPI)
 
 	w, err = aarwcreate("proguard.txt")
 	if err != nil {
@@ -365,7 +365,7 @@ func androidAPIPath() (string, error) {
 	defer sdkDir.Close()
 	fis, err := sdkDir.Readdir(-1)
 	if err != nil {
-		return "", fmt.Errorf("failed to find android SDK platform (min API level: %d): %v", minAndroidAPI, err)
+		return "", fmt.Errorf("failed to find android SDK platform (API level: %d): %v", buildAndroidAPI, err)
 	}
 
 	var apiPath string
@@ -376,7 +376,7 @@ func androidAPIPath() (string, error) {
 			continue
 		}
 		n, err := strconv.Atoi(name[len("android-"):])
-		if err != nil || n < minAndroidAPI {
+		if err != nil || n < buildAndroidAPI {
 			continue
 		}
 		p := filepath.Join(sdkDir.Name(), name)
@@ -387,8 +387,8 @@ func androidAPIPath() (string, error) {
 		}
 	}
 	if apiVer == 0 {
-		return "", fmt.Errorf("failed to find android SDK platform (min API level: %d) in %s",
-			minAndroidAPI, sdkDir.Name())
+		return "", fmt.Errorf("failed to find android SDK platform (API level: %d) in %s",
+			buildAndroidAPI, sdkDir.Name())
 	}
 	return apiPath, nil
 }

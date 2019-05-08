@@ -50,6 +50,9 @@ are copied into the output.
 Flag -iosversion sets the minimal version of the iOS SDK to compile against.
 The default version is 7.0.
 
+Flag -androidapi sets the Android API version to compile against.
+The default and minimum is 15.
+
 The -bundleid flag is required for -target ios and sets the bundle ID to use
 with the app.
 
@@ -230,6 +233,7 @@ var (
 	buildWork       bool   // -work
 	buildBundleID   string // -bundleid
 	buildIOSVersion string // -iosversion
+	buildAndroidAPI int    // -androidapi
 )
 
 func addBuildFlags(cmd *command) {
@@ -239,6 +243,7 @@ func addBuildFlags(cmd *command) {
 	cmd.flag.StringVar(&buildTarget, "target", "android", "")
 	cmd.flag.StringVar(&buildBundleID, "bundleid", "", "")
 	cmd.flag.StringVar(&buildIOSVersion, "iosversion", "7.0", "")
+	cmd.flag.IntVar(&buildAndroidAPI, "androidapi", minAndroidAPI, "")
 
 	cmd.flag.BoolVar(&buildA, "a", false, "")
 	cmd.flag.BoolVar(&buildI, "i", false, "")
