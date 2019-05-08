@@ -182,7 +182,7 @@ func installOpenAL(gomobilepath string) error {
 		cmd := exec.Command(cmake,
 			initOpenAL,
 			"-DCMAKE_TOOLCHAIN_FILE="+initOpenAL+"/XCompile-Android.txt",
-			"-DHOST="+t.clangPrefix)
+			"-DHOST="+t.ClangPrefix())
 		cmd.Dir = buildDir
 		tcPath := filepath.Join(ndkRoot, "toolchains", "llvm", "prebuilt", archNDK(), "bin")
 		if !buildN {
