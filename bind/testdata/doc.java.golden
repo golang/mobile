@@ -308,6 +308,12 @@ public abstract class Doc {
      */
     public static native String getV();
     
+    /**
+     * F is a function.
+     */
     public static native void f();
+    /**
+     * NewS is a constructor.
+     */
     public static native S newS();
 }
