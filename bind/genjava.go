@@ -1655,6 +1655,7 @@ func (g *JavaGen) GenJava() error {
 			g.Printf("// skipped function %s with unsupported parameter or return types\n\n", f.Name())
 			continue
 		}
+		g.javadoc(g.docs[f.Name()].Doc())
 		g.Printf("public static native ")
 		g.genFuncSignature(f, nil, false)
 	}
