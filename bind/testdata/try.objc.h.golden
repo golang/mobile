@@ -7,9 +7,10 @@
 #define __Try_H__
 
 @import Foundation;
+#include "ref.h"
 #include "Universe.objc.h"
 
 
-FOUNDATION_EXPORT NSString* TryThis(void);
+FOUNDATION_EXPORT NSString* _Nonnull TryThis(void);
 
 #endif

@@ -1257,7 +1257,7 @@ func (ctx *context) StencilOpSeparate(face, sfail, dpfail, dppass Enum) {
 	})
 }
 
-func (ctx *context) TexImage2D(target Enum, level int, width, height int, format Enum, ty Enum, data []byte) {
+func (ctx *context) TexImage2D(target Enum, level int, internalFormat int, width, height int, format Enum, ty Enum, data []byte) {
 	// It is common to pass TexImage2D a nil data, indicating that a
 	// bound GL buffer is being used as the source. In that case, it
 	// is not necessary to block.
@@ -1272,7 +1272,7 @@ func (ctx *context) TexImage2D(target Enum, level int, width, height int, format
 			// TODO(crawshaw): GLES3 offset for PIXEL_UNPACK_BUFFER and PIXEL_PACK_BUFFER.
 			a0: target.c(),
 			a1: uintptr(level),
-			a2: uintptr(format),
+			a2: uintptr(internalFormat),
 			a3: uintptr(width),
 			a4: uintptr(height),
 			a5: format.c(),

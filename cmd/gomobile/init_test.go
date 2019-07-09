@@ -7,8 +7,8 @@ package main
 import (
 	"bytes"
 	"os"
+	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 	"text/template"
@@ -17,6 +17,9 @@ import (
 var gopath string
 
 func TestInit(t *testing.T) {
+	if _, err := exec.LookPath("diff"); err != nil {
+		t.Skip("command diff not found, skipping")
+	}
 	buf := new(bytes.Buffer)
 	gopathorig := os.Getenv("GOPATH")
 	defer func() {
@@ -88,7 +91,7 @@ func defaultOutputData() outputData {
 		GOOS:      goos,
 		GOARCH:    goarch,
 		GOPATH:    gopath,
-		NDKARCH:   ndkarch(),
+		NDKARCH:   archNDK(),
 		Xproj:     projPbxproj,
 		Xcontents: contentsJSON,
 		Xinfo:     infoplistTmplData{BundleID: "org.golang.todo.basic", Name: "Basic"},
@@ -99,48 +102,33 @@ func defaultOutputData() outputData {
 	return data
 }
 
-func ndkarch() string {
-	switch runtime.GOARCH {
-	case "amd64":
-		return "x86_64"
-	case "386":
-		return "x86"
-	default:
-		return runtime.GOARCH
-	}
-}
-
 var initTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
 rm -r -f "$GOMOBILE"
 mkdir -p $GOMOBILE
 WORK={{.GOPATH}}/pkg/gomobile/work
-go install -x golang.org/x/mobile/cmd/gobind
-PWD=$NDK_PATH $NDK_PATH/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin/python2.7 build/tools/make_standalone_toolchain.py --arch=arm --api=15 --install-dir=$GOMOBILE/ndk-toolchains/arm
-PWD=$NDK_PATH $NDK_PATH/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin/python2.7 build/tools/make_standalone_toolchain.py --arch=arm64 --api=21 --install-dir=$GOMOBILE/ndk-toolchains/arm64
-PWD=$NDK_PATH $NDK_PATH/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin/python2.7 build/tools/make_standalone_toolchain.py --arch=x86 --api=15 --install-dir=$GOMOBILE/ndk-toolchains/x86
-PWD=$NDK_PATH $NDK_PATH/prebuilt/{{.GOOS}}-{{.NDKARCH}}/bin/python2.7 build/tools/make_standalone_toolchain.py --arch=x86_64 --api=21 --install-dir=$GOMOBILE/ndk-toolchains/x86_64
+GO111MODULE=off go install -x golang.org/x/mobile/cmd/gobind
 cp $OPENAL_PATH/include/AL/al.h $GOMOBILE/include/AL/al.h
 mkdir -p $GOMOBILE/include/AL
 cp $OPENAL_PATH/include/AL/alc.h $GOMOBILE/include/AL/alc.h
 mkdir -p $GOMOBILE/include/AL
 mkdir -p $WORK/build/armeabi
-PWD=$WORK/build/armeabi cmake $OPENAL_PATH -DCMAKE_TOOLCHAIN_FILE=$OPENAL_PATH/XCompile-Android.txt -DHOST=arm-linux-androideabi
-PWD=$WORK/build/armeabi $GOMOBILE/ndk-toolchains/arm/bin/make
+PWD=$WORK/build/armeabi cmake $OPENAL_PATH -DCMAKE_TOOLCHAIN_FILE=$OPENAL_PATH/XCompile-Android.txt -DHOST=armv7a-linux-androideabi16
+PWD=$WORK/build/armeabi $NDK_PATH/prebuilt/{{.NDKARCH}}/bin/make
 cp $WORK/build/armeabi/libopenal.so $GOMOBILE/lib/armeabi-v7a/libopenal.so
 mkdir -p $GOMOBILE/lib/armeabi-v7a
 mkdir -p $WORK/build/arm64
-PWD=$WORK/build/arm64 cmake $OPENAL_PATH -DCMAKE_TOOLCHAIN_FILE=$OPENAL_PATH/XCompile-Android.txt -DHOST=aarch64-linux-android
-PWD=$WORK/build/arm64 $GOMOBILE/ndk-toolchains/arm64/bin/make
+PWD=$WORK/build/arm64 cmake $OPENAL_PATH -DCMAKE_TOOLCHAIN_FILE=$OPENAL_PATH/XCompile-Android.txt -DHOST=aarch64-linux-android21
+PWD=$WORK/build/arm64 $NDK_PATH/prebuilt/{{.NDKARCH}}/bin/make
 cp $WORK/build/arm64/libopenal.so $GOMOBILE/lib/arm64-v8a/libopenal.so
 mkdir -p $GOMOBILE/lib/arm64-v8a
 mkdir -p $WORK/build/x86
-PWD=$WORK/build/x86 cmake $OPENAL_PATH -DCMAKE_TOOLCHAIN_FILE=$OPENAL_PATH/XCompile-Android.txt -DHOST=i686-linux-android
-PWD=$WORK/build/x86 $GOMOBILE/ndk-toolchains/x86/bin/make
+PWD=$WORK/build/x86 cmake $OPENAL_PATH -DCMAKE_TOOLCHAIN_FILE=$OPENAL_PATH/XCompile-Android.txt -DHOST=i686-linux-android16
+PWD=$WORK/build/x86 $NDK_PATH/prebuilt/{{.NDKARCH}}/bin/make
 cp $WORK/build/x86/libopenal.so $GOMOBILE/lib/x86/libopenal.so
 mkdir -p $GOMOBILE/lib/x86
 mkdir -p $WORK/build/x86_64
-PWD=$WORK/build/x86_64 cmake $OPENAL_PATH -DCMAKE_TOOLCHAIN_FILE=$OPENAL_PATH/XCompile-Android.txt -DHOST=x86_64-linux-android
-PWD=$WORK/build/x86_64 $GOMOBILE/ndk-toolchains/x86_64/bin/make
+PWD=$WORK/build/x86_64 cmake $OPENAL_PATH -DCMAKE_TOOLCHAIN_FILE=$OPENAL_PATH/XCompile-Android.txt -DHOST=x86_64-linux-android21
+PWD=$WORK/build/x86_64 $NDK_PATH/prebuilt/{{.NDKARCH}}/bin/make
 cp $WORK/build/x86_64/libopenal.so $GOMOBILE/lib/x86_64/libopenal.so
 mkdir -p $GOMOBILE/lib/x86_64
 rm -r -f "$WORK"

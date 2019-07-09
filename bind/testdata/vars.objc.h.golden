@@ -7,6 +7,7 @@
 #define __Vars_H__
 
 @import Foundation;
+#include "ref.h"
 #include "Universe.objc.h"
 
 
@@ -19,10 +20,10 @@
 
 @interface VarsS : NSObject <goSeqRefInterface, VarsI> {
 }
-@property(strong, readonly) id _ref;
+@property(strong, readonly) _Nonnull id _ref;
 
-- (instancetype)initWithRef:(id)ref;
-- (instancetype)init;
+- (nonnull instancetype)initWithRef:(_Nonnull id)ref;
+- (nonnull instancetype)init;
 @end
 
 @interface Vars : NSObject
@@ -38,11 +39,11 @@
 + (double) aFloat64;
 + (void) setAFloat64:(double)v;
 
-+ (NSString*) aString;
-+ (void) setAString:(NSString*)v;
++ (NSString* _Nonnull) aString;
++ (void) setAString:(NSString* _Nonnull)v;
 
-+ (VarsS*) aStructPtr;
-+ (void) setAStructPtr:(VarsS*)v;
++ (VarsS* _Nullable) aStructPtr;
++ (void) setAStructPtr:(VarsS* _Nullable)v;
 
 + (long) anInt;
 + (void) setAnInt:(long)v;
@@ -59,8 +60,8 @@
 + (int8_t) anInt8;
 + (void) setAnInt8:(int8_t)v;
 
-+ (id<VarsI>) anInterface;
-+ (void) setAnInterface:(id<VarsI>)v;
++ (id<VarsI> _Nullable) anInterface;
++ (void) setAnInterface:(id<VarsI> _Nullable)v;
 
 @end
 
@@ -68,9 +69,9 @@
 
 @interface VarsI : NSObject <goSeqRefInterface, VarsI> {
 }
-@property(strong, readonly) id _ref;
+@property(strong, readonly) _Nonnull id _ref;
 
-- (instancetype)initWithRef:(id)ref;
+- (nonnull instancetype)initWithRef:(_Nonnull id)ref;
 @end
 
 #endif

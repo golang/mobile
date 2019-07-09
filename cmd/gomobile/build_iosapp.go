@@ -62,8 +62,6 @@ func goIOSBuild(pkg *build.Package, bundleID string, archs []string) (map[string
 		}
 	}
 
-	ctx.BuildTags = append(ctx.BuildTags, "ios")
-
 	// We are using lipo tool to build multiarchitecture binaries.
 	cmd := exec.Command(
 		"xcrun", "lipo",

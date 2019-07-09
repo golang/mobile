@@ -35,15 +35,9 @@ package app
 #include <pthread.h>
 #include <stdlib.h>
 
-JavaVM* current_vm;
-jobject current_ctx;
-
-jclass app_find_class(JNIEnv* env, const char* name);
-
 EGLDisplay display;
 EGLSurface surface;
 
-char* initEGLDisplay();
 char* createEGLSurface(ANativeWindow* window);
 char* destroyEGLSurface();
 int32_t getKeyRune(JNIEnv* env, AInputEvent* e);
@@ -65,6 +59,18 @@ import (
 	"golang.org/x/mobile/geom"
 	"golang.org/x/mobile/internal/mobileinit"
 )
+
+// RunOnJVM runs fn on a new goroutine locked to an OS thread with a JNIEnv.
+//
+// RunOnJVM blocks until the call to fn is complete. Any Java
+// exception or failure to attach to the JVM is returned as an error.
+//
+// The function fn takes vm, the current JavaVM*,
+// env, the current JNIEnv*, and
+// ctx, a jobject representing the global android.context.Context.
+func RunOnJVM(fn func(vm, jniEnv, ctx uintptr) error) error {
+	return mobileinit.RunOnJVM(fn)
+}
 
 //export setCurrentContext
 func setCurrentContext(vm *C.JavaVM, ctx C.jobject) {
@@ -131,7 +137,7 @@ func onDestroy(activity *C.ANativeActivity) {
 }
 
 //export onWindowFocusChanged
-func onWindowFocusChanged(activity *C.ANativeActivity, hasFocus int) {
+func onWindowFocusChanged(activity *C.ANativeActivity, hasFocus C.int) {
 }
 
 //export onNativeWindowCreated

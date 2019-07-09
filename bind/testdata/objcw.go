@@ -6,6 +6,8 @@ package objc
 
 import (
 	"ObjC/Foundation"
+	"ObjC/Foundation/NSMutableString"
+	"ObjC/NetworkExtension/NEPacket"
 	"ObjC/UIKit"
 )
 
@@ -36,4 +38,23 @@ type GoUIResponder struct {
 }
 
 func (r *GoUIResponder) PressesBegan(_ Foundation.NSSet, _ UIKit.UIPressesEvent) {
+}
+
+const NSUTF8StringEncoding = 8
+
+func CreateReadNSMutableString() {
+	myData := []byte{'A', 'B'}
+	// Test byte slices. Use NSMutableString because NSString is
+	// represented as Go strings in bindings.
+	// Pass slice from Go to native.
+	mString := NSMutableString.NewWithData(myData, uint(NSUTF8StringEncoding))
+	// Pass slice from native to Go.
+	_ = mString.DataUsingEncoding(uint(NSUTF8StringEncoding))
+}
+
+// From <sys/socket.h>
+const PF_INET = 2
+
+func CallUcharFunction() {
+	_ = NEPacket.NewWithData(nil, uint8(PF_INET))
 }

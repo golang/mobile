@@ -627,7 +627,7 @@ type Context interface {
 	// TexImage2D writes a 2D texture image.
 	//
 	// http://www.khronos.org/opengles/sdk/docs/man3/html/glTexImage2D.xhtml
-	TexImage2D(target Enum, level int, width, height int, format Enum, ty Enum, data []byte)
+	TexImage2D(target Enum, level int, internalFormat int, width, height int, format Enum, ty Enum, data []byte)
 
 	// TexSubImage2D writes a subregion of a 2D texture image.
 	//

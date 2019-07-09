@@ -294,7 +294,7 @@ func (g *JavaGen) genStruct(s structInfo) {
 	g.genProxyImpl(n)
 	cons := g.constructors[s.obj]
 	for _, f := range cons {
-		if !g.isSigSupported(f.Type()) {
+		if !g.isConsSigSupported(f.Type()) {
 			g.Printf("// skipped constructor %s.%s with unsupported parameter or return types\n\n", n, f.Name())
 			continue
 		}
@@ -354,6 +354,28 @@ func (g *JavaGen) genStruct(s structInfo) {
 	g.Printf("}\n\n")
 }
 
+// isConsSigSupported reports whether the generators can handle a given
+// constructor signature.
+func (g *JavaGen) isConsSigSupported(t types.Type) bool {
+	if !g.isSigSupported(t) {
+		return false
+	}
+	// Skip constructors taking a single int32 argument
+	// since they clash with the proxy constructors that
+	// take a refnum.
+	params := t.(*types.Signature).Params()
+	if params.Len() != 1 {
+		return true
+	}
+	if t, ok := params.At(0).Type().(*types.Basic); ok {
+		switch t.Kind() {
+		case types.Int32, types.Uint32:
+			return false
+		}
+	}
+	return true
+}
+
 // javaTypeName returns the class name of a given Go type name. If
 // the type name clashes with the package class name, an underscore is
 // appended.
@@ -372,7 +394,7 @@ func (g *JavaGen) javadoc(doc string) {
 	g.Printf("/**\n * %s */\n", html.EscapeString(doc))
 }
 
-// hasThis returns whether a method has an implicit "this" parameter.
+// hasThis reports whether a method has an implicit "this" parameter.
 func (g *JavaGen) hasThis(sName string, m *types.Func) bool {
 	sig := m.Type().(*types.Signature)
 	params := sig.Params()
@@ -735,14 +757,14 @@ func (g *JavaGen) genJNIFuncSignature(o *types.Func, sName string, jm *java.Func
 	g.Printf("Java_%s_", g.jniPkgName())
 	if sName != "" {
 		if proxy {
-			g.Printf(g.className())
+			g.Printf(java.JNIMangle(g.className()))
 			// 0024 is the mangled form of $, for naming inner classes.
 			g.Printf("_00024proxy%s", sName)
 		} else {
 			g.Printf(java.JNIMangle(g.javaTypeName(sName)))
 		}
 	} else {
-		g.Printf(g.className())
+		g.Printf(java.JNIMangle(g.className()))
 	}
 	g.Printf("_")
 	if jm != nil {
@@ -1091,7 +1113,7 @@ func (g *JavaGen) genJNIVar(o *types.Var) {
 	n := java.JNIMangle(g.javaTypeName(o.Name()))
 	// setter
 	g.Printf("JNIEXPORT void JNICALL\n")
-	g.Printf("Java_%s_%s_set%s(JNIEnv *env, jclass clazz, %s v) {\n", g.jniPkgName(), g.className(), n, g.jniType(o.Type()))
+	g.Printf("Java_%s_%s_set%s(JNIEnv *env, jclass clazz, %s v) {\n", g.jniPkgName(), java.JNIMangle(g.className()), n, g.jniType(o.Type()))
 	g.Indent()
 	g.genJavaToC("v", o.Type(), modeRetained)
 	g.Printf("var_set%s_%s(_v);\n", g.pkgPrefix, o.Name())
@@ -1101,7 +1123,7 @@ func (g *JavaGen) genJNIVar(o *types.Var) {
 
 	// getter
 	g.Printf("JNIEXPORT %s JNICALL\n", g.jniType(o.Type()))
-	g.Printf("Java_%s_%s_get%s(JNIEnv *env, jclass clazz) {\n", g.jniPkgName(), g.className(), n)
+	g.Printf("Java_%s_%s_get%s(JNIEnv *env, jclass clazz) {\n", g.jniPkgName(), java.JNIMangle(g.className()), n)
 	g.Indent()
 	g.Printf("%s r0 = ", g.cgoType(o.Type()))
 	g.Printf("var_get%s_%s();\n", g.pkgPrefix, o.Name())
@@ -1112,7 +1134,7 @@ func (g *JavaGen) genJNIVar(o *types.Var) {
 }
 
 func (g *JavaGen) genJNIConstructor(f *types.Func, sName string) {
-	if !g.isSigSupported(f.Type()) {
+	if !g.isConsSigSupported(f.Type()) {
 		return
 	}
 	sig := f.Type().(*types.Signature)
@@ -1633,6 +1655,7 @@ func (g *JavaGen) GenJava() error {
 			g.Printf("// skipped function %s with unsupported parameter or return types\n\n", f.Name())
 			continue
 		}
+		g.javadoc(g.docs[f.Name()].Doc())
 		g.Printf("public static native ")
 		g.genFuncSignature(f, nil, false)
 	}

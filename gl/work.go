@@ -19,6 +19,7 @@ package gl
 #cgo darwin,amd64,!ios  CFLAGS: -Dos_osx
 #cgo darwin,arm         CFLAGS: -Dos_ios
 #cgo darwin,arm64       CFLAGS: -Dos_ios
+#cgo darwin             CFLAGS: -DGL_SILENCE_DEPRECATION
 #cgo linux              CFLAGS: -Dos_linux
 #cgo openbsd            CFLAGS: -Dos_openbsd
 

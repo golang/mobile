@@ -8,15 +8,52 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
-	"time"
 
 	"golang.org/x/mobile/internal/importers/java"
 )
+
+var gomobileBin string
+
+func TestMain(m *testing.M) {
+	os.Exit(testMain(m))
+}
+
+func testMain(m *testing.M) int {
+	// Build gomobile and gobind and put them into PATH.
+	binDir, err := ioutil.TempDir("", "bind-java-test-")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(binDir)
+	exe := ""
+	if runtime.GOOS == "windows" {
+		exe = ".exe"
+	}
+	if runtime.GOOS != "android" {
+		gomobileBin = filepath.Join(binDir, "gomobile"+exe)
+		gobindBin := filepath.Join(binDir, "gobind"+exe)
+		if out, err := exec.Command("go", "build", "-o", gomobileBin, "golang.org/x/mobile/cmd/gomobile").CombinedOutput(); err != nil {
+			log.Fatalf("gomobile build failed: %v: %s", err, out)
+		}
+		if out, err := exec.Command("go", "build", "-o", gobindBin, "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
+			log.Fatalf("gobind build failed: %v: %s", err, out)
+		}
+		PATH := os.Getenv("PATH")
+		if PATH != "" {
+			PATH += string(filepath.ListSeparator)
+		}
+		PATH += binDir
+		os.Setenv("PATH", PATH)
+	}
+	return m.Run()
+}
 
 func TestClasses(t *testing.T) {
 	if !java.IsAvailable() {
@@ -64,28 +101,15 @@ func TestJavaSeqBench(t *testing.T) {
 // This requires the gradle command in PATH and
 // the Android SDK whose path is available through ANDROID_HOME environment variable.
 func runTest(t *testing.T, pkgNames []string, javaPkg, javaCls string) {
+	if gomobileBin == "" {
+		t.Skipf("no gomobile on %s", runtime.GOOS)
+	}
 	gradle, err := exec.LookPath("gradle")
 	if err != nil {
 		t.Skip("command gradle not found, skipping")
 	}
 	if sdk := os.Getenv("ANDROID_HOME"); sdk == "" {
 		t.Skip("ANDROID_HOME environment var not set, skipping")
-	}
-	gomobile, err := exec.LookPath("gomobile")
-	if err != nil {
-		t.Log("go install gomobile")
-		if _, err := run("go install golang.org/x/mobile/cmd/gomobile"); err != nil {
-			t.Fatalf("gomobile install failed: %v", err)
-		}
-		if gomobile, err = exec.LookPath("gomobile"); err != nil {
-			t.Fatalf("gomobile install failed: %v", err)
-		}
-		t.Log("gomobile init")
-		start := time.Now()
-		if _, err := run(gomobile + " init"); err != nil {
-			t.Fatalf("gomobile init failed: %v", err)
-		}
-		t.Logf("gomobile init took %v", time.Since(start))
 	}
 
 	cwd, err := os.Getwd()
@@ -116,7 +140,7 @@ func runTest(t *testing.T, pkgNames []string, javaPkg, javaCls string) {
 		args = append(args, "-javapkg", javaPkg)
 	}
 	args = append(args, pkgNames...)
-	buf, err := exec.Command(gomobile, args...).CombinedOutput()
+	buf, err := exec.Command(gomobileBin, args...).CombinedOutput()
 	if err != nil {
 		t.Logf("%s", buf)
 		t.Fatalf("failed to run gomobile bind: %v", err)
@@ -195,27 +219,30 @@ const buildgradle = `buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.1'
+        classpath 'com.android.tools.build:gradle:3.1.0'
     }
 }
 
 allprojects {
-    repositories { jcenter() }
+    repositories {
+		google()
+		jcenter()
+	}
 }
 
 apply plugin: 'com.android.library'
 
 android {
     compileSdkVersion 'android-19'
-    buildToolsVersion '21.1.2'
-    defaultConfig { minSdkVersion 15 }
+    defaultConfig { minSdkVersion 16 }
 }
 
 repositories {
     flatDir { dirs 'libs' }
 }
+
 dependencies {
-    compile(name: "pkg", ext: "aar")
+    implementation(name: "pkg", ext: "aar")
 }
 `
 

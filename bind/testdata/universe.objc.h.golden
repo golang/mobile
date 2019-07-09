@@ -7,22 +7,23 @@
 #define __Universe_H__
 
 @import Foundation;
+#include "ref.h"
 
 @protocol Universeerror;
 @class Universeerror;
 
 @protocol Universeerror <NSObject>
-- (NSString*)error;
+- (NSString* _Nonnull)error;
 @end
 
 @class Universeerror;
 
 @interface Universeerror : NSError <goSeqRefInterface, Universeerror> {
 }
-@property(strong, readonly) id _ref;
+@property(strong, readonly) _Nonnull id _ref;
 
-- (instancetype)initWithRef:(id)ref;
-- (NSString*)error;
+- (nonnull instancetype)initWithRef:(_Nonnull id)ref;
+- (NSString* _Nonnull)error;
 @end
 
 #endif

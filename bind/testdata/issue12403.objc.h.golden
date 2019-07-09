@@ -7,6 +7,7 @@
 #define __Issue12403_H__
 
 @import Foundation;
+#include "ref.h"
 #include "Universe.objc.h"
 
 
@@ -14,19 +15,19 @@
 @class Issue12403Parsable;
 
 @protocol Issue12403Parsable <NSObject>
-- (NSString*)fromJSON:(NSString*)jstr;
-- (NSString*)toJSON:(NSError**)error;
+- (NSString* _Nonnull)fromJSON:(NSString* _Nullable)jstr;
+- (NSString* _Nonnull)toJSON:(NSError* _Nullable* _Nullable)error;
 @end
 
 @class Issue12403Parsable;
 
 @interface Issue12403Parsable : NSObject <goSeqRefInterface, Issue12403Parsable> {
 }
-@property(strong, readonly) id _ref;
+@property(strong, readonly) _Nonnull id _ref;
 
-- (instancetype)initWithRef:(id)ref;
-- (NSString*)fromJSON:(NSString*)jstr;
-- (NSString*)toJSON:(NSError**)error;
+- (nonnull instancetype)initWithRef:(_Nonnull id)ref;
+- (NSString* _Nonnull)fromJSON:(NSString* _Nullable)jstr;
+- (NSString* _Nonnull)toJSON:(NSError* _Nullable* _Nullable)error;
 @end
 
 #endif

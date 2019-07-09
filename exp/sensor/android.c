@@ -16,8 +16,18 @@
 ASensorEventQueue* queue = NULL;
 ALooper* looper = NULL;
 
+static ASensorManager* getSensorManager() {
+  #pragma clang diagnostic push
+  // Builders convert C warnings to errors, so suppress the
+  // error from ASensorManager_getInstance being deprecated
+  // in Android 26.
+  #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+  return ASensorManager_getInstance();
+  #pragma clang diagnostic pop
+}
+
 void GoAndroid_createManager() {
-  ASensorManager* manager = ASensorManager_getInstance();
+  ASensorManager* manager = getSensorManager();
   looper = ALooper_forThread();
   if (looper == NULL) {
     looper = ALooper_prepare(ALOOPER_PREPARE_ALLOW_NON_CALLBACKS);
@@ -26,7 +36,7 @@ void GoAndroid_createManager() {
 }
 
 int GoAndroid_enableSensor(int s, int32_t usec) {
-  ASensorManager* manager = ASensorManager_getInstance();
+  ASensorManager* manager = getSensorManager();
   const ASensor* sensor = ASensorManager_getDefaultSensor(manager, s);
   if (sensor == NULL) {
     return 1;
@@ -37,7 +47,7 @@ int GoAndroid_enableSensor(int s, int32_t usec) {
 }
 
 void GoAndroid_disableSensor(int s) {
-  ASensorManager* manager = ASensorManager_getInstance();
+  ASensorManager* manager = getSensorManager();
   const ASensor* sensor = ASensorManager_getDefaultSensor(manager, s);
   ASensorEventQueue_disableSensor(queue, sensor);
 }
@@ -67,7 +77,7 @@ int GoAndroid_readQueue(int n, int32_t* types, int64_t* timestamps, float* vecto
 }
 
 void GoAndroid_destroyManager() {
-  ASensorManager* manager = ASensorManager_getInstance();
+  ASensorManager* manager = getSensorManager();
   ASensorManager_destroyEventQueue(manager, queue);
   queue = NULL;
   looper = NULL;

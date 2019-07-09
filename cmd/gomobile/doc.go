@@ -12,7 +12,7 @@ To install:
 	$ go get golang.org/x/mobile/cmd/gomobile
 	$ gomobile init
 
-At least Go 1.7 is required.
+At least Go 1.10 is required.
 For detailed instructions, see https://golang.org/wiki/Mobile.
 
 Usage:
@@ -98,13 +98,19 @@ be selected by specifying target type with the architecture name. E.g.
 -target=android/arm,android/386.
 
 For -target ios, gomobile must be run on an OS X machine with Xcode
-installed. Support is not complete.
+installed.
 
 If the package directory contains an assets subdirectory, its contents
 are copied into the output.
 
-The -bundleid flag is for -target ios only and sets the bundle ID to use
-with the app; defaults to "org.golang.todo".
+Flag -iosversion sets the minimal version of the iOS SDK to compile against.
+The default version is 7.0.
+
+Flag -androidapi sets the Android API version to compile against.
+The default and minimum is 15.
+
+The -bundleid flag is required for -target ios and sets the bundle ID to use
+with the app.
 
 The -o flag specifies the output file name. If not specified, the
 output file name depends on the package built.
@@ -128,7 +134,7 @@ Build OpenAL for Android
 
 Usage:
 
-	gomobile init -openal dir
+	gomobile init [-openal dir]
 
 If a OpenAL source directory is specified with -openal, init will
 build an Android version of OpenAL for use with gomobile build

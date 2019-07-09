@@ -58,7 +58,7 @@ func (e Event) String() string {
 	return fmt.Sprintf("lifecycle.Event{From:%v, To:%v, DrawContext:%v}", e.From, e.To, e.DrawContext)
 }
 
-// Crosses returns whether the transition from From to To crosses the stage s:
+// Crosses reports whether the transition from From to To crosses the stage s:
 // 	- It returns CrossOn if it does, and the lifecycle change is positive.
 // 	- It returns CrossOff if it does, and the lifecycle change is negative.
 //	- Otherwise, it returns CrossNone.
