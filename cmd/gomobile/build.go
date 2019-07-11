@@ -131,6 +131,7 @@ func runBuild(cmd *command) (err error) {
 		if pkg.Name != "main" {
 			for _, arch := range targetArchs {
 				env := darwinEnv[arch]
+				fmt.Println("building = ", arch)
 				if err := goBuild(pkg.ImportPath, env); err != nil {
 					return err
 				}
@@ -328,7 +329,7 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 	archNames := []string{}
 	for i, p := range strings.Split(buildTarget, ",") {
 		osarch := strings.SplitN(p, "/", 2) // len(osarch) > 0
-		if osarch[0] != "android" && osarch[0] != "ios" {
+		if osarch[0] != "android" && osarch[0] != "ios" && osarch[0] != "macos" && osarch[0] != "macos-ui" {
 			return "", nil, fmt.Errorf(`unsupported os`)
 		}
 
@@ -373,6 +374,15 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 	targetOS := os
 	if os == "ios" {
 		targetOS = "darwin"
+		allArchs = []string{"arm", "arm64", "386", "amd64"}
+	}
+	if os == "macos" {
+		targetOS = "darwin"
+		allArchs = []string{"macos64"}
+	}
+	if os == "macos-ui" {
+		targetOS = "darwin"
+		allArchs = []string{"uikitMac64"}
 	}
 	if all {
 		return targetOS, allArchs, nil

@@ -23,7 +23,7 @@ var (
 	androidArmNM string
 	darwinArmNM  string
 
-	allArchs = []string{"arm", "arm64", "386", "amd64"}
+	allArchs = []string{"arm", "arm64", "386", "amd64", "uikitMac64", "macos64"}
 )
 
 func buildEnvInit() (cleanup func(), err error) {
@@ -127,6 +127,10 @@ func envInit() (err error) {
 		var env []string
 		var err error
 		var clang, cflags string
+
+		var archNew string = arch
+
+		fmt.Println(arch)
 		switch arch {
 		case "arm":
 			env = append(env, "GOARM=7")
@@ -137,6 +141,17 @@ func envInit() (err error) {
 		case "386", "amd64":
 			clang, cflags, err = envClang("iphonesimulator")
 			cflags += " -mios-simulator-version-min=" + buildIOSVersion
+		case "macos64":
+			clang, cflags, err = envClang("macosx")
+			cflags += " -mmacosx-version-min=10.10"
+			archNew = "amd64"
+		case "uikitMac64":
+			clang, cflags, err = envClang("macosx15")
+			cflags += " --target=x86_64-apple-ios13.0-macabi"
+			// cflags += " -miphoneos-version-min=13.0"
+			// cflags += " -mmacosx-version-min=10.15"
+
+			archNew = "amd64"
 		default:
 			panic(fmt.Errorf("unknown GOARCH: %q", arch))
 		}
@@ -146,12 +161,12 @@ func envInit() (err error) {
 		}
 		env = append(env,
 			"GOOS=darwin",
-			"GOARCH="+arch,
+			"GOARCH="+archNew,
 			"CC="+clang,
 			"CXX="+clang+"++",
-			"CGO_CFLAGS="+cflags+" -arch "+archClang(arch),
-			"CGO_CXXFLAGS="+cflags+" -arch "+archClang(arch),
-			"CGO_LDFLAGS="+cflags+" -arch "+archClang(arch),
+			"CGO_CFLAGS="+cflags+" -arch "+archClang(archNew),
+			"CGO_CXXFLAGS="+cflags+" -arch "+archClang(archNew),
+			"CGO_LDFLAGS="+cflags+" -arch "+archClang(archNew),
 			"CGO_ENABLED=1",
 		)
 		darwinEnv[arch] = env
@@ -186,6 +201,12 @@ func ndkRoot() (string, error) {
 }
 
 func envClang(sdkName string) (clang, cflags string, err error) {
+	inSDKname := sdkName
+
+	if inSDKname == "macosx15" {
+		sdkName = "macosx"
+	}
+
 	if buildN {
 		return sdkName + "-clang", "-isysroot=" + sdkName, nil
 	}
@@ -202,6 +223,16 @@ func envClang(sdkName string) (clang, cflags string, err error) {
 		return "", "", fmt.Errorf("xcrun --show-sdk-path: %v\n%s", err, out)
 	}
 	sdk := strings.TrimSpace(string(out))
+	fmt.Println(clang)
+	fmt.Println(sdk)
+	if inSDKname == "macosx15" {
+		clang = "/Users/Yanfeng/Downloads/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang"
+		// sdk = "/Users/Yanfeng/Downloads/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS13.0.sdk"
+		sdk = "/Users/Yanfeng/Downloads/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk"
+		// sdk = "/Users/Yanfeng/Downloads/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator13.0.sdk"
+	}
+	fmt.Println(clang)
+	fmt.Println(sdk)
 	return clang, "-isysroot " + sdk, nil
 }
 
@@ -214,6 +245,10 @@ func archClang(goarch string) string {
 	case "386":
 		return "i386"
 	case "amd64":
+		return "x86_64"
+	case "macos64":
+		return "x86_64"
+	case "uikitMac64":
 		return "x86_64"
 	default:
 		panic(fmt.Sprintf("unknown GOARCH: %q", goarch))
