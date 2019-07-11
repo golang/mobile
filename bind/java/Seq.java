@@ -41,7 +41,7 @@ public class Seq {
 
 	// setContext sets the context in the go-library to be used in RunOnJvm.
 	public static void setContext(Context context) {
-		setContext(context);
+		setContext((java.lang.Object)context);
 	}
 
 	private static native void init();
