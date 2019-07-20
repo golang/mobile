@@ -1125,7 +1125,7 @@ func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 		g.objcdoc(doc.Member(f.Name()))
 
 		// properties are atomic by default so explicitly say otherwise
-		g.Printf("@property (nonatomic, copy) %s %s;\n", typ, objcNameReplacer(lowerFirst(name)))
+		g.Printf("@property (nonatomic) %s %s;\n", typ, objcNameReplacer(lowerFirst(name)))
 	}
 
 	// exported methods
