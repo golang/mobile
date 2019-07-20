@@ -668,7 +668,7 @@ func (g *ObjcGen) genGetter(oName string, f *types.Var) {
 func (g *ObjcGen) genSetter(oName string, f *types.Var) {
 	t := f.Type()
 
-	g.Printf("- (void)set%s:(%s)v {\n", f.Name(), g.objcType(t))
+	g.Printf("- (void)set%s:(%s)v {\n", capitalize(f.Name()), g.objcType(t))
 	g.Indent()
 	g.Printf("int32_t refnum = go_seq_go_to_refnum(self._ref);\n")
 	g.genWrite("v", f.Type(), modeRetained)
@@ -1125,7 +1125,7 @@ func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 		g.objcdoc(doc.Member(f.Name()))
 
 		// properties are atomic by default so explicitly say otherwise
-		g.Printf("@property (nonatomic) %s %s;\n", typ, objcNameReplacer(lowerFirst(name)))
+		g.Printf("@property (nonatomic, copy) %s %s;\n", typ, objcNameReplacer(lowerFirst(name)))
 	}
 
 	// exported methods
@@ -1408,6 +1408,21 @@ func embeddedObjcTypes(t *types.Struct) []string {
 
 func isObjcType(t types.Type) bool {
 	return typePkgFirstElem(t) == "ObjC"
+}
+
+func capitalize(s string) string {
+	if len(s) < 2 {
+		return strings.ToUpper(s)
+	}
+
+	var sb strings.Builder
+	sb.Grow(len(s))
+
+	sb.WriteString(strings.ToUpper(string(s[0])))
+	sb.WriteString(strings.ToLower(string(s[1])))
+	sb.WriteString(s[2:])
+
+	return sb.String()
 }
 
 var objcNameReplacer = newNameSanitizer([]string{

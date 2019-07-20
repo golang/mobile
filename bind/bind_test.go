@@ -650,6 +650,30 @@ func TestLowerFirst(t *testing.T) {
 	}
 }
 
+func TestCapitalize(t *testing.T) {
+	testCases := []struct {
+		in, want string
+	}{
+		{"", ""},
+		{"hello", "Hello"},
+		{"helloGopher", "HelloGopher"},
+		{"ID", "Id"},
+		{"IDOrName", "IdOrName"},
+		{"OSName", "OsName"},
+		{"a00name", "A00name"},
+
+		// seems like russian? ... I don't know russian
+		// {"ΓειαΣας", "γειαΣας"},
+	}
+
+	for _, tc := range testCases {
+		if got := capitalize(tc.in); got != tc.want {
+			t.Errorf("capitalize(%q) = %q; want %q", tc.in, got, tc.want)
+		}
+	}
+
+}
+
 // Test that typeName work for anonymous qualified fields.
 func TestSelectorExprTypeName(t *testing.T) {
 	e, err := parser.ParseExprFrom(fset, "", "struct { bytes.Buffer }", 0)
