@@ -54,7 +54,7 @@
 	return _r0;
 }
 
-- (void)setSF:(NSString* _Nonnull)v {
+- (void)setSf:(NSString* _Nonnull)v {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	nstring _v = go_seq_from_objc_string(v);
 	proxydoc_S_SF_Set(refnum, _v);
