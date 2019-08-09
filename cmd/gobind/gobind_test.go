@@ -30,7 +30,7 @@ var tests = []struct {
 	{"Go-Testpkg", "go", "golang.org/x/mobile/bind/testdata/testpkg", "", false},
 	{"Java-Javapkg", "java", "golang.org/x/mobile/bind/testdata/testpkg/javapkg", "android", true},
 	{"Go-Javapkg", "go", "golang.org/x/mobile/bind/testdata/testpkg/javapkg", "android", true},
-	{"Go-Javapkg", "go,java,objc", "golang.org/x/mobile/bind/testdata/cgopkg", "android", false},
+	{"Go-Cgopkg", "go,java,objc", "golang.org/x/mobile/bind/testdata/cgopkg", "android", false},
 }
 
 var gobindBin string
@@ -109,10 +109,16 @@ type Struct struct{
 		t.Fatal(err)
 	}
 
+	gopath, err := exec.Command("go", "env", "GOPATH").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	const comment = "This is a comment."
 	for _, lang := range []string{"java", "objc"} {
 		cmd := exec.Command(gobindBin, "-lang", lang, "doctest")
-		cmd.Env = append(os.Environ(), "GOROOT="+tmpdir)
+		// TODO(hajimehoshi): Enable this test with Go modules.
+		cmd.Env = append(os.Environ(), "GOPATH="+tmpdir+string(filepath.ListSeparator)+string(gopath), "GO111MODULE=off")
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			t.Errorf("gobind -lang %s failed: %v: %s", lang, err, out)
