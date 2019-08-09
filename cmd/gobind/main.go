@@ -11,7 +11,6 @@ import (
 	"go/ast"
 	"go/build"
 	"go/importer"
-	"go/parser"
 	"go/types"
 	"io/ioutil"
 	"log"
@@ -23,6 +22,7 @@ import (
 	"golang.org/x/mobile/internal/importers"
 	"golang.org/x/mobile/internal/importers/java"
 	"golang.org/x/mobile/internal/importers/objc"
+	"golang.org/x/tools/go/packages"
 )
 
 var (
@@ -53,17 +53,21 @@ func run() {
 	} else {
 		langs = []string{"go", "java", "objc"}
 	}
-	ctx := build.Default
-	if *tags != "" {
-		ctx.BuildTags = append(ctx.BuildTags, strings.Split(*tags, ",")...)
+
+	cfg := &packages.Config{
+		Mode: packages.NeedName | packages.NeedFiles | packages.NeedCompiledGoFiles |
+			packages.NeedImports | packages.NeedDeps |
+			packages.NeedTypes | packages.NeedSyntax | packages.NeedTypesInfo,
+		BuildFlags: []string{"-tags", *tags},
+
+		// packages.Load invokes `go list` command with `GOOS=android`, but in most cases
+		// go-list cannot find the header files for Android. Suppress this error by
+		// disabling Cgo.
+		Env: append(os.Environ(), "CGO_ENABLED=0"),
 	}
-	var allPkg []*build.Package
-	for _, path := range flag.Args() {
-		pkg, err := ctx.Import(path, ".", build.ImportComment)
-		if err != nil {
-			log.Fatalf("package %q: %v", path, err)
-		}
-		allPkg = append(allPkg, pkg)
+	allPkg, err := packages.Load(cfg, flag.Args()...)
+	if err != nil {
+		log.Fatal(err)
 	}
 	jrefs, err := importers.AnalyzePackages(allPkg, "Java/")
 	if err != nil {
@@ -92,6 +96,12 @@ func run() {
 			log.Fatal(err)
 		}
 	}
+
+	ctx := build.Default
+	if *tags != "" {
+		ctx.BuildTags = append(ctx.BuildTags, strings.Split(*tags, ",")...)
+	}
+
 	// Determine GOPATH from go env GOPATH in case the default $HOME/go GOPATH
 	// is in effect.
 	if out, err := exec.Command("go", "env", "GOPATH").Output(); err != nil {
@@ -142,16 +152,12 @@ func run() {
 	imp := importer.For("source", nil)
 	for i, pkg := range allPkg {
 		var err error
-		typePkgs[i], err = imp.Import(pkg.ImportPath)
+		typePkgs[i], err = imp.Import(pkg.PkgPath)
 		if err != nil {
 			errorf("%v\n", err)
 			return
 		}
-		astPkgs[i], err = parse(pkg)
-		if err != nil {
-			errorf("%v\n", err)
-			return
-		}
+		astPkgs[i] = pkg.Syntax
 	}
 	for _, l := range langs {
 		for i, pkg := range typePkgs {
@@ -160,19 +166,6 @@ func run() {
 		// Generate the error package and support files
 		genPkg(l, nil, nil, typePkgs, classes, otypes)
 	}
-}
-
-func parse(pkg *build.Package) ([]*ast.File, error) {
-	fileNames := append(append([]string{}, pkg.GoFiles...), pkg.CgoFiles...)
-	var files []*ast.File
-	for _, name := range fileNames {
-		f, err := parser.ParseFile(fset, filepath.Join(pkg.Dir, name), nil, parser.ParseComments)
-		if err != nil {
-			return nil, err
-		}
-		files = append(files, f)
-	}
-	return files, nil
 }
 
 var exitStatus = 0
