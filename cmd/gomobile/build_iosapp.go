@@ -426,6 +426,7 @@ const projPbxproj = `// !$*UTF8*$!
         SDKROOT = iphoneos;
         TARGETED_DEVICE_FAMILY = "1,2";
         VALIDATE_PRODUCT = YES;
+        ENABLE_BITCODE = NO;
       };
       name = Release;
     };
