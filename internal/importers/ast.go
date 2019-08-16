@@ -106,7 +106,7 @@ func AnalyzePackages(pkgs []*packages.Package, pkgPrefix string) (*References, e
 	fset := token.NewFileSet()
 	for _, pkg := range pkgs {
 		files := make(map[string]*ast.File)
-		for i, name := range pkg.CompiledGoFiles {
+		for i, name := range pkg.GoFiles {
 			files[name] = pkg.Syntax[i]
 		}
 		// Ignore errors (from unknown packages)

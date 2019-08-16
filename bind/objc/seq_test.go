@@ -9,9 +9,11 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -33,6 +35,43 @@ import (
 // All tests here require the Xcode command line tools.
 
 var destination = flag.String("device", "platform=iOS Simulator,name=iPhone 6s Plus", "Specify the -destination flag to xcodebuild")
+
+var gomobileBin string
+
+func TestMain(m *testing.M) {
+	os.Exit(testMain(m))
+}
+
+func testMain(m *testing.M) int {
+	binDir, err := ioutil.TempDir("", "bind-objc-test-")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(binDir)
+
+	exe := ""
+	if runtime.GOOS == "windows" {
+		exe = ".exe"
+	}
+	if runtime.GOOS != "android" {
+		gocmd := filepath.Join(runtime.GOROOT(), "bin", "go")
+		gomobileBin = filepath.Join(binDir, "gomobile"+exe)
+		gobindBin := filepath.Join(binDir, "gobind"+exe)
+		if out, err := exec.Command(gocmd, "build", "-o", gomobileBin, "golang.org/x/mobile/cmd/gomobile").CombinedOutput(); err != nil {
+			log.Fatalf("gomobile build failed: %v: %s", err, out)
+		}
+		if out, err := exec.Command(gocmd, "build", "-o", gobindBin, "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
+			log.Fatalf("gobind build failed: %v: %s", err, out)
+		}
+		path := binDir
+		if oldPath := os.Getenv("PATH"); oldPath != "" {
+			path += string(filepath.ListSeparator) + oldPath
+		}
+		os.Setenv("PATH", path)
+	}
+
+	return m.Run()
+}
 
 // TestObjcSeqTest runs ObjC test SeqTest.m.
 func TestObjcSeqTest(t *testing.T) {
@@ -62,14 +101,11 @@ func TestObjcCustomPkg(t *testing.T) {
 }
 
 func runTest(t *testing.T, pkgNames []string, prefix, testfile, framework string, uitest, dumpOutput bool) {
+	if gomobileBin == "" {
+		t.Skipf("no gomobile on %s", runtime.GOOS)
+	}
 	if _, err := run("which xcodebuild"); err != nil {
 		t.Skip("command xcodebuild not found, skipping")
-	}
-	if _, err := run("which gomobile"); err != nil {
-		t.Log("go install gomobile")
-		if _, err := run("go install golang.org/x/mobile/cmd/gomobile"); err != nil {
-			t.Fatalf("gomobile install failed: %v", err)
-		}
 	}
 
 	tmpdir, err := ioutil.TempDir("", "bind-objc-seq-test-")
@@ -87,7 +123,7 @@ func runTest(t *testing.T, pkgNames []string, prefix, testfile, framework string
 		t.Fatalf("failed to copy %s: %v", testfile, err)
 	}
 
-	cmd := exec.Command("gomobile", "bind", "-target", "ios", "-tags", "aaa bbb")
+	cmd := exec.Command(gomobileBin, "bind", "-target", "ios", "-tags", "aaa bbb")
 	if prefix != "" {
 		cmd.Args = append(cmd.Args, "-prefix", prefix)
 	}

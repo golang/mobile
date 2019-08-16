@@ -60,16 +60,16 @@ func run() {
 	}
 
 	cfg := &packages.Config{
-		Mode: packages.NeedName | packages.NeedFiles | packages.NeedCompiledGoFiles |
+		Mode: packages.NeedName | packages.NeedFiles |
 			packages.NeedImports | packages.NeedDeps |
 			packages.NeedTypes | packages.NeedSyntax | packages.NeedTypesInfo,
-		BuildFlags: []string{"-tags", *tags},
-
-		// packages.Load invokes `go list` command with `GOOS=android`, but in most cases
-		// go-list cannot find the header files for Android. Suppress this error by
-		// disabling Cgo.
-		Env: append(os.Environ(), "CGO_ENABLED=0"),
+		BuildFlags: []string{"-tags", strings.Join(strings.Split(*tags, ","), " ")},
 	}
+
+	// Call Load twice to warm the cache. There is a known issue that the result of Load
+	// depends on build cache state. See golang/go#33687.
+	packages.Load(cfg, flag.Args()...)
+
 	allPkg, err := packages.Load(cfg, flag.Args()...)
 	if err != nil {
 		log.Fatal(err)
