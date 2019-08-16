@@ -46,12 +46,11 @@ func testMain(m *testing.M) int {
 		if out, err := exec.Command(gocmd, "build", "-o", gobindBin, "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
 			log.Fatalf("gobind build failed: %v: %s", err, out)
 		}
-		PATH := os.Getenv("PATH")
-		if PATH != "" {
-			PATH += string(filepath.ListSeparator)
+		path := binDir
+		if oldPath := os.Getenv("PATH"); oldPath != "" {
+			path += string(filepath.ListSeparator) + oldPath
 		}
-		PATH += binDir
-		os.Setenv("PATH", PATH)
+		os.Setenv("PATH", path)
 	}
 	return m.Run()
 }
