@@ -225,8 +225,9 @@ func genObjcPackages(t *testing.T, dir string, cg *ObjcWrapper) {
 		t.Fatal(err)
 	}
 
+	gocmd := filepath.Join(runtime.GOROOT(), "bin", "go")
 	cmd := exec.Command(
-		"go",
+		gocmd,
 		"install",
 		"-pkgdir="+filepath.Join(dir, "pkg", build.Default.GOOS+"_"+build.Default.GOARCH),
 		"ObjC/...",
@@ -266,8 +267,9 @@ func genJavaPackages(t *testing.T, dir string, cg *ClassGen) {
 	io.Copy(buf, cg.Buf)
 	cg.Buf = buf
 
+	gocmd := filepath.Join(runtime.GOROOT(), "bin", "go")
 	cmd := exec.Command(
-		"go",
+		gocmd,
 		"install",
 		"-pkgdir="+filepath.Join(dir, "pkg", build.Default.GOOS+"_"+build.Default.GOARCH),
 		"Java/...",
