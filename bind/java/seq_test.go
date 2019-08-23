@@ -37,12 +37,13 @@ func testMain(m *testing.M) int {
 		exe = ".exe"
 	}
 	if runtime.GOOS != "android" {
+		gocmd := filepath.Join(runtime.GOROOT(), "bin", "go")
 		gomobileBin = filepath.Join(binDir, "gomobile"+exe)
 		gobindBin := filepath.Join(binDir, "gobind"+exe)
-		if out, err := exec.Command("go", "build", "-o", gomobileBin, "golang.org/x/mobile/cmd/gomobile").CombinedOutput(); err != nil {
+		if out, err := exec.Command(gocmd, "build", "-o", gomobileBin, "golang.org/x/mobile/cmd/gomobile").CombinedOutput(); err != nil {
 			log.Fatalf("gomobile build failed: %v: %s", err, out)
 		}
-		if out, err := exec.Command("go", "build", "-o", gobindBin, "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
+		if out, err := exec.Command(gocmd, "build", "-o", gobindBin, "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
 			log.Fatalf("gobind build failed: %v: %s", err, out)
 		}
 		PATH := os.Getenv("PATH")

@@ -47,7 +47,8 @@ func testMain(m *testing.M) int {
 	bin.Close()
 	defer os.Remove(bin.Name())
 	if runtime.GOOS != "android" {
-		if out, err := exec.Command("go", "build", "-o", bin.Name(), "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
+		gocmd := filepath.Join(runtime.GOROOT(), "bin", "go")
+		if out, err := exec.Command(gocmd, "build", "-o", bin.Name(), "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
 			log.Fatalf("gobind build failed: %v: %s", err, out)
 		}
 		gobindBin = bin.Name()
@@ -109,7 +110,8 @@ type Struct struct{
 		t.Fatal(err)
 	}
 
-	gopath, err := exec.Command("go", "env", "GOPATH").Output()
+	gocmd := filepath.Join(runtime.GOROOT(), "bin", "go")
+	gopath, err := exec.Command(gocmd, "env", "GOPATH").Output()
 	if err != nil {
 		t.Fatal(err)
 	}
