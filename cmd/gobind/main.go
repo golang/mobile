@@ -17,6 +17,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"golang.org/x/mobile/internal/importers"
@@ -44,6 +45,10 @@ func main() {
 
 	run()
 	os.Exit(exitStatus)
+}
+
+func goBin() string {
+	return filepath.Join(runtime.GOROOT(), "bin", "go")
 }
 
 func run() {
@@ -104,7 +109,7 @@ func run() {
 
 	// Determine GOPATH from go env GOPATH in case the default $HOME/go GOPATH
 	// is in effect.
-	if out, err := exec.Command("go", "env", "GOPATH").Output(); err != nil {
+	if out, err := exec.Command(goBin(), "env", "GOPATH").Output(); err != nil {
 		log.Fatal(err)
 	} else {
 		ctx.GOPATH = string(bytes.TrimSpace(out))
