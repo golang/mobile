@@ -129,6 +129,9 @@ func runTest(t *testing.T, pkgNames []string, prefix, testfile, framework string
 	}
 	cmd.Args = append(cmd.Args, pkgNames...)
 	cmd.Dir = filepath.Join(tmpdir, "xcodetest")
+	// Reverse binding doesn't work with Go module since imports starting with Java or ObjC are not valid FQDNs.
+	// Disable Go module explicitly until this problem is solved. See golang/go#27234.
+	cmd.Env = append(os.Environ(), "GO111MODULE=off")
 	buf, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Logf("%s", buf)
