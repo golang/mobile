@@ -57,14 +57,30 @@ func goIOSBind(gobind string, pkgs []*build.Package, archs []string) error {
 
 	cmd = exec.Command("xcrun", "lipo", "-create")
 
+	var cenv map[string]string
+	cenv = make(map[string]string)
+	if bindEnv != "" {
+		archEnvs := strings.Split(bindEnv, ",")
+		for _, archenv := range archEnvs {
+			args := strings.Split(archenv, "@")
+			if len(args) > 1 {
+				cenv[args[0]] = args[1]
+			}
+		}
+	}
 	for _, arch := range archs {
 		env := darwinEnv[arch]
 		env = append(env, gopath)
+		fmt.Printf("append Env PATH --> %s \n", cenv[arch])
+		env = append(env, cenv[arch]) // Add the Cross Compile PATH Env
+
 		path, err := goIOSBindArchive(name, env)
 		if err != nil {
 			return fmt.Errorf("darwin-%s: %v", arch, err)
 		}
 		cmd.Args = append(cmd.Args, "-arch", archClang(arch), path)
+
+		fmt.Println("==============")
 	}
 
 	// Build static framework output directory.

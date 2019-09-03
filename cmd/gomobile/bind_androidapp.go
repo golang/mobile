@@ -50,13 +50,26 @@ func goAndroidBind(gobind string, pkgs []*build.Package, androidArchs []string) 
 	}
 
 	androidDir := filepath.Join(tmpdir, "android")
-
+	var cenv map[string]string
+	cenv = make(map[string]string)
+	if bindEnv != "" {
+		archEnvs := strings.Split(bindEnv, ",")
+		for _, archenv := range archEnvs {
+			args := strings.Split(archenv, "@")
+			if len(args) > 1 {
+				cenv[args[0]] = args[1]
+			}
+		}
+	}
 	// Generate binding code and java source code only when processing the first package.
 	for _, arch := range androidArchs {
 		env := androidEnv[arch]
 		// Add the generated packages to GOPATH
 		gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
 		env = append(env, gopath)
+		fmt.Printf("append Env PATH --> %s \n", cenv[arch])
+		env = append(env, cenv[arch]) // Add the Cross Compile PATH Env
+
 		toolchain := ndk.Toolchain(arch)
 
 		err := goBuild(

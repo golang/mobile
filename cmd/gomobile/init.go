@@ -367,6 +367,11 @@ func runCmd(cmd *exec.Cmd) error {
 
 	if !buildN {
 		cmd.Env = environ(cmd.Env)
+		// check Env Path
+		//fmt.Printf("=cmd.Env= \n %s \n", strings.Join(cmd.Env[:], "\n"))
+		//fmt.Printf("=================\n")
+		//fmt.Printf("=cmd.Args= \n %s \n", strings.Join(cmd.Args[:], "\n"))
+		//fmt.Printf("=================\n")
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("%s failed: %v%s", strings.Join(cmd.Args, " "), err, buf)
 		}

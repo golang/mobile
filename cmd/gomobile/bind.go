@@ -21,7 +21,7 @@ import (
 var cmdBind = &command{
 	run:   runBind,
 	Name:  "bind",
-	Usage: "[-target android|ios] [-bootclasspath <path>] [-classpath <path>] [-o output] [build flags] [package]",
+	Usage: "[-target android|ios] [-bootclasspath <path>] [-classpath <path>] [-o output] [-cenv <crossenv>] [-disbitcode <arch>] [build flags] [package]",
 	Short: "build a library for Android and iOS",
 	Long: `
 Bind generates language bindings for the package named by the import
@@ -57,6 +57,24 @@ flag.
 For -target android, the -bootclasspath and -classpath flags are used to
 control the bootstrap classpath and the classpath for Go wrappers to Java
 classes.
+
+The -cenv flag provides some Env Configs for different arch at compile. 
+eg:
+	gomobile bind -o ./dist/and/engine.aar -target=android \
+	-cenv=\
+	386@PKG_CONFIG_PATH=$PWD/dist/pkgconfig/and/386,\
+	amd64@PKG_CONFIG_PATH=$PWD/dist/pkgconfig/and/amd64,\
+	arm@PKG_CONFIG_PATH=$PWD/dist/pkgconfig/and/arm,\
+	arm64@PKG_CONFIG_PATH=$PWD/dist/pkgconfig/and/arm64 \
+	-x -androidapi 16 \
+
+The -disbitcode flag is work at ios, will close BitCode support was you choose
+eg: 
+	gomobile bind -o ./dist/ios/DaCallEngine.framework -target=ios/arm64,ios/amd64 \
+	-cenv=amd64@PKG_CONFIG_PATH=$PWD/dist/pkgconfig/ios/amd64,arm64@PKG_CONFIG_PATH=$PWD/dist/pkgconfig/ios/arm64 \
+	-disbitcode=386,amd64 \
+	-x --ldflags "'-linkmode=external -extldflags=-static'" -iosversion 12.1
+
 
 The -v flag provides verbose output, including the list of packages built.
 
@@ -162,6 +180,8 @@ var (
 	bindJavaPkg       string // -javapkg
 	bindClasspath     string // -classpath
 	bindBootClasspath string // -bootclasspath
+	bindEnv           string // -cenv
+	bindDisBitcode    string // -disbitcode
 )
 
 func init() {
@@ -172,6 +192,9 @@ func init() {
 		"custom Objective-C name prefix. Valid only with -target=ios.")
 	cmdBind.flag.StringVar(&bindClasspath, "classpath", "", "The classpath for imported Java classes. Valid only with -target=android.")
 	cmdBind.flag.StringVar(&bindBootClasspath, "bootclasspath", "", "The bootstrap classpath for imported Java classes. Valid only with -target=android.")
+	cmdBind.flag.StringVar(&bindEnv, "cenv", "", "when cross compile need some env path for arch.")
+	cmdBind.flag.StringVar(&bindDisBitcode, "disbitcode", "", "disable some arch '-fembed-bitcode' args. -target=ios.")
+
 }
 
 func bootClasspath() (string, error) {

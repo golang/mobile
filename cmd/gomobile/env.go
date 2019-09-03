@@ -121,6 +121,16 @@ func envInit() (err error) {
 		return nil
 	}
 
+	var disBitcode map[string]bool
+	disBitcode = make(map[string]bool)
+	if bindDisBitcode != "" {
+		archEnvs := strings.Split(bindDisBitcode, ",")
+		for _, archenv := range archEnvs {
+			disBitcode[archenv] = true
+			fmt.Printf("disable Bitcode-%s-- \n", archenv)
+		}
+	}
+
 	darwinArmNM = "nm"
 	darwinEnv = make(map[string][]string)
 	for _, arch := range allArchs {
@@ -140,7 +150,15 @@ func envInit() (err error) {
 		default:
 			panic(fmt.Errorf("unknown GOARCH: %q", arch))
 		}
-		cflags += " -fembed-bitcode"
+
+		// check if need add " -fembed-bitcode" to cflags
+		if disBitcode[arch] {
+
+		} else {
+			//fmt.Printf("[arch] ==%s=== add -fembed-bitcode====\n",arch)
+			cflags += " -fembed-bitcode"
+		}
+
 		if err != nil {
 			return err
 		}
