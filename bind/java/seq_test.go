@@ -37,20 +37,20 @@ func testMain(m *testing.M) int {
 		exe = ".exe"
 	}
 	if runtime.GOOS != "android" {
+		gocmd := filepath.Join(runtime.GOROOT(), "bin", "go")
 		gomobileBin = filepath.Join(binDir, "gomobile"+exe)
 		gobindBin := filepath.Join(binDir, "gobind"+exe)
-		if out, err := exec.Command("go", "build", "-o", gomobileBin, "golang.org/x/mobile/cmd/gomobile").CombinedOutput(); err != nil {
+		if out, err := exec.Command(gocmd, "build", "-o", gomobileBin, "golang.org/x/mobile/cmd/gomobile").CombinedOutput(); err != nil {
 			log.Fatalf("gomobile build failed: %v: %s", err, out)
 		}
-		if out, err := exec.Command("go", "build", "-o", gobindBin, "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
+		if out, err := exec.Command(gocmd, "build", "-o", gobindBin, "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
 			log.Fatalf("gobind build failed: %v: %s", err, out)
 		}
-		PATH := os.Getenv("PATH")
-		if PATH != "" {
-			PATH += string(filepath.ListSeparator)
+		path := binDir
+		if oldPath := os.Getenv("PATH"); oldPath != "" {
+			path += string(filepath.ListSeparator) + oldPath
 		}
-		PATH += binDir
-		os.Setenv("PATH", PATH)
+		os.Setenv("PATH", path)
 	}
 	return m.Run()
 }
@@ -140,7 +140,11 @@ func runTest(t *testing.T, pkgNames []string, javaPkg, javaCls string) {
 		args = append(args, "-javapkg", javaPkg)
 	}
 	args = append(args, pkgNames...)
-	buf, err := exec.Command(gomobileBin, args...).CombinedOutput()
+	cmd := exec.Command(gomobileBin, args...)
+	// Reverse binding doesn't work with Go module since imports starting with Java or ObjC are not valid FQDNs.
+	// Disable Go module explicitly until this problem is solved. See golang/go#27234.
+	cmd.Env = append(os.Environ(), "GO111MODULE=off")
+	buf, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Logf("%s", buf)
 		t.Fatalf("failed to run gomobile bind: %v", err)

@@ -288,7 +288,7 @@ func goInstall(srcs []string, env []string, args ...string) error {
 
 func goCmd(subcmd string, srcs []string, env []string, args ...string) error {
 	cmd := exec.Command(
-		"go",
+		goBin(),
 		subcmd,
 	)
 	if len(ctx.BuildTags) > 0 {
