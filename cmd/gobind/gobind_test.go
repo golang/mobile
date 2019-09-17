@@ -15,6 +15,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"golang.org/x/tools/go/packages/packagestest"
 )
 
 var tests = []struct {
@@ -26,12 +28,41 @@ var tests = []struct {
 	// external tools such as javap.
 	reverse bool
 }{
-	{"ObjC-Testpkg", "objc", "golang.org/x/mobile/bind/testdata/testpkg", "", false},
-	{"Java-Testpkg", "java", "golang.org/x/mobile/bind/testdata/testpkg", "", false},
-	{"Go-Testpkg", "go", "golang.org/x/mobile/bind/testdata/testpkg", "", false},
-	{"Java-Javapkg", "java", "golang.org/x/mobile/bind/testdata/testpkg/javapkg", "android", true},
-	{"Go-Javapkg", "go", "golang.org/x/mobile/bind/testdata/testpkg/javapkg", "android", true},
-	{"Go-Cgopkg", "go,java,objc", "golang.org/x/mobile/bind/testdata/cgopkg", "android", false},
+	{
+		name: "ObjC-Testpkg",
+		lang: "objc",
+		pkg:  "golang.org/x/mobile/bind/testdata/testpkg",
+	},
+	{
+		name: "Java-Testpkg",
+		lang: "java",
+		pkg:  "golang.org/x/mobile/bind/testdata/testpkg",
+	},
+	{
+		name: "Go-Testpkg",
+		lang: "go",
+		pkg:  "golang.org/x/mobile/bind/testdata/testpkg",
+	},
+	{
+		name:    "Java-Javapkg",
+		lang:    "java",
+		pkg:     "golang.org/x/mobile/bind/testdata/testpkg/javapkg",
+		goos:    "android",
+		reverse: true,
+	},
+	{
+		name:    "Go-Javapkg",
+		lang:    "go",
+		pkg:     "golang.org/x/mobile/bind/testdata/testpkg/javapkg",
+		goos:    "android",
+		reverse: true,
+	},
+	{
+		name: "Go-Cgopkg",
+		lang: "go,java,objc",
+		pkg:  "golang.org/x/mobile/bind/testdata/cgopkg",
+		goos: "android",
+	},
 }
 
 var gobindBin string
@@ -56,30 +87,51 @@ func testMain(m *testing.M) int {
 	return m.Run()
 }
 
-func runGobind(t testing.TB, lang, pkg, goos string) error {
+func runGobind(t testing.TB, lang, pkg, goos string, exported *packagestest.Exported) error {
 	if gobindBin == "" {
 		t.Skipf("gobind is not available on %s", runtime.GOOS)
 	}
 	cmd := exec.Command(gobindBin, "-lang", lang, pkg)
+	cmd.Dir = exported.Config.Dir
+	cmd.Env = exported.Config.Env
 	if goos != "" {
-		cmd.Env = append(os.Environ(), "GOOS="+goos)
-		cmd.Env = append(cmd.Env, "CGO_ENABLED=1")
-		cmd.Env = append(cmd.Env, "GO111MODULE=off")
+		cmd.Env = append(cmd.Env, "GOOS="+goos)
 	}
 	if out, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("gobind -lang %s %s failed: %v: %s", lang, pkg, err, out)
+		var cmd string
+		for _, env := range exported.Config.Env {
+			if strings.HasPrefix(env, "GO111MODULE=") {
+				cmd = env + " "
+				break
+			}
+		}
+		cmd += fmt.Sprintf("gobind -lang %s %s", lang, pkg)
+		return fmt.Errorf("%s failed: %v: %s", cmd, err, out)
 	}
 	return nil
 }
 
 func TestGobind(t *testing.T) {
+	packagestest.TestAll(t, testGobind)
+}
+
+func testGobind(t *testing.T, exporter packagestest.Exporter) {
 	_, javapErr := exec.LookPath("javap")
+	exported := packagestest.Export(t, exporter, []packagestest.Module{{
+		Name:  "golang.org/x/mobile",
+		Files: packagestest.MustCopyFileTree("../.."),
+	}})
+	defer exported.Cleanup()
+
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			if exporter == packagestest.Modules && test.reverse {
+				t.Skip("reverse binding does't work with Go modules")
+			}
 			if test.reverse && javapErr != nil {
 				t.Skip("reverse bind test requires javap which is not available")
 			}
-			if err := runGobind(t, test.lang, test.pkg, test.goos); err != nil {
+			if err := runGobind(t, test.lang, test.pkg, test.goos, exported); err != nil {
 				t.Error(err)
 			}
 		})
@@ -132,14 +184,27 @@ type Struct struct{
 }
 
 func BenchmarkGobind(b *testing.B) {
+	packagestest.BenchmarkAll(b, benchmarkGobind)
+}
+
+func benchmarkGobind(b *testing.B, exporter packagestest.Exporter) {
 	_, javapErr := exec.LookPath("javap")
+	exported := packagestest.Export(b, exporter, []packagestest.Module{{
+		Name:  "golang.org/x/mobile",
+		Files: packagestest.MustCopyFileTree("../.."),
+	}})
+	defer exported.Cleanup()
+
 	for _, test := range tests {
 		b.Run(test.name, func(b *testing.B) {
+			if exporter == packagestest.Modules && test.reverse {
+				b.Skip("reverse binding does't work with Go modules")
+			}
 			if test.reverse && javapErr != nil {
 				b.Skip("reverse bind test requires javap which is not available")
 			}
 			for i := 0; i < b.N; i++ {
-				if err := runGobind(b, test.lang, test.pkg, test.goos); err != nil {
+				if err := runGobind(b, test.lang, test.pkg, test.goos, exported); err != nil {
 					b.Error(err)
 				}
 			}
