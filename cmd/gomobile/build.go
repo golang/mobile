@@ -376,6 +376,9 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 		targetOS = "darwin"
 		allArchs = []string{"arm", "arm64", "386", "amd64"}
 	}
+	if os == "android" {
+		allArchs = []string{"arm", "arm64", "386", "amd64"}
+	}
 	if os == "macos" {
 		targetOS = "darwin"
 		allArchs = []string{"macos64"}
