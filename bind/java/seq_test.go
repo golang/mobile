@@ -140,7 +140,11 @@ func runTest(t *testing.T, pkgNames []string, javaPkg, javaCls string) {
 		args = append(args, "-javapkg", javaPkg)
 	}
 	args = append(args, pkgNames...)
-	buf, err := exec.Command(gomobileBin, args...).CombinedOutput()
+	cmd := exec.Command(gomobileBin, args...)
+	// Reverse binding doesn't work with Go module since imports starting with Java or ObjC are not valid FQDNs.
+	// Disable Go module explicitly until this problem is solved. See golang/go#27234.
+	cmd.Env = append(os.Environ(), "GO111MODULE=off")
+	buf, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Logf("%s", buf)
 		t.Fatalf("failed to run gomobile bind: %v", err)
