@@ -8,6 +8,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"go/build"
 	"io"
@@ -61,7 +62,7 @@ output file name depends on the package built.
 
 The -v flag provides verbose output, including the list of packages built.
 
-The build flags -a, -i, -n, -x, -gcflags, -ldflags, -tags, and -work are
+The build flags -a, -i, -n, -x, -gcflags, -ldflags, -trimpath, -tags, and -work are
 shared with the build command. For documentation, see 'go help build'.
 `,
 }
@@ -229,6 +230,7 @@ var (
 	buildO          string // -o
 	buildGcflags    string // -gcflags
 	buildLdflags    string // -ldflags
+	buildTrimpath   bool   // -trimpath
 	buildTarget     string // -target
 	buildWork       bool   // -work
 	buildBundleID   string // -bundleid
@@ -245,6 +247,7 @@ func addBuildFlags(cmd *command) {
 	cmd.flag.StringVar(&buildIOSVersion, "iosversion", "7.0", "")
 	cmd.flag.IntVar(&buildAndroidAPI, "androidapi", minAndroidAPI, "")
 
+	cmd.flag.BoolVar(&buildTrimpath, "trimpath", false, "")
 	cmd.flag.BoolVar(&buildA, "a", false, "")
 	cmd.flag.BoolVar(&buildI, "i", false, "")
 	cmd.flag.Var((*stringsFlag)(&ctx.BuildTags), "tags", "")
@@ -307,6 +310,17 @@ func goCmd(subcmd string, srcs []string, env []string, args ...string) error {
 	}
 	if buildLdflags != "" {
 		cmd.Args = append(cmd.Args, "-ldflags", buildLdflags)
+	}
+	if buildTrimpath {
+		// ignore unknown versions.
+		goVersionOut, _ := exec.Command(goBin(), "version").CombinedOutput()
+		if len(goVersionOut) > 0 {
+			var minor int
+			if _, err := fmt.Sscanf(string(goVersionOut), "go version go1.%d", &minor); err == nil && minor < 13 {
+				return errors.New("-trimpath : Go 1.13 or newer is required")
+			}
+		}
+		cmd.Args = append(cmd.Args, "-trimpath")
 	}
 	if buildWork {
 		cmd.Args = append(cmd.Args, "-work")
