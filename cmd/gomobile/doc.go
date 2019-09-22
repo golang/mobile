@@ -73,7 +73,7 @@ classes.
 
 The -v flag provides verbose output, including the list of packages built.
 
-The build flags -a, -n, -x, -gcflags, -ldflags, -tags, and -work
+The build flags -a, -n, -x, -gcflags, -ldflags, -tags, -trimpath, and -work
 are shared with the build command. For documentation, see 'go help build'.
 
 
@@ -117,7 +117,7 @@ output file name depends on the package built.
 
 The -v flag provides verbose output, including the list of packages built.
 
-The build flags -a, -i, -n, -x, -gcflags, -ldflags, -tags, and -work are
+The build flags -a, -i, -n, -x, -gcflags, -ldflags, -tags, -trimpath, and -work are
 shared with the build command. For documentation, see 'go help build'.
 
 
@@ -152,7 +152,7 @@ attached mobile device.
 
 Only -target android is supported. The 'adb' tool must be on the PATH.
 
-The build flags -a, -i, -n, -x, -gcflags, -ldflags, -tags, and -work are
+The build flags -a, -i, -n, -x, -gcflags, -ldflags, -tags, -trimpath, and -work are
 shared with the build command.
 For documentation, see 'go help build'.
 
