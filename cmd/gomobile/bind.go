@@ -60,7 +60,7 @@ classes.
 
 The -v flag provides verbose output, including the list of packages built.
 
-The build flags -a, -n, -x, -gcflags, -ldflags, -tags, and -work
+The build flags -a, -n, -x, -gcflags, -ldflags, -tags, -trimpath, and -work
 are shared with the build command. For documentation, see 'go help build'.
 `,
 }
