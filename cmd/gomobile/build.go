@@ -62,7 +62,7 @@ output file name depends on the package built.
 
 The -v flag provides verbose output, including the list of packages built.
 
-The build flags -a, -i, -n, -x, -gcflags, -ldflags, -trimpath, -tags, and -work are
+The build flags -a, -i, -n, -x, -gcflags, -ldflags, -tags, -trimpath, and -work are
 shared with the build command. For documentation, see 'go help build'.
 `,
 }
@@ -232,6 +232,7 @@ var (
 	buildLdflags    string // -ldflags
 	buildTrimpath   bool   // -trimpath
 	buildTarget     string // -target
+	buildTrimpath   bool   // -trimpath
 	buildWork       bool   // -work
 	buildBundleID   string // -bundleid
 	buildIOSVersion string // -iosversion
@@ -250,6 +251,7 @@ func addBuildFlags(cmd *command) {
 	cmd.flag.BoolVar(&buildTrimpath, "trimpath", false, "")
 	cmd.flag.BoolVar(&buildA, "a", false, "")
 	cmd.flag.BoolVar(&buildI, "i", false, "")
+	cmd.flag.BoolVar(&buildTrimpath, "trimpath", false, "")
 	cmd.flag.Var((*stringsFlag)(&ctx.BuildTags), "tags", "")
 }
 
