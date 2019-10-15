@@ -68,7 +68,9 @@ func goAndroidBind(gobind string, pkgs []*build.Package, androidArchs []string) 
 		gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
 		env = append(env, gopath)
 		fmt.Printf("append Env PATH --> %s \n", cenv[arch])
-		env = append(env, cenv[arch]) // Add the Cross Compile PATH Env
+		if cenv[arch] != "" {
+			env = append(env, cenv[arch]) // Add the Cross Compile PATH Env
+		}
 
 		toolchain := ndk.Toolchain(arch)
 

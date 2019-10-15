@@ -72,7 +72,9 @@ func goIOSBind(gobind string, pkgs []*build.Package, archs []string) error {
 		env := darwinEnv[arch]
 		env = append(env, gopath)
 		fmt.Printf("append Env PATH --> %s \n", cenv[arch])
-		env = append(env, cenv[arch]) // Add the Cross Compile PATH Env
+		if cenv[arch] != "" {
+			env = append(env, cenv[arch]) // Add the Cross Compile PATH Env
+		}
 
 		path, err := goIOSBindArchive(name, env)
 		if err != nil {
