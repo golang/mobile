@@ -155,7 +155,6 @@ func envInit() (err error) {
 		if disBitcode[arch] {
 
 		} else {
-			//fmt.Printf("[arch] ==%s=== add -fembed-bitcode====\n",arch)
 			cflags += " -fembed-bitcode"
 		}
 

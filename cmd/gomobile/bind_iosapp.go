@@ -71,7 +71,6 @@ func goIOSBind(gobind string, pkgs []*build.Package, archs []string) error {
 	for _, arch := range archs {
 		env := darwinEnv[arch]
 		env = append(env, gopath)
-		fmt.Printf("append Env PATH --> %s \n", cenv[arch])
 		if cenv[arch] != "" {
 			env = append(env, cenv[arch]) // Add the Cross Compile PATH Env
 		}
@@ -82,7 +81,6 @@ func goIOSBind(gobind string, pkgs []*build.Package, archs []string) error {
 		}
 		cmd.Args = append(cmd.Args, "-arch", archClang(arch), path)
 
-		fmt.Println("==============")
 	}
 
 	// Build static framework output directory.
