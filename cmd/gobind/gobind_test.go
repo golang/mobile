@@ -13,6 +13,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -118,7 +119,7 @@ type Struct struct{
 	for _, lang := range []string{"java", "objc"} {
 		cmd := exec.Command(gobindBin, "-lang", lang, "doctest")
 		// TODO(hajimehoshi): Enable this test with Go modules.
-		cmd.Env = append(os.Environ(), "GOPATH="+tmpdir+string(filepath.ListSeparator)+string(gopath), "GO111MODULE=off")
+		cmd.Env = append(os.Environ(), "GOPATH="+tmpdir+string(filepath.ListSeparator)+strings.TrimSpace(string(gopath)), "GO111MODULE=off")
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			t.Errorf("gobind -lang %s failed: %v: %s", lang, err, out)
