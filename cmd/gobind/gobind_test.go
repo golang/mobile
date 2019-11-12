@@ -11,7 +11,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
@@ -111,10 +110,7 @@ func runGobind(t testing.TB, lang, pkg, goos string, exported *packagestest.Expo
 	return nil
 }
 
-func TestGobind(t *testing.T) {
-	packagestest.TestAll(t, testGobind)
-}
-
+func TestGobind(t *testing.T) { packagestest.TestAll(t, testGobind) }
 func testGobind(t *testing.T, exporter packagestest.Exporter) {
 	_, javapErr := exec.LookPath("javap")
 	exported := packagestest.Export(t, exporter, []packagestest.Module{{
@@ -138,40 +134,39 @@ func testGobind(t *testing.T, exporter packagestest.Exporter) {
 	}
 }
 
-func TestDocs(t *testing.T) {
+func TestDocs(t *testing.T) { packagestest.TestAll(t, testDocs) }
+func testDocs(t *testing.T, exporter packagestest.Exporter) {
 	if gobindBin == "" {
 		t.Skipf("gobind is not available on %s", runtime.GOOS)
 	}
-	// Create a fake package for doc.go
-	tmpdir, err := ioutil.TempDir("", "gobind-test-")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(tmpdir)
-	docPkg := filepath.Join(tmpdir, "src", "doctest")
-	if err := os.MkdirAll(docPkg, 0700); err != nil {
-		t.Fatal(err)
-	}
+
 	const docsrc = `
 package doctest
 
 // This is a comment.
 type Struct struct{
 }`
-	if err := ioutil.WriteFile(filepath.Join(docPkg, "doc.go"), []byte(docsrc), 0700); err != nil {
-		t.Fatal(err)
-	}
 
-	gopath, err := exec.Command(goBin(), "env", "GOPATH").Output()
-	if err != nil {
-		t.Fatal(err)
-	}
+	exported := packagestest.Export(t, exporter, []packagestest.Module{
+		{
+			Name: "example.com/doctest",
+			Files: map[string]interface{}{
+				"doc.go": docsrc,
+			},
+		},
+		{
+			// gobind requires golang.org/x/mobile to generate code for reverse bindings.
+			Name:  "golang.org/x/mobile",
+			Files: packagestest.MustCopyFileTree("../.."),
+		},
+	})
+	defer exported.Cleanup()
 
 	const comment = "This is a comment."
 	for _, lang := range []string{"java", "objc"} {
-		cmd := exec.Command(gobindBin, "-lang", lang, "doctest")
-		// TODO(hajimehoshi): Enable this test with Go modules.
-		cmd.Env = append(os.Environ(), "GOPATH="+tmpdir+string(filepath.ListSeparator)+strings.TrimSpace(string(gopath)), "GO111MODULE=off")
+		cmd := exec.Command(gobindBin, "-lang", lang, "example.com/doctest")
+		cmd.Dir = exported.Config.Dir
+		cmd.Env = exported.Config.Env
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			t.Errorf("gobind -lang %s failed: %v: %s", lang, err, out)
