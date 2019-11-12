@@ -7,7 +7,6 @@ package main
 import (
 	"archive/zip"
 	"fmt"
-	"go/build"
 	"io"
 	"io/ioutil"
 	"os"
@@ -15,9 +14,11 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"golang.org/x/tools/go/packages"
 )
 
-func goAndroidBind(gobind string, pkgs []*build.Package, androidArchs []string) error {
+func goAndroidBind(gobind string, pkgs []*packages.Package, androidArchs []string) error {
 	if sdkDir := os.Getenv("ANDROID_HOME"); sdkDir == "" {
 		return fmt.Errorf("this command requires ANDROID_HOME environment variable (path to the Android SDK)")
 	}
@@ -43,7 +44,7 @@ func goAndroidBind(gobind string, pkgs []*build.Package, androidArchs []string) 
 		cmd.Args = append(cmd.Args, "-bootclasspath="+bindBootClasspath)
 	}
 	for _, p := range pkgs {
-		cmd.Args = append(cmd.Args, p.ImportPath)
+		cmd.Args = append(cmd.Args, p.PkgPath)
 	}
 	if err := runCmd(cmd); err != nil {
 		return err
@@ -114,7 +115,7 @@ func buildSrcJar(src string) error {
 //	aidl (optional, not relevant)
 //
 // javac and jar commands are needed to build classes.jar.
-func buildAAR(srcDir, androidDir string, pkgs []*build.Package, androidArchs []string) (err error) {
+func buildAAR(srcDir, androidDir string, pkgs []*packages.Package, androidArchs []string) (err error) {
 	var out io.Writer = ioutil.Discard
 	if buildO == "" {
 		buildO = pkgs[0].Name + ".aar"
@@ -173,7 +174,9 @@ func buildAAR(srcDir, androidDir string, pkgs []*build.Package, androidArchs []s
 
 	files := map[string]string{}
 	for _, pkg := range pkgs {
-		assetsDir := filepath.Join(pkg.Dir, "assets")
+		// TODO(hajimehoshi): This works only with Go tools that assume all source files are in one directory.
+		// Fix this to work with other Go tools.
+		assetsDir := filepath.Join(filepath.Dir(pkg.GoFiles[0]), "assets")
 		assetsDirExists := false
 		if fi, err := os.Stat(assetsDir); err == nil {
 			assetsDirExists = fi.IsDir()
@@ -198,9 +201,9 @@ func buildAAR(srcDir, androidDir string, pkgs []*build.Package, androidArchs []s
 					name := "assets/" + path[len(assetsDir)+1:]
 					if orig, exists := files[name]; exists {
 						return fmt.Errorf("package %s asset name conflict: %s already added from package %s",
-							pkg.ImportPath, name, orig)
+							pkg.PkgPath, name, orig)
 					}
-					files[name] = pkg.ImportPath
+					files[name] = pkg.PkgPath
 					w, err := aarwcreate(name)
 					if err != nil {
 						return nil

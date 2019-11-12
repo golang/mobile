@@ -20,13 +20,13 @@ func TestImportPackagesPathCleaning(t *testing.T) {
 		t.Skip("not available on Android")
 	}
 	slashPath := "golang.org/x/mobile/example/bind/hello/"
-	pkgs, err := importPackages([]string{slashPath})
+	pkgs, err := importPackages([]string{slashPath}, runtime.GOOS)
 	if err != nil {
 		t.Fatal(err)
 	}
 	p := pkgs[0]
-	if c := path.Clean(slashPath); p.ImportPath != c {
-		t.Errorf("expected %s; got %s", c, p.ImportPath)
+	if c := path.Clean(slashPath); p.PkgPath != c {
+		t.Errorf("expected %s; got %s", c, p.PkgPath)
 	}
 }
 
@@ -145,8 +145,7 @@ func TestBindIOS(t *testing.T) {
 			os.Setenv("HOMEDRIVE", "C:")
 		}
 		cmdBind.flag.Parse([]string{"golang.org/x/mobile/asset"})
-		err := runBind(cmdBind)
-		if err != nil {
+		if err := runBind(cmdBind); err != nil {
 			t.Log(buf.String())
 			t.Fatal(err)
 		}
