@@ -13,8 +13,11 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path"
 	"regexp"
 	"strings"
+
+	"golang.org/x/tools/go/packages"
 )
 
 var ctx = build.Default
@@ -72,7 +75,7 @@ func runBuild(cmd *command) (err error) {
 
 // runBuildImpl builds a package for mobiles based on the given commands.
 // runBuildImpl returns a built package information and an error if exists.
-func runBuildImpl(cmd *command) (*build.Package, error) {
+func runBuildImpl(cmd *command) (*packages.Package, error) {
 	cleanup, err := buildEnvInit()
 	if err != nil {
 		return nil, err
@@ -86,30 +89,37 @@ func runBuildImpl(cmd *command) (*build.Package, error) {
 		return nil, fmt.Errorf(`invalid -target=%q: %v`, buildTarget, err)
 	}
 
+	// TODO(hajimehoshi): ctx is now used only for recording build tags in build. Remove this.
 	oldCtx := ctx
 	defer func() {
 		ctx = oldCtx
 	}()
-	ctx.GOARCH = targetArchs[0]
-	ctx.GOOS = targetOS
 
-	if ctx.GOOS == "darwin" {
+	if targetOS == "darwin" {
 		ctx.BuildTags = append(ctx.BuildTags, "ios")
 	}
 
-	var pkg *build.Package
+	var buildPath string
 	switch len(args) {
 	case 0:
-		pkg, err = ctx.ImportDir(cwd, build.ImportComment)
+		buildPath = "."
 	case 1:
-		pkg, err = ctx.Import(args[0], cwd, build.ImportComment)
+		buildPath = path.Clean(args[0])
 	default:
 		cmd.usage()
 		os.Exit(1)
 	}
+	pkgs, err := packages.Load(packagesConfig(targetOS), buildPath)
 	if err != nil {
 		return nil, err
 	}
+	// len(pkgs) can be more than 1 e.g., when the specified path includes `...`.
+	if len(pkgs) != 1 {
+		cmd.usage()
+		os.Exit(1)
+	}
+
+	pkg := pkgs[0]
 
 	if pkg.Name != "main" && buildO != "" {
 		return nil, fmt.Errorf("cannot set -o when building non-main package")
@@ -121,7 +131,7 @@ func runBuildImpl(cmd *command) (*build.Package, error) {
 		if pkg.Name != "main" {
 			for _, arch := range targetArchs {
 				env := androidEnv[arch]
-				if err := goBuild(pkg.ImportPath, env); err != nil {
+				if err := goBuild(pkg.PkgPath, env); err != nil {
 					return nil, err
 				}
 			}
@@ -138,7 +148,7 @@ func runBuildImpl(cmd *command) (*build.Package, error) {
 		if pkg.Name != "main" {
 			for _, arch := range targetArchs {
 				env := darwinEnv[arch]
-				if err := goBuild(pkg.ImportPath, env); err != nil {
+				if err := goBuild(pkg.PkgPath, env); err != nil {
 					return nil, err
 				}
 			}
@@ -154,7 +164,7 @@ func runBuildImpl(cmd *command) (*build.Package, error) {
 	}
 
 	if !nmpkgs["golang.org/x/mobile/app"] {
-		return nil, fmt.Errorf(`%s does not import "golang.org/x/mobile/app"`, pkg.ImportPath)
+		return nil, fmt.Errorf(`%s does not import "golang.org/x/mobile/app"`, pkg.PkgPath)
 	}
 
 	return pkg, nil
