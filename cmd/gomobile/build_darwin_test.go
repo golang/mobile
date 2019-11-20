@@ -23,10 +23,10 @@ func TestIOSBuild(t *testing.T) {
 	buildTarget = "ios"
 	buildBundleID = "org.golang.todo"
 	gopath = filepath.SplitList(goEnv("GOPATH"))[0]
-	oldTags := ctx.BuildTags
-	ctx.BuildTags = []string{"tag1"}
+	oldTags := buildTags
+	buildTags = []string{"tag1"}
 	defer func() {
-		ctx.BuildTags = oldTags
+		buildTags = oldTags
 	}()
 	tests := []struct {
 		pkg  string

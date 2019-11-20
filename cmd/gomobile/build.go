@@ -9,7 +9,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"go/build"
 	"io"
 	"os"
 	"os/exec"
@@ -20,7 +19,6 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-var ctx = build.Default
 var tmpdir string
 
 var cmdBuild = &command{
@@ -87,16 +85,6 @@ func runBuildImpl(cmd *command) (*packages.Package, error) {
 	targetOS, targetArchs, err := parseBuildTarget(buildTarget)
 	if err != nil {
 		return nil, fmt.Errorf(`invalid -target=%q: %v`, buildTarget, err)
-	}
-
-	// TODO(hajimehoshi): ctx is now used only for recording build tags in build. Remove this.
-	oldCtx := ctx
-	defer func() {
-		ctx = oldCtx
-	}()
-
-	if targetOS == "darwin" {
-		ctx.BuildTags = append(ctx.BuildTags, "ios")
 	}
 
 	var buildPath string
@@ -228,20 +216,21 @@ func printcmd(format string, args ...interface{}) {
 
 // "Build flags", used by multiple commands.
 var (
-	buildA          bool   // -a
-	buildI          bool   // -i
-	buildN          bool   // -n
-	buildV          bool   // -v
-	buildX          bool   // -x
-	buildO          string // -o
-	buildGcflags    string // -gcflags
-	buildLdflags    string // -ldflags
-	buildTarget     string // -target
-	buildTrimpath   bool   // -trimpath
-	buildWork       bool   // -work
-	buildBundleID   string // -bundleid
-	buildIOSVersion string // -iosversion
-	buildAndroidAPI int    // -androidapi
+	buildA          bool        // -a
+	buildI          bool        // -i
+	buildN          bool        // -n
+	buildV          bool        // -v
+	buildX          bool        // -x
+	buildO          string      // -o
+	buildGcflags    string      // -gcflags
+	buildLdflags    string      // -ldflags
+	buildTarget     string      // -target
+	buildTrimpath   bool        // -trimpath
+	buildWork       bool        // -work
+	buildBundleID   string      // -bundleid
+	buildIOSVersion string      // -iosversion
+	buildAndroidAPI int         // -androidapi
+	buildTags       stringsFlag // -tags
 )
 
 func addBuildFlags(cmd *command) {
@@ -256,7 +245,7 @@ func addBuildFlags(cmd *command) {
 	cmd.flag.BoolVar(&buildA, "a", false, "")
 	cmd.flag.BoolVar(&buildI, "i", false, "")
 	cmd.flag.BoolVar(&buildTrimpath, "trimpath", false, "")
-	cmd.flag.Var((*stringsFlag)(&ctx.BuildTags), "tags", "")
+	cmd.flag.Var(&buildTags, "tags", "")
 }
 
 func addBuildFlagsNVXWork(cmd *command) {
@@ -299,8 +288,16 @@ func goCmd(subcmd string, srcs []string, env []string, args ...string) error {
 		goBin(),
 		subcmd,
 	)
-	if len(ctx.BuildTags) > 0 {
-		cmd.Args = append(cmd.Args, "-tags", strings.Join(ctx.BuildTags, " "))
+	tags := buildTags
+	targetOS, _, err := parseBuildTarget(buildTarget)
+	if err != nil {
+		return err
+	}
+	if targetOS == "darwin" {
+		tags = append(tags, "ios")
+	}
+	if len(tags) > 0 {
+		cmd.Args = append(cmd.Args, "-tags", strings.Join(tags, " "))
 	}
 	if buildV {
 		cmd.Args = append(cmd.Args, "-v")

@@ -18,8 +18,6 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-// ctx in build.go
-
 var cmdBind = &command{
 	run:   runBind,
 	Name:  "bind",
@@ -81,12 +79,6 @@ func runBind(cmd *command) error {
 		return fmt.Errorf(`invalid -target=%q: %v`, buildTarget, err)
 	}
 
-	// TODO(hajimehoshi): ctx is now used only for recording build tags in bind. Remove this.
-	oldCtx := ctx
-	defer func() {
-		ctx = oldCtx
-	}()
-
 	if bindJavaPkg != "" && targetOS != "android" {
 		return fmt.Errorf("-javapkg is supported only for android target")
 	}
@@ -98,9 +90,6 @@ func runBind(cmd *command) error {
 		if _, err := ndkRoot(); err != nil {
 			return err
 		}
-	}
-	if targetOS == "darwin" {
-		ctx.BuildTags = append(ctx.BuildTags, "ios")
 	}
 
 	var gobind string
@@ -232,8 +221,12 @@ func writeFile(filename string, generate func(io.Writer) error) error {
 func packagesConfig(targetOS string) *packages.Config {
 	config := &packages.Config{}
 	config.Env = append(os.Environ(), "GOARCH=arm", "GOOS="+targetOS)
-	if len(ctx.BuildTags) > 0 {
-		config.BuildFlags = []string{"-tags=" + strings.Join(ctx.BuildTags, ",")}
+	tags := buildTags
+	if targetOS == "darwin" {
+		tags = append(tags, "ios")
+	}
+	if len(tags) > 0 {
+		config.BuildFlags = []string{"-tags=" + strings.Join(tags, ",")}
 	}
 	return config
 }
