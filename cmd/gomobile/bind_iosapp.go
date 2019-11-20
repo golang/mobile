@@ -24,9 +24,8 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 	)
 	cmd.Env = append(cmd.Env, "GOOS=darwin")
 	cmd.Env = append(cmd.Env, "CGO_ENABLED=1")
-	if len(ctx.BuildTags) > 0 {
-		cmd.Args = append(cmd.Args, "-tags="+strings.Join(ctx.BuildTags, ","))
-	}
+	tags := append(buildTags, "ios")
+	cmd.Args = append(cmd.Args, "-tags="+strings.Join(tags, ","))
 	if bindPrefix != "" {
 		cmd.Args = append(cmd.Args, "-prefix="+bindPrefix)
 	}
