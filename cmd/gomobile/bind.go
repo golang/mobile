@@ -116,7 +116,7 @@ func runBind(cmd *command) error {
 	var pkgs []*packages.Package
 	switch len(args) {
 	case 0:
-		pkgs, err = packages.Load(packagesConfig(targetOS), cwd)
+		pkgs, err = packages.Load(packagesConfig(targetOS), ".")
 	default:
 		pkgs, err = importPackages(args, targetOS)
 	}

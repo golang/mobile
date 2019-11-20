@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
+	"path"
 	"strings"
 )
 
@@ -43,7 +43,7 @@ func runInstall(cmd *command) error {
 		`adb`,
 		`install`,
 		`-r`,
-		androidPkgName(filepath.Base(pkg.Dir))+`.apk`,
+		androidPkgName(path.Base(pkg.PkgPath))+`.apk`,
 	)
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
