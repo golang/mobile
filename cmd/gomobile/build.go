@@ -194,16 +194,6 @@ func extractPkgs(nm string, path string) (map[string]bool, error) {
 	return nmpkgs, nil
 }
 
-func importsApp(pkg *build.Package) error {
-	// Building a program, make sure it is appropriate for mobile.
-	for _, path := range pkg.Imports {
-		if path == "golang.org/x/mobile/app" {
-			return nil
-		}
-	}
-	return fmt.Errorf(`%s does not import "golang.org/x/mobile/app"`, pkg.ImportPath)
-}
-
 var xout io.Writer = os.Stderr
 
 func printcmd(format string, args ...interface{}) {
