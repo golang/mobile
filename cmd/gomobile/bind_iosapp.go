@@ -37,7 +37,6 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 	}
 
 	srcDir := filepath.Join(tmpdir, "src", "gobind")
-	gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
 
 	name := pkgs[0].Name
 	title := strings.Title(name)
@@ -59,8 +58,10 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 
 	for _, arch := range archs {
 		env := darwinEnv[arch]
+		// Add the generated packages to GOPATH for reverse bindings.
+		gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
 		env = append(env, gopath)
-		path, err := goIOSBindArchive(name, env)
+		path, err := goIOSBindArchive(name, env, filepath.Join(tmpdir, "src"))
 		if err != nil {
 			return fmt.Errorf("darwin-%s: %v", arch, err)
 		}
@@ -174,14 +175,13 @@ var iosModuleMapTmpl = template.Must(template.New("iosmmap").Parse(`framework mo
     export *
 }`))
 
-func goIOSBindArchive(name string, env []string) (string, error) {
+func goIOSBindArchive(name string, env []string, gosrc string) (string, error) {
 	arch := getenv(env, "GOARCH")
 	archive := filepath.Join(tmpdir, name+"-"+arch+".a")
-	err := goBuild("gobind", env, "-buildmode=c-archive", "-o", archive)
+	err := goBuildAt(gosrc, "./gobind", env, "-buildmode=c-archive", "-o", archive)
 	if err != nil {
 		return "", err
 	}
-
 	return archive, nil
 }
 
