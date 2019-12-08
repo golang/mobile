@@ -7,16 +7,16 @@ package main
 import (
 	"errors"
 	"fmt"
-	"go/build"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
-)
+	"strings"
 
-// ctx, pkg, tmpdir in build.go
+	"golang.org/x/tools/go/packages"
+)
 
 var cmdBind = &command{
 	run:   runBind,
@@ -97,28 +97,17 @@ func runBind(cmd *command) error {
 		return fmt.Errorf(`invalid -target=%q: %v`, buildTarget, err)
 	}
 
-	oldCtx := ctx
-	defer func() {
-		ctx = oldCtx
-	}()
-	ctx.GOARCH = "arm"
-	ctx.GOOS = targetOS
-
-	if bindJavaPkg != "" && ctx.GOOS != "android" {
+	if bindJavaPkg != "" && targetOS != "android" {
 		return fmt.Errorf("-javapkg is supported only for android target")
 	}
-	if bindPrefix != "" && ctx.GOOS != "darwin" {
+	if bindPrefix != "" && targetOS != "darwin" {
 		return fmt.Errorf("-prefix is supported only for ios target")
 	}
 
-	if ctx.GOOS == "android" {
+	if targetOS == "android" {
 		if _, err := ndkRoot(); err != nil {
 			return err
 		}
-	}
-
-	if ctx.GOOS == "darwin" {
-		ctx.BuildTags = append(ctx.BuildTags, "ios")
 	}
 
 	var gobind string
@@ -131,13 +120,12 @@ func runBind(cmd *command) error {
 		gobind = "gobind"
 	}
 
-	var pkgs []*build.Package
+	var pkgs []*packages.Package
 	switch len(args) {
 	case 0:
-		pkgs = make([]*build.Package, 1)
-		pkgs[0], err = ctx.ImportDir(cwd, build.ImportComment)
+		pkgs, err = packages.Load(packagesConfig(targetOS), ".")
 	default:
-		pkgs, err = importPackages(args)
+		pkgs, err = importPackages(args, targetOS)
 	}
 	if err != nil {
 		return err
@@ -146,7 +134,7 @@ func runBind(cmd *command) error {
 	// check if any of the package is main
 	for _, pkg := range pkgs {
 		if pkg.Name == "main" {
-			return fmt.Errorf("binding 'main' package (%s) is not supported", pkg.ImportComment)
+			return fmt.Errorf("binding 'main' package (%s) is not supported", pkg.PkgPath)
 		}
 	}
 
@@ -163,16 +151,13 @@ func runBind(cmd *command) error {
 	}
 }
 
-func importPackages(args []string) ([]*build.Package, error) {
-	pkgs := make([]*build.Package, len(args))
-	for i, a := range args {
-		a = path.Clean(a)
-		var err error
-		if pkgs[i], err = ctx.Import(a, cwd, build.ImportComment); err != nil {
-			return nil, fmt.Errorf("package %q: %v", a, err)
-		}
+func importPackages(args []string, targetOS string) ([]*packages.Package, error) {
+	config := packagesConfig(targetOS)
+	var cleaned []string
+	for _, a := range args {
+		cleaned = append(cleaned, path.Clean(a))
 	}
-	return pkgs, nil
+	return packages.Load(config, cleaned...)
 }
 
 var (
@@ -254,4 +239,17 @@ func writeFile(filename string, generate func(io.Writer) error) error {
 	}()
 
 	return generate(f)
+}
+
+func packagesConfig(targetOS string) *packages.Config {
+	config := &packages.Config{}
+	config.Env = append(os.Environ(), "GOARCH=arm", "GOOS="+targetOS)
+	tags := buildTags
+	if targetOS == "darwin" {
+		tags = append(tags, "ios")
+	}
+	if len(tags) > 0 {
+		config.BuildFlags = []string{"-tags=" + strings.Join(tags, ",")}
+	}
+	return config
 }

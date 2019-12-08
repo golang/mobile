@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
+	"path"
 	"strings"
 )
 
@@ -33,7 +33,8 @@ func runInstall(cmd *command) error {
 	if !strings.HasPrefix(buildTarget, "android") {
 		return fmt.Errorf("install is not supported for -target=%s", buildTarget)
 	}
-	if err := runBuild(cmd); err != nil {
+	pkg, err := runBuildImpl(cmd)
+	if err != nil {
 		return err
 	}
 
@@ -42,7 +43,7 @@ func runInstall(cmd *command) error {
 		`adb`,
 		`install`,
 		`-r`,
-		androidPkgName(filepath.Base(pkg.Dir))+`.apk`,
+		androidPkgName(path.Base(pkg.PkgPath))+`.apk`,
 	)
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
