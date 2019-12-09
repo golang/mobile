@@ -57,6 +57,10 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 	cmd = exec.Command("xcrun", "lipo", "-create")
 
 	for _, arch := range archs {
+		if err := writeGoMod("darwin", arch); err != nil {
+			return err
+		}
+
 		env := darwinEnv[arch]
 		// Add the generated packages to GOPATH for reverse bindings.
 		gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
@@ -178,8 +182,6 @@ var iosModuleMapTmpl = template.Must(template.New("iosmmap").Parse(`framework mo
 func goIOSBindArchive(name string, env []string, gosrc string) (string, error) {
 	arch := getenv(env, "GOARCH")
 	archive := filepath.Join(tmpdir, name+"-"+arch+".a")
-	// gobind-bind does not support modules yet.
-	env = append(env, "GO111MODULE=off")
 	err := goBuildAt(gosrc, "./gobind", env, "-buildmode=c-archive", "-o", archive)
 	if err != nil {
 		return "", err
