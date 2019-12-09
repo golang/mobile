@@ -178,6 +178,8 @@ var iosModuleMapTmpl = template.Must(template.New("iosmmap").Parse(`framework mo
 func goIOSBindArchive(name string, env []string, gosrc string) (string, error) {
 	arch := getenv(env, "GOARCH")
 	archive := filepath.Join(tmpdir, name+"-"+arch+".a")
+	// gobind-bind does not support modules yet.
+	env = append(env, "GO111MODULE=off")
 	err := goBuildAt(gosrc, "./gobind", env, "-buildmode=c-archive", "-o", archive)
 	if err != nil {
 		return "", err
