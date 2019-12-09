@@ -5,6 +5,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -15,6 +17,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"golang.org/x/mod/modfile"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -102,13 +105,10 @@ func runBind(cmd *command) error {
 		gobind = "gobind"
 	}
 
-	var pkgs []*packages.Package
-	switch len(args) {
-	case 0:
-		pkgs, err = packages.Load(packagesConfig(targetOS), ".")
-	default:
-		pkgs, err = importPackages(args, targetOS)
+	if len(args) == 0 {
+		args = append(args, ".")
 	}
+	pkgs, err := importPackages(args, targetOS)
 	if err != nil {
 		return err
 	}
@@ -196,8 +196,7 @@ func writeFile(filename string, generate func(io.Writer) error) error {
 		fmt.Fprintf(os.Stderr, "write %s\n", filename)
 	}
 
-	err := mkdir(filepath.Dir(filename))
-	if err != nil {
+	if err := mkdir(filepath.Dir(filename)); err != nil {
 		return err
 	}
 
@@ -229,4 +228,98 @@ func packagesConfig(targetOS string) *packages.Config {
 		config.BuildFlags = []string{"-tags=" + strings.Join(tags, ",")}
 	}
 	return config
+}
+
+// getModuleVersions returns a module information at the directory src.
+func getModuleVersions(targetOS string, targetArch string, src string) (*modfile.File, error) {
+	cmd := exec.Command(goBin(), "list")
+	cmd.Env = append(os.Environ(), "GOOS="+targetOS, "GOARCH="+targetArch)
+
+	tags := buildTags
+	if targetOS == "darwin" {
+		tags = append(tags, "ios")
+	}
+	cmd.Args = append(cmd.Args, "-m", "-json", "-tags="+strings.Join(tags, ","), "all")
+	cmd.Dir = src
+
+	output, err := cmd.Output()
+	if err != nil {
+		// Module information is not available at src.
+		return nil, nil
+	}
+
+	type Module struct {
+		Path    string
+		Version string
+		Dir     string
+		Replace *Module
+	}
+
+	f := &modfile.File{}
+	f.AddModuleStmt("gobind")
+	e := json.NewDecoder(bytes.NewReader(output))
+	for {
+		var mod *Module
+		err := e.Decode(&mod)
+		if err != nil && err != io.EOF {
+			return nil, err
+		}
+		if mod != nil {
+			switch {
+			case mod.Replace != nil:
+				f.AddReplace(mod.Path, mod.Version, mod.Replace.Path, mod.Replace.Version)
+			case mod.Version == "":
+				// When the version part is empty, the module is local and mod.Dir represents the location.
+				f.AddReplace(mod.Path, "", mod.Dir, "")
+			default:
+				f.AddRequire(mod.Path, mod.Version)
+			}
+		}
+		if err == io.EOF {
+			break
+		}
+	}
+	return f, nil
+}
+
+// writeGoMod writes go.mod file at $WORK/src when Go modules are used.
+func writeGoMod(targetOS string, targetArch string) error {
+	m, err := areGoModulesUsed()
+	if err != nil {
+		return err
+	}
+	// If Go modules are not used, go.mod should not be created because the dependencies might not be compatible with Go modules.
+	if !m {
+		return nil
+	}
+
+	return writeFile(filepath.Join(tmpdir, "src", "go.mod"), func(w io.Writer) error {
+		f, err := getModuleVersions(targetOS, targetArch, ".")
+		if err != nil {
+			return err
+		}
+		if f == nil {
+			return nil
+		}
+		bs, err := f.Format()
+		if err != nil {
+			return err
+		}
+		if _, err := w.Write(bs); err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+func areGoModulesUsed() (bool, error) {
+	out, err := exec.Command(goBin(), "env", "GOMOD").Output()
+	if err != nil {
+		return false, err
+	}
+	outstr := strings.TrimSpace(string(out))
+	if outstr == "" {
+		return false, nil
+	}
+	return true, nil
 }

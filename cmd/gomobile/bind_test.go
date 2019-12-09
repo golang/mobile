@@ -6,7 +6,9 @@ package main
 
 import (
 	"bytes"
+	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -179,7 +181,8 @@ func TestBindIOS(t *testing.T) {
 var bindAndroidTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
 WORK=$WORK
 GOOS=android CGO_ENABLED=1 gobind -lang=go,java -outdir=$WORK{{if .JavaPkg}} -javapkg={{.JavaPkg}}{{end}} golang.org/x/mobile/asset
-PWD=$WORK/src GOOS=android GOARCH=arm CC=$NDK_PATH/toolchains/llvm/prebuilt/{{.NDKARCH}}/bin/armv7a-linux-androideabi16-clang CXX=$NDK_PATH/toolchains/llvm/prebuilt/{{.NDKARCH}}/bin/armv7a-linux-androideabi16-clang++ CGO_ENABLED=1 GOARM=7 GOPATH=$WORK:$GOPATH GO111MODULE=off go build -x -buildmode=c-shared -o=$WORK/android/src/main/jniLibs/armeabi-v7a/libgojni.so ./gobind
+mkdir -p $WORK/src
+PWD=$WORK/src GOOS=android GOARCH=arm CC=$NDK_PATH/toolchains/llvm/prebuilt/{{.NDKARCH}}/bin/armv7a-linux-androideabi16-clang CXX=$NDK_PATH/toolchains/llvm/prebuilt/{{.NDKARCH}}/bin/armv7a-linux-androideabi16-clang++ CGO_ENABLED=1 GOARM=7 GOPATH=$WORK:$GOPATH go build -x -buildmode=c-shared -o=$WORK/android/src/main/jniLibs/armeabi-v7a/libgojni.so ./gobind
 PWD=$WORK/java javac -d $WORK/javac-output -source 1.7 -target 1.7 -bootclasspath {{.AndroidPlatform}}/android.jar *.java
 jar c -C $WORK/javac-output .
 `))
@@ -187,7 +190,8 @@ jar c -C $WORK/javac-output .
 var bindIOSTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
 WORK=$WORK
 GOOS=darwin CGO_ENABLED=1 gobind -lang=go,objc -outdir=$WORK -tags=ios{{if .Prefix}} -prefix={{.Prefix}}{{end}} golang.org/x/mobile/asset
-PWD=$WORK/src GOARM=7 GOOS=darwin GOARCH=arm CC=iphoneos-clang CXX=iphoneos-clang++ CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 -fembed-bitcode -arch armv7 CGO_CXXFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 -fembed-bitcode -arch armv7 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 -fembed-bitcode -arch armv7 CGO_ENABLED=1 GOPATH=$WORK:$GOPATH GO111MODULE=off go build -tags ios -x -buildmode=c-archive -o $WORK/asset-arm.a ./gobind
+mkdir -p $WORK/src
+PWD=$WORK/src GOARM=7 GOOS=darwin GOARCH=arm CC=iphoneos-clang CXX=iphoneos-clang++ CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 -fembed-bitcode -arch armv7 CGO_CXXFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 -fembed-bitcode -arch armv7 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 -fembed-bitcode -arch armv7 CGO_ENABLED=1 GOPATH=$WORK:$GOPATH go build -tags ios -x -buildmode=c-archive -o $WORK/asset-arm.a ./gobind
 rm -r -f "Asset.framework"
 mkdir -p Asset.framework/Versions/A/Headers
 ln -s A Asset.framework/Versions/Current
@@ -207,3 +211,60 @@ mkdir -p Asset.framework/Resources
 mkdir -p Asset.framework/Versions/A/Modules
 ln -s Versions/Current/Modules Asset.framework/Modules
 `))
+
+func TestBindWithGoModules(t *testing.T) {
+	if runtime.GOOS == "android" {
+		t.Skipf("gomobile and gobind are not available on %s", runtime.GOOS)
+	}
+
+	dir, err := ioutil.TempDir("", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	if out, err := exec.Command(goBin(), "build", "-o="+dir, "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
+		t.Fatalf("%v: %s", err, string(out))
+	}
+	if out, err := exec.Command(goBin(), "build", "-o="+dir, "golang.org/x/mobile/cmd/gomobile").CombinedOutput(); err != nil {
+		t.Fatalf("%v: %s", err, string(out))
+	}
+	path := dir
+	if p := os.Getenv("PATH"); p != "" {
+		path += string(filepath.ListSeparator) + p
+	}
+
+	for _, target := range []string{"android", "ios"} {
+		t.Run(target, func(t *testing.T) {
+			switch target {
+			case "android":
+				androidHome := os.Getenv("ANDROID_HOME")
+				if androidHome == "" {
+					t.Skip("ANDROID_HOME not found, skipping bind")
+				}
+				if _, err := androidAPIPath(); err != nil {
+					t.Skip("No android API platform found in $ANDROID_HOME, skipping bind")
+				}
+			case "ios":
+				if !xcodeAvailable() {
+					t.Skip("Xcode is missing")
+				}
+			}
+
+			var out string
+			switch target {
+			case "android":
+				out = filepath.Join(dir, "cgopkg.aar")
+			case "ios":
+				out = filepath.Join(dir, "Cgopkg.framework")
+			}
+			cmd := exec.Command(filepath.Join(dir, "gomobile"), "bind", "-target="+target, "-o="+out, "golang.org/x/mobile/bind/testdata/cgopkg")
+			cmd.Env = append(os.Environ(), "PATH="+path, "GO111MODULE=on")
+			var b bytes.Buffer
+			cmd.Stderr = &b
+			if err := cmd.Run(); err != nil {
+				t.Errorf("%v: %s", err, string(b.Bytes()))
+			}
+		})
+	}
+}
