@@ -51,13 +51,26 @@ func goAndroidBind(gobind string, pkgs []*packages.Package, androidArchs []strin
 	}
 
 	androidDir := filepath.Join(tmpdir, "android")
-
+	var cenv map[string]string
+	cenv = make(map[string]string)
+	if bindEnv != "" {
+		archEnvs := strings.Split(bindEnv, ",")
+		for _, archenv := range archEnvs {
+			args := strings.Split(archenv, "@")
+			if len(args) > 1 {
+				cenv[args[0]] = args[1]
+			}
+		}
+	}
 	// Generate binding code and java source code only when processing the first package.
 	for _, arch := range androidArchs {
 		env := androidEnv[arch]
 		// Add the generated packages to GOPATH for reverse bindings.
 		gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
 		env = append(env, gopath)
+		if cenv[arch] != "" {
+			env = append(env, cenv[arch]) // Add the Cross Compile PATH Env
+		}
 		// gomobile-bind does not support modules yet.
 		env = append(env, "GO111MODULE=off")
 		toolchain := ndk.Toolchain(arch)

@@ -56,16 +56,32 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 
 	cmd = exec.Command("xcrun", "lipo", "-create")
 
+	var cenv map[string]string
+	cenv = make(map[string]string)
+	if bindEnv != "" {
+		archEnvs := strings.Split(bindEnv, ",")
+		for _, archenv := range archEnvs {
+			args := strings.Split(archenv, "@")
+			if len(args) > 1 {
+				cenv[args[0]] = args[1]
+			}
+		}
+	}
 	for _, arch := range archs {
 		env := darwinEnv[arch]
 		// Add the generated packages to GOPATH for reverse bindings.
 		gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
 		env = append(env, gopath)
+    
+		if cenv[arch] != "" {
+			env = append(env, cenv[arch]) // Add the Cross Compile PATH Env
+		}
 		path, err := goIOSBindArchive(name, env, filepath.Join(tmpdir, "src"))
 		if err != nil {
 			return fmt.Errorf("darwin-%s: %v", arch, err)
 		}
 		cmd.Args = append(cmd.Args, "-arch", archClang(arch), path)
+
 	}
 
 	// Build static framework output directory.
