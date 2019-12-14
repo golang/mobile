@@ -64,6 +64,8 @@ func run() {
 			packages.NeedImports | packages.NeedDeps |
 			packages.NeedTypes | packages.NeedSyntax | packages.NeedTypesInfo,
 		BuildFlags: []string{"-tags", strings.Join(strings.Split(*tags, ","), " ")},
+
+		Env: append(os.Environ(), "CGO_ENABLED=0"),
 	}
 
 	// Call Load twice to warm the cache. There is a known issue that the result of Load
