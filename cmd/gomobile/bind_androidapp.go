@@ -71,7 +71,8 @@ func goAndroidBind(gobind string, pkgs []*packages.Package, androidArchs []strin
 		if cenv[arch] != "" {
 			env = append(env, cenv[arch]) // Add the Cross Compile PATH Env
 		}
-
+		// gomobile-bind does not support modules yet.
+		env = append(env, "GO111MODULE=off")
 		toolchain := ndk.Toolchain(arch)
 
 		err := goBuildAt(
