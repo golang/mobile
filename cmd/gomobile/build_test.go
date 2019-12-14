@@ -86,10 +86,10 @@ func TestAndroidBuild(t *testing.T) {
 		os.Setenv("HOMEDRIVE", "C:")
 	}
 	cmdBuild.flag.Parse([]string{"golang.org/x/mobile/example/basic"})
-	oldTags := ctx.BuildTags
-	ctx.BuildTags = []string{"tag1"}
+	oldTags := buildTags
+	buildTags = []string{"tag1"}
 	defer func() {
-		ctx.BuildTags = oldTags
+		buildTags = oldTags
 	}()
 	err := runBuild(cmdBuild)
 	if err != nil {
