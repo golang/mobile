@@ -9,28 +9,12 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
 	"text/template"
 )
-
-func TestImportPackagesPathCleaning(t *testing.T) {
-	if runtime.GOOS == "android" {
-		t.Skip("not available on Android")
-	}
-	slashPath := "golang.org/x/mobile/example/bind/hello/"
-	pkgs, err := importPackages([]string{slashPath}, runtime.GOOS)
-	if err != nil {
-		t.Fatal(err)
-	}
-	p := pkgs[0]
-	if c := path.Clean(slashPath); p.PkgPath != c {
-		t.Errorf("expected %s; got %s", c, p.PkgPath)
-	}
-}
 
 func TestBindAndroid(t *testing.T) {
 	androidHome := os.Getenv("ANDROID_HOME")
@@ -258,12 +242,28 @@ func TestBindWithGoModules(t *testing.T) {
 			case "ios":
 				out = filepath.Join(dir, "Cgopkg.framework")
 			}
-			cmd := exec.Command(filepath.Join(dir, "gomobile"), "bind", "-target="+target, "-o="+out, "golang.org/x/mobile/bind/testdata/cgopkg")
-			cmd.Env = append(os.Environ(), "PATH="+path, "GO111MODULE=on")
-			var b bytes.Buffer
-			cmd.Stderr = &b
-			if err := cmd.Run(); err != nil {
-				t.Errorf("%v: %s", err, string(b.Bytes()))
+
+			// Absolute path
+			{
+				cmd := exec.Command(filepath.Join(dir, "gomobile"), "bind", "-target="+target, "-o="+out, "golang.org/x/mobile/bind/testdata/cgopkg")
+				cmd.Env = append(os.Environ(), "PATH="+path, "GO111MODULE=on")
+				var b bytes.Buffer
+				cmd.Stderr = &b
+				if err := cmd.Run(); err != nil {
+					t.Errorf("%v: %s", err, string(b.Bytes()))
+				}
+			}
+
+			// Relative path
+			{
+				cmd := exec.Command(filepath.Join(dir, "gomobile"), "bind", "-target="+target, "-o="+out, "./bind/testdata/cgopkg")
+				cmd.Env = append(os.Environ(), "PATH="+path, "GO111MODULE=on")
+				cmd.Dir = filepath.Join("..", "..")
+				var b bytes.Buffer
+				cmd.Stderr = &b
+				if err := cmd.Run(); err != nil {
+					t.Errorf("%v: %s", err, string(b.Bytes()))
+				}
 			}
 		})
 	}
