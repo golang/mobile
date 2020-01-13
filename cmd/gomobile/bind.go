@@ -13,7 +13,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -135,11 +134,7 @@ func runBind(cmd *command) error {
 
 func importPackages(args []string, targetOS string) ([]*packages.Package, error) {
 	config := packagesConfig(targetOS)
-	var cleaned []string
-	for _, a := range args {
-		cleaned = append(cleaned, path.Clean(a))
-	}
-	return packages.Load(config, cleaned...)
+	return packages.Load(config, args...)
 }
 
 var (
