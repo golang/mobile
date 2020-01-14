@@ -94,7 +94,8 @@ func runGobind(t testing.TB, lang, pkg, goos string, exported *packagestest.Expo
 	cmd.Dir = exported.Config.Dir
 	cmd.Env = exported.Config.Env
 	if goos != "" {
-		cmd.Env = append(cmd.Env, "GOOS="+goos)
+		// Add CGO_ENABLED=1 explicitly since Cgo is disabled when GOOS is different from host OS.
+		cmd.Env = append(cmd.Env, "GOOS="+goos, "CGO_ENABLED=1")
 	}
 	if out, err := cmd.CombinedOutput(); err != nil {
 		var cmd string
