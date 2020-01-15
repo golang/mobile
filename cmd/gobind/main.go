@@ -15,7 +15,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"golang.org/x/mobile/internal/importers"
@@ -43,10 +42,6 @@ func main() {
 
 	run()
 	os.Exit(exitStatus)
-}
-
-func goBin() string {
-	return filepath.Join(runtime.GOROOT(), "bin", "go")
 }
 
 func run() {
@@ -129,7 +124,7 @@ func run() {
 		// Add a new directory to GOPATH where the file for reverse bindings exist, and recreate allPkg.
 		// It is because the current allPkg did not solve imports for reverse bindings.
 		var gopath string
-		if out, err := exec.Command(goBin(), "env", "GOPATH").Output(); err != nil {
+		if out, err := exec.Command("go", "env", "GOPATH").Output(); err != nil {
 			log.Fatal(err)
 		} else {
 			gopath = string(bytes.TrimSpace(out))
