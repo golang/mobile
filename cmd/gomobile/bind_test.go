@@ -201,7 +201,7 @@ func TestBindWithGoModules(t *testing.T) {
 		t.Skipf("gomobile and gobind are not available on %s", runtime.GOOS)
 	}
 
-	dir, err := ioutil.TempDir("", "")
+	dir, err := ioutil.TempDir("", "gomobile-test")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -243,27 +243,32 @@ func TestBindWithGoModules(t *testing.T) {
 				out = filepath.Join(dir, "Cgopkg.framework")
 			}
 
-			// Absolute path
-			{
-				cmd := exec.Command(filepath.Join(dir, "gomobile"), "bind", "-target="+target, "-o="+out, "golang.org/x/mobile/bind/testdata/cgopkg")
-				cmd.Env = append(os.Environ(), "PATH="+path, "GO111MODULE=on")
-				var b bytes.Buffer
-				cmd.Stderr = &b
-				if err := cmd.Run(); err != nil {
-					t.Errorf("%v: %s", err, string(b.Bytes()))
-				}
+			tests := []struct {
+				Name string
+				Path string
+				Dir  string
+			}{
+				{
+					Name: "Absolute Path",
+					Path: "golang.org/x/mobile/bind/testdata/cgopkg",
+				},
+				{
+					Name: "Relative Path",
+					Path: "./bind/testdata/cgopkg",
+					Dir:  filepath.Join("..", ".."),
+				},
 			}
 
-			// Relative path
-			{
-				cmd := exec.Command(filepath.Join(dir, "gomobile"), "bind", "-target="+target, "-o="+out, "./bind/testdata/cgopkg")
-				cmd.Env = append(os.Environ(), "PATH="+path, "GO111MODULE=on")
-				cmd.Dir = filepath.Join("..", "..")
-				var b bytes.Buffer
-				cmd.Stderr = &b
-				if err := cmd.Run(); err != nil {
-					t.Errorf("%v: %s", err, string(b.Bytes()))
-				}
+			for _, tc := range tests {
+				tc := tc
+				t.Run(tc.Name, func(t *testing.T) {
+					cmd := exec.Command(filepath.Join(dir, "gomobile"), "bind", "-target="+target, "-o="+out, tc.Path)
+					cmd.Env = append(os.Environ(), "PATH="+path, "GO111MODULE=on")
+					cmd.Dir = tc.Dir
+					if out, err := cmd.CombinedOutput(); err != nil {
+						t.Errorf("gomobile bind failed: %v\n%s", err, string(out))
+					}
+				})
 			}
 		})
 	}
