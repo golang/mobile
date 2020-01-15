@@ -6,6 +6,7 @@ package main
 
 import (
 	"bytes"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -33,7 +34,11 @@ func TestInit(t *testing.T) {
 	buildX = true
 
 	// Test that first GOPATH element is chosen correctly.
-	gopath = "/GOPATH1"
+	var err error
+	gopath, err = ioutil.TempDir("", "gomobile-test")
+	if err != nil {
+		t.Fatal(err)
+	}
 	paths := []string{gopath, "/path2", "/path3"}
 	if goos == "windows" {
 		gopath = filepath.ToSlash(`C:\GOPATH1`)
@@ -45,8 +50,7 @@ func TestInit(t *testing.T) {
 		os.Setenv("HOMEDRIVE", "C:")
 	}
 
-	err := runInit(cmdInit)
-	if err != nil {
+	if err := runInit(cmdInit); err != nil {
 		t.Log(buf.String())
 		t.Fatal(err)
 	}
@@ -64,7 +68,10 @@ func diffOutput(got string, wantTmpl *template.Template) (string, error) {
 	got = filepath.ToSlash(got)
 
 	wantBuf := new(bytes.Buffer)
-	data := defaultOutputData()
+	data, err := defaultOutputData()
+	if err != nil {
+		return "", err
+	}
 	if err := wantTmpl.Execute(wantBuf, data); err != nil {
 		return "", err
 	}
@@ -86,20 +93,27 @@ type outputData struct {
 	Xinfo     infoplistTmplData
 }
 
-func defaultOutputData() outputData {
+func defaultOutputData() (outputData, error) {
+	projPbxproj := new(bytes.Buffer)
+	if err := projPbxprojTmpl.Execute(projPbxproj, projPbxprojTmplData{
+		BitcodeEnabled: bitcodeEnabled,
+	}); err != nil {
+		return outputData{}, err
+	}
+
 	data := outputData{
 		GOOS:      goos,
 		GOARCH:    goarch,
 		GOPATH:    gopath,
 		NDKARCH:   archNDK(),
-		Xproj:     projPbxproj,
+		Xproj:     string(projPbxproj.Bytes()),
 		Xcontents: contentsJSON,
 		Xinfo:     infoplistTmplData{BundleID: "org.golang.todo.basic", Name: "Basic"},
 	}
 	if goos == "windows" {
 		data.EXE = ".exe"
 	}
-	return data
+	return data, nil
 }
 
 var initTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile

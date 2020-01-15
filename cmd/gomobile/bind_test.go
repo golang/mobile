@@ -67,12 +67,16 @@ func TestBindAndroid(t *testing.T) {
 		}
 		got := filepath.ToSlash(buf.String())
 
+		output, err := defaultOutputData()
+		if err != nil {
+			t.Fatal(err)
+		}
 		data := struct {
 			outputData
 			AndroidPlatform string
 			JavaPkg         string
 		}{
-			outputData:      defaultOutputData(),
+			outputData:      output,
 			AndroidPlatform: platform,
 			JavaPkg:         tc.javaPkg,
 		}
@@ -137,12 +141,19 @@ func TestBindIOS(t *testing.T) {
 		}
 		got := filepath.ToSlash(buf.String())
 
+		output, err := defaultOutputData()
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		data := struct {
 			outputData
-			Prefix string
+			Prefix         string
+			BitcodeEnabled bool
 		}{
-			outputData: defaultOutputData(),
-			Prefix:     tc.prefix,
+			outputData:     output,
+			Prefix:         tc.prefix,
+			BitcodeEnabled: bitcodeEnabled,
 		}
 
 		wantBuf := new(bytes.Buffer)
@@ -175,7 +186,7 @@ var bindIOSTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH
 WORK=$WORK
 GOOS=darwin CGO_ENABLED=1 gobind -lang=go,objc -outdir=$WORK -tags=ios{{if .Prefix}} -prefix={{.Prefix}}{{end}} golang.org/x/mobile/asset
 mkdir -p $WORK/src
-PWD=$WORK/src GOARM=7 GOOS=darwin GOARCH=arm CC=iphoneos-clang CXX=iphoneos-clang++ CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 -fembed-bitcode -arch armv7 CGO_CXXFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 -fembed-bitcode -arch armv7 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 -fembed-bitcode -arch armv7 CGO_ENABLED=1 GOPATH=$WORK:$GOPATH go build -tags ios -x -buildmode=c-archive -o $WORK/asset-arm.a ./gobind
+PWD=$WORK/src GOARM=7 GOOS=darwin GOARCH=arm CC=iphoneos-clang CXX=iphoneos-clang++ CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 {{if .BitcodeEnabled}}-fembed-bitcode {{end}}-arch armv7 CGO_CXXFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 {{if .BitcodeEnabled}}-fembed-bitcode {{end}}-arch armv7 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 {{if .BitcodeEnabled}}-fembed-bitcode {{end}}-arch armv7 CGO_ENABLED=1 GOPATH=$WORK:$GOPATH go build -tags ios -x -buildmode=c-archive -o $WORK/asset-arm.a ./gobind
 rm -r -f "Asset.framework"
 mkdir -p Asset.framework/Versions/A/Headers
 ln -s A Asset.framework/Versions/Current
