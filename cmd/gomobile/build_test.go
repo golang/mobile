@@ -208,10 +208,6 @@ func TestBuildWithGoModules(t *testing.T) {
 
 	for _, target := range []string{"android", "ios"} {
 		t.Run(target, func(t *testing.T) {
-			if target == "ios" {
-				t.Skip("gomobile-build doesn't work for iOS. see https://golang.org/issue/32963")
-			}
-
 			switch target {
 			case "android":
 				androidHome := os.Getenv("ANDROID_HOME")
