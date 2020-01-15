@@ -227,7 +227,7 @@ func packagesConfig(targetOS string) *packages.Config {
 
 // getModuleVersions returns a module information at the directory src.
 func getModuleVersions(targetOS string, targetArch string, src string) (*modfile.File, error) {
-	cmd := exec.Command(goBin(), "list")
+	cmd := exec.Command("go", "list")
 	cmd.Env = append(os.Environ(), "GOOS="+targetOS, "GOARCH="+targetArch)
 
 	tags := buildTags
@@ -308,7 +308,7 @@ func writeGoMod(targetOS string, targetArch string) error {
 }
 
 func areGoModulesUsed() (bool, error) {
-	out, err := exec.Command(goBin(), "env", "GOMOD").Output()
+	out, err := exec.Command("go", "env", "GOMOD").Output()
 	if err != nil {
 		return false, err
 	}
