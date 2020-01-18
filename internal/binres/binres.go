@@ -41,7 +41,7 @@
 //    [...node]
 //
 // Additional resources:
-// https://android.googlesource.com/platform/frameworks/base/+/master/include/androidfw/ResourceTypes.h
+// https://android.googlesource.com/platform/frameworks/base/+/master/libs/androidfw/include/androidfw/ResourceTypes.h
 // https://justanapplication.wordpress.com/2011/09/13/ (a series of articles, increment date)
 package binres
 
