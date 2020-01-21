@@ -263,7 +263,7 @@ func getModuleVersions(targetOS string, targetArch string, src string) (*modfile
 		if mod != nil {
 			switch {
 			case mod.Replace != nil:
-				f.AddReplace(mod.Path, mod.Version, mod.Replace.Path, mod.Replace.Version)
+				f.AddReplace(mod.Path, mod.Version, mod.Replace.Dir, mod.Replace.Version)
 			case mod.Version == "":
 				// When the version part is empty, the module is local and mod.Dir represents the location.
 				f.AddReplace(mod.Path, "", mod.Dir, "")
