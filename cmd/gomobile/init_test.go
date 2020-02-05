@@ -50,17 +50,67 @@ func TestInit(t *testing.T) {
 		os.Setenv("HOMEDRIVE", "C:")
 	}
 
-	if err := runInit(cmdInit); err != nil {
-		t.Log(buf.String())
+	emptymod, err := ioutil.TempDir("", "gomobile-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(emptymod)
+
+	// Create go.mod, but without Go files.
+	f, err := os.Create(filepath.Join(emptymod, "go.mod"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	if _, err := f.WriteString("module example.com/m\n"); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.Sync(); err != nil {
 		t.Fatal(err)
 	}
 
-	diff, err := diffOutput(buf.String(), initTmpl)
-	if err != nil {
-		t.Fatalf("computing diff failed: %v", err)
+	dirs := []struct {
+		dir  string
+		name string
+	}{
+		{
+			dir:  ".",
+			name: "current",
+		},
+		{
+			dir:  emptymod,
+			name: "emptymod",
+		},
 	}
-	if diff != "" {
-		t.Errorf("unexpected output:\n%s", diff)
+	for _, dir := range dirs {
+		dir := dir
+		t.Run(dir.name, func(t *testing.T) {
+			wd, err := os.Getwd()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Chdir(dir.dir); err != nil {
+				t.Fatal(err)
+			}
+			defer os.Chdir(wd)
+
+			if err := runInit(cmdInit); err != nil {
+				t.Log(buf.String())
+				t.Fatal(err)
+			}
+
+			if dir.name == "emptymod" {
+				return
+			}
+
+			diff, err := diffOutput(buf.String(), initTmpl)
+			if err != nil {
+				t.Fatalf("computing diff failed: %v", err)
+			}
+			if diff != "" {
+				t.Errorf("unexpected output:\n%s", diff)
+			}
+		})
 	}
 }
 
