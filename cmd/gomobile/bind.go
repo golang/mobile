@@ -263,17 +263,14 @@ func getModuleVersions(targetOS string, targetArch string, src string) (*modfile
 			return nil, err
 		}
 		if mod != nil {
-			switch {
-			case mod.Replace != nil:
+			if mod.Replace != nil {
 				p, v := mod.Replace.Path, mod.Replace.Version
 				if modfile.IsDirectoryPath(p) {
 					// replaced by a local directory
 					p = mod.Replace.Dir
 				}
 				f.AddReplace(mod.Path, mod.Version, p, v)
-			case mod.Main, mod.Path == "golang.org/x/mobile":
-				// We are binding this module or it has
-				// explicit dependency on golang.org/x/mobile.
+			} else {
 				// When the version part is empty, the module is local and mod.Dir represents the location.
 				if v := mod.Version; v == "" {
 					f.AddReplace(mod.Path, mod.Version, mod.Dir, "")
