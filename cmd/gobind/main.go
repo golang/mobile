@@ -15,7 +15,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"golang.org/x/mobile/internal/importers"
@@ -45,10 +44,6 @@ func main() {
 	os.Exit(exitStatus)
 }
 
-func goBin() string {
-	return filepath.Join(runtime.GOROOT(), "bin", "go")
-}
-
 func run() {
 	var langs []string
 	if *lang != "" {
@@ -57,6 +52,9 @@ func run() {
 		langs = []string{"go", "java", "objc"}
 	}
 
+	// We need to give appropriate environment variables like CC or CXX so that the returned packages no longer have errors.
+	// However, getting such environment variables is difficult or impossible so far.
+	// Gomobile can obtain such environment variables in env.go, but this logic assumes some condiitons gobind doesn't assume.
 	cfg := &packages.Config{
 		Mode: packages.NeedName | packages.NeedFiles |
 			packages.NeedImports | packages.NeedDeps |
@@ -131,7 +129,7 @@ func run() {
 		// Add a new directory to GOPATH where the file for reverse bindings exist, and recreate allPkg.
 		// It is because the current allPkg did not solve imports for reverse bindings.
 		var gopath string
-		if out, err := exec.Command(goBin(), "env", "GOPATH").Output(); err != nil {
+		if out, err := exec.Command("go", "env", "GOPATH").Output(); err != nil {
 			log.Fatal(err)
 		} else {
 			gopath = string(bytes.TrimSpace(out))
@@ -150,10 +148,8 @@ func run() {
 	typePkgs := make([]*types.Package, len(allPkg))
 	astPkgs := make([][]*ast.File, len(allPkg))
 	for i, pkg := range allPkg {
-		if len(pkg.Errors) > 0 {
-			errorf("%v", pkg.Errors)
-			return
-		}
+		// Ignore pkg.Errors. pkg.Errors can exist when Cgo is used, but this should not affect the result.
+		// See the discussion at golang/go#36547.
 		typePkgs[i] = pkg.Types
 		astPkgs[i] = pkg.Syntax
 	}

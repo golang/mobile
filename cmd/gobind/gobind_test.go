@@ -78,7 +78,7 @@ func testMain(m *testing.M) int {
 	bin.Close()
 	defer os.Remove(bin.Name())
 	if runtime.GOOS != "android" {
-		if out, err := exec.Command(goBin(), "build", "-o", bin.Name(), "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
+		if out, err := exec.Command("go", "build", "-o", bin.Name(), "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
 			log.Fatalf("gobind build failed: %v: %s", err, out)
 		}
 		gobindBin = bin.Name()
@@ -94,7 +94,8 @@ func runGobind(t testing.TB, lang, pkg, goos string, exported *packagestest.Expo
 	cmd.Dir = exported.Config.Dir
 	cmd.Env = exported.Config.Env
 	if goos != "" {
-		cmd.Env = append(cmd.Env, "GOOS="+goos)
+		// Add CGO_ENABLED=1 explicitly since Cgo is disabled when GOOS is different from host OS.
+		cmd.Env = append(cmd.Env, "GOOS="+goos, "CGO_ENABLED=1")
 	}
 	if out, err := cmd.CombinedOutput(); err != nil {
 		var cmd string
