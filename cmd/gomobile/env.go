@@ -247,12 +247,12 @@ func envClang(sdkName string) (clang, cflags string, err error) {
 	sdk := strings.TrimSpace(string(out))
 	fmt.Println(clang)
 	fmt.Println(sdk)
-	if inSDKname == "macosx15" {
-		clang = "/Users/Yanfeng/Downloads/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang"
-		// sdk = "/Users/Yanfeng/Downloads/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS13.0.sdk"
-		sdk = "/Users/Yanfeng/Downloads/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk"
-		// sdk = "/Users/Yanfeng/Downloads/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator13.0.sdk"
-	}
+	// if inSDKname == "macosx15" {
+	// 	clang = "/Users/Yanfeng/Downloads/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang"
+	// 	// sdk = "/Users/Yanfeng/Downloads/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS13.0.sdk"
+	// 	sdk = "/Users/Yanfeng/Downloads/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk"
+	// 	// sdk = "/Users/Yanfeng/Downloads/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator13.0.sdk"
+	// }
 	fmt.Println(clang)
 	fmt.Println(sdk)
 	return clang, "-isysroot " + sdk, nil
