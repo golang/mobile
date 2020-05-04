@@ -18,8 +18,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
-	"runtime"
 	"unicode"
 	"unicode/utf8"
 )
@@ -86,12 +84,8 @@ func main() {
 	os.Exit(2)
 }
 
-func goBin() string {
-	return filepath.Join(runtime.GOROOT(), "bin", "go")
-}
-
 func determineGoVersion() error {
-	goVersionOut, err := exec.Command(goBin(), "version").CombinedOutput()
+	goVersionOut, err := exec.Command("go", "version").CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("'go version' failed: %v, %s", err, goVersionOut)
 	}

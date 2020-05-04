@@ -6,6 +6,7 @@ package main
 
 import (
 	"bytes"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -33,7 +34,11 @@ func TestInit(t *testing.T) {
 	buildX = true
 
 	// Test that first GOPATH element is chosen correctly.
-	gopath = "/GOPATH1"
+	var err error
+	gopath, err = ioutil.TempDir("", "gomobile-test")
+	if err != nil {
+		t.Fatal(err)
+	}
 	paths := []string{gopath, "/path2", "/path3"}
 	if goos == "windows" {
 		gopath = filepath.ToSlash(`C:\GOPATH1`)
@@ -45,18 +50,67 @@ func TestInit(t *testing.T) {
 		os.Setenv("HOMEDRIVE", "C:")
 	}
 
-	err := runInit(cmdInit)
+	emptymod, err := ioutil.TempDir("", "gomobile-test")
 	if err != nil {
-		t.Log(buf.String())
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(emptymod)
+
+	// Create go.mod, but without Go files.
+	f, err := os.Create(filepath.Join(emptymod, "go.mod"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	if _, err := f.WriteString("module example.com/m\n"); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.Sync(); err != nil {
 		t.Fatal(err)
 	}
 
-	diff, err := diffOutput(buf.String(), initTmpl)
-	if err != nil {
-		t.Fatalf("computing diff failed: %v", err)
+	dirs := []struct {
+		dir  string
+		name string
+	}{
+		{
+			dir:  ".",
+			name: "current",
+		},
+		{
+			dir:  emptymod,
+			name: "emptymod",
+		},
 	}
-	if diff != "" {
-		t.Errorf("unexpected output:\n%s", diff)
+	for _, dir := range dirs {
+		dir := dir
+		t.Run(dir.name, func(t *testing.T) {
+			wd, err := os.Getwd()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Chdir(dir.dir); err != nil {
+				t.Fatal(err)
+			}
+			defer os.Chdir(wd)
+
+			if err := runInit(cmdInit); err != nil {
+				t.Log(buf.String())
+				t.Fatal(err)
+			}
+
+			if dir.name == "emptymod" {
+				return
+			}
+
+			diff, err := diffOutput(buf.String(), initTmpl)
+			if err != nil {
+				t.Fatalf("computing diff failed: %v", err)
+			}
+			if diff != "" {
+				t.Errorf("unexpected output:\n%s", diff)
+			}
+		})
 	}
 }
 
@@ -64,7 +118,10 @@ func diffOutput(got string, wantTmpl *template.Template) (string, error) {
 	got = filepath.ToSlash(got)
 
 	wantBuf := new(bytes.Buffer)
-	data := defaultOutputData()
+	data, err := defaultOutputData()
+	if err != nil {
+		return "", err
+	}
 	if err := wantTmpl.Execute(wantBuf, data); err != nil {
 		return "", err
 	}
@@ -86,27 +143,34 @@ type outputData struct {
 	Xinfo     infoplistTmplData
 }
 
-func defaultOutputData() outputData {
+func defaultOutputData() (outputData, error) {
+	projPbxproj := new(bytes.Buffer)
+	if err := projPbxprojTmpl.Execute(projPbxproj, projPbxprojTmplData{
+		BitcodeEnabled: bitcodeEnabled,
+	}); err != nil {
+		return outputData{}, err
+	}
+
 	data := outputData{
 		GOOS:      goos,
 		GOARCH:    goarch,
 		GOPATH:    gopath,
 		NDKARCH:   archNDK(),
-		Xproj:     projPbxproj,
+		Xproj:     string(projPbxproj.Bytes()),
 		Xcontents: contentsJSON,
 		Xinfo:     infoplistTmplData{BundleID: "org.golang.todo.basic", Name: "Basic"},
 	}
 	if goos == "windows" {
 		data.EXE = ".exe"
 	}
-	return data
+	return data, nil
 }
 
 var initTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
 rm -r -f "$GOMOBILE"
 mkdir -p $GOMOBILE
 WORK={{.GOPATH}}/pkg/gomobile/work
-GO111MODULE=off go install -x golang.org/x/mobile/cmd/gobind
+go install -x golang.org/x/mobile/cmd/gobind
 cp $OPENAL_PATH/include/AL/al.h $GOMOBILE/include/AL/al.h
 mkdir -p $GOMOBILE/include/AL
 cp $OPENAL_PATH/include/AL/alc.h $GOMOBILE/include/AL/alc.h

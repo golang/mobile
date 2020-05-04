@@ -9,15 +9,12 @@ import (
 	"flag"
 	"fmt"
 	"go/ast"
-	"go/build"
-	"go/importer"
 	"go/types"
 	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"golang.org/x/mobile/internal/importers"
@@ -47,10 +44,6 @@ func main() {
 	os.Exit(exitStatus)
 }
 
-func goBin() string {
-	return filepath.Join(runtime.GOROOT(), "bin", "go")
-}
-
 func run() {
 	var langs []string
 	if *lang != "" {
@@ -59,6 +52,9 @@ func run() {
 		langs = []string{"go", "java", "objc"}
 	}
 
+	// We need to give appropriate environment variables like CC or CXX so that the returned packages no longer have errors.
+	// However, getting such environment variables is difficult or impossible so far.
+	// Gomobile can obtain such environment variables in env.go, but this logic assumes some condiitons gobind doesn't assume.
 	cfg := &packages.Config{
 		Mode: packages.NeedName | packages.NeedFiles |
 			packages.NeedImports | packages.NeedDeps |
@@ -74,6 +70,7 @@ func run() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	jrefs, err := importers.AnalyzePackages(allPkg, "Java/")
 	if err != nil {
 		log.Fatal(err)
@@ -102,21 +99,7 @@ func run() {
 		}
 	}
 
-	ctx := build.Default
-	if *tags != "" {
-		ctx.BuildTags = append(ctx.BuildTags, strings.Split(*tags, ",")...)
-	}
-
-	// Determine GOPATH from go env GOPATH in case the default $HOME/go GOPATH
-	// is in effect.
-	if out, err := exec.Command(goBin(), "env", "GOPATH").Output(); err != nil {
-		log.Fatal(err)
-	} else {
-		ctx.GOPATH = string(bytes.TrimSpace(out))
-	}
 	if len(classes) > 0 || len(otypes) > 0 {
-		// After generation, reverse bindings needs to be in the GOPATH
-		// for user packages to build.
 		srcDir := *outdir
 		if srcDir == "" {
 			srcDir, err = ioutil.TempDir(os.TempDir(), "gobind-")
@@ -130,10 +113,6 @@ func run() {
 				log.Fatal(err)
 			}
 		}
-		if ctx.GOPATH != "" {
-			ctx.GOPATH = string(filepath.ListSeparator) + ctx.GOPATH
-		}
-		ctx.GOPATH = srcDir + ctx.GOPATH
 		if len(classes) > 0 {
 			if err := genJavaPackages(srcDir, classes, jrefs.Embedders); err != nil {
 				log.Fatal(err)
@@ -144,24 +123,32 @@ func run() {
 				log.Fatal(err)
 			}
 		}
+
+		// Add a new directory to GOPATH where the file for reverse bindings exist, and recreate allPkg.
+		// It is because the current allPkg did not solve imports for reverse bindings.
+		var gopath string
+		if out, err := exec.Command("go", "env", "GOPATH").Output(); err != nil {
+			log.Fatal(err)
+		} else {
+			gopath = string(bytes.TrimSpace(out))
+		}
+		if gopath != "" {
+			gopath = string(filepath.ListSeparator) + gopath
+		}
+		gopath = srcDir + gopath
+		cfg.Env = append(os.Environ(), "GOPATH="+gopath)
+		allPkg, err = packages.Load(cfg, flag.Args()...)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	typePkgs := make([]*types.Package, len(allPkg))
 	astPkgs := make([][]*ast.File, len(allPkg))
-	// The "source" go/importer package implicitly uses build.Default.
-	oldCtx := build.Default
-	build.Default = ctx
-	defer func() {
-		build.Default = oldCtx
-	}()
-	imp := importer.For("source", nil)
 	for i, pkg := range allPkg {
-		var err error
-		typePkgs[i], err = imp.Import(pkg.PkgPath)
-		if err != nil {
-			errorf("%v\n", err)
-			return
-		}
+		// Ignore pkg.Errors. pkg.Errors can exist when Cgo is used, but this should not affect the result.
+		// See the discussion at golang/go#36547.
+		typePkgs[i] = pkg.Types
 		astPkgs[i] = pkg.Syntax
 	}
 	for _, l := range langs {

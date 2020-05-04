@@ -13,7 +13,6 @@ import (
 
 // General mobile build environment. Initialized by envInit.
 var (
-	cwd          string
 	gomobilepath string // $GOPATH/pkg/gomobile
 
 	androidEnv map[string][]string // android arch -> []string
@@ -24,6 +23,7 @@ var (
 	darwinArmNM  string
 
 	allArchs = []string{"arm", "arm64", "386", "amd64", "uikitMac64", "macos64"}
+	bitcodeEnabled bool
 )
 
 func buildEnvInit() (cleanup func(), err error) {
@@ -74,10 +74,18 @@ func buildEnvInit() (cleanup func(), err error) {
 }
 
 func envInit() (err error) {
-	// TODO(crawshaw): cwd only used by ctx.Import, which can take "."
-	cwd, err = os.Getwd()
+	// Check the current Go version by go-list.
+	// An arbitrary standard package ('runtime' here) is given to go-list.
+	// This is because go-list tries to analyze the module at the current directory if no packages are given,
+	// and if the module doesn't have any Go file, go-list fails. See golang/go#36668.
+	cmd := exec.Command("go", "list", "-e", "-f", `{{range context.ReleaseTags}}{{if eq . "go1.14"}}{{.}}{{end}}{{end}}`, "runtime")
+	cmd.Stderr = os.Stderr
+	out, err := cmd.Output()
 	if err != nil {
 		return err
+	}
+	if len(strings.TrimSpace(string(out))) > 0 {
+		bitcodeEnabled = true
 	}
 
 	// Setup the cross-compiler environments.
@@ -155,9 +163,12 @@ func envInit() (err error) {
 		default:
 			panic(fmt.Errorf("unknown GOARCH: %q", arch))
 		}
-		cflags += " -fembed-bitcode"
 		if err != nil {
 			return err
+		}
+
+		if bitcodeEnabled {
+			cflags += " -fembed-bitcode"
 		}
 		env = append(env,
 			"GOOS=darwin",
