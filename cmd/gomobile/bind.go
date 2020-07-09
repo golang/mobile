@@ -215,7 +215,7 @@ func writeFile(filename string, generate func(io.Writer) error) error {
 func packagesConfig(targetOS string) *packages.Config {
 	config := &packages.Config{}
 	// Add CGO_ENABLED=1 explicitly since Cgo is disabled when GOOS is different from host OS.
-	config.Env = append(os.Environ(), "GOARCH=arm", "GOOS="+targetOS, "CGO_ENABLED=1")
+	config.Env = append(os.Environ(), "GOARCH=arm64", "GOOS="+targetOS, "CGO_ENABLED=1")
 	tags := buildTags
 	if targetOS == "darwin" {
 		tags = append(tags, "ios")
