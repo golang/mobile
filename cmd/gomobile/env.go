@@ -22,10 +22,19 @@ var (
 	androidArmNM string
 	darwinArmNM  string
 
-	allArchs = []string{"arm", "arm64", "386", "amd64"}
-
 	bitcodeEnabled bool
 )
+
+func allArchs(targetOS string) []string {
+	switch targetOS {
+	case "ios":
+		return []string{"arm64", "386", "amd64"}
+	case "android":
+		return []string{"arm", "arm64", "386", "amd64"}
+	default:
+		panic(fmt.Sprintf("unexpected target OS: %s", targetOS))
+	}
+}
 
 func buildEnvInit() (cleanup func(), err error) {
 	// Find gomobilepath.
@@ -132,14 +141,11 @@ func envInit() (err error) {
 
 	darwinArmNM = "nm"
 	darwinEnv = make(map[string][]string)
-	for _, arch := range allArchs {
+	for _, arch := range allArchs("ios") {
 		var env []string
 		var err error
 		var clang, cflags string
 		switch arch {
-		case "arm":
-			env = append(env, "GOARM=7")
-			fallthrough
 		case "arm64":
 			clang, cflags, err = envClang("iphoneos")
 			cflags += " -miphoneos-version-min=" + buildIOSVersion

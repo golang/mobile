@@ -167,7 +167,7 @@ func installOpenAL(gomobilepath string) error {
 		}
 	}
 
-	for _, arch := range allArchs {
+	for _, arch := range allArchs("android") {
 		t := ndk[arch]
 		abi := t.arch
 		if abi == "arm" {
