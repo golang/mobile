@@ -216,6 +216,36 @@ mkdir -p {{.Output}}.framework/Versions/A/Modules
 ln -s Versions/Current/Modules {{.Output}}.framework/Modules
 `))
 
+func TestBindIOSAll(t *testing.T) {
+	if !xcodeAvailable() {
+		t.Skip("Xcode is missing")
+	}
+	defer func() {
+		xout = os.Stderr
+		buildN = false
+		buildX = false
+		buildO = ""
+		buildTarget = ""
+		bindPrefix = ""
+	}()
+	buildN = true
+	buildX = true
+	buildO = "Asset.framework"
+	buildTarget = "ios"
+
+	buf := new(bytes.Buffer)
+	xout = buf
+	gopath = filepath.SplitList(goEnv("GOPATH"))[0]
+	if goos == "windows" {
+		os.Setenv("HOMEDRIVE", "C:")
+	}
+	cmdBind.flag.Parse([]string{"golang.org/x/mobile/asset"})
+	if err := runBind(cmdBind); err != nil {
+		t.Log(buf.String())
+		t.Fatal(err)
+	}
+}
+
 func TestBindWithGoModules(t *testing.T) {
 	if runtime.GOOS == "android" {
 		t.Skipf("gomobile and gobind are not available on %s", runtime.GOOS)
