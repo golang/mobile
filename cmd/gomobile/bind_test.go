@@ -113,7 +113,7 @@ func TestBindIOS(t *testing.T) {
 	buildN = true
 	buildX = true
 	buildO = "Asset.framework"
-	buildTarget = "ios/arm"
+	buildTarget = "ios/arm64"
 
 	tests := []struct {
 		prefix string
@@ -195,13 +195,13 @@ var bindIOSTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH
 WORK=$WORK
 GOOS=darwin CGO_ENABLED=1 gobind -lang=go,objc -outdir=$WORK -tags=ios{{if .Prefix}} -prefix={{.Prefix}}{{end}} golang.org/x/mobile/asset
 mkdir -p $WORK/src
-PWD=$WORK/src GOARM=7 GOOS=darwin GOARCH=arm CC=iphoneos-clang CXX=iphoneos-clang++ CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 {{if .BitcodeEnabled}}-fembed-bitcode {{end}}-arch armv7 CGO_CXXFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 {{if .BitcodeEnabled}}-fembed-bitcode {{end}}-arch armv7 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 {{if .BitcodeEnabled}}-fembed-bitcode {{end}}-arch armv7 CGO_ENABLED=1 GOPATH=$WORK:$GOPATH go build -tags ios -x -buildmode=c-archive -o $WORK/{{.Output}}-arm.a ./gobind
+PWD=$WORK/src GOOS=darwin GOARCH=arm64 CC=iphoneos-clang CXX=iphoneos-clang++ CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 {{if .BitcodeEnabled}}-fembed-bitcode {{end}}-arch arm64 CGO_CXXFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 {{if .BitcodeEnabled}}-fembed-bitcode {{end}}-arch arm64 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 {{if .BitcodeEnabled}}-fembed-bitcode {{end}}-arch arm64 CGO_ENABLED=1 GOPATH=$WORK:$GOPATH go build -tags ios -x -buildmode=c-archive -o $WORK/{{.Output}}-arm64.a ./gobind
 rm -r -f "{{.Output}}.framework"
 mkdir -p {{.Output}}.framework/Versions/A/Headers
 ln -s A {{.Output}}.framework/Versions/Current
 ln -s Versions/Current/Headers {{.Output}}.framework/Headers
 ln -s Versions/Current/{{.Output}} {{.Output}}.framework/{{.Output}}
-xcrun lipo -create -arch armv7 $WORK/{{.Output}}-arm.a -o {{.Output}}.framework/Versions/A/{{.Output}}
+xcrun lipo -create -arch arm64 $WORK/{{.Output}}-arm64.a -o {{.Output}}.framework/Versions/A/{{.Output}}
 cp $WORK/src/gobind/{{.Prefix}}Asset.objc.h {{.Output}}.framework/Versions/A/Headers/{{.Prefix}}Asset.objc.h
 mkdir -p {{.Output}}.framework/Versions/A/Headers
 cp $WORK/src/gobind/Universe.objc.h {{.Output}}.framework/Versions/A/Headers/Universe.objc.h
