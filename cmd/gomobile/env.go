@@ -28,7 +28,7 @@ var (
 func allArchs(targetOS string) []string {
 	switch targetOS {
 	case "ios":
-		return []string{"arm64", "386", "amd64"}
+		return []string{"arm64", "amd64"}
 	case "android":
 		return []string{"arm", "arm64", "386", "amd64"}
 	default:
@@ -149,7 +149,7 @@ func envInit() (err error) {
 		case "arm64":
 			clang, cflags, err = envClang("iphoneos")
 			cflags += " -miphoneos-version-min=" + buildIOSVersion
-		case "386", "amd64":
+		case "amd64":
 			clang, cflags, err = envClang("iphonesimulator")
 			cflags += " -mios-simulator-version-min=" + buildIOSVersion
 		default:
