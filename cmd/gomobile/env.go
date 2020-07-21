@@ -183,16 +183,7 @@ func ndkRoot() (string, error) {
 		return "$NDK_PATH", nil
 	}
 
-	androidHome := os.Getenv("ANDROID_HOME")
-	if androidHome != "" {
-		ndkRoot := filepath.Join(androidHome, "ndk-bundle")
-		_, err := os.Stat(ndkRoot)
-		if err == nil {
-			return ndkRoot, nil
-		}
-	}
-
-	ndkRoot := os.Getenv("ANDROID_NDK_HOME")
+	ndkRoot := os.Getenv("ANDROID_NDK_ROOT")
 	if ndkRoot != "" {
 		_, err := os.Stat(ndkRoot)
 		if err == nil {
@@ -200,7 +191,25 @@ func ndkRoot() (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("no Android NDK found in $ANDROID_HOME/ndk-bundle nor in $ANDROID_NDK_HOME")
+	androidHome := os.Getenv("ANDROID_SDK_ROOT")
+	if androidHome != "" {
+		ndkRootParent := filepath.Join(androidHome, "ndk")
+		if _, err := os.Stat(ndkRootParent); err == nil {
+			versiondirs, err := ioutil.ReadDir(ndkRootParent)
+			if err != nil {
+				return "", fmt.Errorf("could not list directories in %s: %v", ndkRootParent, err)
+			}
+			if len(versiondirs) == 0 {
+				return "", fmt.Errorf("no Android NDK found in $ANDROID_NDK_ROOT nor in $ANDROID_SDK_ROOT/ndk/%%version%%")
+			}
+			if len(versiondirs) > 1 {
+				return "", fmt.Errorf("multiple Android NDKs found in $ANDROID_SDK_ROOT/ndk/%%version%%, manually specify which version you want via $ANDROID_NDK_ROOT")
+			}
+			return filepath.Join(ndkRootParent, versiondirs[0].Name()), nil
+		}
+	}
+
+	return "", fmt.Errorf("no Android NDK found in $ANDROID_NDK_ROOT nor in $ANDROID_SDK_ROOT/ndk/%%version%%")
 }
 
 func envClang(sdkName string) (clang, cflags string, err error) {
