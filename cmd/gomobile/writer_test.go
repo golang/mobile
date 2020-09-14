@@ -15,6 +15,10 @@ import (
 )
 
 func TestWriter(t *testing.T) {
+	if os.Getenv("GO_BUILDER_NAME") == "linux-amd64-androidemu" {
+		t.Skip("skipping on linux-amd64-androidemu builder; see golang.org/issue/40290")
+	}
+
 	block, _ := pem.Decode([]byte(debugCert))
 	if block == nil {
 		t.Fatal("no cert")

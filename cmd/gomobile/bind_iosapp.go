@@ -38,14 +38,19 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 
 	srcDir := filepath.Join(tmpdir, "src", "gobind")
 
-	name := pkgs[0].Name
-	title := strings.Title(name)
-
-	if buildO != "" && !strings.HasSuffix(buildO, ".framework") {
-		return fmt.Errorf("static framework name %q missing .framework suffix", buildO)
-	}
+	var name string
+	var title string
 	if buildO == "" {
+		name = pkgs[0].Name
+		title = strings.Title(name)
 		buildO = title + ".framework"
+	} else {
+		if !strings.HasSuffix(buildO, ".framework") {
+			return fmt.Errorf("static framework name %q missing .framework suffix", buildO)
+		}
+		base := filepath.Base(buildO)
+		name = base[:len(base)-len(".framework")]
+		title = strings.Title(name)
 	}
 
 	fileBases := make([]string, len(pkgs)+1)

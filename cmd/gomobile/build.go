@@ -360,8 +360,8 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 	}
 
 	// verify all archs are supported one while deduping.
-	isSupported := func(arch string) bool {
-		for _, a := range allArchs {
+	isSupported := func(os, arch string) bool {
+		for _, a := range allArchs(os) {
 			if a == arch {
 				return true
 			}
@@ -369,12 +369,17 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 		return false
 	}
 
+	targetOS := os
+	if os == "ios" {
+		targetOS = "darwin"
+	}
+
 	seen := map[string]bool{}
 	for _, arch := range archNames {
 		if _, ok := seen[arch]; ok {
 			continue
 		}
-		if !isSupported(arch) {
+		if !isSupported(os, arch) {
 			return "", nil, fmt.Errorf(`unsupported arch: %q`, arch)
 		}
 
@@ -399,7 +404,7 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 		allArchs = []string{"uikitMac64"}
 	}
 	if all {
-		return targetOS, allArchs, nil
+		return targetOS, allArchs(os), nil
 	}
 	return targetOS, archs, nil
 }

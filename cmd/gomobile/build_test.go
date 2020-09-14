@@ -115,7 +115,8 @@ GOOS=android GOARCH=arm CC=$NDK_PATH/toolchains/llvm/prebuilt/{{.NDKARCH}}/bin/a
 `))
 
 func TestParseBuildTargetFlag(t *testing.T) {
-	archs := strings.Join(allArchs, ",")
+	androidArchs := strings.Join(allArchs("android"), ",")
+	iosArchs := strings.Join(allArchs("ios"), ",")
 
 	tests := []struct {
 		in        string
@@ -123,13 +124,13 @@ func TestParseBuildTargetFlag(t *testing.T) {
 		wantOS    string
 		wantArchs string
 	}{
-		{"android", false, "android", archs},
-		{"android,android/arm", false, "android", archs},
+		{"android", false, "android", androidArchs},
+		{"android,android/arm", false, "android", androidArchs},
 		{"android/arm", false, "android", "arm"},
 
-		{"ios", false, "darwin", archs},
-		{"ios,ios/arm", false, "darwin", archs},
-		{"ios/arm", false, "darwin", "arm"},
+		{"ios", false, "darwin", iosArchs},
+		{"ios,ios/arm64", false, "darwin", iosArchs},
+		{"ios/arm64", false, "darwin", "arm64"},
 		{"ios/amd64", false, "darwin", "amd64"},
 
 		{"", true, "", ""},
