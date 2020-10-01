@@ -22,16 +22,20 @@ var (
 	androidArmNM string
 	darwinArmNM  string
 
-	allArchs = []string{"arm", "arm64", "386", "amd64", "uikitMac64", "macos64"}
+	
 	bitcodeEnabled bool
 )
 
 func allArchs(targetOS string) []string {
 	switch targetOS {
 	case "ios":
-		return []string{"arm64", "amd64"}
+		return []string{"arm", "arm64", "386", "amd64"}
 	case "android":
 		return []string{"arm", "arm64", "386", "amd64"}
+	case "macos":
+		return  []string{"macos64"}
+	case "macos-ui":
+		return []string{"uikitMac64"}
 	default:
 		panic(fmt.Sprintf("unexpected target OS: %s", targetOS))
 	}
@@ -151,6 +155,13 @@ func envInit() (err error) {
 
 		fmt.Println(arch)
 		switch arch {
+		case "arm":
+			clang, cflags, err = envClang("iphoneos")
+			cflags += " -miphoneos-version-min=" + buildIOSVersion
+		case "386":
+			clang, cflags, err = envClang("macosx")
+			cflags += " -mmacosx-version-min=10.10"
+			archNew = "386"
 		case "arm64":
 			clang, cflags, err = envClang("iphoneos")
 			cflags += " -miphoneos-version-min=" + buildIOSVersion

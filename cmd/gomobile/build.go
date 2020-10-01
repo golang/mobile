@@ -135,7 +135,7 @@ func runBuildImpl(cmd *command) (*packages.Package, error) {
 			for _, arch := range targetArchs {
 				env := darwinEnv[arch]
 				fmt.Println("building = ", arch)
-				if err := goBuild(pkg.ImportPath, env); err != nil {
+				if err := goBuild(pkg.PkgPath, env); err != nil {
 					return nil, err
 				}
 			}
@@ -372,6 +372,19 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 	targetOS := os
 	if os == "ios" {
 		targetOS = "darwin"
+		return targetOS, []string{"arm", "arm64", "386", "amd64"}, nil
+	}
+	if os == "android" {
+		return targetOS, []string{"arm", "arm64", "386", "amd64"}, nil
+	}
+	if os == "macos" {
+		targetOS = "darwin"
+		// allArchs = []string{"macos64"}
+		return targetOS, []string{"macos64"}, nil
+	}
+	if os == "macos-ui" {
+		targetOS = "darwin"
+		return targetOS,  []string{"uikitMac64"}, nil
 	}
 
 	seen := map[string]bool{}
@@ -387,22 +400,7 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 		archs = append(archs, arch)
 	}
 
-	targetOS := os
-	if os == "ios" {
-		targetOS = "darwin"
-		allArchs = []string{"arm", "arm64", "386", "amd64"}
-	}
-	if os == "android" {
-		allArchs = []string{"arm", "arm64", "386", "amd64"}
-	}
-	if os == "macos" {
-		targetOS = "darwin"
-		allArchs = []string{"macos64"}
-	}
-	if os == "macos-ui" {
-		targetOS = "darwin"
-		allArchs = []string{"uikitMac64"}
-	}
+
 	if all {
 		return targetOS, allArchs(os), nil
 	}
