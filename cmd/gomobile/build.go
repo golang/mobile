@@ -380,6 +380,19 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 	targetOS := os
 	if os == "ios" {
 		targetOS = "darwin"
+		return targetOS, []string{"arm", "arm64", "386", "amd64"}, nil
+	}
+	if os == "android" {
+		return targetOS, []string{"arm", "arm64", "386", "amd64"}, nil
+	}
+	if os == "macos" {
+		targetOS = "darwin"
+		// allArchs = []string{"macos64"}
+		return targetOS, []string{"macos64"}, nil
+	}
+	if os == "macos-ui" {
+		targetOS = "darwin"
+		return targetOS, []string{"uikitMac64"}, nil
 	}
 	if os == "macos" {
 		targetOS = "darwin"

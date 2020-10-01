@@ -154,6 +154,13 @@ func envInit() (err error) {
 
 		fmt.Println(arch)
 		switch arch {
+		case "arm":
+			clang, cflags, err = envClang("iphoneos")
+			cflags += " -miphoneos-version-min=" + buildIOSVersion
+		case "386":
+			clang, cflags, err = envClang("macosx")
+			cflags += " -mmacosx-version-min=10.10"
+			archNew = "386"
 		case "arm64":
 			clang, cflags, err = envClang("iphoneos")
 			cflags += " -miphoneos-version-min=" + buildIOSVersion
