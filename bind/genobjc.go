@@ -7,6 +7,7 @@ package bind
 import (
 	"fmt"
 	"go/constant"
+	"go/token"
 	"go/types"
 	"math"
 	"strings"
@@ -121,7 +122,7 @@ func (g *ObjcGen) GenGoH() error {
 		}
 		for _, m := range i.summary.callable {
 			if !g.isSigSupported(m.Type()) {
-				g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", i.obj.Name(), m.Name())
+				g.warnf(m.Pos(), "skipped method %s.%s with unsupported parameter or return types", i.obj.Name(), m.Name())
 				continue
 			}
 			g.genInterfaceMethodSignature(m, i.obj.Name(), true, g.paramName)
@@ -192,7 +193,7 @@ func (g *ObjcGen) GenH() error {
 	// TODO: prefix with k?, or use a class method?
 	for _, obj := range g.constants {
 		if _, ok := obj.Type().(*types.Basic); !ok || !g.isSupported(obj.Type()) {
-			g.Printf("// skipped const %s with unsupported type: %s\n\n", obj.Name(), obj.Type())
+			g.warnf(obj.Pos(), "skipped const %s with unsupported type: %s", obj.Name(), obj.Type())
 			continue
 		}
 		g.objcdoc(g.docs[obj.Name()].Doc())
@@ -212,7 +213,7 @@ func (g *ObjcGen) GenH() error {
 		g.Printf("@interface %s : NSObject\n", g.namePrefix)
 		for _, obj := range g.vars {
 			if t := obj.Type(); !g.isSupported(t) {
-				g.Printf("// skipped variable %s with unsupported type: %s\n\n", obj.Name(), t)
+				g.warnf(obj.Pos(), "skipped variable %s with unsupported type: %s", obj.Name(), t)
 				continue
 			}
 			objcType := g.objcType(obj.Type())
@@ -307,7 +308,7 @@ func (g *ObjcGen) GenM() error {
 
 	for _, obj := range g.funcs {
 		if !g.isSigSupported(obj.Type()) {
-			g.Printf("// skipped function %s with unsupported parameter or return types\n\n", obj.Name())
+			g.warnf(obj.Pos(), "skipped function %s with unsupported parameter or return types", obj.Name())
 			continue
 		}
 		g.genFuncM(obj)
@@ -317,7 +318,7 @@ func (g *ObjcGen) GenM() error {
 	for _, i := range g.interfaces {
 		for _, m := range i.summary.callable {
 			if !g.isSigSupported(m.Type()) {
-				g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", i.obj.Name(), m.Name())
+				g.warnf(m.Pos(), "skipped method %s.%s with unsupported parameter or return types", i.obj.Name(), m.Name())
 				continue
 			}
 			g.genInterfaceMethodProxy(i.obj, m)
@@ -339,7 +340,7 @@ func (g *ObjcGen) GenM() error {
 
 func (g *ObjcGen) genVarM(o *types.Var) {
 	if t := o.Type(); !g.isSupported(t) {
-		g.Printf("// skipped variable %s with unsupported type: %s\n\n", o.Name(), t)
+		g.warnf(o.Pos(), "skipped variable %s with unsupported type: %s", o.Name(), t)
 		return
 	}
 	objcType := g.objcType(o.Type())
@@ -366,7 +367,7 @@ func (g *ObjcGen) genVarM(o *types.Var) {
 
 func (g *ObjcGen) genConstM(o *types.Const) {
 	if _, ok := o.Type().(*types.Basic); !ok || !g.isSupported(o.Type()) {
-		g.Printf("// skipped const %s with unsupported type: %s\n\n", o.Name(), o.Type())
+		g.warnf(o.Pos(), "skipped const %s with unsupported type: %s", o.Name(), o.Type())
 		return
 	}
 	cName := fmt.Sprintf("%s%s", g.namePrefix, o.Name())
@@ -631,7 +632,7 @@ func (g *ObjcGen) paramName(params *types.Tuple, pos int) string {
 
 func (g *ObjcGen) genFuncH(obj *types.Func) {
 	if !g.isSigSupported(obj.Type()) {
-		g.Printf("// skipped function %s with unsupported parameter or return types\n\n", obj.Name())
+		g.warnf(obj.Pos(), "skipped function %s with unsupported parameter or return types", obj.Name())
 		return
 	}
 	if s := g.funcSummary(nil, obj); s != nil {
@@ -883,7 +884,7 @@ func (g *ObjcGen) genInterfaceInterface(obj *types.TypeName, summary ifaceSummar
 	g.Printf("- (nonnull instancetype)initWithRef:(_Nonnull id)ref;\n")
 	for _, m := range summary.callable {
 		if !g.isSigSupported(m.Type()) {
-			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", obj.Name(), m.Name())
+			g.warnf(m.Pos(), "skipped method %s.%s with unsupported parameter or return types", obj.Name(), m.Name())
 			continue
 		}
 		s := g.funcSummary(nil, m)
@@ -902,7 +903,7 @@ func (g *ObjcGen) genInterfaceH(obj *types.TypeName, t *types.Interface) {
 	g.Printf("@protocol %s%s <NSObject>\n", g.namePrefix, obj.Name())
 	for _, m := range makeIfaceSummary(t).callable {
 		if !g.isSigSupported(m.Type()) {
-			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", obj.Name(), m.Name())
+			g.warnf(m.Pos(), "skipped method %s.%s with unsupported parameter or return types", obj.Name(), m.Name())
 			continue
 		}
 		s := g.funcSummary(nil, m)
@@ -936,7 +937,7 @@ func (g *ObjcGen) genInterfaceM(obj *types.TypeName, t *types.Interface) bool {
 
 	for _, m := range summary.callable {
 		if !g.isSigSupported(m.Type()) {
-			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", obj.Name(), m.Name())
+			g.warnf(m.Pos(), "skipped method %s.%s with unsupported parameter or return types", obj.Name(), m.Name())
 			continue
 		}
 		s := g.funcSummary(nil, m)
@@ -1104,7 +1105,7 @@ func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 	if oinf == nil {
 		for _, f := range cons {
 			if !g.isSigSupported(f.Type()) {
-				g.Printf("// skipped constructor %s.%s with unsupported parameter or return types\n\n", obj.Name(), f.Name())
+				g.warnf(f.Pos(), "skipped constructor %s.%s with unsupported parameter or return types", obj.Name(), f.Name())
 				continue
 			}
 			g.genInitH(obj, f)
@@ -1118,7 +1119,7 @@ func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 	// accessors to exported fields.
 	for _, f := range exportedFields(t) {
 		if t := f.Type(); !g.isSupported(t) {
-			g.Printf("// skipped field %s.%s with unsupported type: %s\n\n", obj.Name(), f.Name(), t)
+			g.warnf(f.Pos(), "skipped field %s.%s with unsupported type: %s", obj.Name(), f.Name(), t)
 			continue
 		}
 		name, typ := f.Name(), g.objcType(f.Type())
@@ -1131,7 +1132,7 @@ func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 	// exported methods
 	for _, m := range exportedMethodSet(types.NewPointer(obj.Type())) {
 		if !g.isSigSupported(m.Type()) {
-			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", obj.Name(), m.Name())
+			g.warnf(m.Pos(), "skipped method %s.%s with unsupported parameter or return types", obj.Name(), m.Name())
 			continue
 		}
 		s := g.funcSummary(obj, m)
@@ -1167,7 +1168,7 @@ func (g *ObjcGen) genStructM(obj *types.TypeName, t *types.Struct) {
 	if oinf == nil {
 		for _, f := range cons {
 			if !g.isSigSupported(f.Type()) {
-				g.Printf("// skipped constructor %s.%s with unsupported parameter or return types\n\n", obj, f.Name())
+				g.warnf(f.Pos(), "skipped constructor %s.%s with unsupported parameter or return types", obj, f.Name())
 				continue
 			}
 			g.genInitM(obj, f)
@@ -1189,7 +1190,7 @@ func (g *ObjcGen) genStructM(obj *types.TypeName, t *types.Struct) {
 
 	for _, f := range fields {
 		if !g.isSupported(f.Type()) {
-			g.Printf("// skipped unsupported field %s with type %s\n\n", f.Name(), f.Type())
+			g.warnf(f.Pos(), "skipped unsupported field %s with type %s", f.Name(), f.Type())
 			continue
 		}
 		g.genGetter(obj.Name(), f)
@@ -1198,7 +1199,7 @@ func (g *ObjcGen) genStructM(obj *types.TypeName, t *types.Struct) {
 
 	for _, m := range methods {
 		if !g.isSigSupported(m.Type()) {
-			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", obj.Name(), m.Name())
+			g.warnf(m.Pos(), "skipped method %s.%s with unsupported parameter or return types", obj.Name(), m.Name())
 			continue
 		}
 		s := g.funcSummary(obj, m)
@@ -1258,6 +1259,14 @@ func (g *ObjcGen) genInitM(obj *types.TypeName, f *types.Func) {
 	g.Printf("return self;\n")
 	g.Outdent()
 	g.Printf("}\n\n")
+}
+
+func (g *ObjcGen) warnf(pos token.Pos, format string, args ...interface{}) {
+	if g.Reporter != nil {
+		fpos := g.Fset.Position(pos)
+		g.Reporter.Message(fmt.Sprintf(fpos.String()+": "+format, args...))
+	}
+	g.Printf("// "+format+"\n\n", args...)
 }
 
 func (g *ObjcGen) errorf(format string, args ...interface{}) {

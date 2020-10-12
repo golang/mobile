@@ -25,6 +25,20 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
+type consoleReporter struct {
+	msgs []string
+}
+
+func (r *consoleReporter) Message(s string) {
+	r.msgs = append(r.msgs, s)
+}
+
+func (r *consoleReporter) PrintMessages() {
+	if len(r.msgs) > 0 {
+		fmt.Fprintln(os.Stderr, strings.Join(r.msgs, "\n"))
+	}
+}
+
 func genPkg(lang string, fset *token.FileSet, p *types.Package, astFiles []*ast.File, allPkg []*types.Package, classes []*java.Class, otypes []*objc.Named) {
 	fname := defaultFileName(lang, p)
 	conf := &bind.GeneratorConfig{
@@ -39,12 +53,14 @@ func genPkg(lang string, fset *token.FileSet, p *types.Package, astFiles []*ast.
 		pname = "universe"
 	}
 	var buf bytes.Buffer
+	var reporter consoleReporter
 	generator := &bind.Generator{
-		Printer: &bind.Printer{Buf: &buf, IndentEach: []byte("\t")},
-		Fset:    conf.Fset,
-		AllPkg:  conf.AllPkg,
-		Pkg:     conf.Pkg,
-		Files:   astFiles,
+		Printer:  &bind.Printer{Buf: &buf, IndentEach: []byte("\t")},
+		Fset:     conf.Fset,
+		AllPkg:   conf.AllPkg,
+		Pkg:      conf.Pkg,
+		Files:    astFiles,
+		Reporter: &reporter,
 	}
 	switch lang {
 	case "java":
@@ -169,6 +185,7 @@ func genPkg(lang string, fset *token.FileSet, p *types.Package, astFiles []*ast.
 	default:
 		errorf("unknown target language: %q", lang)
 	}
+	reporter.PrintMessages()
 }
 
 func genPkgH(w io.Writer, pname string) {
