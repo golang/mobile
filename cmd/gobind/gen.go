@@ -25,7 +25,7 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-func genPkg(lang string, p *types.Package, astFiles []*ast.File, allPkg []*types.Package, classes []*java.Class, otypes []*objc.Named) {
+func genPkg(lang string, fset *token.FileSet, p *types.Package, astFiles []*ast.File, allPkg []*types.Package, classes []*java.Class, otypes []*objc.Named) {
 	fname := defaultFileName(lang, p)
 	conf := &bind.GeneratorConfig{
 		Fset:   fset,
@@ -302,8 +302,6 @@ func processErr(err error) {
 		}
 	}
 }
-
-var fset = token.NewFileSet()
 
 func writer(fname string) (w io.Writer, closer func()) {
 	if *outdir == "" {
