@@ -29,7 +29,7 @@ var (
 func allArchs(targetOS string) []string {
 	switch targetOS {
 	case "ios":
-		return []string{"arm", "arm64", "386", "amd64"}
+		return []string{"arm64", "amd64"}
 	case "android":
 		return []string{"arm", "arm64", "386", "amd64"}
 	case "macos":
@@ -146,7 +146,10 @@ func envInit() (err error) {
 
 	darwinArmNM = "nm"
 	darwinEnv = make(map[string][]string)
-	for _, arch := range allArchs("ios") {
+	darwinArchs := allArchs("ios")
+	darwinArchs = append(darwinArchs, allArchs("macos")...)
+	darwinArchs = append(darwinArchs, allArchs("macos-ui")...)
+	for _, arch := range darwinArchs {
 		var env []string
 		var err error
 		var clang, cflags string
@@ -155,13 +158,6 @@ func envInit() (err error) {
 
 		fmt.Println(arch)
 		switch arch {
-		case "arm":
-			clang, cflags, err = envClang("iphoneos")
-			cflags += " -miphoneos-version-min=" + buildIOSVersion
-		case "386":
-			clang, cflags, err = envClang("macosx")
-			cflags += " -mmacosx-version-min=10.10"
-			archNew = "386"
 		case "arm64":
 			clang, cflags, err = envClang("iphoneos")
 			cflags += " -miphoneos-version-min=" + buildIOSVersion
