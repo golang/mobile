@@ -4,6 +4,7 @@
 
 // +build !cgo !darwin,!linux,!openbsd
 // +build !windows
+// +build !js !wasm
 
 package gl
 
