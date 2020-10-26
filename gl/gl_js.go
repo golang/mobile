@@ -80,7 +80,7 @@ func (ctx *context) BufferSubData(target Enum, offset int, data []byte) {
 }
 
 func (ctx *context) CheckFramebufferStatus(target Enum) Enum {
-	return Enum(ctx.cachedCall("checkFramebufferStatus", target).Int())
+	return Enum(toInt(ctx.cachedCall("checkFramebufferStatus", target)))
 }
 
 func (ctx *context) Clear(mask Enum) {
@@ -319,12 +319,12 @@ func (ctx *context) GetFloatv(dst []float32, pname Enum) {
 func (ctx *context) GetIntegerv(dst []int32, pname Enum) {
 	v := ctx.cachedCall("getParameter", pname)
 
-	if v.Type() == js.TypeNumber {
-		dst[0] = int32(v.Int())
-	} else {
+	if v.Type() == js.TypeObject {
 		for i := range dst {
-			dst[i] = int32(v.Index(i).Int())
+			dst[i] = int32(toInt(v.Index(i)))
 		}
+	} else {
+		dst[0] = int32(toInt(v))
 	}
 }
 
@@ -335,7 +335,7 @@ func (ctx *context) GetInteger(pname Enum) int {
 }
 
 func (ctx *context) GetBufferParameteri(target, value Enum) int {
-	return ctx.cachedCall("getBufferParameter", target, value).Int()
+	return toInt(ctx.cachedCall("getBufferParameter", target, value))
 }
 
 func (ctx *context) GetError() Enum {
@@ -343,11 +343,11 @@ func (ctx *context) GetError() Enum {
 }
 
 func (ctx *context) GetFramebufferAttachmentParameteri(target, attachment, pname Enum) int {
-	return ctx.cachedCall("getFramebufferAttachmentParameter", target, attachment, pname).Int()
+	return toInt(ctx.cachedCall("getFramebufferAttachmentParameter", target, attachment, pname))
 }
 
 func (ctx *context) GetProgrami(p Program, pname Enum) int {
-	return ctx.cachedCall("getProgramParameter", p.c(), pname).Int()
+	return toInt(ctx.cachedCall("getProgramParameter", p.c(), pname))
 }
 
 func (ctx *context) GetProgramInfoLog(p Program) string {
@@ -355,11 +355,11 @@ func (ctx *context) GetProgramInfoLog(p Program) string {
 }
 
 func (ctx *context) GetRenderbufferParameteri(target, pname Enum) int {
-	return ctx.cachedCall("getRenderbufferParameter", target, pname).Int()
+	return toInt(ctx.cachedCall("getRenderbufferParameter", target, pname))
 }
 
 func (ctx *context) GetShaderi(s Shader, pname Enum) int {
-	return ctx.cachedCall("getShaderParameter", s.c(), pname).Int()
+	return toInt(ctx.cachedCall("getShaderParameter", s.c(), pname))
 }
 
 func (ctx *context) GetShaderInfoLog(s Shader) string {
@@ -385,7 +385,7 @@ func (ctx *context) GetTexParameterfv(dst []float32, target, pname Enum) {
 }
 
 func (ctx *context) GetTexParameteriv(dst []int32, target, pname Enum) {
-	dst[0] = int32(ctx.cachedCall("getTexParameter", target, pname).Int())
+	dst[0] = int32(toInt(ctx.cachedCall("getTexParameter", target, pname)))
 }
 
 func (ctx *context) GetUniformfv(dst []float32, src Uniform, p Program) {
@@ -403,12 +403,12 @@ func (ctx *context) GetUniformfv(dst []float32, src Uniform, p Program) {
 func (ctx *context) GetUniformiv(dst []int32, src Uniform, p Program) {
 	v := ctx.cachedCall("getUniform", p.c(), src.c())
 
-	if v.Type() == js.TypeNumber {
-		dst[0] = int32(v.Int())
-	} else {
+	if v.Type() == js.TypeObject {
 		for i := range dst {
-			dst[i] = int32(v.Index(i).Int())
+			dst[i] = int32(toInt(v.Index(i)))
 		}
+	} else {
+		dst[0] = int32(toInt(v))
 	}
 }
 
@@ -445,12 +445,12 @@ func (ctx *context) GetVertexAttribi(src Attrib, pname Enum) int32 {
 func (ctx *context) GetVertexAttribiv(dst []int32, src Attrib, pname Enum) {
 	v := ctx.cachedCall("getVertexAttrib", src.c(), pname)
 
-	if v.Type() == js.TypeNumber {
-		dst[0] = int32(v.Int())
-	} else {
+	if v.Type() == js.TypeObject {
 		for i := range dst {
-			dst[i] = int32(v.Index(i).Int())
+			dst[i] = int32(toInt(v.Index(i)))
 		}
+	} else {
+		dst[0] = int32(toInt(v))
 	}
 }
 

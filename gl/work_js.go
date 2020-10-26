@@ -127,3 +127,15 @@ func jsPtr(v js.Value) *js.Value {
 
 	return nil
 }
+
+func toInt(v js.Value) int {
+	if v.Type() == js.TypeBoolean {
+		if v.Bool() {
+			return TRUE
+		}
+
+		return FALSE
+	}
+
+	return v.Int()
+}
