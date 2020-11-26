@@ -62,6 +62,9 @@ For -target android, the -bootclasspath and -classpath flags are used to
 control the bootstrap classpath and the classpath for Go wrappers to Java
 classes.
 
+The -cache flag specifies the build cache directory. If not specified,
+ioutil.TempDir() is used.
+
 The -v flag provides verbose output, including the list of packages built.
 
 The build flags -a, -n, -x, -gcflags, -ldflags, -tags, -trimpath, and -work
