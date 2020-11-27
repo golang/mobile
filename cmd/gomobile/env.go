@@ -94,7 +94,7 @@ func envInit() (err error) {
 	if err != nil {
 		return err
 	}
-	if len(strings.TrimSpace(string(out))) > 0 {
+	if len(strings.TrimSpace(string(out))) > 0 && os.Getenv("DISABLE_BITCODE") == "" {
 		bitcodeEnabled = true
 	}
 
