@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/hashicorp/go-version"
 )
 
 // General mobile build environment. Initialized by envInit.
@@ -22,18 +24,48 @@ var (
 	androidArmNM string
 	darwinArmNM  string
 
-	
 	bitcodeEnabled bool
 )
+
+func getGoVersion() (string, error) {
+	cmd := exec.Command("go", "version")
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	versionOutput := strings.Split(string(output), " ")
+	versionNumber := versionOutput[2][2:]
+
+	return versionNumber, nil
+}
+
+func supports32bitsArchs() bool {
+	versionNumber, err := getGoVersion()
+	if err != nil {
+		panic(err)
+	}
+	v, err := version.NewVersion(versionNumber)
+	if err != nil {
+		panic(err)
+	}
+	constraints, err := version.NewConstraint("< 1.15.0")
+	if err != nil {
+		panic(err)
+	}
+	return constraints.Check(v)
+}
 
 func allArchs(targetOS string) []string {
 	switch targetOS {
 	case "ios":
+		if supports32bitsArchs() {
+			return []string{"arm", "arm64", "amd64"}
+		}
 		return []string{"arm64", "amd64"}
 	case "android":
 		return []string{"arm", "arm64", "386", "amd64"}
 	case "macos":
-		return  []string{"macos64"}
+		return []string{"macos64"}
 	case "macos-ui":
 		return []string{"uikitMac64"}
 	default:
@@ -158,6 +190,13 @@ func envInit() (err error) {
 
 		fmt.Println(arch)
 		switch arch {
+		case "arm":
+			clang, cflags, err = envClang("iphoneos")
+			cflags += " -miphoneos-version-min=" + buildIOSVersion
+		case "386":
+			clang, cflags, err = envClang("macosx")
+			cflags += " -mmacosx-version-min=10.10"
+			archNew = "386"
 		case "arm64":
 			clang, cflags, err = envClang("iphoneos")
 			cflags += " -miphoneos-version-min=" + buildIOSVersion

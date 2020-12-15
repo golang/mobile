@@ -372,6 +372,9 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 	targetOS := os
 	if os == "ios" {
 		targetOS = "darwin"
+		if supports32bitsArchs() {
+			return targetOS, []string{"arm", "arm64", "amd64"}, nil
+		}
 		return targetOS, []string{"arm64", "amd64"}, nil
 	}
 	if os == "android" {
@@ -384,7 +387,7 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 	}
 	if os == "macos-ui" {
 		targetOS = "darwin"
-		return targetOS,  []string{"uikitMac64"}, nil
+		return targetOS, []string{"uikitMac64"}, nil
 	}
 
 	seen := map[string]bool{}
@@ -399,7 +402,6 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 		seen[arch] = true
 		archs = append(archs, arch)
 	}
-
 
 	if all {
 		return targetOS, allArchs(os), nil
