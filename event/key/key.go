@@ -211,7 +211,8 @@ const (
 	CodeF23 Code = 114
 	CodeF24 Code = 115
 
-	CodeHelp Code = 117
+	CodeHelp  Code = 117
+	CodeProps Code = 118 // alternatively Menu
 
 	CodeMute       Code = 127
 	CodeVolumeUp   Code = 128
