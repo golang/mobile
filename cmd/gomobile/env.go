@@ -59,9 +59,11 @@ func allArchs(targetOS string) []string {
 	switch targetOS {
 	case "ios":
 		if supports32bitsArchs() {
-			return []string{"arm", "arm64", "amd64", "simArm64"}
+			return []string{"arm", "arm64", "amd64"}
 		}
-		return []string{"arm64", "amd64", "simArm64"}
+		return []string{"arm64", "amd64"}
+	case "sim-arm64":
+		return []string{"sim-arm64"}
 	case "macos":
 		return []string{"macos64"}
 	case "macos-ui":
@@ -203,7 +205,7 @@ func envInit() (err error) {
 		case "amd64":
 			clang, cflags, err = envClang("iphonesimulator")
 			cflags += " -mios-simulator-version-min=" + buildIOSVersion
-		case "simArm64":
+		case "sim-arm64":
 			clang, cflags, err = envClang("iphonesimulator")
 			cflags += " -mios-simulator-version-min=" + buildIOSVersion
 			archNew = "arm64"
@@ -317,6 +319,8 @@ func archClang(goarch string) string {
 		return "x86_64"
 	case "macos64":
 		return "x86_64"
+	case "sim-arm64":
+		return "arm64"
 	case "uikitMac64":
 		return "x86_64"
 	default:

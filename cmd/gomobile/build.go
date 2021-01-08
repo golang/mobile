@@ -381,6 +381,9 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 	if os == "ios" {
 		targetOS = "darwin"
 	}
+	if os == "sim-arm64" {
+		targetOS = "darwin"
+	}
 	if os == "macos" {
 		targetOS = "darwin"
 	}

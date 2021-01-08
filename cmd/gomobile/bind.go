@@ -291,7 +291,7 @@ func writeGoMod(targetOS string, targetArch string) error {
 	if targetArch == "macos64" || targetArch == "uikitMac64" {
 		targetArch = "amd64"
 	}
-	if targetArch == "simArm64" {
+	if targetArch == "sim-arm64" {
 		targetArch = "arm64"
 	}
 	m, err := areGoModulesUsed()
