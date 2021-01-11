@@ -315,6 +315,8 @@ func archClang(goarch string) string {
 		return "x86_64"
 	case "sim-arm64":
 		return "arm64"
+	case "sim-amd64":
+		return "x86_64"
 	case "uikitMac64":
 		return "x86_64"
 	default:
