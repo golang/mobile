@@ -348,7 +348,7 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 	archNames := []string{}
 	for i, p := range strings.Split(buildTarget, ",") {
 		osarch := strings.SplitN(p, "/", 2) // len(osarch) > 0
-		if osarch[0] != "android" && osarch[0] != "ios" && osarch[0] != "macos" && osarch[0] != "macos-ui" && osarch[0] != "sim-arm64" {
+		if osarch[0] != "android" && osarch[0] != "ios" && osarch[0] != "macos" && osarch[0] != "macos-ui" && osarch[0] != "ios-simulator" {
 			return "", nil, fmt.Errorf(`unsupported os`)
 		}
 
@@ -381,7 +381,7 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 	if os == "ios" {
 		targetOS = "darwin"
 	}
-	if os == "sim-arm64" {
+	if os == "ios-simulator" {
 		targetOS = "darwin"
 	}
 	if os == "macos" {

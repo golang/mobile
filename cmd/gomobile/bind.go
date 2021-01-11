@@ -288,7 +288,7 @@ func getModuleVersions(targetOS string, targetArch string, src string) (*modfile
 
 // writeGoMod writes go.mod file at $WORK/src when Go modules are used.
 func writeGoMod(targetOS string, targetArch string) error {
-	if targetArch == "macos64" || targetArch == "uikitMac64" {
+	if targetArch == "macos64" || targetArch == "uikitMac64" || targetArch == "sim-amd64" {
 		targetArch = "amd64"
 	}
 	if targetArch == "sim-arm64" {

@@ -59,11 +59,11 @@ func allArchs(targetOS string) []string {
 	switch targetOS {
 	case "ios":
 		if supports32bitsArchs() {
-			return []string{"arm", "arm64", "amd64"}
+			return []string{"arm", "arm64"}
 		}
-		return []string{"arm64", "amd64"}
-	case "sim-arm64":
-		return []string{"sim-arm64"}
+		return []string{"arm64"}
+	case "ios-simulator":
+		return []string{"sim-amd64", "sim-arm64"}
 	case "macos":
 		return []string{"macos64"}
 	case "macos-ui":
@@ -183,6 +183,7 @@ func envInit() (err error) {
 	darwinArchs := allArchs("ios")
 	darwinArchs = append(darwinArchs, allArchs("macos")...)
 	darwinArchs = append(darwinArchs, allArchs("macos-ui")...)
+	darwinArchs = append(darwinArchs, allArchs("ios-simulator")...)
 	for _, arch := range darwinArchs {
 		var env []string
 		var err error
@@ -202,9 +203,10 @@ func envInit() (err error) {
 		case "arm64":
 			clang, cflags, err = envClang("iphoneos")
 			cflags += " -miphoneos-version-min=" + buildIOSVersion
-		case "amd64":
+		case "sim-amd64":
 			clang, cflags, err = envClang("iphonesimulator")
 			cflags += " -mios-simulator-version-min=" + buildIOSVersion
+			archNew = "amd64"
 		case "sim-arm64":
 			clang, cflags, err = envClang("iphonesimulator")
 			cflags += " -mios-simulator-version-min=" + buildIOSVersion
@@ -294,14 +296,6 @@ func envClang(sdkName string) (clang, cflags string, err error) {
 		return "", "", fmt.Errorf("xcrun --show-sdk-path: %v\n%s", err, out)
 	}
 	sdk := strings.TrimSpace(string(out))
-	fmt.Println(clang)
-	fmt.Println(sdk)
-	// if inSDKname == "macosx15" {
-	// 	clang = "/Users/Yanfeng/Downloads/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang"
-	// 	// sdk = "/Users/Yanfeng/Downloads/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS13.0.sdk"
-	// 	sdk = "/Users/Yanfeng/Downloads/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk"
-	// 	// sdk = "/Users/Yanfeng/Downloads/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator13.0.sdk"
-	// }
 	fmt.Println(clang)
 	fmt.Println(sdk)
 	return clang, "-isysroot " + sdk, nil
