@@ -65,9 +65,9 @@ func allArchs(targetOS string) []string {
 	case "ios-simulator":
 		return []string{"sim-amd64", "sim-arm64"}
 	case "macos":
-		return []string{"macos64"}
+		return []string{"macos-arm64", "macos-amd64"}
 	case "macos-ui":
-		return []string{"uikitMac64"}
+		return []string{"uikitMac-arm64", "uikitMac-amd64"}
 	case "android":
 		return []string{"arm", "arm64", "386", "amd64"}
 	default:
@@ -211,17 +211,28 @@ func envInit() (err error) {
 			clang, cflags, err = envClang("iphonesimulator")
 			cflags += " -mios-simulator-version-min=" + buildIOSVersion
 			archNew = "arm64"
-		case "macos64":
+		case "macos-amd64":
 			clang, cflags, err = envClang("macosx")
 			cflags += " -mmacosx-version-min=10.10"
 			archNew = "amd64"
-		case "uikitMac64":
+		case "macos-arm64":
+			clang, cflags, err = envClang("macosx")
+			cflags += " -mmacosx-version-min=10.10"
+			archNew = "arm64"
+		case "uikitMac-amd64":
 			clang, cflags, err = envClang("macosx15")
 			cflags += " --target=x86_64-apple-ios13.0-macabi"
 			// cflags += " -miphoneos-version-min=13.0"
 			// cflags += " -mmacosx-version-min=10.15"
 
 			archNew = "amd64"
+		case "uikitMac-arm64":
+			clang, cflags, err = envClang("macosx15")
+			cflags += " --target=x86_64-apple-ios13.0-macabi"
+			// cflags += " -miphoneos-version-min=13.0"
+			// cflags += " -mmacosx-version-min=10.15"
+
+			archNew = "arm64"
 		default:
 			panic(fmt.Errorf("unknown GOARCH: %q", arch))
 		}
@@ -311,14 +322,18 @@ func archClang(goarch string) string {
 		return "i386"
 	case "amd64":
 		return "x86_64"
-	case "macos64":
+	case "macos-amd64":
 		return "x86_64"
+	case "macos-arm64":
+		return "arm64"
 	case "sim-arm64":
 		return "arm64"
 	case "sim-amd64":
 		return "x86_64"
-	case "uikitMac64":
+	case "uikitMac-amd64":
 		return "x86_64"
+	case "uikitMac-arm64":
+		return "arm64"
 	default:
 		panic(fmt.Sprintf("unknown GOARCH: %q", goarch))
 	}
