@@ -184,7 +184,7 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 		}
 	}
 	// Combine frameworks into xcframework
-	cmd = exec.Command("xcodebuild", "-create-xcframework", "-framework", tmpdir+"/arm64/Sample.framework", "-framework", tmpdir+"/amd64/Sample.framework", "-framework", tmpdir+"/catalyst/Sample.framework", "-output", buildO)
+	cmd = exec.Command("xcodebuild", "-create-xcframework", "-framework", tmpdir+"/arm64/" + title + ".framework", "-framework", tmpdir+"/amd64/" + title + ".framework", "-framework", tmpdir+"/catalyst/" + title + ".framework", "-output", buildO)
 	err := runCmd(cmd)
 	return err
 }
