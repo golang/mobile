@@ -177,14 +177,14 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 		}
 		// Thin the arm64 framework with lipo
 		if arch == "arm64" {
-			cmd = exec.Command("xcrun", "lipo", buildTemp + "/Versions/A/" + title, "-thin", "arm64", "-output", buildTemp + "/Versions/A/" + title)
+			cmd = exec.Command("xcrun", "lipo", buildTemp+"/Versions/A/"+title, "-thin", "arm64", "-output", buildTemp+"/Versions/A/"+title)
 			if err := runCmd(cmd); err != nil {
 				return err
 			}
 		}
 	}
 	// Combine frameworks into xcframework
-	cmd = exec.Command("xcodebuild", "-create-xcframework", "-framework", tmpdir+"/arm64/" + title + ".framework", "-framework", tmpdir+"/amd64/" + title + ".framework", "-framework", tmpdir+"/catalyst/" + title + ".framework", "-output", buildO)
+	cmd = exec.Command("xcodebuild", "-create-xcframework", "-framework", tmpdir+"/arm64/"+title+".framework", "-framework", tmpdir+"/amd64/"+title+".framework", "-framework", tmpdir+"/catalyst/"+title+".framework", "-output", buildO)
 	err := runCmd(cmd)
 	return err
 }
