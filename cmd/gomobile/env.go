@@ -228,7 +228,7 @@ func envInit() (err error) {
 			archNew = "amd64"
 		case "uikitMac-arm64":
 			clang, cflags, err = envClang("macosx15")
-			cflags += " --target=x86_64-apple-ios13.0-macabi"
+			cflags += " --target=arm64-apple-ios13.0-macabi"
 			// cflags += " -miphoneos-version-min=13.0"
 			// cflags += " -mmacosx-version-min=10.15"
 
