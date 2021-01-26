@@ -326,10 +326,10 @@ func archClang(goarch string) string {
 		return "x86_64"
 	case "macos-arm64":
 		return "arm64"
-	case "sim-arm64":
-		return "arm64"
 	case "sim-amd64":
 		return "x86_64"
+	case "sim-arm64":
+		return "arm64"
 	case "uikitMac-amd64":
 		return "x86_64"
 	case "uikitMac-arm64":
