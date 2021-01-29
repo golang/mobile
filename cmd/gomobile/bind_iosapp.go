@@ -59,132 +59,156 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 		return err
 	}
 
-	for _, arch := range archs {
+	targets := allTargets("ios")
 
-		// Keep the .framework for each "architecture" to combine into .xcframework
-		buildTemp = tmpdir + "/" + arch + "/" + title + ".framework"
+	// create separate framework for ios,simulator and catalyst
+	// every target has at least one arch (arm64 and x86_64)
+	for _, target := range targets {
+		archs := allTargetArchs("ios", target)
 
-		fileBases := make([]string, len(pkgs)+1)
-		for i, pkg := range pkgs {
-			fileBases[i] = bindPrefix + strings.Title(pkg.Name)
-		}
-		fileBases[len(fileBases)-1] = "Universe"
+		for index, arch := range archs {
+			buildTemp = tmpdir + "/" + target + "/" + title + ".framework"
 
-		cmd = exec.Command("xcrun", "lipo", "-create")
+			fileBases := make([]string, len(pkgs)+1)
+			for i, pkg := range pkgs {
+				fileBases[i] = bindPrefix + strings.Title(pkg.Name)
+			}
+			fileBases[len(fileBases)-1] = "Universe"
 
-		if err := writeGoMod("darwin", arch); err != nil {
-			return err
-		}
+			cmd = exec.Command("xcrun", "lipo", "-create")
 
-		env := darwinEnv[arch]
-		// Add the generated packages to GOPATH for reverse bindings.
-		gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
-		env = append(env, gopath)
-		path, err := goIOSBindArchive(name, env, filepath.Join(tmpdir, "src"))
-		if err != nil {
-			return fmt.Errorf("darwin-%s: %v", arch, err)
-		}
-		cmd.Args = append(cmd.Args, "-arch", archClang(arch), path)
+			env := darwinEnv[target + "_" + arch]
 
-		headers := buildTemp + "/Versions/A/Headers"
-		if err := mkdir(headers); err != nil {
-			return err
-		}
-		if err := symlink("A", buildTemp+"/Versions/Current"); err != nil {
-			return err
-		}
-		if err := symlink("Versions/Current/Headers", buildTemp+"/Headers"); err != nil {
-			return err
-		}
-		if err := symlink("Versions/Current/"+title, buildTemp+"/"+title); err != nil {
-			return err
-		}
-
-		cmd.Args = append(cmd.Args, "-o", buildTemp+"/Versions/A/"+title)
-		if err := runCmd(cmd); err != nil {
-			return err
-		}
-
-		// Copy header file next to output archive.
-		headerFiles := make([]string, len(fileBases))
-		if len(fileBases) == 1 {
-			headerFiles[0] = title + ".h"
-			err := copyFile(
-				headers+"/"+title+".h",
-				srcDir+"/"+bindPrefix+title+".objc.h",
-			)
-			if err != nil {
+			if err := writeGoMod("darwin", getenv(env, "GOARCH")); err != nil {
 				return err
 			}
-		} else {
-			for i, fileBase := range fileBases {
-				headerFiles[i] = fileBase + ".objc.h"
+
+			// Add the generated packages to GOPATH for reverse bindings.
+			gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
+			env = append(env, gopath)
+			fmt.Printf("[debug] goenv:\n%s\n", env)
+
+			path, err := goIOSBindArchive(name, env, filepath.Join(tmpdir, "src"))
+			if err != nil {
+				return fmt.Errorf("darwin-%s: %v", arch, err)
+			}
+
+			if index > 0 {
+				// not the first static lib, attach to a fat library and skip create headers
+				fatCmd := exec.Command("xcrun", "lipo", "-create",
+					"-output", buildTemp+"/Versions/A/"+title,
+					buildTemp+"/Versions/A/"+title, path)
+
+				if err := runCmd(fatCmd); err != nil {
+					return err
+				}
+
+				continue
+			}
+
+			cmd.Args = append(cmd.Args, "-arch", archClang(arch), path)
+
+			headers := buildTemp + "/Versions/A/Headers"
+			if err := mkdir(headers); err != nil {
+				return err
+			}
+			if err := symlink("A", buildTemp+"/Versions/Current"); err != nil {
+				return err
+			}
+			if err := symlink("Versions/Current/Headers", buildTemp+"/Headers"); err != nil {
+				return err
+			}
+			if err := symlink("Versions/Current/"+title, buildTemp+"/"+title); err != nil {
+				return err
+			}
+
+			cmd.Args = append(cmd.Args, "-o", buildTemp+"/Versions/A/"+title)
+			if err := runCmd(cmd); err != nil {
+				return err
+			}
+
+			//Copy header file next to output archive.
+			headerFiles := make([]string, len(fileBases))
+			if len(fileBases) == 1 {
+				headerFiles[0] = title + ".h"
 				err := copyFile(
-					headers+"/"+fileBase+".objc.h",
-					srcDir+"/"+fileBase+".objc.h")
+					headers+"/"+title+".h",
+					srcDir+"/"+bindPrefix+title+".objc.h",
+				)
+				if err != nil {
+					return err
+				}
+			} else {
+				for i, fileBase := range fileBases {
+					headerFiles[i] = fileBase + ".objc.h"
+					err := copyFile(
+						headers+"/"+fileBase+".objc.h",
+						srcDir+"/"+fileBase+".objc.h")
+					if err != nil {
+						return err
+					}
+				}
+				err := copyFile(
+					headers+"/ref.h",
+					srcDir+"/ref.h")
+				if err != nil {
+					return err
+				}
+				headerFiles = append(headerFiles, title+".h")
+				err = writeFile(headers+"/"+title+".h", func(w io.Writer) error {
+					return iosBindHeaderTmpl.Execute(w, map[string]interface{}{
+						"pkgs": pkgs, "title": title, "bases": fileBases,
+					})
+				})
 				if err != nil {
 					return err
 				}
 			}
-			err := copyFile(
-				headers+"/ref.h",
-				srcDir+"/ref.h")
-			if err != nil {
+
+			resources := buildTemp + "/Versions/A/Resources"
+			if err := mkdir(resources); err != nil {
 				return err
 			}
-			headerFiles = append(headerFiles, title+".h")
-			err = writeFile(headers+"/"+title+".h", func(w io.Writer) error {
-				return iosBindHeaderTmpl.Execute(w, map[string]interface{}{
-					"pkgs": pkgs, "title": title, "bases": fileBases,
-				})
+			if err := symlink("Versions/Current/Resources", buildTemp+"/Resources"); err != nil {
+				return err
+			}
+			err = writeFile(buildTemp+"/Resources/Info.plist", func(w io.Writer) error {
+				_, err := w.Write([]byte(iosBindInfoPlist))
+				return err
 			})
 			if err != nil {
 				return err
 			}
-		}
 
-		resources := buildTemp + "/Versions/A/Resources"
-		if err := mkdir(resources); err != nil {
-			return err
-		}
-		if err := symlink("Versions/Current/Resources", buildTemp+"/Resources"); err != nil {
-			return err
-		}
-		err = writeFile(buildTemp+"/Resources/Info.plist", func(w io.Writer) error {
-			_, err := w.Write([]byte(iosBindInfoPlist))
-			return err
-		})
-		if err != nil {
-			return err
-		}
-
-		var mmVals = struct {
-			Module  string
-			Headers []string
-		}{
-			Module:  title,
-			Headers: headerFiles,
-		}
-		err = writeFile(buildTemp+"/Versions/A/Modules/module.modulemap", func(w io.Writer) error {
-			return iosModuleMapTmpl.Execute(w, mmVals)
-		})
-		if err != nil {
-			return err
-		}
-		err = symlink("Versions/Current/Modules", buildTemp+"/Modules")
-		if err != nil {
-			return err
-		}
-		// Thin the arm64 framework with lipo
-		if arch == "arm64" {
-			cmd = exec.Command("xcrun", "lipo", buildTemp+"/Versions/A/"+title, "-thin", "arm64", "-output", buildTemp+"/Versions/A/"+title)
-			if err := runCmd(cmd); err != nil {
+			var mmVals = struct {
+				Module  string
+				Headers []string
+			}{
+				Module:  title,
+				Headers: headerFiles,
+			}
+			err = writeFile(buildTemp+"/Versions/A/Modules/module.modulemap", func(w io.Writer) error {
+				return iosModuleMapTmpl.Execute(w, mmVals)
+			})
+			if err != nil {
+				return err
+			}
+			err = symlink("Versions/Current/Modules", buildTemp+"/Modules")
+			if err != nil {
 				return err
 			}
 		}
 	}
-	// Combine frameworks into xcframework
-	cmd = exec.Command("xcodebuild", "-create-xcframework", "-framework", tmpdir+"/arm64/"+title+".framework", "-framework", tmpdir+"/amd64/"+title+".framework", "-framework", tmpdir+"/catalyst/"+title+".framework", "-output", buildO)
+
+	// Finally combine ios/simulator/catalyst framework to xcframework
+	xcframeworkArgs := []string{"-create-xcframework"}
+
+	for _, target := range allTargets("ios") {
+		xcframeworkArgs = append(xcframeworkArgs, "-framework", tmpdir+"/"+target+"/"+title+".framework")
+	}
+
+	xcframeworkArgs = append(xcframeworkArgs, "-output", buildO)
+	cmd = exec.Command("xcodebuild", xcframeworkArgs...)
 	err := runCmd(cmd)
 	return err
 }
