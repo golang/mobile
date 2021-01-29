@@ -290,6 +290,7 @@ func goCmd(subcmd string, srcs []string, env []string, args ...string) error {
 
 func goCmdAt(at string, subcmd string, srcs []string, env []string, args ...string) error {
 	cmd := exec.Command("go", subcmd)
+	//cmd := exec.Command("go1.16rc1", subcmd)
 	tags := buildTags
 	targetOS, _, err := parseBuildTarget(buildTarget)
 	if err != nil {
