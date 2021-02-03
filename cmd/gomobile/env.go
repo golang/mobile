@@ -28,7 +28,7 @@ var (
 func allArchs(targetOS string) []string {
 	switch targetOS {
 	case "ios":
-		return []string{"arm64", "amd64", "catalyst"}
+		return []string{"arm64", "amd64"}
 	case "android":
 		return []string{"arm", "arm64", "386", "amd64"}
 	default:
