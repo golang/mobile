@@ -35,8 +35,9 @@ package app
 #include <pthread.h>
 #include <stdlib.h>
 
-EGLDisplay display;
-EGLSurface surface;
+extern EGLDisplay display;
+extern EGLSurface surface;
+
 
 char* createEGLSurface(ANativeWindow* window);
 char* destroyEGLSurface();
