@@ -329,6 +329,16 @@ func goCmdAt(at string, subcmd string, srcs []string, env []string, args ...stri
 	return runCmd(cmd)
 }
 
+func goModTidyAt(at string, env []string) error {
+	cmd := exec.Command("go", "mod", "tidy")
+	if buildV {
+		cmd.Args = append(cmd.Args, "-v")
+	}
+	cmd.Env = append([]string{}, env...)
+	cmd.Dir = at
+	return runCmd(cmd)
+}
+
 func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 	if buildTarget == "" {
 		return "", nil, fmt.Errorf(`invalid target ""`)

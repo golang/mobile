@@ -52,6 +52,11 @@ func goAndroidBind(gobind string, pkgs []*packages.Package, androidArchs []strin
 
 	androidDir := filepath.Join(tmpdir, "android")
 
+	modulesUsed, err := areGoModulesUsed()
+	if err != nil {
+		return err
+	}
+
 	// Generate binding code and java source code only when processing the first package.
 	for _, arch := range androidArchs {
 		if err := writeGoMod("android", arch); err != nil {
@@ -62,8 +67,16 @@ func goAndroidBind(gobind string, pkgs []*packages.Package, androidArchs []strin
 		// Add the generated packages to GOPATH for reverse bindings.
 		gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
 		env = append(env, gopath)
-		toolchain := ndk.Toolchain(arch)
 
+		// Run `go mod tidy` to force to create go.sum.
+		// Without go.sum, `go build` fails as of Go 1.16.
+		if modulesUsed {
+			if err := goModTidyAt(filepath.Join(tmpdir, "src"), env); err != nil {
+				return err
+			}
+		}
+
+		toolchain := ndk.Toolchain(arch)
 		err := goBuildAt(
 			filepath.Join(tmpdir, "src"),
 			"./gobind",
