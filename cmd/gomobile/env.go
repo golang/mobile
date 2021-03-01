@@ -39,7 +39,7 @@ func allArchs(targetOS string) []string {
 func allTargets(targetOS string) []string {
 	switch targetOS {
 	case "ios":
-		return []string{"simulator", "ios", "catalyst"}
+		return []string{"simulator", "ios", "catalyst", "macosx"}
 	default:
 		panic(fmt.Sprintf("unexpected target OS: %s", targetOS))
 	}
@@ -54,6 +54,8 @@ func allTargetArchs(targetOS string, target string) []string {
 		case "ios":
 			return []string{"arm64"}
 		case "catalyst":
+			return []string{"arm64", "amd64"}
+		case "macosx":
 			return []string{"arm64", "amd64"}
 		default:
 			panic(fmt.Sprintf("unexpected ios target: %s", target))
@@ -183,6 +185,9 @@ func envInit() (err error) {
 			case "catalyst":
 				clang, cflags, err = envClang("macosx")
 				cflags += " -target x86_64-apple-ios13.0-macabi"
+			case "macosx":
+				clang, cflags, err = envClang("macosx")
+				// cflags += " -target x86_64-apple-ios13.0-macabi"
 			default:
 				panic(fmt.Errorf("unknown ios target: %q", arch))
 			}
@@ -205,7 +210,7 @@ func envInit() (err error) {
 				"CGO_ENABLED=1",
 				"ARCH="+arch,
 			)
-			darwinEnv[target + "_" + arch] = env
+			darwinEnv[target+"_"+arch] = env
 		}
 	}
 
