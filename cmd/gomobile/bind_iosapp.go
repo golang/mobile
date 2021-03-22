@@ -119,81 +119,20 @@ func goIOSBind(gobind string, pkgs []*packages.Package, _ []string) error {
 					return err
 				}
 
+				fmt.Println("continue")
 				continue
 			}
 
 			cmd.Args = append(cmd.Args, "-arch", archClang(arch), path)
 
-			headers := buildTempPath + "/Versions/A/Headers"
-			if err := mkdir(headers); err != nil {
-				return err
+			headerFiles, headerErr := buildHeaders(buildTempPath, title, cmd, fileBases, srcDir, pkgs)
+			if headerErr != nil {
+				return headerErr
 			}
 
-			if err := symlink("A", buildTempPath+"/Versions/Current"); err != nil {
-				return err
-			}
-			if err := symlink("Versions/Current/Headers", buildTempPath+"/Headers"); err != nil {
-				return err
-			}
-			if err := symlink("Versions/Current/"+title, buildTempPath+"/"+title); err != nil {
-				return err
-			}
-
-			cmd.Args = append(cmd.Args, "-o", buildTempPath+"/Versions/A/"+title)
-			if err := runCmd(cmd); err != nil {
-				return err
-			}
-
-			// Copy header file next to output archive.
-			headerFiles := make([]string, len(fileBases))
-			if len(fileBases) == 1 {
-				headerFiles[0] = title + ".h"
-				err := copyFile(
-					headers+"/"+title+".h",
-					srcDir+"/"+bindPrefix+title+".objc.h",
-				)
-				if err != nil {
-					return err
-				}
-			} else {
-				for i, fileBase := range fileBases {
-					headerFiles[i] = fileBase + ".objc.h"
-					err := copyFile(
-						headers+"/"+fileBase+".objc.h",
-						srcDir+"/"+fileBase+".objc.h")
-					if err != nil {
-						return err
-					}
-				}
-				err := copyFile(
-					headers+"/ref.h",
-					srcDir+"/ref.h")
-				if err != nil {
-					return err
-				}
-				headerFiles = append(headerFiles, title+".h")
-				err = writeFile(headers+"/"+title+".h", func(w io.Writer) error {
-					return iosBindHeaderTmpl.Execute(w, map[string]interface{}{
-						"pkgs": pkgs, "title": title, "bases": fileBases,
-					})
-				})
-				if err != nil {
-					return err
-				}
-			}
-
-			resources := buildTempPath + "/Versions/A/Resources"
-			if err := mkdir(resources); err != nil {
-				return err
-			}
-			if err := symlink("Versions/Current/Resources", buildTempPath+"/Resources"); err != nil {
-				return err
-			}
-			if err := writeFile(buildTempPath+"/Resources/Info.plist", func(w io.Writer) error {
-				_, err := w.Write([]byte(iosBindInfoPlist))
-				return err
-			}); err != nil {
-				return err
+			resourceErr := buildResources(buildTempPath)
+			if resourceErr != nil {
+				return resourceErr
 			}
 
 			var mmVals = struct {
@@ -228,6 +167,84 @@ func goIOSBind(gobind string, pkgs []*packages.Package, _ []string) error {
 	cmd = exec.Command("xcodebuild", xcframeworkArgs...)
 	err = runCmd(cmd)
 	return err
+}
+
+func buildResources(buildTempPath string) error {
+	resources := buildTempPath + "/Versions/A/Resources"
+	if err := mkdir(resources); err != nil {
+		return err
+	}
+	if err := symlink("Versions/Current/Resources", buildTempPath+"/Resources"); err != nil {
+		return err
+	}
+	if err := writeFile(buildTempPath+"/Resources/Info.plist", func(w io.Writer) error {
+		_, err := w.Write([]byte(iosBindInfoPlist))
+		return err
+	}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func buildHeaders(buildTempPath string, title string, cmd *exec.Cmd, fileBases []string, srcDir string, pkgs []*packages.Package) ([]string, error) {
+	headers := buildTempPath + "/Versions/A/Headers"
+	if err := mkdir(headers); err != nil {
+		return nil, err
+	}
+
+	if err := symlink("A", buildTempPath+"/Versions/Current"); err != nil {
+		return nil, err
+	}
+	if err := symlink("Versions/Current/Headers", buildTempPath+"/Headers"); err != nil {
+		return nil, err
+	}
+	if err := symlink("Versions/Current/"+title, buildTempPath+"/"+title); err != nil {
+		return nil, err
+	}
+
+	cmd.Args = append(cmd.Args, "-o", buildTempPath+"/Versions/A/"+title)
+	if err := runCmd(cmd); err != nil {
+		return nil, err
+	}
+
+	// Copy header file next to output archive.
+	headerFiles := make([]string, len(fileBases))
+	if len(fileBases) == 1 {
+		headerFiles[0] = title + ".h"
+		err := copyFile(
+			headers+"/"+title+".h",
+			srcDir+"/"+bindPrefix+title+".objc.h",
+		)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		for i, fileBase := range fileBases {
+			headerFiles[i] = fileBase + ".objc.h"
+			err := copyFile(
+				headers+"/"+fileBase+".objc.h",
+				srcDir+"/"+fileBase+".objc.h")
+			if err != nil {
+				return nil, err
+			}
+		}
+		err := copyFile(
+			headers+"/ref.h",
+			srcDir+"/ref.h")
+		if err != nil {
+			return nil, err
+		}
+		headerFiles = append(headerFiles, title+".h")
+		err = writeFile(headers+"/"+title+".h", func(w io.Writer) error {
+			return iosBindHeaderTmpl.Execute(w, map[string]interface{}{
+				"pkgs": pkgs, "title": title, "bases": fileBases,
+			})
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	return headerFiles, nil
 }
 
 const iosBindInfoPlist = `<?xml version="1.0" encoding="UTF-8"?>
