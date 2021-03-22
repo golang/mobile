@@ -28,7 +28,7 @@ var (
 func allArchs(targetOS string) []string {
 	switch targetOS {
 	case "ios":
-		return []string{"arm64", "amd64"}
+		return []string{"simulator", "ios", "catalyst"}
 	case "android":
 		return []string{"arm", "arm64", "386", "amd64"}
 	default:
@@ -36,16 +36,7 @@ func allArchs(targetOS string) []string {
 	}
 }
 
-func allTargets(targetOS string) []string {
-	switch targetOS {
-	case "ios":
-		return []string{"simulator", "ios", "catalyst"}
-	default:
-		panic(fmt.Sprintf("unexpected target OS: %s", targetOS))
-	}
-}
-
-func allTargetArchs(targetOS string, target string) []string {
+func allAppleTargetArchs(targetOS string, target string) []string {
 	switch targetOS {
 	case "ios":
 		switch target {
@@ -56,7 +47,7 @@ func allTargetArchs(targetOS string, target string) []string {
 		case "catalyst":
 			return []string{"arm64", "amd64"}
 		default:
-			panic(fmt.Sprintf("unexpected ios target: %s", target))
+			panic(fmt.Sprintf("unexpected iOS target: %s", target))
 		}
 	default:
 		panic(fmt.Sprintf("unexpected target OS: %s", targetOS))
@@ -168,8 +159,8 @@ func envInit() (err error) {
 
 	darwinArmNM = "nm"
 	darwinEnv = make(map[string][]string)
-	for _, target := range allTargets("ios") {
-		for _, arch := range allTargetArchs("ios", target) {
+	for _, target := range allArchs("ios") {
+		for _, arch := range allAppleTargetArchs("ios", target) {
 			var env []string
 			var err error
 			var clang, cflags string
