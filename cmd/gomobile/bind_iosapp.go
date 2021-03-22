@@ -94,8 +94,6 @@ func goIOSBind(gobind string, pkgs []*packages.Package, _ []string) error {
 			gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
 			env = append(env, gopath)
 
-			fmt.Printf("[debug] goenv:\n%s\n", env)
-
 			// Run `go mod tidy` to force to create go.sum.
 			// Without go.sum, `go build` fails as of Go 1.16.
 			if modulesUsed {
@@ -152,10 +150,8 @@ func goIOSBind(gobind string, pkgs []*packages.Package, _ []string) error {
 				return err
 			}
 		}
-
 	}
 
-	// Finally combine ios/simulator/catalyst framework to xcframework
 	xcframeworkArgs := []string{"-create-xcframework"}
 
 	for _, target := range allTargets("ios") {
