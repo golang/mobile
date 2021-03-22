@@ -14,3 +14,5 @@ example/bind/android/gradlew*
 example/bind/android/gradle
 example/bind/android/build
 example/bind/android/app/build
+
+.vscode
