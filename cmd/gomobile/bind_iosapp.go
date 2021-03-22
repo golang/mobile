@@ -119,7 +119,6 @@ func goIOSBind(gobind string, pkgs []*packages.Package, _ []string) error {
 					return err
 				}
 
-				fmt.Println("continue")
 				continue
 			}
 

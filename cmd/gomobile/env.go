@@ -17,7 +17,7 @@ var (
 
 	androidEnv map[string][]string // android arch -> []string
 
-	darwinEnv map[string][]string
+	darwinEnv map[string][]string // targetOS arch -> []string
 
 	androidArmNM string
 	darwinArmNM  string
@@ -182,7 +182,7 @@ func envInit() (err error) {
 				cflags += " -mios-simulator-version-min=" + buildIOSVersion
 			case "catalyst":
 				clang, cflags, err = envClang("macosx")
-				cflags += " -target x86_64-apple-ios13.0-macabi"
+				cflags += " -target x86_64-apple-ios-macabi -miphoneos-version-min=13.0"
 			default:
 				panic(fmt.Errorf("unknown ios target: %q", arch))
 			}
@@ -205,7 +205,7 @@ func envInit() (err error) {
 				"CGO_ENABLED=1",
 				"ARCH="+arch,
 			)
-			darwinEnv[target + "_" + arch] = env
+			darwinEnv[target+"_"+arch] = env
 		}
 	}
 
