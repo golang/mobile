@@ -61,7 +61,6 @@ func goIOSBind(gobind string, pkgs []*packages.Package, _ []string) error {
 	}
 
 	modulesUsed, err := areGoModulesUsed()
-
 	if err != nil {
 		return err
 	}
