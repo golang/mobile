@@ -145,7 +145,6 @@ func goIOSBind(gobind string, pkgs []*packages.Package, _ []string) error {
 				return err
 			}
 
-
 			// Copy header file next to output archive.
 			headerFiles := make([]string, len(fileBases))
 			if len(fileBases) == 1 {
@@ -184,7 +183,6 @@ func goIOSBind(gobind string, pkgs []*packages.Package, _ []string) error {
 				}
 			}
 
-
 			resources := buildTempPath + "/Versions/A/Resources"
 			if err := mkdir(resources); err != nil {
 				return err
@@ -198,7 +196,6 @@ func goIOSBind(gobind string, pkgs []*packages.Package, _ []string) error {
 			}); err != nil {
 				return err
 			}
-
 
 			var mmVals = struct {
 				Module  string
@@ -220,11 +217,6 @@ func goIOSBind(gobind string, pkgs []*packages.Package, _ []string) error {
 		}
 
 	}
-
-	// Build static framework output directory.
-	//if err := removeAll(buildO); err != nil {
-	//	return err
-	//}
 
 	// Finally combine ios/simulator/catalyst framework to xcframework
 	xcframeworkArgs := []string{"-create-xcframework"}
