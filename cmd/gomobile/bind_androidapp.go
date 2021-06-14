@@ -393,7 +393,7 @@ func androidAPIPath() (string, error) {
 	var apiVer int
 	for _, fi := range fis {
 		name := fi.Name()
-		if !fi.IsDir() || !strings.HasPrefix(name, "android-") {
+		if !strings.HasPrefix(name, "android-") {
 			continue
 		}
 		n, err := strconv.Atoi(name[len("android-"):])
