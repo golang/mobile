@@ -84,16 +84,19 @@ func NewContext() (Context, Worker) {
 		work:          make(chan call, workbufLen),
 		retvalue:      make(chan C.uintptr_t),
 	}
-	if C.GLES_VERSION == "GL_ES_2_0" {
+	if version == "GL_ES_2_0" {
 		return glctx, glctx
 	}
 	return context3{glctx}, glctx
 }
 
+// version is determined at runtime on platforms that support EGL.
+var version = C.GLES_VERSION
+
 // Version returns a GL ES version string, either "GL_ES_2_0" or "GL_ES_3_0".
 // Future versions of the gl package may return "GL_ES_3_1".
 func Version() string {
-	return C.GLES_VERSION
+	return version
 }
 
 func (ctx *context) enqueue(c call) uintptr {
@@ -148,11 +151,8 @@ func (ctx *context) DoWork() {
 	}
 }
 
-func init() {
-	if unsafe.Sizeof(C.GLint(0)) != unsafe.Sizeof(int32(0)) {
-		panic("GLint is not an int32")
-	}
-}
+// GLint should be the same size as int32
+var _ [unsafe.Sizeof(C.GLint(0))]struct{} = [unsafe.Sizeof(int32(0))]struct{}{}
 
 // cString creates C string off the Go heap.
 // ret is a *char.
