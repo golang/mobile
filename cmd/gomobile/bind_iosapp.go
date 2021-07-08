@@ -91,7 +91,6 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 			// Add the generated packages to GOPATH for reverse bindings.
 			gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
 			env = append(env, gopath)
-			fmt.Printf("[debug] goenv:\n%s\n", env)
 
 			// Run `go mod tidy` to force to create go.sum.
 			// Without go.sum, `go build` fails as of Go 1.16.
