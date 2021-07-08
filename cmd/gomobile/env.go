@@ -184,7 +184,12 @@ func envInit() (err error) {
 				cflags += " -mios-simulator-version-min=" + buildIOSVersion
 			case "catalyst":
 				clang, cflags, err = envClang("macosx")
-				cflags += " -target x86_64-apple-ios13.0-macabi"
+				switch arch {
+				case "amd64":
+					cflags += " -target x86_64-apple-ios13.0-macabi"
+				case "arm64":
+					cflags += " -target arm64-apple-ios13.0-macabi"
+				}
 			case "macosx":
 				clang, cflags, err = envClang("macosx")
 				// cflags += " -target x86_64-apple-ios13.0-macabi"
