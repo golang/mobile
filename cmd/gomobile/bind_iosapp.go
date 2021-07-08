@@ -64,11 +64,9 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 		return err
 	}
 
-	targets := allTargets("ios")
-
 	// create separate framework for ios,simulator and catalyst
 	// every target has at least one arch (arm64 and x86_64)
-	for _, target := range targets {
+	for _, target := range allTargets("ios") {
 		archs := allTargetArchs("ios", target)
 
 		for index, arch := range archs {
