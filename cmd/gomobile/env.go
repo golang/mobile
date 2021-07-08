@@ -192,7 +192,6 @@ func envInit() (err error) {
 				}
 			case "macosx":
 				clang, cflags, err = envClang("macosx")
-				// cflags += " -target x86_64-apple-ios13.0-macabi"
 			default:
 				panic(fmt.Errorf("unknown ios target: %q", arch))
 			}
