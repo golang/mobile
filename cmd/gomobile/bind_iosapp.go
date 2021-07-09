@@ -135,7 +135,7 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 				return err
 			}
 
-			//Copy header file next to output archive.
+			// Copy header file next to output archive.
 			headerFiles := make([]string, len(fileBases))
 			if len(fileBases) == 1 {
 				headerFiles[0] = title + ".h"
