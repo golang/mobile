@@ -54,7 +54,7 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 		name = base[:len(base)-len(".xcframework")]
 		title = strings.Title(name)
 	}
-	// Build static xcframework output directory.
+
 	if err := removeAll(buildO); err != nil {
 		return err
 	}
