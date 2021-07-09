@@ -205,7 +205,6 @@ func envInit() (err error) {
 				"CGO_CXXFLAGS="+cflags+" -arch "+archClang(arch),
 				"CGO_LDFLAGS="+cflags+" -arch "+archClang(arch),
 				"CGO_ENABLED=1",
-				"ARCH="+arch,
 			)
 			darwinEnv[target+"_"+arch] = env
 		}
