@@ -36,7 +36,7 @@ func allArchs(targetOS string) []string {
 	}
 }
 
-var iOSTargets = []string{"simulator", "ios", "catalyst", "macosx"}
+var iOSTargets = []string{"simulator", "ios", "catalyst", "macos"}
 
 func iOSTargetArchs(target string) []string {
 	switch target {
@@ -46,7 +46,7 @@ func iOSTargetArchs(target string) []string {
 		return []string{"arm64"}
 	case "catalyst":
 		return []string{"arm64", "amd64"}
-	case "macosx":
+	case "macos":
 		return []string{"arm64", "amd64"}
 	default:
 		panic(fmt.Sprintf("unexpected iOS target: %s", target))
@@ -178,7 +178,8 @@ func envInit() (err error) {
 				case "arm64":
 					cflags += " -target arm64-apple-ios13.0-macabi"
 				}
-			case "macosx":
+			case "macos":
+				// Note: the SDK is called "macosx", not "macos"
 				clang, cflags, err = envClang("macosx")
 			default:
 				panic(fmt.Errorf("unknown ios target: %q", arch))
