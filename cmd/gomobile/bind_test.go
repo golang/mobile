@@ -197,7 +197,7 @@ WORK=$WORK
 GOOS=darwin CGO_ENABLED=1 gobind -lang=go,objc -outdir=$WORK -tags=ios{{if .Prefix}} -prefix={{.Prefix}}{{end}} golang.org/x/mobile/asset
 rm -r -f "{{.Output}}.xcframework"
 mkdir -p $WORK/src
-PWD=$WORK/src GOOS=darwin GOARCH=arm64 CC=iphoneos-clang CXX=iphoneos-clang++ CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 {{if .BitcodeEnabled}}-fembed-bitcode {{end}}-arch arm64 CGO_CXXFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 {{if .BitcodeEnabled}}-fembed-bitcode {{end}}-arch arm64 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 {{if .BitcodeEnabled}}-fembed-bitcode {{end}}-arch arm64 CGO_ENABLED=1 ARCH=arm64 GOPATH=$WORK:$GOPATH go build -tags ios -x -buildmode=c-archive -o $WORK/{{.Output}}-arm64.a ./gobind
+PWD=$WORK/src GOOS=darwin GOARCH=arm64 CC=iphoneos-clang CXX=iphoneos-clang++ CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 {{if .BitcodeEnabled}}-fembed-bitcode {{end}}-arch arm64 CGO_CXXFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 {{if .BitcodeEnabled}}-fembed-bitcode {{end}}-arch arm64 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 {{if .BitcodeEnabled}}-fembed-bitcode {{end}}-arch arm64 CGO_ENABLED=1 GOPATH=$WORK:$GOPATH go build -tags ios -x -buildmode=c-archive -o $WORK/{{.Output}}-arm64.a ./gobind
 mkdir -p $WORK/arm64/{{.Output}}.framework/Versions/A/Headers
 ln -s A $WORK/arm64/{{.Output}}.framework/Versions/Current
 ln -s Versions/Current/Headers $WORK/arm64/{{.Output}}.framework/Headers
