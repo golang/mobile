@@ -67,9 +67,7 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 	// create separate framework for ios,simulator and catalyst
 	// every target has at least one arch (arm64 and x86_64)
 	for _, target := range allTargets("ios") {
-		archs := allTargetArchs("ios", target)
-
-		for index, arch := range archs {
+		for index, arch := range iOSTargetArchs(target) {
 			buildTemp = tmpdir + "/" + target + "/" + title + ".framework"
 
 			fileBases := make([]string, len(pkgs)+1)

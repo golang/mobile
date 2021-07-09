@@ -45,23 +45,18 @@ func allTargets(targetOS string) []string {
 	}
 }
 
-func allTargetArchs(targetOS string, target string) []string {
-	switch targetOS {
+func iOSTargetArchs(target string) []string {
+	switch target {
+	case "simulator":
+		return []string{"arm64", "amd64"}
 	case "ios":
-		switch target {
-		case "simulator":
-			return []string{"arm64", "amd64"}
-		case "ios":
-			return []string{"arm64"}
-		case "catalyst":
-			return []string{"arm64", "amd64"}
-		case "macosx":
-			return []string{"arm64", "amd64"}
-		default:
-			panic(fmt.Sprintf("unexpected ios target: %s", target))
-		}
+		return []string{"arm64"}
+	case "catalyst":
+		return []string{"arm64", "amd64"}
+	case "macosx":
+		return []string{"arm64", "amd64"}
 	default:
-		panic(fmt.Sprintf("unexpected target OS: %s", targetOS))
+		panic(fmt.Sprintf("unexpected iOS target: %s", target))
 	}
 }
 
@@ -171,7 +166,7 @@ func envInit() (err error) {
 	darwinArmNM = "nm"
 	darwinEnv = make(map[string][]string)
 	for _, target := range allTargets("ios") {
-		for _, arch := range allTargetArchs("ios", target) {
+		for _, arch := range iOSTargetArchs(target) {
 			var env []string
 			var err error
 			var clang, cflags string
