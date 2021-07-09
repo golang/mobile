@@ -14,7 +14,10 @@ import "C"
 func init() {
 	display := C.eglGetDisplay(C.EGL_DEFAULT_DISPLAY)
 
-	C.eglInitialize(display, nil, nil)
+	if C.eglInitialize(display, nil, nil) == C.EGL_FALSE {
+		return
+	}
+	defer C.eglTerminate(display)
 
 	attributes := []C.EGLint{
 		C.EGL_RED_SIZE, 1,
@@ -27,7 +30,9 @@ func init() {
 		config C.EGLConfig
 		count  C.EGLint
 	)
-	C.eglChooseConfig(display, &attributes[0], &config, 1, &count)
+	if C.eglChooseConfig(display, &attributes[0], &config, 1, &count) == C.EGL_FALSE {
+		return
+	}
 
 	C.eglBindAPI(C.EGL_OPENGL_ES_API)
 
