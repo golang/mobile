@@ -93,8 +93,7 @@ func NewContext() (Context, Worker) {
 // version is determined at runtime on platforms that support EGL.
 var version = C.GLES_VERSION
 
-// Version returns a GL ES version string, either "GL_ES_2_0" or "GL_ES_3_0".
-// Future versions of the gl package may return "GL_ES_3_1".
+// Version returns a GL ES Version string such as "GL_ES_2_0" or "GL_ES_3_0".
 func Version() string {
 	return version
 }
