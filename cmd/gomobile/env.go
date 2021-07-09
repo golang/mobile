@@ -36,6 +36,27 @@ func allArchs(targetOS string) []string {
 	}
 }
 
+// iOSTargets lists Apple platforms as individual sub-targets.
+// The gomobile "ios" target actually builds for multiple Apple platforms:
+// iOS, iPadOS, MacCatalyst (iOS on macOS), and macOS.
+// TODO: support watchOS and tvOS?
+var iOSTargets = []string{"simulator", "ios", "catalyst", "macos"}
+
+func iOSTargetArchs(target string) []string {
+	switch target {
+	case "simulator":
+		return []string{"arm64", "amd64"}
+	case "ios":
+		return []string{"arm64"}
+	case "catalyst":
+		return []string{"arm64", "amd64"}
+	case "macos":
+		return []string{"arm64", "amd64"}
+	default:
+		panic(fmt.Sprintf("unexpected iOS target: %s", target))
+	}
+}
+
 func buildEnvInit() (cleanup func(), err error) {
 	// Find gomobilepath.
 	gopath := goEnv("GOPATH")
@@ -141,38 +162,52 @@ func envInit() (err error) {
 
 	darwinArmNM = "nm"
 	darwinEnv = make(map[string][]string)
-	for _, arch := range allArchs("ios") {
-		var env []string
-		var err error
-		var clang, cflags string
-		switch arch {
-		case "arm64":
-			clang, cflags, err = envClang("iphoneos")
-			cflags += " -miphoneos-version-min=" + buildIOSVersion
-		case "amd64":
-			clang, cflags, err = envClang("iphonesimulator")
-			cflags += " -mios-simulator-version-min=" + buildIOSVersion
-		default:
-			panic(fmt.Errorf("unknown GOARCH: %q", arch))
-		}
-		if err != nil {
-			return err
-		}
+	for _, target := range iOSTargets {
+		for _, arch := range iOSTargetArchs(target) {
+			var env []string
+			var err error
+			var clang, cflags string
+			switch target {
+			case "ios":
+				clang, cflags, err = envClang("iphoneos")
+				cflags += " -miphoneos-version-min=" + buildIOSVersion
+			case "simulator":
+				clang, cflags, err = envClang("iphonesimulator")
+				cflags += " -mios-simulator-version-min=" + buildIOSVersion
+			case "catalyst":
+				clang, cflags, err = envClang("macosx")
+				switch arch {
+				case "amd64":
+					cflags += " -target x86_64-apple-ios13.0-macabi"
+				case "arm64":
+					cflags += " -target arm64-apple-ios13.0-macabi"
+				}
+			case "macos":
+				// Note: the SDK is called "macosx", not "macos"
+				clang, cflags, err = envClang("macosx")
+			default:
+				panic(fmt.Errorf("unknown ios target: %q", arch))
+			}
 
-		if bitcodeEnabled {
-			cflags += " -fembed-bitcode"
+			if err != nil {
+				return err
+			}
+
+			if bitcodeEnabled {
+				cflags += " -fembed-bitcode"
+			}
+			env = append(env,
+				"GOOS=darwin",
+				"GOARCH="+arch,
+				"CC="+clang,
+				"CXX="+clang+"++",
+				"CGO_CFLAGS="+cflags+" -arch "+archClang(arch),
+				"CGO_CXXFLAGS="+cflags+" -arch "+archClang(arch),
+				"CGO_LDFLAGS="+cflags+" -arch "+archClang(arch),
+				"CGO_ENABLED=1",
+			)
+			darwinEnv[target+"_"+arch] = env
 		}
-		env = append(env,
-			"GOOS=darwin",
-			"GOARCH="+arch,
-			"CC="+clang,
-			"CXX="+clang+"++",
-			"CGO_CFLAGS="+cflags+" -arch "+archClang(arch),
-			"CGO_CXXFLAGS="+cflags+" -arch "+archClang(arch),
-			"CGO_LDFLAGS="+cflags+" -arch "+archClang(arch),
-			"CGO_ENABLED=1",
-		)
-		darwinEnv[arch] = env
 	}
 
 	return nil

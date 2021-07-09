@@ -112,7 +112,7 @@ func TestBindIOS(t *testing.T) {
 	}()
 	buildN = true
 	buildX = true
-	buildO = "Asset.framework"
+	buildO = "Asset.xcframework"
 	buildTarget = "ios/arm64"
 
 	tests := []struct {
@@ -126,7 +126,7 @@ func TestBindIOS(t *testing.T) {
 			prefix: "Foo",
 		},
 		{
-			out: "Abcde.framework",
+			out: "Abcde.xcframework",
 		},
 	}
 	for _, tc := range tests {
@@ -160,7 +160,7 @@ func TestBindIOS(t *testing.T) {
 			BitcodeEnabled bool
 		}{
 			outputData:     output,
-			Output:         buildO[:len(buildO)-len(".framework")],
+			Output:         buildO[:len(buildO)-len(".xcframework")],
 			Prefix:         tc.prefix,
 			BitcodeEnabled: bitcodeEnabled,
 		}
@@ -195,26 +195,28 @@ jar c -C $WORK/javac-output .
 var bindIOSTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
 WORK=$WORK
 GOOS=darwin CGO_ENABLED=1 gobind -lang=go,objc -outdir=$WORK -tags=ios{{if .Prefix}} -prefix={{.Prefix}}{{end}} golang.org/x/mobile/asset
+rm -r -f "{{.Output}}.xcframework"
 mkdir -p $WORK/src
 PWD=$WORK/src GOOS=darwin GOARCH=arm64 CC=iphoneos-clang CXX=iphoneos-clang++ CGO_CFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 {{if .BitcodeEnabled}}-fembed-bitcode {{end}}-arch arm64 CGO_CXXFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 {{if .BitcodeEnabled}}-fembed-bitcode {{end}}-arch arm64 CGO_LDFLAGS=-isysroot=iphoneos -miphoneos-version-min=7.0 {{if .BitcodeEnabled}}-fembed-bitcode {{end}}-arch arm64 CGO_ENABLED=1 GOPATH=$WORK:$GOPATH go build -tags ios -x -buildmode=c-archive -o $WORK/{{.Output}}-arm64.a ./gobind
-rm -r -f "{{.Output}}.framework"
-mkdir -p {{.Output}}.framework/Versions/A/Headers
-ln -s A {{.Output}}.framework/Versions/Current
-ln -s Versions/Current/Headers {{.Output}}.framework/Headers
-ln -s Versions/Current/{{.Output}} {{.Output}}.framework/{{.Output}}
-xcrun lipo -create -arch arm64 $WORK/{{.Output}}-arm64.a -o {{.Output}}.framework/Versions/A/{{.Output}}
-cp $WORK/src/gobind/{{.Prefix}}Asset.objc.h {{.Output}}.framework/Versions/A/Headers/{{.Prefix}}Asset.objc.h
-mkdir -p {{.Output}}.framework/Versions/A/Headers
-cp $WORK/src/gobind/Universe.objc.h {{.Output}}.framework/Versions/A/Headers/Universe.objc.h
-mkdir -p {{.Output}}.framework/Versions/A/Headers
-cp $WORK/src/gobind/ref.h {{.Output}}.framework/Versions/A/Headers/ref.h
-mkdir -p {{.Output}}.framework/Versions/A/Headers
-mkdir -p {{.Output}}.framework/Versions/A/Headers
-mkdir -p {{.Output}}.framework/Versions/A/Resources
-ln -s Versions/Current/Resources {{.Output}}.framework/Resources
-mkdir -p {{.Output}}.framework/Resources
-mkdir -p {{.Output}}.framework/Versions/A/Modules
-ln -s Versions/Current/Modules {{.Output}}.framework/Modules
+mkdir -p $WORK/arm64/{{.Output}}.framework/Versions/A/Headers
+ln -s A $WORK/arm64/{{.Output}}.framework/Versions/Current
+ln -s Versions/Current/Headers $WORK/arm64/{{.Output}}.framework/Headers
+ln -s Versions/Current/{{.Output}} $WORK/arm64/{{.Output}}.framework/{{.Output}}
+xcrun lipo -create -arch arm64 $WORK/{{.Output}}-arm64.a -o $WORK/arm64/{{.Output}}.framework/Versions/A/{{.Output}}
+cp $WORK/src/gobind/{{.Prefix}}Asset.objc.h $WORK/arm64/{{.Output}}.framework/Versions/A/Headers/{{.Prefix}}Asset.objc.h
+mkdir -p $WORK/arm64/{{.Output}}.framework/Versions/A/Headers
+cp $WORK/src/gobind/Universe.objc.h $WORK/arm64/{{.Output}}.framework/Versions/A/Headers/Universe.objc.h
+mkdir -p $WORK/arm64/{{.Output}}.framework/Versions/A/Headers
+cp $WORK/src/gobind/ref.h $WORK/arm64/{{.Output}}.framework/Versions/A/Headers/ref.h
+mkdir -p $WORK/arm64/{{.Output}}.framework/Versions/A/Headers
+mkdir -p $WORK/arm64/{{.Output}}.framework/Versions/A/Headers
+mkdir -p $WORK/arm64/{{.Output}}.framework/Versions/A/Resources
+ln -s Versions/Current/Resources $WORK/arm64/{{.Output}}.framework/Resources
+mkdir -p $WORK/arm64/{{.Output}}.framework/Resources
+mkdir -p $WORK/arm64/{{.Output}}.framework/Versions/A/Modules
+ln -s Versions/Current/Modules $WORK/arm64/{{.Output}}.framework/Modules
+xcrun lipo $WORK/arm64/{{.Output}}.framework/Versions/A/{{.Output}} -thin arm64 -output $WORK/arm64/{{.Output}}.framework/Versions/A/{{.Output}}
+xcodebuild -create-xcframework -framework $WORK/arm64/{{.Output}}.framework -framework $WORK/amd64/{{.Output}}.framework -framework $WORK/catalyst/{{.Output}}.framework -output {{.Output}}.xcframework
 `))
 
 func TestBindIOSAll(t *testing.T) {
@@ -231,7 +233,7 @@ func TestBindIOSAll(t *testing.T) {
 	}()
 	buildN = true
 	buildX = true
-	buildO = "Asset.framework"
+	buildO = "Asset.xcframework"
 	buildTarget = "ios"
 
 	buf := new(bytes.Buffer)
@@ -291,7 +293,7 @@ func TestBindWithGoModules(t *testing.T) {
 			case "android":
 				out = filepath.Join(dir, "cgopkg.aar")
 			case "ios":
-				out = filepath.Join(dir, "Cgopkg.framework")
+				out = filepath.Join(dir, "Cgopkg.xcframework")
 			}
 
 			tests := []struct {
