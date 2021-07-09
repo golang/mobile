@@ -138,9 +138,9 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 			}
 
 			// Copy header file next to output archive.
-			headerFiles := make([]string, len(fileBases))
+			var headerFiles []string
 			if len(fileBases) == 1 {
-				headerFiles[0] = title + ".h"
+				headerFiles = append(headerFiles, title+".h")
 				err := copyFile(
 					filepath.Join(versionsAHeadersDir, title+".h"),
 					filepath.Join(srcDir, bindPrefix+title+".objc.h"),
@@ -149,8 +149,8 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 					return err
 				}
 			} else {
-				for i, fileBase := range fileBases {
-					headerFiles[i] = fileBase + ".objc.h"
+				for _, fileBase := range fileBases {
+					headerFiles = append(headerFiles, fileBase+".objc.h")
 					err := copyFile(
 						filepath.Join(versionsAHeadersDir, fileBase+".objc.h"),
 						filepath.Join(srcDir, fileBase+".objc.h"),
