@@ -119,8 +119,7 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 			if err := mkdir(versionsAHeadersDir); err != nil {
 				return err
 			}
-			versionsCurrentDir := filepath.Join(versionsDir, "Current")
-			if err := symlink("A", versionsCurrentDir); err != nil {
+			if err := symlink("A", filepath.Join(versionsDir, "Current")); err != nil {
 				return err
 			}
 			if err := symlink("Versions/Current/Headers", filepath.Join(frameworkDir, "Headers")); err != nil {
@@ -178,15 +177,13 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 				}
 			}
 
-			resourcesADir := filepath.Join(versionsADir, "Resources")
-			resourcesDir := filepath.Join(frameworkDir, "Resources")
-			if err := mkdir(resourcesADir); err != nil {
+			if err := mkdir(filepath.Join(versionsADir, "Resources")); err != nil {
 				return err
 			}
 			if err := symlink("Versions/Current/Resources", filepath.Join(frameworkDir, "Resources")); err != nil {
 				return err
 			}
-			err = writeFile(filepath.Join(resourcesDir, "Info.plist"), func(w io.Writer) error {
+			err = writeFile(filepath.Join(frameworkDir, "Resources", "Info.plist"), func(w io.Writer) error {
 				_, err := w.Write([]byte(iosBindInfoPlist))
 				return err
 			})
