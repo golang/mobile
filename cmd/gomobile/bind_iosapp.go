@@ -66,7 +66,7 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 
 	// create separate framework for ios,simulator and catalyst
 	// every target has at least one arch (arm64 and x86_64)
-	for _, target := range allTargets("ios") {
+	for _, target := range iOSTargets {
 		for index, arch := range iOSTargetArchs(target) {
 			buildTemp = tmpdir + "/" + target + "/" + title + ".framework"
 
@@ -211,7 +211,7 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 	// Finally combine ios/simulator/catalyst framework to xcframework
 	xcframeworkArgs := []string{"-create-xcframework"}
 
-	for _, target := range allTargets("ios") {
+	for _, target := range iOSTargets {
 		xcframeworkArgs = append(xcframeworkArgs, "-framework", tmpdir+"/"+target+"/"+title+".framework")
 	}
 
