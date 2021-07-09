@@ -36,7 +36,8 @@ func allArchs(targetOS string) []string {
 	}
 }
 
-// gomobile's "ios" target OS actually builds for multiple Apple platforms:
+// iOSTargets lists Apple platforms as individual sub-targets.
+// The gomobile "ios" target actually builds for multiple Apple platforms:
 // iOS, iPadOS, MacCatalyst (iOS on macOS), and macOS.
 // TODO: support watchOS and tvOS?
 var iOSTargets = []string{"simulator", "ios", "catalyst", "macos"}
