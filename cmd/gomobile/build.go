@@ -58,6 +58,9 @@ with the app.
 The -o flag specifies the output file name. If not specified, the
 output file name depends on the package built.
 
+The -cache flag specifies the build cache directory. If not specified,
+ioutil.TempDir() is used.
+
 The -v flag provides verbose output, including the list of packages built.
 
 The build flags -a, -i, -n, -x, -gcflags, -ldflags, -tags, -trimpath, and -work are
@@ -224,6 +227,7 @@ var (
 	buildTarget     string      // -target
 	buildTrimpath   bool        // -trimpath
 	buildWork       bool        // -work
+	buildCache      string      // -cache
 	buildBundleID   string      // -bundleid
 	buildIOSVersion string      // -iosversion
 	buildAndroidAPI int         // -androidapi
@@ -245,11 +249,12 @@ func addBuildFlags(cmd *command) {
 	cmd.flag.Var(&buildTags, "tags", "")
 }
 
-func addBuildFlagsNVXWork(cmd *command) {
+func addBuildFlagsNVXWorkCache(cmd *command) {
 	cmd.flag.BoolVar(&buildN, "n", false, "")
 	cmd.flag.BoolVar(&buildV, "v", false, "")
 	cmd.flag.BoolVar(&buildX, "x", false, "")
 	cmd.flag.BoolVar(&buildWork, "work", false, "")
+	cmd.flag.StringVar(&buildCache, "cache", "", "")
 }
 
 type binInfo struct {
@@ -259,17 +264,17 @@ type binInfo struct {
 
 func init() {
 	addBuildFlags(cmdBuild)
-	addBuildFlagsNVXWork(cmdBuild)
+	addBuildFlagsNVXWorkCache(cmdBuild)
 
 	addBuildFlags(cmdInstall)
-	addBuildFlagsNVXWork(cmdInstall)
+	addBuildFlagsNVXWorkCache(cmdInstall)
 
-	addBuildFlagsNVXWork(cmdInit)
+	addBuildFlagsNVXWorkCache(cmdInit)
 
 	addBuildFlags(cmdBind)
-	addBuildFlagsNVXWork(cmdBind)
+	addBuildFlagsNVXWorkCache(cmdBind)
 
-	addBuildFlagsNVXWork(cmdClean)
+	addBuildFlagsNVXWorkCache(cmdClean)
 }
 
 func goBuild(src string, env []string, args ...string) error {
