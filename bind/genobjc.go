@@ -218,7 +218,7 @@ func (g *ObjcGen) GenH() error {
 			objcType := g.objcType(obj.Type())
 			g.objcdoc(g.docs[obj.Name()].Doc())
 			g.Printf("+ (%s) %s;\n", objcType, objcNameReplacer(lowerFirst(obj.Name())))
-			g.Printf("+ (void) set%s:(%s)v;\n", obj.Name(), objcType)
+			g.Printf("+ (void) set%s:(%s)v;\n", initialUpper(lowerFirst(obj.Name())), objcType)
 			g.Printf("\n")
 		}
 		g.Printf("@end\n\n")
@@ -345,7 +345,7 @@ func (g *ObjcGen) genVarM(o *types.Var) {
 	objcType := g.objcType(o.Type())
 
 	// setter
-	g.Printf("+ (void) set%s:(%s)v {\n", o.Name(), objcType)
+	g.Printf("+ (void) set%s:(%s)v {\n", initialUpper(lowerFirst(o.Name())), objcType)
 	g.Indent()
 	g.genWrite("v", o.Type(), modeRetained)
 	g.Printf("var_set%s_%s(_v);\n", g.pkgPrefix, o.Name())
@@ -668,7 +668,7 @@ func (g *ObjcGen) genGetter(oName string, f *types.Var) {
 func (g *ObjcGen) genSetter(oName string, f *types.Var) {
 	t := f.Type()
 
-	g.Printf("- (void)set%s:(%s)v {\n", f.Name(), g.objcType(t))
+	g.Printf("- (void)set%s:(%s)v {\n", initialUpper(lowerFirst(f.Name())), g.objcType(t))
 	g.Indent()
 	g.Printf("int32_t refnum = go_seq_go_to_refnum(self._ref);\n")
 	g.genWrite("v", f.Type(), modeRetained)
