@@ -147,8 +147,13 @@ func envInit() (err error) {
 		var clang, cflags string
 		switch arch {
 		case "arm64":
-			clang, cflags, err = envClang("iphoneos")
-			cflags += " -miphoneos-version-min=" + buildIOSVersion
+			if buildSimulator {
+				clang, cflags, err = envClang("iphonesimulator")
+				cflags += " -mios-simulator-version-min=" + buildIOSVersion
+			} else {
+				clang, cflags, err = envClang("iphoneos")
+				cflags += " -miphoneos-version-min=" + buildIOSVersion
+			}
 		case "amd64":
 			clang, cflags, err = envClang("iphonesimulator")
 			cflags += " -mios-simulator-version-min=" + buildIOSVersion
