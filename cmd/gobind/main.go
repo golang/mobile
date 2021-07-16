@@ -9,6 +9,7 @@ import (
 	"flag"
 	"fmt"
 	"go/ast"
+	"go/token"
 	"go/types"
 	"io/ioutil"
 	"log"
@@ -145,18 +146,20 @@ func run() {
 
 	typePkgs := make([]*types.Package, len(allPkg))
 	astPkgs := make([][]*ast.File, len(allPkg))
+	fSets := make([]*token.FileSet, len(allPkg))
 	for i, pkg := range allPkg {
 		// Ignore pkg.Errors. pkg.Errors can exist when Cgo is used, but this should not affect the result.
 		// See the discussion at golang/go#36547.
 		typePkgs[i] = pkg.Types
 		astPkgs[i] = pkg.Syntax
+		fSets[i] = pkg.Fset
 	}
 	for _, l := range langs {
 		for i, pkg := range typePkgs {
-			genPkg(l, pkg, astPkgs[i], typePkgs, classes, otypes)
+			genPkg(l, fSets[i], pkg, astPkgs[i], typePkgs, classes, otypes)
 		}
 		// Generate the error package and support files
-		genPkg(l, nil, nil, typePkgs, classes, otypes)
+		genPkg(l, token.NewFileSet(), nil, nil, typePkgs, classes, otypes)
 	}
 }
 

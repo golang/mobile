@@ -7,6 +7,7 @@ package bind
 import (
 	"fmt"
 	"go/constant"
+	"go/token"
 	"go/types"
 	"html"
 	"math"
@@ -295,7 +296,7 @@ func (g *JavaGen) genStruct(s structInfo) {
 	cons := g.constructors[s.obj]
 	for _, f := range cons {
 		if !g.isConsSigSupported(f.Type()) {
-			g.Printf("// skipped constructor %s.%s with unsupported parameter or return types\n\n", n, f.Name())
+			g.warnf(f.Pos(), "skipped constructor %s.%s with unsupported parameter or return types", n, f.Name())
 			continue
 		}
 		g.genConstructor(f, n, jinf != nil)
@@ -312,7 +313,7 @@ func (g *JavaGen) genStruct(s structInfo) {
 
 	for _, f := range fields {
 		if t := f.Type(); !g.isSupported(t) {
-			g.Printf("// skipped field %s.%s with unsupported type: %s\n\n", n, f.Name(), t)
+			g.warnf(f.Pos(), "skipped field %s.%s with unsupported type: %s", n, f.Name(), t)
 			continue
 		}
 
@@ -326,7 +327,7 @@ func (g *JavaGen) genStruct(s structInfo) {
 	var isStringer bool
 	for _, m := range methods {
 		if !g.isSigSupported(m.Type()) {
-			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", n, m.Name())
+			g.warnf(m.Pos(), "skipped method %s.%s with unsupported parameter or return types", n, m.Name())
 			continue
 		}
 		g.javadoc(doc.Member(m.Name()))
@@ -487,7 +488,7 @@ func (g *JavaGen) genObjectMethods(n string, fields []*types.Var, isStringer boo
 	g.Printf("%s that = (%s)o;\n", n, n)
 	for _, f := range fields {
 		if t := f.Type(); !g.isSupported(t) {
-			g.Printf("// skipped field %s.%s with unsupported type: %s\n\n", n, f.Name(), t)
+			g.warnf(f.Pos(), "skipped field %s.%s with unsupported type: %s", n, f.Name(), t)
 			continue
 		}
 		nf := f.Name()
@@ -581,7 +582,7 @@ func (g *JavaGen) genInterface(iface interfaceInfo) {
 
 	for _, m := range iface.summary.callable {
 		if !g.isSigSupported(m.Type()) {
-			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", iface.obj.Name(), m.Name())
+			g.warnf(m.Pos(), "skipped method %s.%s with unsupported parameter or return types", iface.obj.Name(), m.Name())
 			continue
 		}
 		g.javadoc(doc.Member(m.Name()))
@@ -862,7 +863,7 @@ func (g *JavaGen) genFuncSignature(o *types.Func, jm *java.Func, hasThis bool) {
 
 func (g *JavaGen) genVar(o *types.Var) {
 	if t := o.Type(); !g.isSupported(t) {
-		g.Printf("// skipped variable %s with unsupported type: %s\n\n", o.Name(), t)
+		g.warnf(o.Pos(), "skipped variable %s with unsupported type: %s", o.Name(), t)
 		return
 	}
 	jType := g.javaType(o.Type())
@@ -1043,7 +1044,7 @@ func JavaClassName(pkg *types.Package) string {
 
 func (g *JavaGen) genConst(o *types.Const) {
 	if _, ok := o.Type().(*types.Basic); !ok || !g.isSupported(o.Type()) {
-		g.Printf("// skipped const %s with unsupported type: %s\n\n", o.Name(), o.Type())
+		g.warnf(o.Pos(), "skipped const %s with unsupported type: %s", o.Name(), o.Type())
 		return
 	}
 	// TODO(hyangah): should const names use upper cases + "_"?
@@ -1077,7 +1078,7 @@ func (g *JavaGen) genConst(o *types.Const) {
 
 func (g *JavaGen) genJNIField(o *types.TypeName, f *types.Var) {
 	if t := f.Type(); !g.isSupported(t) {
-		g.Printf("// skipped field %s with unsupported type: %s\n\n", o.Name(), t)
+		g.warnf(f.Pos(), "skipped field %s with unsupported type: %s", o.Name(), t)
 		return
 	}
 	n := java.JNIMangle(g.javaTypeName(o.Name()))
@@ -1107,7 +1108,7 @@ func (g *JavaGen) genJNIField(o *types.TypeName, f *types.Var) {
 
 func (g *JavaGen) genJNIVar(o *types.Var) {
 	if t := o.Type(); !g.isSupported(t) {
-		g.Printf("// skipped variable %s with unsupported type: %s\n\n", o.Name(), t)
+		g.warnf(o.Pos(), "skipped variable %s with unsupported type: %s", o.Name(), t)
 		return
 	}
 	n := java.JNIMangle(g.javaTypeName(o.Name()))
@@ -1187,7 +1188,7 @@ func (g *JavaGen) genJNIFunc(o *types.Func, sName string, jm *java.Func, proxy, 
 		if sName != "" {
 			n = sName + "." + n
 		}
-		g.Printf("// skipped function %s with unsupported parameter or return types\n\n", n)
+		g.warnf(o.Pos(), "skipped function %s with unsupported parameter or return types", n)
 		return
 	}
 	g.genJNIFuncSignature(o, sName, jm, proxy, isjava)
@@ -1276,7 +1277,7 @@ func (g *JavaGen) genRelease(varName string, t types.Type, mode varMode) {
 
 func (g *JavaGen) genMethodInterfaceProxy(oName string, m *types.Func) {
 	if !g.isSigSupported(m.Type()) {
-		g.Printf("// skipped method %s with unsupported parameter or return types\n\n", oName)
+		g.warnf(m.Pos(), "skipped method %s with unsupported parameter or return types", oName)
 		return
 	}
 	sig := m.Type().(*types.Signature)
@@ -1345,7 +1346,7 @@ func (g *JavaGen) GenH() error {
 		g.Printf("\n")
 		for _, m := range iface.summary.callable {
 			if !g.isSigSupported(m.Type()) {
-				g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", iface.obj.Name(), m.Name())
+				g.warnf(m.Pos(), "skipped method %s.%s with unsupported parameter or return types", iface.obj.Name(), m.Name())
 				continue
 			}
 			g.genInterfaceMethodSignature(m, iface.obj.Name(), true, g.paramName)
@@ -1477,7 +1478,7 @@ func (g *JavaGen) GenC() error {
 		g.Printf("jmethodID proxy_class_%s_%s_cons;\n", g.pkgPrefix, iface.obj.Name())
 		for _, m := range iface.summary.callable {
 			if !g.isSigSupported(m.Type()) {
-				g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", iface.obj.Name(), m.Name())
+				g.warnf(m.Pos(), "skipped method %s.%s with unsupported parameter or return types", iface.obj.Name(), m.Name())
 				continue
 			}
 			g.Printf("static jmethodID mid_%s_%s;\n", iface.obj.Name(), m.Name())
@@ -1519,7 +1520,7 @@ func (g *JavaGen) GenC() error {
 		g.Printf("clazz = (*env)->FindClass(env, %q);\n", g.jniClassSigPrefix(pkg)+g.javaTypeName(iface.obj.Name()))
 		for _, m := range iface.summary.callable {
 			if !g.isSigSupported(m.Type()) {
-				g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", iface.obj.Name(), m.Name())
+				g.warnf(m.Pos(), "skipped method %s.%s with unsupported parameter or return types", iface.obj.Name(), m.Name())
 				continue
 			}
 			sig := m.Type().(*types.Signature)
@@ -1630,7 +1631,7 @@ func (g *JavaGen) GenJava() error {
 		}
 		for _, m := range iface.summary.callable {
 			if !g.isSigSupported(m.Type()) {
-				g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", n, m.Name())
+				g.warnf(m.Pos(), "skipped method %s.%s with unsupported parameter or return types", n, m.Name())
 				continue
 			}
 			g.Printf("public native ")
@@ -1652,7 +1653,7 @@ func (g *JavaGen) GenJava() error {
 	}
 	for _, f := range g.funcs {
 		if !g.isSigSupported(f.Type()) {
-			g.Printf("// skipped function %s with unsupported parameter or return types\n\n", f.Name())
+			g.warnf(f.Pos(), "skipped function %s with unsupported parameter or return types", f.Name())
 			continue
 		}
 		g.javadoc(g.docs[f.Name()].Doc())
@@ -1667,6 +1668,14 @@ func (g *JavaGen) GenJava() error {
 		return g.err
 	}
 	return nil
+}
+
+func (g *JavaGen) warnf(pos token.Pos, format string, args ...interface{}) {
+	if g.Reporter != nil {
+		fpos := g.Fset.Position(pos)
+		g.Reporter.Message(fmt.Sprintf(fpos.String()+": "+format, args...))
+	}
+	g.Printf("// "+format+"\n\n", args...)
 }
 
 // embeddedJavaClasses returns the possible empty list of Java types embedded

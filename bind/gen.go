@@ -43,6 +43,10 @@ const (
 	modeRetained
 )
 
+type Reporter interface {
+	Message(s string)
+}
+
 func (list ErrorList) Error() string {
 	buf := new(bytes.Buffer)
 	for i, err := range list {
@@ -84,6 +88,8 @@ type Generator struct {
 	Files  []*ast.File
 	Pkg    *types.Package
 	err    ErrorList
+
+	Reporter Reporter
 
 	// fields set by init.
 	pkgName   string

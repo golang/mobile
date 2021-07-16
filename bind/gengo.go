@@ -7,6 +7,7 @@ package bind
 import (
 	"bytes"
 	"fmt"
+	"go/token"
 	"go/types"
 	"strings"
 )
@@ -189,7 +190,7 @@ func (g *goGen) paramName(params *types.Tuple, pos int) string {
 
 func (g *goGen) genFunc(o *types.Func) {
 	if !g.isSigSupported(o.Type()) {
-		g.Printf("// skipped function %s with unsupported parameter or result types\n", o.Name())
+		g.warnf(o.Pos(), "skipped function %s with unsupported parameter or result types", o.Name())
 		return
 	}
 	g.genFuncSignature(o, "")
@@ -205,7 +206,7 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 
 	for _, f := range fields {
 		if t := f.Type(); !g.isSupported(t) {
-			g.Printf("// skipped field %s.%s with unsupported type: %s\n\n", obj.Name(), f.Name(), t)
+			g.warnf(f.Pos(), "skipped field %s.%s with unsupported type: %s", obj.Name(), f.Name(), t)
 			continue
 		}
 		g.Printf("//export proxy%s_%s_%s_Set\n", g.pkgPrefix, obj.Name(), f.Name())
@@ -230,7 +231,7 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 
 	for _, m := range methods {
 		if !g.isSigSupported(m.Type()) {
-			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", obj.Name(), m.Name())
+			g.warnf(m.Pos(), "skipped method %s.%s with unsupported parameter or return types", obj.Name(), m.Name())
 			continue
 		}
 		g.genFuncSignature(m, obj.Name())
@@ -252,7 +253,7 @@ func (g *goGen) genStruct(obj *types.TypeName, T *types.Struct) {
 
 func (g *goGen) genVar(o *types.Var) {
 	if t := o.Type(); !g.isSupported(t) {
-		g.Printf("// skipped variable %s with unsupported type %s\n\n", o.Name(), t)
+		g.warnf(o.Pos(), "skipped variable %s with unsupported type %s", o.Name(), t)
 		return
 	}
 	// TODO(hyangah): non-struct pointer types (*int), struct type.
@@ -289,7 +290,7 @@ func (g *goGen) genInterface(obj *types.TypeName) {
 	// Define the entry points.
 	for _, m := range summary.callable {
 		if !g.isSigSupported(m.Type()) {
-			g.Printf("// skipped method %s.%s with unsupported parameter or return types\n\n", obj.Name(), m.Name())
+			g.warnf(m.Pos(), "skipped method %s.%s with unsupported parameter or return types", obj.Name(), m.Name())
 			continue
 		}
 		g.genFuncSignature(m, obj.Name())
@@ -318,7 +319,7 @@ func (g *goGen) genInterface(obj *types.TypeName) {
 
 	for _, m := range summary.callable {
 		if !g.isSigSupported(m.Type()) {
-			g.Printf("// skipped method %s.%s with unsupported parameter or result types\n", obj.Name(), m.Name())
+			g.warnf(m.Pos(), "skipped method %s.%s with unsupported parameter or result types", obj.Name(), m.Name())
 			continue
 		}
 		sig := m.Type().(*types.Signature)
@@ -590,4 +591,12 @@ func (g *goGen) pkgName(pkg *types.Package) string {
 	}
 	g.importMap[pkg] = name
 	return name + "."
+}
+
+func (g *goGen) warnf(pos token.Pos, format string, args ...interface{}) {
+	if g.Reporter != nil {
+		fpos := g.Fset.Position(pos)
+		g.Reporter.Message(fmt.Sprintf(fpos.String()+": "+format, args...))
+	}
+	g.Printf("// "+format+"\n\n", args...)
 }

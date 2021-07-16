@@ -44,7 +44,9 @@ func (p *proxyignore_I) Bind_proxy_refnum__() int32 {
 }
 
 // skipped method I.Argument with unsupported parameter or result types
+
 // skipped method I.Result with unsupported parameter or result types
+
 // skipped variable C128 with unsupported type complex128
 
 // skipped variable C64 with unsupported type complex64
@@ -60,4 +62,5 @@ func (p *proxyignore_I) Bind_proxy_refnum__() int32 {
 // skipped variable Var with unsupported type interface{}
 
 // skipped function Argument with unsupported parameter or result types
+
 // skipped function Result with unsupported parameter or result types

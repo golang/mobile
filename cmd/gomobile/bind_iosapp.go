@@ -7,6 +7,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -22,6 +23,8 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 		"-lang=go,objc",
 		"-outdir="+tmpdir,
 	)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	cmd.Env = append(cmd.Env, "GOOS=darwin")
 	cmd.Env = append(cmd.Env, "CGO_ENABLED=1")
 	tags := append(buildTags, "ios")
