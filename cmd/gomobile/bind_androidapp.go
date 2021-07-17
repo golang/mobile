@@ -59,7 +59,7 @@ func goAndroidBind(gobind string, pkgs []*packages.Package, androidArchs []strin
 
 	// Generate binding code and java source code only when processing the first package.
 	for _, arch := range androidArchs {
-		if err := writeGoMod("android", arch); err != nil {
+		if err := writeGoMod(tmpdir, "android", arch); err != nil {
 			return err
 		}
 

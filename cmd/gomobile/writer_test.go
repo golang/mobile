@@ -125,7 +125,7 @@ const androidManifest = `
 	android:versionCode="1"
 	android:versionName="1.0">
 
-	
+
 	<application android:label="FakeApp" android:hasCode="false" android:debuggable="true">
 		<activity android:name="android.app.NativeActivity"
 			android:label="FakeApp"

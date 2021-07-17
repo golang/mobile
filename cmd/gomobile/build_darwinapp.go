@@ -20,7 +20,7 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-func goIOSBuild(pkg *packages.Package, bundleID string, archs []string) (map[string]bool, error) {
+func goDarwinBuild(pkg *packages.Package, bundleID string, targetPlatforms, targetArchs []string) (map[string]bool, error) {
 	src := pkg.PkgPath
 	if buildO != "" && !strings.HasSuffix(buildO, ".app") {
 		return nil, fmt.Errorf("-o must have an .app for -target=ios")
@@ -76,21 +76,38 @@ func goIOSBuild(pkg *packages.Package, bundleID string, archs []string) (map[str
 		"-o", filepath.Join(tmpdir, "main/main"),
 		"-create",
 	)
+
 	var nmpkgs map[string]bool
-	for _, arch := range archs {
-		path := filepath.Join(tmpdir, arch)
-		// Disable DWARF; see golang.org/issues/25148.
-		if err := goBuild(src, darwinEnv[arch], "-ldflags=-w", "-o="+path); err != nil {
-			return nil, err
-		}
-		if nmpkgs == nil {
-			var err error
-			nmpkgs, err = extractPkgs(darwinArmNM, path)
-			if err != nil {
+	builtArch := map[string]bool{}
+	for _, platform := range targetPlatforms {
+		for _, arch := range targetArchs {
+			// Skip unrequested architectures
+			if !isSupportedArch(platform, arch) {
+				continue
+			}
+
+			// Only one binary per arch allowed
+			// e.g. ios/arm64 + iossimulator/amd64
+			if builtArch[arch] {
+				continue
+			}
+			builtArch[arch] = true
+
+			path := filepath.Join(tmpdir, platform, arch)
+
+			// Disable DWARF; see golang.org/issues/25148.
+			if err := goBuild(src, darwinEnv[platform+"/"+arch], "-ldflags=-w", "-o="+path); err != nil {
 				return nil, err
 			}
+			if nmpkgs == nil {
+				var err error
+				nmpkgs, err = extractPkgs(darwinArmNM, path)
+				if err != nil {
+					return nil, err
+				}
+			}
+			cmd.Args = append(cmd.Args, path)
 		}
-		cmd.Args = append(cmd.Args, path)
 	}
 
 	if err := runCmd(cmd); err != nil {
@@ -152,11 +169,11 @@ func goIOSBuild(pkg *packages.Package, bundleID string, archs []string) (map[str
 }
 
 func detectTeamID() (string, error) {
-	// Grabs the first certificate for "iPhone Developer"; will not work if there
+	// Grabs the first certificate for "Apple Development"; will not work if there
 	// are multiple certificates and the first is not desired.
 	cmd := exec.Command(
 		"security", "find-certificate",
-		"-c", "iPhone Developer", "-p",
+		"-c", "Apple Development", "-p",
 	)
 	pemString, err := cmd.Output()
 	if err != nil {
@@ -435,7 +452,6 @@ var projPbxprojTmpl = template.Must(template.New("projPbxproj").Parse(`// !$*UTF
         GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
         GCC_WARN_UNUSED_FUNCTION = YES;
         GCC_WARN_UNUSED_VARIABLE = YES;
-        IPHONEOS_DEPLOYMENT_TARGET = 8.3;
         MTL_ENABLE_DEBUG_INFO = NO;
         SDKROOT = iphoneos;
         TARGETED_DEVICE_FAMILY = "1,2";

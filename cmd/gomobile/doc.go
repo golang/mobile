@@ -35,13 +35,13 @@ Build a library for Android and iOS
 
 Usage:
 
-	gomobile bind [-target android|ios] [-bootclasspath <path>] [-classpath <path>] [-o output] [build flags] [package]
+	gomobile bind [-target android|ios|iossimulator|macos|maccatalyst] [-bootclasspath <path>] [-classpath <path>] [-o output] [build flags] [package]
 
 Bind generates language bindings for the package named by the import
 path, and compiles a library for the named target system.
 
-The -target flag takes a target system name, either android (the
-default) or ios.
+The -target flag takes one or more comma-delimited platform names,
+either android (the default) or ios, iossimulator, macos, maccatalyst.
 
 For -target android, the bind command produces an AAR (Android ARchive)
 file that archives the precompiled Java API stub classes, the compiled
@@ -63,9 +63,9 @@ instruction sets (arm, arm64, 386, amd64). A subset of instruction sets
 can be selected by specifying target type with the architecture name. E.g.,
 -target=android/arm,android/386.
 
-For -target ios, gomobile must be run on an OS X machine with Xcode
-installed. The generated Objective-C types can be prefixed with the -prefix
-flag.
+For Apple -target platforms, gomobile must be run on an OS X machine with
+Xcode installed. The generated Objective-C types can be prefixed with the
+-prefix flag.
 
 For -target android, the -bootclasspath and -classpath flags are used to
 control the bootstrap classpath and the classpath for Go wrappers to Java
@@ -81,14 +81,14 @@ Compile android APK and iOS app
 
 Usage:
 
-	gomobile build [-target android|ios] [-o output] [-bundleid bundleID] [build flags] [package]
+	gomobile build [-target android|ios|iossimulator|macos|maccatalyst] [-o output] [-bundleid bundleID] [build flags] [package]
 
 Build compiles and encodes the app named by the import path.
 
 The named package must define a main function.
 
-The -target flag takes a target system name, either android (the
-default) or ios.
+The -target flag takes a target platform, either android (the
+default) or ios, iossimulator, macos, maccatalyst.
 
 For -target android, if an AndroidManifest.xml is defined in the
 package directory, it is added to the APK output. Otherwise, a default
@@ -97,14 +97,14 @@ instruction sets (arm, 386, amd64, arm64). A subset of instruction sets can
 be selected by specifying target type with the architecture name. E.g.
 -target=android/arm,android/386.
 
-For -target ios, gomobile must be run on an OS X machine with Xcode
-installed.
+For Apple -target platforms, gomobile must be run on an OS X machine with
+Xcode installed.
 
 If the package directory contains an assets subdirectory, its contents
 are copied into the output.
 
 Flag -iosversion sets the minimal version of the iOS SDK to compile against.
-The default version is 7.0.
+The default version is 13.0.
 
 Flag -androidapi sets the Android API version to compile against.
 The default and minimum is 15.

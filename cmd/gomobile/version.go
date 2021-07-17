@@ -53,7 +53,7 @@ func runVersion(cmd *command) (err error) {
 	// Supported platforms
 	platforms := "android"
 	if xcodeAvailable() {
-		platforms = "android,ios"
+		platforms += "," + strings.Join(darwinPlatforms, ",")
 	}
 
 	// ANDROID_HOME, sdk build tool version
