@@ -11,6 +11,11 @@ package gl
 // #cgo LDFLAGS: -lEGL
 import "C"
 
+const (
+	versionES2 = "GL_ES_2_0"
+	versionES3 = "GL_ES_3_0"
+)
+
 func init() {
 	display := C.eglGetDisplay(C.EGL_DEFAULT_DISPLAY)
 
@@ -43,12 +48,12 @@ func init() {
 
 	context := C.eglCreateContext(display, config, C.EGLContext(C.EGL_NO_CONTEXT), &attributes[0])
 	if context == nil {
-		version = "GL_ES_2_0"
+		version = versionES2
 
 		return
 	}
 
 	C.eglDestroyContext(display, context)
 
-	version = "GL_ES_3_0"
+	version = versionES3
 }
