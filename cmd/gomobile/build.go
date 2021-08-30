@@ -127,13 +127,13 @@ func runBuildImpl(cmd *command) (*packages.Package, error) {
 		if err != nil {
 			return nil, err
 		}
-	case "darwin":
+	case "ios":
 		if !xcodeAvailable() {
 			return nil, fmt.Errorf("-target=ios requires XCode")
 		}
 		if pkg.Name != "main" {
 			for _, arch := range targetArchs {
-				if err := goBuild(pkg.PkgPath, darwinEnv[arch]); err != nil {
+				if err := goBuild(pkg.PkgPath, iosEnv[arch]); err != nil {
 					return nil, err
 				}
 			}
@@ -291,13 +291,6 @@ func goCmd(subcmd string, srcs []string, env []string, args ...string) error {
 func goCmdAt(at string, subcmd string, srcs []string, env []string, args ...string) error {
 	cmd := exec.Command("go", subcmd)
 	tags := buildTags
-	targetOS, _, err := parseBuildTarget(buildTarget)
-	if err != nil {
-		return err
-	}
-	if targetOS == "darwin" {
-		tags = append(tags, "ios")
-	}
 	if len(tags) > 0 {
 		cmd.Args = append(cmd.Args, "-tags", strings.Join(tags, " "))
 	}
@@ -378,10 +371,6 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 	}
 
 	targetOS := os
-	if os == "ios" {
-		targetOS = "darwin"
-	}
-
 	seen := map[string]bool{}
 	for _, arch := range archNames {
 		if _, ok := seen[arch]; ok {

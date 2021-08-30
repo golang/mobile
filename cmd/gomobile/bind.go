@@ -84,7 +84,7 @@ func runBind(cmd *command) error {
 	if bindJavaPkg != "" && targetOS != "android" {
 		return fmt.Errorf("-javapkg is supported only for android target")
 	}
-	if bindPrefix != "" && targetOS != "darwin" {
+	if bindPrefix != "" && targetOS != "ios" {
 		return fmt.Errorf("-prefix is supported only for ios target")
 	}
 
@@ -122,7 +122,7 @@ func runBind(cmd *command) error {
 	switch targetOS {
 	case "android":
 		return goAndroidBind(gobind, pkgs, targetArchs)
-	case "darwin":
+	case "ios":
 		if !xcodeAvailable() {
 			return fmt.Errorf("-target=ios requires XCode")
 		}
@@ -217,9 +217,6 @@ func packagesConfig(targetOS string) *packages.Config {
 	// Add CGO_ENABLED=1 explicitly since Cgo is disabled when GOOS is different from host OS.
 	config.Env = append(os.Environ(), "GOARCH=arm64", "GOOS="+targetOS, "CGO_ENABLED=1")
 	tags := buildTags
-	if targetOS == "darwin" {
-		tags = append(tags, "ios")
-	}
 	if len(tags) > 0 {
 		config.BuildFlags = []string{"-tags=" + strings.Join(tags, ",")}
 	}
@@ -232,9 +229,6 @@ func getModuleVersions(targetOS string, targetArch string, src string) (*modfile
 	cmd.Env = append(os.Environ(), "GOOS="+targetOS, "GOARCH="+targetArch)
 
 	tags := buildTags
-	if targetOS == "darwin" {
-		tags = append(tags, "ios")
-	}
 	// TODO(hyangah): probably we don't need to add all the dependencies.
 	cmd.Args = append(cmd.Args, "-m", "-json", "-tags="+strings.Join(tags, ","), "all")
 	cmd.Dir = src

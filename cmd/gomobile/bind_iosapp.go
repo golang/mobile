@@ -67,11 +67,11 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 	}
 
 	for _, arch := range archs {
-		if err := writeGoMod("darwin", arch); err != nil {
+		if err := writeGoMod("ios", arch); err != nil {
 			return err
 		}
 
-		env := darwinEnv[arch]
+		env := iosEnv[arch]
 		// Add the generated packages to GOPATH for reverse bindings.
 		gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
 		env = append(env, gopath)
@@ -86,7 +86,7 @@ func goIOSBind(gobind string, pkgs []*packages.Package, archs []string) error {
 
 		path, err := goIOSBindArchive(name, env, filepath.Join(tmpdir, "src"))
 		if err != nil {
-			return fmt.Errorf("darwin-%s: %v", arch, err)
+			return fmt.Errorf("ios-%s: %v", arch, err)
 		}
 		cmd.Args = append(cmd.Args, "-arch", archClang(arch), path)
 	}

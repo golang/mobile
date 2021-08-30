@@ -128,10 +128,10 @@ func TestParseBuildTargetFlag(t *testing.T) {
 		{"android,android/arm", false, "android", androidArchs},
 		{"android/arm", false, "android", "arm"},
 
-		{"ios", false, "darwin", iosArchs},
-		{"ios,ios/arm64", false, "darwin", iosArchs},
-		{"ios/arm64", false, "darwin", "arm64"},
-		{"ios/amd64", false, "darwin", "amd64"},
+		{"ios", false, "ios", iosArchs},
+		{"ios,ios/arm64", false, "ios", iosArchs},
+		{"ios/arm64", false, "ios", "arm64"},
+		{"ios/amd64", false, "ios", "amd64"},
 
 		{"", true, "", ""},
 		{"linux", true, "", ""},

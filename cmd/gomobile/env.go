@@ -17,10 +17,10 @@ var (
 
 	androidEnv map[string][]string // android arch -> []string
 
-	darwinEnv map[string][]string
+	iosEnv map[string][]string
 
 	androidArmNM string
-	darwinArmNM  string
+	iosArmNM     string
 
 	bitcodeEnabled bool
 )
@@ -139,8 +139,8 @@ func envInit() (err error) {
 		return nil
 	}
 
-	darwinArmNM = "nm"
-	darwinEnv = make(map[string][]string)
+	iosArmNM = "nm"
+	iosEnv = make(map[string][]string)
 	for _, arch := range allArchs("ios") {
 		var env []string
 		var err error
@@ -163,7 +163,7 @@ func envInit() (err error) {
 			cflags += " -fembed-bitcode"
 		}
 		env = append(env,
-			"GOOS=darwin",
+			"GOOS=ios",
 			"GOARCH="+arch,
 			"CC="+clang,
 			"CXX="+clang+"++",
@@ -172,7 +172,7 @@ func envInit() (err error) {
 			"CGO_LDFLAGS="+cflags+" -arch "+archClang(arch),
 			"CGO_ENABLED=1",
 		)
-		darwinEnv[arch] = env
+		iosEnv[arch] = env
 	}
 
 	return nil

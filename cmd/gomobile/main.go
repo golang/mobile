@@ -94,8 +94,8 @@ func determineGoVersion() error {
 		// Ignore unknown versions; it's probably a devel version.
 		return nil
 	}
-	if minor < 10 {
-		return errors.New("Go 1.10 or newer is required")
+	if minor < 16 {
+		return errors.New("Go 1.16 or newer is required")
 	}
 	return nil
 }
@@ -186,10 +186,10 @@ var usageTmpl = template.Must(template.New("usage").Parse(
 
 To install:
 
-	$ go get golang.org/x/mobile/cmd/gomobile
+	$ go install golang.org/x/mobile/cmd/gomobile@latest
 	$ gomobile init
 
-At least Go 1.10 is required.
+At least Go 1.16 is required.
 For detailed instructions, see https://golang.org/wiki/Mobile.
 
 Usage:

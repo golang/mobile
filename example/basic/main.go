@@ -7,8 +7,7 @@
 
 // An app that draws a green triangle on a red background.
 //
-// Note: This demo is an early preview of Go 1.5. In order to build this
-// program as an Android APK using the gomobile tool.
+// In order to build this program as an Android APK, using the gomobile tool.
 //
 // See http://godoc.org/golang.org/x/mobile/cmd/gomobile to install gomobile.
 //

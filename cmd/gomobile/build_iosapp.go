@@ -80,12 +80,12 @@ func goIOSBuild(pkg *packages.Package, bundleID string, archs []string) (map[str
 	for _, arch := range archs {
 		path := filepath.Join(tmpdir, arch)
 		// Disable DWARF; see golang.org/issues/25148.
-		if err := goBuild(src, darwinEnv[arch], "-ldflags=-w", "-o="+path); err != nil {
+		if err := goBuild(src, iosEnv[arch], "-ldflags=-w", "-o="+path); err != nil {
 			return nil, err
 		}
 		if nmpkgs == nil {
 			var err error
-			nmpkgs, err = extractPkgs(darwinArmNM, path)
+			nmpkgs, err = extractPkgs(iosArmNM, path)
 			if err != nil {
 				return nil, err
 			}
