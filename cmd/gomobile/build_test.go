@@ -168,6 +168,7 @@ func TestRegexImportGolangXPackage(t *testing.T) {
 		{"ffffffff t github.com/example/golang.org/x/mobile", "", 0},
 		{"ffffffff t github.com/example/repo", "", 0},
 		{"ffffffff t github.com/example/repo/vendor", "", 0},
+		{"ffffffff t _golang.org/x/mobile/app", "golang.org/x/mobile/app", 2},
 	}
 
 	for _, tc := range tests {

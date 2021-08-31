@@ -155,7 +155,7 @@ func runBuildImpl(cmd *command) (*packages.Package, error) {
 	return pkg, nil
 }
 
-var nmRE = regexp.MustCompile(`[0-9a-f]{8} t (?:.*/vendor/)?(golang.org/x.*/[^.]*)`)
+var nmRE = regexp.MustCompile(`[0-9a-f]{8} t _?(?:.*/vendor/)?(golang.org/x.*/[^.]*)`)
 
 func extractPkgs(nm string, path string) (map[string]bool, error) {
 	if buildN {
