@@ -294,6 +294,15 @@ func archNDK() string {
 			arch = "x86"
 		case "amd64":
 			arch = "x86_64"
+		case "arm64":
+			// Android NDK does not contain arm64 toolchains (until and
+			// including NDK 23), use use x86_64 instead. See:
+			// https://github.com/android/ndk/issues/1299
+			if runtime.GOOS == "darwin" {
+				arch = "x86_64"
+				break
+			}
+			fallthrough
 		default:
 			panic("unsupported GOARCH: " + runtime.GOARCH)
 		}
