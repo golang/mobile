@@ -21,8 +21,8 @@ import (
 )
 
 func TestAffine(t *testing.T) {
-	if runtime.GOOS == "android" {
-		t.Skip("testdata not available on Android")
+	if runtime.GOOS == "android" || runtime.GOOS == "ios" {
+		t.Skipf("testdata not available on %s", runtime.GOOS)
 	}
 	f, err := os.Open("../../../testdata/testpattern.png")
 	if err != nil {
@@ -104,8 +104,8 @@ func TestAffine(t *testing.T) {
 }
 
 func TestAffineMask(t *testing.T) {
-	if runtime.GOOS == "android" {
-		t.Skip("testdata not available on Android")
+	if runtime.GOOS == "android" || runtime.GOOS == "ios" {
+		t.Skipf("testdata not available on %s", runtime.GOOS)
 	}
 	f, err := os.Open("../../../testdata/testpattern.png")
 	if err != nil {

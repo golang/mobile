@@ -69,8 +69,8 @@ func TestAndroidPkgName(t *testing.T) {
 }
 
 func TestAndroidBuild(t *testing.T) {
-	if runtime.GOOS == "android" {
-		t.Skip("not available on Android")
+	if runtime.GOOS == "android" || runtime.GOOS == "ios" {
+		t.Skipf("not available on %s", runtime.GOOS)
 	}
 	buf := new(bytes.Buffer)
 	defer func() {
@@ -189,7 +189,7 @@ func TestRegexImportGolangXPackage(t *testing.T) {
 }
 
 func TestBuildWithGoModules(t *testing.T) {
-	if runtime.GOOS == "android" {
+	if runtime.GOOS == "android" || runtime.GOOS == "ios" {
 		t.Skipf("gomobile are not available on %s", runtime.GOOS)
 	}
 

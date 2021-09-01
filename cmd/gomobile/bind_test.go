@@ -248,7 +248,7 @@ func TestBindIOSAll(t *testing.T) {
 }
 
 func TestBindWithGoModules(t *testing.T) {
-	if runtime.GOOS == "android" {
+	if runtime.GOOS == "android" || runtime.GOOS == "ios" {
 		t.Skipf("gomobile and gobind are not available on %s", runtime.GOOS)
 	}
 

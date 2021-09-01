@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"text/template"
@@ -18,6 +19,10 @@ import (
 var gopath string
 
 func TestInit(t *testing.T) {
+	if runtime.GOOS == "android" || runtime.GOOS == "ios" {
+		t.Skipf("not available on %s", runtime.GOOS)
+	}
+
 	if _, err := exec.LookPath("diff"); err != nil {
 		t.Skip("command diff not found, skipping")
 	}
