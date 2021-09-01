@@ -5,18 +5,19 @@ license that can be found in the LICENSE file.
 -->
 <html>
 <head>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no'>
 <style>
 body {
 	padding: 0;
 	margin: 0;
+	margin-top: 20px;
 	font-family: Menlo, monospace;
 }
 
 .flowhide {
 	text-overflow: ellipsis;
-	word-break: break-all;
-	white-space: nowrap;
-	overflow: hidden;
+	word-break: break-word;
+	overflow-wrap: break-word;
 }
 
 .flowshow {
@@ -29,8 +30,8 @@ function flowclick(el) {
 	el.classList.toggle("flowshow");
 }
 function appendDiv(text) {
-    var el = document.createElement("div");
-    el.classList.add("flowhide");
+	var el = document.createElement("div");
+	el.classList.add("flowhide");
 	el.innerHTML = text;
 	el.onclick = function() {
 		flowclick(el);

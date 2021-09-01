@@ -23,8 +23,8 @@
     self.suggestionView = [[Suggestion alloc] init];
     self.suggestionView.delegate = self;
 
-    self.tape = (UIWebView *)[self.view viewWithTag:2];
-    self.tape.delegate = self;
+    self.tape = [self.view viewWithTag:2];
+    self.tape.UIDelegate = self;
 
     [[NSNotificationCenter defaultCenter]
         addObserver:self
@@ -46,8 +46,13 @@
         [[NSBundle mainBundle] URLForResource:@"tape" withExtension:@"html"];
     NSURLRequest *request = [NSURLRequest requestWithURL:bundleURL];
     [self.tape loadRequest:request];
-    self.tape.delegate = self;
+    self.tape.UIDelegate = self;
     [self.input becomeFirstResponder];
+}
+
+- (void)viewDidAppear:(BOOL)animated
+{
+    [self.view endEditing:YES];
 }
 
 - (BOOL)textFieldShouldBeginEditing:(UITextField *)textField
@@ -77,8 +82,8 @@
         [self
             appendTape:[NSString stringWithFormat:@"<b>%@</b>", [self.input text]]];
         NSString *expr = [self.input.text stringByAppendingString:@"\n"];
-        NSString *result;
-        NSError *err = MobileEval(expr, &result);
+        NSError *err;
+        NSString *result = MobileEval(expr, &err);
         if (err != nil) {
             result = err.description;
         }
@@ -130,7 +135,7 @@
         delay:0
         options:options
         animations:^{
-        self.bottomConstraint.constant = kbFrame.size.height + 32;
+        self.bottomConstraint.constant = kbFrame.size.height;
         [self.view layoutIfNeeded];
         }
         completion:^(BOOL finished) {
@@ -166,14 +171,14 @@
 - (void)scrollTapeToBottom
 {
     NSString *scroll = @"window.scrollBy(0, document.body.offsetHeight);";
-    [self.tape stringByEvaluatingJavaScriptFromString:scroll];
+    [self.tape evaluateJavaScript:scroll completionHandler:nil];
 }
 
 - (void)appendTape:(NSString *)text
 {
     NSString *injectSrc = @"appendDiv('%@');";
     NSString *runToInject = [NSString stringWithFormat:injectSrc, text];
-    [self.tape stringByEvaluatingJavaScriptFromString:runToInject];
+    [self.tape evaluateJavaScript:runToInject completionHandler:nil];
 }
 
 @end

@@ -169,7 +169,7 @@
 
                  if ([self.delegate
                          respondsToSelector:@selector(suggestionReplace:)]) {
-                   NSString *t = text;
+                   NSString *t = self->text;
                    if (t == nil) {
                      t = @"";
                    }
@@ -177,8 +177,8 @@
                      // Special case for +, -, *, /.
                      t = [t stringByAppendingString:button.currentTitle];
                    } else {
-                     t = [text stringByReplacingCharactersInRange:
-                                   range withString:button.currentTitle];
+                     t = [self->text stringByReplacingCharactersInRange:
+                          self->range withString:button.currentTitle];
                    }
                    [self performSelector:@selector(suggestionReplace:)
                               withObject:t
