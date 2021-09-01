@@ -149,19 +149,12 @@ type outputData struct {
 }
 
 func defaultOutputData() (outputData, error) {
-	projPbxproj := new(bytes.Buffer)
-	if err := projPbxprojTmpl.Execute(projPbxproj, projPbxprojTmplData{
-		BitcodeEnabled: bitcodeEnabled,
-	}); err != nil {
-		return outputData{}, err
-	}
-
 	data := outputData{
 		GOOS:      goos,
 		GOARCH:    goarch,
 		GOPATH:    gopath,
 		NDKARCH:   archNDK(),
-		Xproj:     string(projPbxproj.Bytes()),
+		Xproj:     projPbxproj,
 		Xcontents: contentsJSON,
 		Xinfo:     infoplistTmplData{BundleID: "org.golang.todo.basic", Name: "Basic"},
 	}

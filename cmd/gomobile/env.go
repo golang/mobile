@@ -21,8 +21,6 @@ var (
 
 	androidArmNM string
 	iosArmNM     string
-
-	bitcodeEnabled bool
 )
 
 func allArchs(targetOS string) []string {
@@ -84,20 +82,6 @@ func buildEnvInit() (cleanup func(), err error) {
 }
 
 func envInit() (err error) {
-	// Check the current Go version by go-list.
-	// An arbitrary standard package ('runtime' here) is given to go-list.
-	// This is because go-list tries to analyze the module at the current directory if no packages are given,
-	// and if the module doesn't have any Go file, go-list fails. See golang/go#36668.
-	cmd := exec.Command("go", "list", "-e", "-f", `{{range context.ReleaseTags}}{{if eq . "go1.14"}}{{.}}{{end}}{{end}}`, "runtime")
-	cmd.Stderr = os.Stderr
-	out, err := cmd.Output()
-	if err != nil {
-		return err
-	}
-	if len(strings.TrimSpace(string(out))) > 0 {
-		bitcodeEnabled = true
-	}
-
 	// Setup the cross-compiler environments.
 	if ndkRoot, err := ndkRoot(); err == nil {
 		androidEnv = make(map[string][]string)
@@ -158,10 +142,7 @@ func envInit() (err error) {
 		if err != nil {
 			return err
 		}
-
-		if bitcodeEnabled {
-			cflags += " -fembed-bitcode"
-		}
+		cflags += " -fembed-bitcode"
 		env = append(env,
 			"GOOS=ios",
 			"GOARCH="+arch,

@@ -31,13 +31,6 @@ func goIOSBuild(pkg *packages.Package, bundleID string, archs []string) (map[str
 		productName = "ProductName" // like xcode.
 	}
 
-	projPbxproj := new(bytes.Buffer)
-	if err := projPbxprojTmpl.Execute(projPbxproj, projPbxprojTmplData{
-		BitcodeEnabled: bitcodeEnabled,
-	}); err != nil {
-		return nil, err
-	}
-
 	infoplist := new(bytes.Buffer)
 	if err := infoplistTmpl.Execute(infoplist, infoplistTmplData{
 		// TODO: better bundle id.
@@ -51,7 +44,7 @@ func goIOSBuild(pkg *packages.Package, bundleID string, archs []string) (map[str
 		name     string
 		contents []byte
 	}{
-		{tmpdir + "/main.xcodeproj/project.pbxproj", projPbxproj.Bytes()},
+		{tmpdir + "/main.xcodeproj/project.pbxproj", []byte(projPbxproj)},
 		{tmpdir + "/main/Info.plist", infoplist.Bytes()},
 		{tmpdir + "/main/Images.xcassets/AppIcon.appiconset/Contents.json", []byte(contentsJSON)},
 	}
@@ -278,11 +271,7 @@ var infoplistTmpl = template.Must(template.New("infoplist").Parse(`<?xml version
 </plist>
 `))
 
-type projPbxprojTmplData struct {
-	BitcodeEnabled bool
-}
-
-var projPbxprojTmpl = template.Must(template.New("projPbxproj").Parse(`// !$*UTF8*$!
+const projPbxproj = `// !$*UTF8*$!
 {
   archiveVersion = 1;
   classes = {
@@ -440,7 +429,7 @@ var projPbxprojTmpl = template.Must(template.New("projPbxproj").Parse(`// !$*UTF
         SDKROOT = iphoneos;
         TARGETED_DEVICE_FAMILY = "1,2";
         VALIDATE_PRODUCT = YES;
-        {{if not .BitcodeEnabled}}ENABLE_BITCODE = NO;{{end}}
+        ENABLE_BITCODE = YES;
       };
       name = Release;
     };
@@ -477,7 +466,7 @@ var projPbxprojTmpl = template.Must(template.New("projPbxproj").Parse(`// !$*UTF
   };
   rootObject = 254BB8361B1FD08900C56DE9 /* Project object */;
 }
-`))
+`
 
 const contentsJSON = `{
   "images" : [
