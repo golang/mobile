@@ -29,6 +29,8 @@ func goAndroidBind(gobind string, pkgs []*packages.Package, androidArchs []strin
 		"-lang=go,java",
 		"-outdir="+tmpdir,
 	)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	cmd.Env = append(cmd.Env, "GOOS=android")
 	cmd.Env = append(cmd.Env, "CGO_ENABLED=1")
 	if len(buildTags) > 0 {
