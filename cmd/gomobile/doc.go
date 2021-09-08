@@ -66,7 +66,8 @@ can be selected by specifying target type with the architecture name. E.g.,
 
 For Apple -target platforms, gomobile must be run on an OS X machine with
 Xcode installed. The generated Objective-C types can be prefixed with the
--prefix flag.
+-prefix flag. Accepted Apple platforms for -target:
+ios, iossimulator, macos, maccatalyst.
 
 For -target android, the -bootclasspath and -classpath flags are used to
 control the bootstrap classpath and the classpath for Go wrappers to Java
@@ -100,6 +101,14 @@ be selected by specifying target type with the architecture name. E.g.
 
 For Apple -target platforms, gomobile must be run on an OS X machine with
 Xcode installed.
+
+By default, -target ios will generate an XCFramework for both ios
+and iossimulator. Multiple Apple targets can be specified, creating a "fat"
+XCFramework with each slice. To generate a fat XCFramework that supports
+iOS, macOS, and macCatalyst for all supportec architectures (amd64 and arm64),
+specify -target ios,macos,maccatalyst. A subset of instruction sets can be
+selectged by specifying the platform with an architecture name. E.g.
+-target=ios/arm64,maccatalyst/arm64.
 
 If the package directory contains an assets subdirectory, its contents
 are copied into the output.
