@@ -281,7 +281,7 @@ func getModuleVersions(targetPlatform string, targetArch string, src string) (*m
 }
 
 // writeGoMod writes go.mod file at $WORK/src when Go modules are used.
-func writeGoMod(dir string, targetPlatform string, targetArch string) error {
+func writeGoMod(dir, targetPlatform, targetArch string) error {
 	m, err := areGoModulesUsed()
 	if err != nil {
 		return err
