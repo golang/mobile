@@ -131,6 +131,19 @@ func TestParseBuildTargetFlag(t *testing.T) {
 		{"ios,ios/arm64", false, "ios,iossimulator", "arm64"},
 		{"ios/arm64", false, "ios,iossimulator", "arm64"},
 
+		{"iossimulator", false, "iossimulator", "arm64,amd64"},
+		{"iossimulator/amd64", false, "iossimulator", "amd64"},
+
+		{"macos", false, "macos", "arm64,amd64"},
+		{"macos,ios/arm64", false, "macos,ios,iossimulator", "arm64"},
+		{"macos/arm64", false, "macos", "arm64"},
+		{"macos/amd64", false, "macos", "amd64"},
+
+		{"maccatalyst", false, "maccatalyst", "arm64,amd64"},
+		{"maccatalyst,ios/arm64", false, "maccatalyst,ios,iossimulator", "arm64"},
+		{"maccatalyst/arm64", false, "maccatalyst", "arm64"},
+		{"maccatalyst/amd64", false, "maccatalyst", "amd64"},
+
 		{"", true, "", ""},
 		{"linux", true, "", ""},
 		{"android/x86", true, "", ""},
