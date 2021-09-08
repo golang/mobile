@@ -3,6 +3,7 @@ last-change
 *.apk
 *.app
 *.framework
+*.xcframework
 *.aar
 *.iml
 .idea
