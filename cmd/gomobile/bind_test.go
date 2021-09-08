@@ -122,12 +122,12 @@ func TestBindIOS(t *testing.T) {
 		{
 			// empty prefix
 		},
-		// {
-		// 	prefix: "Foo",
-		// },
-		// {
-		// 	out: "Abcde.xcframework",
-		// },
+		{
+			prefix: "Foo",
+		},
+		{
+			out: "Abcde.xcframework",
+		},
 	}
 	for _, tc := range tests {
 		bindPrefix = tc.prefix
