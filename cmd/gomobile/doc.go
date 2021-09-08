@@ -41,7 +41,8 @@ Bind generates language bindings for the package named by the import
 path, and compiles a library for the named target system.
 
 The -target flag takes one or more comma-delimited platform names,
-either android (the default) or ios, iossimulator, macos, maccatalyst.
+either android (the default) or one or more comma-delimited Apple
+platforms (ios, iossimulator, macos, maccatalyst).
 
 For -target android, the bind command produces an AAR (Android ARchive)
 file that archives the precompiled Java API stub classes, the compiled

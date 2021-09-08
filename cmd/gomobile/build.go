@@ -357,6 +357,8 @@ func goModTidyAt(at string, env []string) error {
 //    android/arm64,android/386,android/amd64
 //    ios,iossimulator,maccatalyst
 //    macos/amd64
+// TODO(ydnar): change the return value of parseBuildTarget to return a slice of
+// {platform, arch} tuples, so callers don’t have to filter archs out.
 func parseBuildTarget(buildTarget string) (targetPlatforms, targetArchs []string, _ error) {
 	if buildTarget == "" {
 		return nil, nil, fmt.Errorf(`invalid target ""`)
