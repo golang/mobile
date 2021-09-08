@@ -216,7 +216,7 @@ func envInit() (err error) {
 				goos = "darwin"
 				sdk = "macosx" // Note: the SDK is called "macosx", not "macos"
 				clang, cflags, err = envClang(sdk)
-				if arch != "amd64" { // TODO(ydnar): should this be == "arm64"?
+				if arch == "arm64" {
 					cflags += " -fembed-bitcode"
 				}
 			default:
