@@ -187,7 +187,7 @@ func detectTeamID() (string, error) {
 	}
 
 	if len(cert.Subject.OrganizationalUnit) == 0 {
-		err = fmt.Errorf("the signing certificate has no organizational unit (team ID).")
+		err = fmt.Errorf("the signing certificate has no organizational unit (team ID)")
 		return "", err
 	}
 
