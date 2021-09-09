@@ -54,8 +54,7 @@ can be selected by specifying target type with the architecture name. E.g.,
 
 For Apple -target platforms, gomobile must be run on an OS X machine with
 Xcode installed. The generated Objective-C types can be prefixed with the
--prefix flag. Accepted Apple platforms for -target:
-` + strings.Join(applePlatforms, ", ") + `.
+-prefix flag.
 
 For -target android, the -bootclasspath and -classpath flags are used to
 control the bootstrap classpath and the classpath for Go wrappers to Java
