@@ -214,28 +214,7 @@ ln -s Versions/Current/Resources $WORK/ios/iphoneos/{{.Output}}.framework/Resour
 mkdir -p $WORK/ios/iphoneos/{{.Output}}.framework/Resources
 mkdir -p $WORK/ios/iphoneos/{{.Output}}.framework/Versions/A/Modules
 ln -s Versions/Current/Modules $WORK/ios/iphoneos/{{.Output}}.framework/Modules
-GOOS=ios CGO_ENABLED=1 gobind -lang=go,objc -outdir=$WORK/iossimulator -tags=ios{{if .Prefix}} -prefix={{.Prefix}}{{end}} golang.org/x/mobile/asset
-mkdir -p $WORK/iossimulator/src
-PWD=$WORK/iossimulator/src GOOS=ios GOARCH=arm64 GOFLAGS=-tags=ios CC=iphonesimulator-clang CXX=iphonesimulator-clang++ CGO_CFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=13.0 -fembed-bitcode -arch arm64 CGO_CXXFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=13.0 -fembed-bitcode -arch arm64 CGO_LDFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=13.0 -fembed-bitcode -arch arm64 CGO_ENABLED=1 DARWIN_SDK=iphonesimulator GOPATH=$WORK/iossimulator:$GOPATH go mod tidy
-PWD=$WORK/iossimulator/src GOOS=ios GOARCH=arm64 GOFLAGS=-tags=ios CC=iphonesimulator-clang CXX=iphonesimulator-clang++ CGO_CFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=13.0 -fembed-bitcode -arch arm64 CGO_CXXFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=13.0 -fembed-bitcode -arch arm64 CGO_LDFLAGS=-isysroot=iphonesimulator -mios-simulator-version-min=13.0 -fembed-bitcode -arch arm64 CGO_ENABLED=1 DARWIN_SDK=iphonesimulator GOPATH=$WORK/iossimulator:$GOPATH go build -x -buildmode=c-archive -o $WORK/{{.Output}}-iossimulator-arm64.a ./gobind
-mkdir -p $WORK/iossimulator/iphonesimulator/{{.Output}}.framework/Versions/A/Headers
-ln -s A $WORK/iossimulator/iphonesimulator/{{.Output}}.framework/Versions/Current
-ln -s Versions/Current/Headers $WORK/iossimulator/iphonesimulator/{{.Output}}.framework/Headers
-ln -s Versions/Current/{{.Output}} $WORK/iossimulator/iphonesimulator/{{.Output}}.framework/{{.Output}}
-xcrun lipo $WORK/{{.Output}}-iossimulator-arm64.a -create -o $WORK/iossimulator/iphonesimulator/{{.Output}}.framework/Versions/A/{{.Output}}
-cp $WORK/iossimulator/src/gobind/{{.Prefix}}Asset.objc.h $WORK/iossimulator/iphonesimulator/{{.Output}}.framework/Versions/A/Headers/{{.Prefix}}Asset.objc.h
-mkdir -p $WORK/iossimulator/iphonesimulator/{{.Output}}.framework/Versions/A/Headers
-cp $WORK/iossimulator/src/gobind/Universe.objc.h $WORK/iossimulator/iphonesimulator/{{.Output}}.framework/Versions/A/Headers/Universe.objc.h
-mkdir -p $WORK/iossimulator/iphonesimulator/{{.Output}}.framework/Versions/A/Headers
-cp $WORK/iossimulator/src/gobind/ref.h $WORK/iossimulator/iphonesimulator/{{.Output}}.framework/Versions/A/Headers/ref.h
-mkdir -p $WORK/iossimulator/iphonesimulator/{{.Output}}.framework/Versions/A/Headers
-mkdir -p $WORK/iossimulator/iphonesimulator/{{.Output}}.framework/Versions/A/Headers
-mkdir -p $WORK/iossimulator/iphonesimulator/{{.Output}}.framework/Versions/A/Resources
-ln -s Versions/Current/Resources $WORK/iossimulator/iphonesimulator/{{.Output}}.framework/Resources
-mkdir -p $WORK/iossimulator/iphonesimulator/{{.Output}}.framework/Resources
-mkdir -p $WORK/iossimulator/iphonesimulator/{{.Output}}.framework/Versions/A/Modules
-ln -s Versions/Current/Modules $WORK/iossimulator/iphonesimulator/{{.Output}}.framework/Modules
-xcodebuild -create-xcframework -framework $WORK/ios/iphoneos/{{.Output}}.framework -framework $WORK/iossimulator/iphonesimulator/{{.Output}}.framework -output {{.Output}}.xcframework
+xcodebuild -create-xcframework -framework $WORK/ios/iphoneos/{{.Output}}.framework -output {{.Output}}.xcframework
 `))
 
 func TestBindIOSAll(t *testing.T) {

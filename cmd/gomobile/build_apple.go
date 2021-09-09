@@ -20,7 +20,7 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-func goAppleBuild(pkg *packages.Package, bundleID string, targetPlatforms, targetArchs []string) (map[string]bool, error) {
+func goAppleBuild(pkg *packages.Package, bundleID string, targets []targetInfo) (map[string]bool, error) {
 	src := pkg.PkgPath
 	if buildO != "" && !strings.HasSuffix(buildO, ".app") {
 		return nil, fmt.Errorf("-o must have an .app for -target=ios")
@@ -72,35 +72,29 @@ func goAppleBuild(pkg *packages.Package, bundleID string, targetPlatforms, targe
 
 	var nmpkgs map[string]bool
 	builtArch := map[string]bool{}
-	for _, platform := range targetPlatforms {
-		for _, arch := range targetArchs {
-			// Skip unrequested architectures
-			if !isSupportedArch(platform, arch) {
-				continue
-			}
+	for _, t := range targets {
+		// Only one binary per arch allowed
+		// e.g. ios/arm64 + iossimulator/amd64
+		if builtArch[t.arch] {
+			continue
+		}
+		builtArch[t.arch] = true
 
-			// Only one binary per arch allowed
-			// e.g. ios/arm64 + iossimulator/amd64
-			if builtArch[arch] {
-				continue
-			}
-			builtArch[arch] = true
+		path := filepath.Join(tmpdir, t.platform, t.arch)
 
-			path := filepath.Join(tmpdir, platform, arch)
-
-			// Disable DWARF; see golang.org/issues/25148.
-			if err := goBuild(src, iosEnv[platform+"/"+arch], "-ldflags=-w", "-o="+path); err != nil {
+		// Disable DWARF; see golang.org/issues/25148.
+		if err := goBuild(src, iosEnv[t.String()], "-ldflags=-w", "-o="+path); err != nil {
+			return nil, err
+		}
+		if nmpkgs == nil {
+			var err error
+			nmpkgs, err = extractPkgs(iosArmNM, path)
+			if err != nil {
 				return nil, err
 			}
-			if nmpkgs == nil {
-				var err error
-				nmpkgs, err = extractPkgs(iosArmNM, path)
-				if err != nil {
-					return nil, err
-				}
-			}
-			cmd.Args = append(cmd.Args, path)
 		}
+		cmd.Args = append(cmd.Args, path)
+
 	}
 
 	if err := runCmd(cmd); err != nil {

@@ -91,7 +91,7 @@ func runBuildImpl(cmd *command) (*packages.Package, error) {
 
 	args := cmd.flag.Args()
 
-	targetPlatforms, targetArchs, err := parseBuildTarget(buildTarget)
+	targets, err := parseBuildTarget(buildTarget)
 	if err != nil {
 		return nil, fmt.Errorf(`invalid -target=%q: %v`, buildTarget, err)
 	}
@@ -109,7 +109,7 @@ func runBuildImpl(cmd *command) (*packages.Package, error) {
 
 	// TODO(ydnar): this should work, unless build tags affect loading a single package.
 	// Should we try to import packages with different build tags per platform?
-	pkgs, err := packages.Load(packagesConfig(targetPlatforms[0]), buildPath)
+	pkgs, err := packages.Load(packagesConfig(targets[0].platform), buildPath)
 	if err != nil {
 		return nil, err
 	}
@@ -128,37 +128,33 @@ func runBuildImpl(cmd *command) (*packages.Package, error) {
 
 	var nmpkgs map[string]bool
 	switch {
-	case isAndroidPlatform(targetPlatforms[0]):
+	case isAndroidPlatform(targets[0].platform):
 		if pkg.Name != "main" {
-			for _, arch := range targetArchs {
-				if err := goBuild(pkg.PkgPath, androidEnv[arch]); err != nil {
+			for _, t := range targets {
+				if err := goBuild(pkg.PkgPath, androidEnv[t.arch]); err != nil {
 					return nil, err
 				}
 			}
 			return pkg, nil
 		}
-		nmpkgs, err = goAndroidBuild(pkg, targetArchs)
+		nmpkgs, err = goAndroidBuild(pkg, targets)
 		if err != nil {
 			return nil, err
 		}
-	case isApplePlatform(targetPlatforms[0]):
+	case isApplePlatform(targets[0].platform):
 		if !xcodeAvailable() {
 			return nil, fmt.Errorf("-target=%s requires XCode", buildTarget)
 		}
 		if pkg.Name != "main" {
-			for _, platform := range targetPlatforms {
+			for _, t := range targets {
 				// Catalyst support requires iOS 13+
 				v, _ := strconv.ParseFloat(buildIOSVersion, 64)
-				if platform == "maccatalyst" && v < 13.0 {
+				if t.platform == "maccatalyst" && v < 13.0 {
 					return nil, errors.New("catalyst requires -iosversion=13 or higher")
 				}
 
-				for _, arch := range targetArchs {
-					// Skip unrequested architectures
-					if !isSupportedArch(platform, arch) {
-						continue
-					}
-					if err := goBuild(pkg.PkgPath, iosEnv[platform+"/"+arch]); err != nil {
+				for _, t := range targets {
+					if err := goBuild(pkg.PkgPath, iosEnv[t.String()]); err != nil {
 						return nil, err
 					}
 				}
@@ -168,7 +164,7 @@ func runBuildImpl(cmd *command) (*packages.Package, error) {
 		if buildBundleID == "" {
 			return nil, fmt.Errorf("-target=ios requires -bundleid set")
 		}
-		nmpkgs, err = goAppleBuild(pkg, buildBundleID, targetPlatforms, targetArchs)
+		nmpkgs, err = goAppleBuild(pkg, buildBundleID, targets)
 		if err != nil {
 			return nil, err
 		}
@@ -365,14 +361,28 @@ func goModTidyAt(at string, env []string) error {
 //    android/arm64,android/386,android/amd64
 //    ios,iossimulator,maccatalyst
 //    macos/amd64
-// TODO(ydnar): change the return value of parseBuildTarget to return a slice of
-// {platform, arch} tuples, so callers don’t have to filter archs out.
-func parseBuildTarget(buildTarget string) (targetPlatforms, targetArchs []string, _ error) {
+func parseBuildTarget(buildTarget string) ([]targetInfo, error) {
 	if buildTarget == "" {
-		return nil, nil, fmt.Errorf(`invalid target ""`)
+		return nil, fmt.Errorf(`invalid target ""`)
 	}
 
-	var platforms, archs orderedSet
+	targets := []targetInfo{}
+	targetsAdded := make(map[targetInfo]bool)
+
+	addTarget := func(platform, arch string) {
+		t := targetInfo{platform, arch}
+		if targetsAdded[t] {
+			return
+		}
+		targets = append(targets, t)
+		targetsAdded[t] = true
+	}
+
+	addPlatform := func(platform string) {
+		for _, arch := range platformArchs(platform) {
+			addTarget(platform, arch)
+		}
+	}
 
 	var isAndroid, isApple bool
 	for _, target := range strings.Split(buildTarget, ",") {
@@ -385,35 +395,38 @@ func parseBuildTarget(buildTarget string) (targetPlatforms, targetArchs []string
 		} else if isApplePlatform(platform) {
 			isApple = true
 		} else {
-			return nil, nil, fmt.Errorf("unsupported platform: %q", platform)
+			return nil, fmt.Errorf("unsupported platform: %q", platform)
 		}
 		if isAndroid && isApple {
-			return nil, nil, fmt.Errorf(`cannot mix android and Apple platforms`)
-		}
-
-		platforms.Add(platform)
-		if platform == "ios" {
-			platforms.Add("iossimulator")
+			return nil, fmt.Errorf(`cannot mix android and Apple platforms`)
 		}
 
 		if hasArch {
 			arch := tuple[1]
 			if !isSupportedArch(platform, arch) {
-				return nil, nil, fmt.Errorf(`unsupported platform/arch: %q`, target)
+				return nil, fmt.Errorf(`unsupported platform/arch: %q`, target)
 			}
-			archs.Add(arch)
+			addTarget(platform, arch)
+		} else {
+			addPlatform(platform)
 		}
 	}
 
-	if len(archs.Slice()) == 0 {
-		for _, platform := range platforms.Slice() {
-			for _, arch := range platformArchs(platform) {
-				archs.Add(arch)
-			}
-		}
+	// Special case to build iossimulator if -target=ios
+	if buildTarget == "ios" {
+		addPlatform("iossimulator")
 	}
 
-	return platforms.Slice(), archs.Slice(), nil
+	return targets, nil
+}
+
+type targetInfo struct {
+	platform string
+	arch     string
+}
+
+func (t targetInfo) String() string {
+	return t.platform + "/" + t.arch
 }
 
 type orderedSet struct {

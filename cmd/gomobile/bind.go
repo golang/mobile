@@ -78,12 +78,12 @@ func runBind(cmd *command) error {
 
 	args := cmd.flag.Args()
 
-	targetPlatforms, targetArchs, err := parseBuildTarget(buildTarget)
+	targets, err := parseBuildTarget(buildTarget)
 	if err != nil {
 		return fmt.Errorf(`invalid -target=%q: %v`, buildTarget, err)
 	}
 
-	if isAndroidPlatform(targetPlatforms[0]) {
+	if isAndroidPlatform(targets[0].platform) {
 		if bindPrefix != "" {
 			return fmt.Errorf("-prefix is supported only for Apple targets")
 		}
@@ -112,7 +112,7 @@ func runBind(cmd *command) error {
 
 	// TODO(ydnar): this should work, unless build tags affect loading a single package.
 	// Should we try to import packages with different build tags per platform?
-	pkgs, err := packages.Load(packagesConfig(targetPlatforms[0]), args...)
+	pkgs, err := packages.Load(packagesConfig(targets[0].platform), args...)
 	if err != nil {
 		return err
 	}
@@ -125,13 +125,13 @@ func runBind(cmd *command) error {
 	}
 
 	switch {
-	case isAndroidPlatform(targetPlatforms[0]):
-		return goAndroidBind(gobind, pkgs, targetArchs)
-	case isApplePlatform(targetPlatforms[0]):
+	case isAndroidPlatform(targets[0].platform):
+		return goAndroidBind(gobind, pkgs, targets)
+	case isApplePlatform(targets[0].platform):
 		if !xcodeAvailable() {
 			return fmt.Errorf("-target=%q requires Xcode", buildTarget)
 		}
-		return goIOSBind(gobind, pkgs, targetPlatforms, targetArchs)
+		return goIOSBind(gobind, pkgs, targets)
 	default:
 		return fmt.Errorf(`invalid -target=%q`, buildTarget)
 	}
