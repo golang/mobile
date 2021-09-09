@@ -32,8 +32,8 @@ Build compiles and encodes the app named by the import path.
 
 The named package must define a main function.
 
-The -target flag takes a target platform, either android (the
-default) or ` + strings.Join(applePlatforms, ", ") + `.
+The -target flag takes either android (the default), or one or more
+comma-delimited Apple platforms (` + strings.Join(applePlatforms, ", ") + `).
 
 For -target android, if an AndroidManifest.xml is defined in the
 package directory, it is added to the APK output. Otherwise, a default

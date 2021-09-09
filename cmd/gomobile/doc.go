@@ -40,9 +40,8 @@ Usage:
 Bind generates language bindings for the package named by the import
 path, and compiles a library for the named target system.
 
-The -target flag takes one or more comma-delimited platform names,
-either android (the default) or one or more comma-delimited Apple
-platforms (ios, iossimulator, macos, maccatalyst).
+The -target flag takes either android (the default), or one or more
+comma-delimited Apple platforms (ios, iossimulator, macos, maccatalyst).
 
 For -target android, the bind command produces an AAR (Android ARchive)
 file that archives the precompiled Java API stub classes, the compiled
@@ -89,8 +88,8 @@ Build compiles and encodes the app named by the import path.
 
 The named package must define a main function.
 
-The -target flag takes a target platform, either android (the
-default) or ios, iossimulator, macos, maccatalyst.
+The -target flag takes either android (the default), or one or more
+comma-delimited Apple platforms (ios, iossimulator, macos, maccatalyst).
 
 For -target android, if an AndroidManifest.xml is defined in the
 package directory, it is added to the APK output. Otherwise, a default
