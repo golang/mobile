@@ -17,10 +17,10 @@ var (
 
 	androidEnv map[string][]string // android arch -> []string
 
-	iosEnv map[string][]string
+	appleEnv map[string][]string
 
 	androidArmNM string
-	iosArmNM     string
+	appleNM      string
 )
 
 func isAndroidPlatform(platform string) bool {
@@ -181,8 +181,8 @@ func envInit() (err error) {
 		return nil
 	}
 
-	iosArmNM = "nm"
-	iosEnv = make(map[string][]string)
+	appleNM = "nm"
+	appleEnv = make(map[string][]string)
 	for _, platform := range applePlatforms {
 		for _, arch := range platformArchs(platform) {
 			var env []string
@@ -239,7 +239,7 @@ func envInit() (err error) {
 				"CGO_ENABLED=1",
 				"DARWIN_SDK="+sdk,
 			)
-			iosEnv[platform+"/"+arch] = env
+			appleEnv[platform+"/"+arch] = env
 		}
 	}
 

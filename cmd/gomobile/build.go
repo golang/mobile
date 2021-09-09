@@ -154,7 +154,7 @@ func runBuildImpl(cmd *command) (*packages.Package, error) {
 				}
 
 				for _, t := range targets {
-					if err := goBuild(pkg.PkgPath, iosEnv[t.String()]); err != nil {
+					if err := goBuild(pkg.PkgPath, appleEnv[t.String()]); err != nil {
 						return nil, err
 					}
 				}

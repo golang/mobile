@@ -76,7 +76,7 @@ func goIOSBind(gobind string, pkgs []*packages.Package, targets []targetInfo) er
 			return err
 		}
 
-		env := iosEnv[t.String()][:]
+		env := appleEnv[t.String()][:]
 		sdk := getenv(env, "DARWIN_SDK")
 
 		frameworkDir := filepath.Join(tmpdir, t.platform, sdk, title+".framework")
