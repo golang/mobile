@@ -112,7 +112,7 @@ func runBind(cmd *command) error {
 
 	// TODO(ydnar): this should work, unless build tags affect loading a single package.
 	// Should we try to import packages with different build tags per platform?
-	pkgs, err := packages.Load(packagesConfig(targets[0].platform), args...)
+	pkgs, err := packages.Load(packagesConfig(targets[0]), args...)
 	if err != nil {
 		return err
 	}
@@ -212,11 +212,11 @@ func writeFile(filename string, generate func(io.Writer) error) error {
 	return generate(f)
 }
 
-func packagesConfig(targetPlatform string) *packages.Config {
+func packagesConfig(t targetInfo) *packages.Config {
 	config := &packages.Config{}
 	// Add CGO_ENABLED=1 explicitly since Cgo is disabled when GOOS is different from host OS.
-	config.Env = append(os.Environ(), "GOARCH=arm64", "GOOS="+platformOS(targetPlatform), "CGO_ENABLED=1")
-	tags := append(buildTags[:], platformTags(targetPlatform)...)
+	config.Env = append(os.Environ(), "GOARCH="+t.arch, "GOOS="+platformOS(t.platform), "CGO_ENABLED=1")
+	tags := append(buildTags[:], platformTags(t.platform)...)
 
 	if len(tags) > 0 {
 		config.BuildFlags = []string{"-tags=" + strings.Join(tags, ",")}

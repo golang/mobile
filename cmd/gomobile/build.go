@@ -109,7 +109,7 @@ func runBuildImpl(cmd *command) (*packages.Package, error) {
 
 	// TODO(ydnar): this should work, unless build tags affect loading a single package.
 	// Should we try to import packages with different build tags per platform?
-	pkgs, err := packages.Load(packagesConfig(targets[0].platform), buildPath)
+	pkgs, err := packages.Load(packagesConfig(targets[0]), buildPath)
 	if err != nil {
 		return nil, err
 	}
