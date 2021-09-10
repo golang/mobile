@@ -13,6 +13,9 @@ import (
 )
 
 func TestAppleBuild(t *testing.T) {
+	if !xcodeAvailable() {
+		t.Skip("Xcode is missing")
+	}
 	defer func() {
 		xout = os.Stderr
 		buildN = false
