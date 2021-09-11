@@ -273,7 +273,7 @@ func ndkRoot() (string, error) {
 
 func envClang(sdkName string) (clang, cflags string, err error) {
 	if buildN {
-		return sdkName + "-clang", "-isysroot=" + sdkName, nil
+		return sdkName + "-clang", "-isysroot " + sdkName, nil
 	}
 	cmd := exec.Command("xcrun", "--sdk", sdkName, "--find", "clang")
 	out, err := cmd.CombinedOutput()
