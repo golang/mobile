@@ -17,7 +17,7 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-func goIOSBind(gobind string, pkgs []*packages.Package, targets []targetInfo) error {
+func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) error {
 	var name string
 	var title string
 
@@ -105,7 +105,7 @@ func goIOSBind(gobind string, pkgs []*packages.Package, targets []targetInfo) er
 			}
 		}
 
-		path, err := goIOSBindArchive(name+"-"+t.platform+"-"+t.arch, env, outSrcDir)
+		path, err := goAppleBindArchive(name+"-"+t.platform+"-"+t.arch, env, outSrcDir)
 		if err != nil {
 			return fmt.Errorf("%s/%s: %v", t.platform, t.arch, err)
 		}
@@ -178,7 +178,7 @@ func goIOSBind(gobind string, pkgs []*packages.Package, targets []targetInfo) er
 			}
 			headerFiles = append(headerFiles, title+".h")
 			err = writeFile(filepath.Join(versionsAHeadersDir, title+".h"), func(w io.Writer) error {
-				return iosBindHeaderTmpl.Execute(w, map[string]interface{}{
+				return appleBindHeaderTmpl.Execute(w, map[string]interface{}{
 					"pkgs": pkgs, "title": title, "bases": fileBases,
 				})
 			})
@@ -194,7 +194,7 @@ func goIOSBind(gobind string, pkgs []*packages.Package, targets []targetInfo) er
 			return err
 		}
 		err = writeFile(filepath.Join(frameworkDir, "Resources", "Info.plist"), func(w io.Writer) error {
-			_, err := w.Write([]byte(iosBindInfoPlist))
+			_, err := w.Write([]byte(appleBindInfoPlist))
 			return err
 		})
 		if err != nil {
@@ -209,7 +209,7 @@ func goIOSBind(gobind string, pkgs []*packages.Package, targets []targetInfo) er
 			Headers: headerFiles,
 		}
 		err = writeFile(filepath.Join(versionsADir, "Modules", "module.modulemap"), func(w io.Writer) error {
-			return iosModuleMapTmpl.Execute(w, mmVals)
+			return appleModuleMapTmpl.Execute(w, mmVals)
 		})
 		if err != nil {
 			return err
@@ -234,7 +234,7 @@ func goIOSBind(gobind string, pkgs []*packages.Package, targets []targetInfo) er
 	return err
 }
 
-const iosBindInfoPlist = `<?xml version="1.0" encoding="UTF-8"?>
+const appleBindInfoPlist = `<?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
     <plist version="1.0">
       <dict>
@@ -242,14 +242,14 @@ const iosBindInfoPlist = `<?xml version="1.0" encoding="UTF-8"?>
     </plist>
 `
 
-var iosModuleMapTmpl = template.Must(template.New("iosmmap").Parse(`framework module "{{.Module}}" {
+var appleModuleMapTmpl = template.Must(template.New("iosmmap").Parse(`framework module "{{.Module}}" {
 	header "ref.h"
 {{range .Headers}}    header "{{.}}"
 {{end}}
     export *
 }`))
 
-func goIOSBindArchive(name string, env []string, gosrc string) (string, error) {
+func goAppleBindArchive(name string, env []string, gosrc string) (string, error) {
 	archive := filepath.Join(tmpdir, name+".a")
 	err := goBuildAt(gosrc, "./gobind", env, "-buildmode=c-archive", "-o", archive)
 	if err != nil {
@@ -258,7 +258,7 @@ func goIOSBindArchive(name string, env []string, gosrc string) (string, error) {
 	return archive, nil
 }
 
-var iosBindHeaderTmpl = template.Must(template.New("ios.h").Parse(`
+var appleBindHeaderTmpl = template.Must(template.New("apple.h").Parse(`
 // Objective-C API for talking to the following Go packages
 //
 {{range .pkgs}}//	{{.PkgPath}}

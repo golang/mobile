@@ -102,7 +102,7 @@ func goAppleBuild(pkg *packages.Package, bundleID string, targets []targetInfo) 
 	}
 
 	// TODO(jbd): Set the launcher icon.
-	if err := iosCopyAssets(pkg, tmpdir); err != nil {
+	if err := appleCopyAssets(pkg, tmpdir); err != nil {
 		return nil, err
 	}
 
@@ -188,7 +188,7 @@ func detectTeamID() (string, error) {
 	return cert.Subject.OrganizationalUnit[0], nil
 }
 
-func iosCopyAssets(pkg *packages.Package, xcodeProjDir string) error {
+func appleCopyAssets(pkg *packages.Package, xcodeProjDir string) error {
 	dstAssets := xcodeProjDir + "/main/assets"
 	if err := mkdir(dstAssets); err != nil {
 		return err

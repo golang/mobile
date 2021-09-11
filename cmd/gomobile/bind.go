@@ -129,7 +129,7 @@ func runBind(cmd *command) error {
 		if !xcodeAvailable() {
 			return fmt.Errorf("-target=%q requires Xcode", buildTarget)
 		}
-		return goIOSBind(gobind, pkgs, targets)
+		return goAppleBind(gobind, pkgs, targets)
 	default:
 		return fmt.Errorf(`invalid -target=%q`, buildTarget)
 	}

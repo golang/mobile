@@ -98,7 +98,7 @@ func TestBindAndroid(t *testing.T) {
 	}
 }
 
-func TestBindIOS(t *testing.T) {
+func TestBindApple(t *testing.T) {
 	if !xcodeAvailable() {
 		t.Skip("Xcode is missing")
 	}
@@ -164,7 +164,7 @@ func TestBindIOS(t *testing.T) {
 		}
 
 		wantBuf := new(bytes.Buffer)
-		if err := bindIOSTmpl.Execute(wantBuf, data); err != nil {
+		if err := bindAppleTmpl.Execute(wantBuf, data); err != nil {
 			t.Errorf("%+v: computing diff failed: %v", tc, err)
 			continue
 		}
@@ -190,7 +190,7 @@ PWD=$WORK/java javac -d $WORK/javac-output -source 1.7 -target 1.7 -bootclasspat
 jar c -C $WORK/javac-output .
 `))
 
-var bindIOSTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
+var bindAppleTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
 WORK=$WORK
 rm -r -f "{{.Output}}.xcframework"
 GOOS=ios CGO_ENABLED=1 gobind -lang=go,objc -outdir=$WORK/ios -tags=ios{{if .Prefix}} -prefix={{.Prefix}}{{end}} golang.org/x/mobile/asset
@@ -217,7 +217,7 @@ ln -s Versions/Current/Modules $WORK/ios/iphoneos/{{.Output}}.framework/Modules
 xcodebuild -create-xcframework -framework $WORK/ios/iphoneos/{{.Output}}.framework -output {{.Output}}.xcframework
 `))
 
-func TestBindIOSAll(t *testing.T) {
+func TestBindAppleAll(t *testing.T) {
 	if !xcodeAvailable() {
 		t.Skip("Xcode is missing")
 	}
