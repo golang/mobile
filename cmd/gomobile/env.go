@@ -75,6 +75,16 @@ func platformTags(platform string) []string {
 	case "macos":
 		return []string{"macos"}
 	case "maccatalyst":
+		// Mac Catalyst is a subset of iOS APIs made available on macOS
+		// designed to ease porting apps developed for iPad to macOS.
+		// See https://developer.apple.com/mac-catalyst/.
+		// Because of this, when building a Go package targeting maccatalyst,
+		// GOOS=darwin (not ios). To bridge the gap and enable maccatalyst
+		// packages to be compiled, we also specify the "ios" build tag.
+		// To help discriminate between darwin, ios, macos, and maccatalyst
+		// targets, there is also a "maccatalyst" tag.
+		// Some additional context on this can be found here:
+		// https://stackoverflow.com/questions/12132933/preprocessor-macro-for-os-x-targets/49560690#49560690
 		// TODO(ydnar): remove tag "ios" when cgo supports Catalyst
 		// See golang.org/issues/47228
 		return []string{"ios", "macos", "maccatalyst"}
@@ -202,6 +212,16 @@ func envInit() (err error) {
 				cflags += " -mios-simulator-version-min=" + buildIOSVersion
 				cflags += " -fembed-bitcode"
 			case "maccatalyst":
+				// Mac Catalyst is a subset of iOS APIs made available on macOS
+				// designed to ease porting apps developed for iPad to macOS.
+				// See https://developer.apple.com/mac-catalyst/.
+				// Because of this, when building a Go package targeting maccatalyst,
+				// GOOS=darwin (not ios). To bridge the gap and enable maccatalyst
+				// packages to be compiled, we also specify the "ios" build tag.
+				// To help discriminate between darwin, ios, macos, and maccatalyst
+				// targets, there is also a "maccatalyst" tag.
+				// Some additional context on this can be found here:
+				// https://stackoverflow.com/questions/12132933/preprocessor-macro-for-os-x-targets/49560690#49560690
 				goos = "darwin"
 				sdk = "macosx"
 				clang, cflags, err = envClang(sdk)
