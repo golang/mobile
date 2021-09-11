@@ -205,6 +205,15 @@ func envInit() (err error) {
 				goos = "darwin"
 				sdk = "macosx"
 				clang, cflags, err = envClang(sdk)
+				// TODO(ydnar): the following 3 lines MAY be needed to compile
+				// packages or apps for maccatalyst. Commenting them out now in case
+				// it turns out they are necessary. Currently none of the example
+				// apps will build for macos or maccatalyst because they have a
+				// GLKit dependency, which is deprecated on all Apple platforms, and
+				// broken on maccatalyst (GLKView isn’t available).
+				// sysroot := strings.SplitN(cflags, " ", 2)[1]
+				// cflags += " -isystem " + sysroot + "/System/iOSSupport/usr/include"
+				// cflags += " -iframework " + sysroot + "/System/iOSSupport/System/Library/Frameworks"
 				switch arch {
 				case "amd64":
 					cflags += " -target x86_64-apple-ios" + buildIOSVersion + "-macabi"
