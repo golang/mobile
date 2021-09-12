@@ -60,6 +60,10 @@ func platformOS(platform string) string {
 	case "ios", "iossimulator":
 		return "ios"
 	case "macos", "maccatalyst":
+		// For "maccatalyst", Go packages should be built with GOOS=darwin,
+		// not GOOS=ios, since the underlying OS (and kernel, runtime) is macOS.
+		// We also apply a "macos" or "maccatalyst" build tag, respectively.
+		// See below for additional context.
 		return "darwin"
 	default:
 		panic(fmt.Sprintf("unexpected platform: %s", platform))
