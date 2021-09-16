@@ -425,28 +425,3 @@ type targetInfo struct {
 func (t targetInfo) String() string {
 	return t.platform + "/" + t.arch
 }
-
-type orderedSet struct {
-	strs []string
-	m    map[string]bool
-}
-
-func (s *orderedSet) Has(str string) bool {
-	return s.m[str]
-}
-
-func (s *orderedSet) Add(strs ...string) {
-	for _, str := range strs {
-		if !s.m[str] {
-			if s.m == nil {
-				s.m = make(map[string]bool)
-			}
-			s.m[str] = true
-			s.strs = append(s.strs, str)
-		}
-	}
-}
-
-func (s *orderedSet) Slice() []string {
-	return s.strs
-}
