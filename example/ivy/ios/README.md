@@ -2,11 +2,11 @@
 
 This directory contains the source code to the Ivy iOS app.
 
-To build, first create the mobile.framework out of the Go
+To build, first create the Mobile.xcframework out of the Go
 implementation of Ivy. Run:
 
 ```
-go install golang.org/x/mobile/cmd/gomobile@latest 
+go install golang.org/x/mobile/cmd/gomobile@latest
 go install golang.org/x/mobile/cmd/gobind@latest
 ```
 
@@ -20,7 +20,7 @@ go get -d robpike.io/ivy/mobile
 gomobile bind -target=ios robpike.io/ivy/mobile
 ```
 
-Place the mobile.framework directory in this directory, and
+Place the Mobile.xcframework directory in this directory, and
 then open ivy.xcodeproj in Xcode.
 
 You have to specify Development Team for code signing certificate in:
