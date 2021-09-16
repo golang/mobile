@@ -8,7 +8,6 @@ last-change
 *.iml
 .idea
 .gradle
-.build
 
 # Android Studio build and IDE configuration files.
 example/bind/android/local.properties
