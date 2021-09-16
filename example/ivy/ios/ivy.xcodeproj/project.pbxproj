@@ -248,6 +248,7 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = "arm64 x86_64 armv7";
 			};
@@ -296,6 +297,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
+				SUPPORTS_MACCATALYST = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
 				VALID_ARCHS = "arm64 x86_64 armv7";
@@ -322,8 +324,9 @@
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = ivy;
 				STRIP_STYLE = debugging;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				VALID_ARCHS = "arm64 armv7";
+				SUPPORTS_MACCATALYST = YES;
+				TARGETED_DEVICE_FAMILY = "1,2,6";
+				VALID_ARCHS = "arm64 x86_64 armv7";
 			};
 			name = Debug;
 		};
@@ -348,8 +351,9 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.google.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = ivy;
 				STRIP_STYLE = debugging;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				VALID_ARCHS = "arm64 armv7";
+				SUPPORTS_MACCATALYST = YES;
+				TARGETED_DEVICE_FAMILY = "1,2,6";
+				VALID_ARCHS = "arm64 x86_64 armv7";
 			};
 			name = Release;
 		};
