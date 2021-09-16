@@ -24,7 +24,7 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-func goAndroidBuild(pkg *packages.Package, androidArchs []string) (map[string]bool, error) {
+func goAndroidBuild(pkg *packages.Package, targets []targetInfo) (map[string]bool, error) {
 	ndkRoot, err := ndkRoot()
 	if err != nil {
 		return nil, err
@@ -68,8 +68,8 @@ func goAndroidBuild(pkg *packages.Package, androidArchs []string) (map[string]bo
 	libFiles := []string{}
 	nmpkgs := make(map[string]map[string]bool) // map: arch -> extractPkgs' output
 
-	for _, arch := range androidArchs {
-		toolchain := ndk.Toolchain(arch)
+	for _, t := range targets {
+		toolchain := ndk.Toolchain(t.arch)
 		libPath := "lib/" + toolchain.abi + "/lib" + libName + ".so"
 		libAbsPath := filepath.Join(tmpdir, libPath)
 		if err := mkdir(filepath.Dir(libAbsPath)); err != nil {
@@ -77,14 +77,14 @@ func goAndroidBuild(pkg *packages.Package, androidArchs []string) (map[string]bo
 		}
 		err = goBuild(
 			pkg.PkgPath,
-			androidEnv[arch],
+			androidEnv[t.arch],
 			"-buildmode=c-shared",
 			"-o", libAbsPath,
 		)
 		if err != nil {
 			return nil, err
 		}
-		nmpkgs[arch], err = extractPkgs(toolchain.Path(ndkRoot, "nm"), libAbsPath)
+		nmpkgs[t.arch], err = extractPkgs(toolchain.Path(ndkRoot, "nm"), libAbsPath)
 		if err != nil {
 			return nil, err
 		}
@@ -169,9 +169,9 @@ func goAndroidBuild(pkg *packages.Package, androidArchs []string) (map[string]bo
 		}
 	}
 
-	for _, arch := range androidArchs {
-		toolchain := ndk.Toolchain(arch)
-		if nmpkgs[arch]["golang.org/x/mobile/exp/audio/al"] {
+	for _, t := range targets {
+		toolchain := ndk.Toolchain(t.arch)
+		if nmpkgs[t.arch]["golang.org/x/mobile/exp/audio/al"] {
 			dst := "lib/" + toolchain.abi + "/libopenal.so"
 			src := filepath.Join(gomobilepath, dst)
 			if _, err := os.Stat(src); err != nil {
@@ -282,7 +282,7 @@ func goAndroidBuild(pkg *packages.Package, androidArchs []string) (map[string]bo
 	}
 
 	// TODO: return nmpkgs
-	return nmpkgs[androidArchs[0]], nil
+	return nmpkgs[targets[0].arch], nil
 }
 
 // androidPkgName sanitizes the go package name to be acceptable as a android

@@ -20,7 +20,7 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-func goIOSBuild(pkg *packages.Package, bundleID string, archs []string) (map[string]bool, error) {
+func goAppleBuild(pkg *packages.Package, bundleID string, targets []targetInfo) (map[string]bool, error) {
 	src := pkg.PkgPath
 	if buildO != "" && !strings.HasSuffix(buildO, ".app") {
 		return nil, fmt.Errorf("-o must have an .app for -target=ios")
@@ -69,21 +69,32 @@ func goIOSBuild(pkg *packages.Package, bundleID string, archs []string) (map[str
 		"-o", filepath.Join(tmpdir, "main/main"),
 		"-create",
 	)
+
 	var nmpkgs map[string]bool
-	for _, arch := range archs {
-		path := filepath.Join(tmpdir, arch)
+	builtArch := map[string]bool{}
+	for _, t := range targets {
+		// Only one binary per arch allowed
+		// e.g. ios/arm64 + iossimulator/amd64
+		if builtArch[t.arch] {
+			continue
+		}
+		builtArch[t.arch] = true
+
+		path := filepath.Join(tmpdir, t.platform, t.arch)
+
 		// Disable DWARF; see golang.org/issues/25148.
-		if err := goBuild(src, iosEnv[arch], "-ldflags=-w", "-o="+path); err != nil {
+		if err := goBuild(src, appleEnv[t.String()], "-ldflags=-w", "-o="+path); err != nil {
 			return nil, err
 		}
 		if nmpkgs == nil {
 			var err error
-			nmpkgs, err = extractPkgs(iosArmNM, path)
+			nmpkgs, err = extractPkgs(appleNM, path)
 			if err != nil {
 				return nil, err
 			}
 		}
 		cmd.Args = append(cmd.Args, path)
+
 	}
 
 	if err := runCmd(cmd); err != nil {
@@ -91,7 +102,7 @@ func goIOSBuild(pkg *packages.Package, bundleID string, archs []string) (map[str
 	}
 
 	// TODO(jbd): Set the launcher icon.
-	if err := iosCopyAssets(pkg, tmpdir); err != nil {
+	if err := appleCopyAssets(pkg, tmpdir); err != nil {
 		return nil, err
 	}
 
@@ -145,7 +156,7 @@ func goIOSBuild(pkg *packages.Package, bundleID string, archs []string) (map[str
 }
 
 func detectTeamID() (string, error) {
-	// Grabs the certificate for "Apple Development"; will not work if there
+	// Grabs the first certificate for "Apple Development"; will not work if there
 	// are multiple certificates and the first is not desired.
 	cmd := exec.Command(
 		"security", "find-certificate",
@@ -170,14 +181,14 @@ func detectTeamID() (string, error) {
 	}
 
 	if len(cert.Subject.OrganizationalUnit) == 0 {
-		err = fmt.Errorf("the signing certificate has no organizational unit (team ID).")
+		err = fmt.Errorf("the signing certificate has no organizational unit (team ID)")
 		return "", err
 	}
 
 	return cert.Subject.OrganizationalUnit[0], nil
 }
 
-func iosCopyAssets(pkg *packages.Package, xcodeProjDir string) error {
+func appleCopyAssets(pkg *packages.Package, xcodeProjDir string) error {
 	dstAssets := xcodeProjDir + "/main/assets"
 	if err := mkdir(dstAssets); err != nil {
 		return err
@@ -424,7 +435,6 @@ const projPbxproj = `// !$*UTF8*$!
         GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
         GCC_WARN_UNUSED_FUNCTION = YES;
         GCC_WARN_UNUSED_VARIABLE = YES;
-        IPHONEOS_DEPLOYMENT_TARGET = 9.0;
         MTL_ENABLE_DEBUG_INFO = NO;
         SDKROOT = iphoneos;
         TARGETED_DEVICE_FAMILY = "1,2";

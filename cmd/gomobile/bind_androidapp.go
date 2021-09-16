@@ -18,7 +18,7 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-func goAndroidBind(gobind string, pkgs []*packages.Package, androidArchs []string) error {
+func goAndroidBind(gobind string, pkgs []*packages.Package, targets []targetInfo) error {
 	if sdkDir := os.Getenv("ANDROID_HOME"); sdkDir == "" {
 		return fmt.Errorf("this command requires ANDROID_HOME environment variable (path to the Android SDK)")
 	}
@@ -58,12 +58,12 @@ func goAndroidBind(gobind string, pkgs []*packages.Package, androidArchs []strin
 	}
 
 	// Generate binding code and java source code only when processing the first package.
-	for _, arch := range androidArchs {
-		if err := writeGoMod("android", arch); err != nil {
+	for _, t := range targets {
+		if err := writeGoMod(tmpdir, "android", t.arch); err != nil {
 			return err
 		}
 
-		env := androidEnv[arch]
+		env := androidEnv[t.arch]
 		// Add the generated packages to GOPATH for reverse bindings.
 		gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
 		env = append(env, gopath)
@@ -76,7 +76,7 @@ func goAndroidBind(gobind string, pkgs []*packages.Package, androidArchs []strin
 			}
 		}
 
-		toolchain := ndk.Toolchain(arch)
+		toolchain := ndk.Toolchain(t.arch)
 		err := goBuildAt(
 			filepath.Join(tmpdir, "src"),
 			"./gobind",
@@ -90,7 +90,7 @@ func goAndroidBind(gobind string, pkgs []*packages.Package, androidArchs []strin
 	}
 
 	jsrc := filepath.Join(tmpdir, "java")
-	if err := buildAAR(jsrc, androidDir, pkgs, androidArchs); err != nil {
+	if err := buildAAR(jsrc, androidDir, pkgs, targets); err != nil {
 		return err
 	}
 	return buildSrcJar(jsrc)
@@ -133,7 +133,7 @@ func buildSrcJar(src string) error {
 //	aidl (optional, not relevant)
 //
 // javac and jar commands are needed to build classes.jar.
-func buildAAR(srcDir, androidDir string, pkgs []*packages.Package, androidArchs []string) (err error) {
+func buildAAR(srcDir, androidDir string, pkgs []*packages.Package, targets []targetInfo) (err error) {
 	var out io.Writer = ioutil.Discard
 	if buildO == "" {
 		buildO = pkgs[0].Name + ".aar"
@@ -235,8 +235,8 @@ func buildAAR(srcDir, androidDir string, pkgs []*packages.Package, androidArchs 
 		}
 	}
 
-	for _, arch := range androidArchs {
-		toolchain := ndk.Toolchain(arch)
+	for _, t := range targets {
+		toolchain := ndk.Toolchain(t.arch)
 		lib := toolchain.abi + "/libgojni.so"
 		w, err = aarwcreate("jni/" + lib)
 		if err != nil {

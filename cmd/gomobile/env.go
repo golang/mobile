@@ -17,21 +17,93 @@ var (
 
 	androidEnv map[string][]string // android arch -> []string
 
-	iosEnv map[string][]string
+	appleEnv map[string][]string
 
 	androidArmNM string
-	iosArmNM     string
+	appleNM      string
 )
 
-func allArchs(targetOS string) []string {
-	switch targetOS {
+func isAndroidPlatform(platform string) bool {
+	return platform == "android"
+}
+
+func isApplePlatform(platform string) bool {
+	return contains(applePlatforms, platform)
+}
+
+var applePlatforms = []string{"ios", "iossimulator", "macos", "maccatalyst"}
+
+func platformArchs(platform string) []string {
+	switch platform {
 	case "ios":
+		return []string{"arm64"}
+	case "iossimulator":
+		return []string{"arm64", "amd64"}
+	case "macos", "maccatalyst":
 		return []string{"arm64", "amd64"}
 	case "android":
 		return []string{"arm", "arm64", "386", "amd64"}
 	default:
-		panic(fmt.Sprintf("unexpected target OS: %s", targetOS))
+		panic(fmt.Sprintf("unexpected platform: %s", platform))
 	}
+}
+
+func isSupportedArch(platform, arch string) bool {
+	return contains(platformArchs(platform), arch)
+}
+
+// platformOS returns the correct GOOS value for platform.
+func platformOS(platform string) string {
+	switch platform {
+	case "android":
+		return "android"
+	case "ios", "iossimulator":
+		return "ios"
+	case "macos", "maccatalyst":
+		// For "maccatalyst", Go packages should be built with GOOS=darwin,
+		// not GOOS=ios, since the underlying OS (and kernel, runtime) is macOS.
+		// We also apply a "macos" or "maccatalyst" build tag, respectively.
+		// See below for additional context.
+		return "darwin"
+	default:
+		panic(fmt.Sprintf("unexpected platform: %s", platform))
+	}
+}
+
+func platformTags(platform string) []string {
+	switch platform {
+	case "android":
+		return []string{"android"}
+	case "ios", "iossimulator":
+		return []string{"ios"}
+	case "macos":
+		return []string{"macos"}
+	case "maccatalyst":
+		// Mac Catalyst is a subset of iOS APIs made available on macOS
+		// designed to ease porting apps developed for iPad to macOS.
+		// See https://developer.apple.com/mac-catalyst/.
+		// Because of this, when building a Go package targeting maccatalyst,
+		// GOOS=darwin (not ios). To bridge the gap and enable maccatalyst
+		// packages to be compiled, we also specify the "ios" build tag.
+		// To help discriminate between darwin, ios, macos, and maccatalyst
+		// targets, there is also a "maccatalyst" tag.
+		// Some additional context on this can be found here:
+		// https://stackoverflow.com/questions/12132933/preprocessor-macro-for-os-x-targets/49560690#49560690
+		// TODO(ydnar): remove tag "ios" when cgo supports Catalyst
+		// See golang.org/issues/47228
+		return []string{"ios", "macos", "maccatalyst"}
+	default:
+		panic(fmt.Sprintf("unexpected platform: %s", platform))
+	}
+}
+
+func contains(haystack []string, needle string) bool {
+	for _, v := range haystack {
+		if v == needle {
+			return true
+		}
+	}
+	return false
 }
 
 func buildEnvInit() (cleanup func(), err error) {
@@ -123,37 +195,85 @@ func envInit() (err error) {
 		return nil
 	}
 
-	iosArmNM = "nm"
-	iosEnv = make(map[string][]string)
-	for _, arch := range allArchs("ios") {
-		var env []string
-		var err error
-		var clang, cflags string
-		switch arch {
-		case "arm64":
-			clang, cflags, err = envClang("iphoneos")
-			cflags += " -miphoneos-version-min=" + buildIOSVersion
-		case "amd64":
-			clang, cflags, err = envClang("iphonesimulator")
-			cflags += " -mios-simulator-version-min=" + buildIOSVersion
-		default:
-			panic(fmt.Errorf("unknown GOARCH: %q", arch))
+	appleNM = "nm"
+	appleEnv = make(map[string][]string)
+	for _, platform := range applePlatforms {
+		for _, arch := range platformArchs(platform) {
+			var env []string
+			var goos, sdk, clang, cflags string
+			var err error
+			switch platform {
+			case "ios":
+				goos = "ios"
+				sdk = "iphoneos"
+				clang, cflags, err = envClang(sdk)
+				cflags += " -miphoneos-version-min=" + buildIOSVersion
+				cflags += " -fembed-bitcode"
+			case "iossimulator":
+				goos = "ios"
+				sdk = "iphonesimulator"
+				clang, cflags, err = envClang(sdk)
+				cflags += " -mios-simulator-version-min=" + buildIOSVersion
+				cflags += " -fembed-bitcode"
+			case "maccatalyst":
+				// Mac Catalyst is a subset of iOS APIs made available on macOS
+				// designed to ease porting apps developed for iPad to macOS.
+				// See https://developer.apple.com/mac-catalyst/.
+				// Because of this, when building a Go package targeting maccatalyst,
+				// GOOS=darwin (not ios). To bridge the gap and enable maccatalyst
+				// packages to be compiled, we also specify the "ios" build tag.
+				// To help discriminate between darwin, ios, macos, and maccatalyst
+				// targets, there is also a "maccatalyst" tag.
+				// Some additional context on this can be found here:
+				// https://stackoverflow.com/questions/12132933/preprocessor-macro-for-os-x-targets/49560690#49560690
+				goos = "darwin"
+				sdk = "macosx"
+				clang, cflags, err = envClang(sdk)
+				// TODO(ydnar): the following 3 lines MAY be needed to compile
+				// packages or apps for maccatalyst. Commenting them out now in case
+				// it turns out they are necessary. Currently none of the example
+				// apps will build for macos or maccatalyst because they have a
+				// GLKit dependency, which is deprecated on all Apple platforms, and
+				// broken on maccatalyst (GLKView isn’t available).
+				// sysroot := strings.SplitN(cflags, " ", 2)[1]
+				// cflags += " -isystem " + sysroot + "/System/iOSSupport/usr/include"
+				// cflags += " -iframework " + sysroot + "/System/iOSSupport/System/Library/Frameworks"
+				switch arch {
+				case "amd64":
+					cflags += " -target x86_64-apple-ios" + buildIOSVersion + "-macabi"
+				case "arm64":
+					cflags += " -target arm64-apple-ios" + buildIOSVersion + "-macabi"
+					cflags += " -fembed-bitcode"
+				}
+			case "macos":
+				goos = "darwin"
+				sdk = "macosx" // Note: the SDK is called "macosx", not "macos"
+				clang, cflags, err = envClang(sdk)
+				if arch == "arm64" {
+					cflags += " -fembed-bitcode"
+				}
+			default:
+				panic(fmt.Errorf("unknown Apple target: %s/%s", platform, arch))
+			}
+
+			if err != nil {
+				return err
+			}
+
+			env = append(env,
+				"GOOS="+goos,
+				"GOARCH="+arch,
+				"GOFLAGS="+"-tags="+strings.Join(platformTags(platform), ","),
+				"CC="+clang,
+				"CXX="+clang+"++",
+				"CGO_CFLAGS="+cflags+" -arch "+archClang(arch),
+				"CGO_CXXFLAGS="+cflags+" -arch "+archClang(arch),
+				"CGO_LDFLAGS="+cflags+" -arch "+archClang(arch),
+				"CGO_ENABLED=1",
+				"DARWIN_SDK="+sdk,
+			)
+			appleEnv[platform+"/"+arch] = env
 		}
-		if err != nil {
-			return err
-		}
-		cflags += " -fembed-bitcode"
-		env = append(env,
-			"GOOS=ios",
-			"GOARCH="+arch,
-			"CC="+clang,
-			"CXX="+clang+"++",
-			"CGO_CFLAGS="+cflags+" -arch "+archClang(arch),
-			"CGO_CXXFLAGS="+cflags+" -arch "+archClang(arch),
-			"CGO_LDFLAGS="+cflags+" -arch "+archClang(arch),
-			"CGO_ENABLED=1",
-		)
-		iosEnv[arch] = env
 	}
 
 	return nil
@@ -186,7 +306,7 @@ func ndkRoot() (string, error) {
 
 func envClang(sdkName string) (clang, cflags string, err error) {
 	if buildN {
-		return sdkName + "-clang", "-isysroot=" + sdkName, nil
+		return sdkName + "-clang", "-isysroot " + sdkName, nil
 	}
 	cmd := exec.Command("xcrun", "--sdk", sdkName, "--find", "clang")
 	out, err := cmd.CombinedOutput()

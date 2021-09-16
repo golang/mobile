@@ -23,14 +23,14 @@ import (
 var cmdBind = &command{
 	run:   runBind,
 	Name:  "bind",
-	Usage: "[-target android|ios] [-bootclasspath <path>] [-classpath <path>] [-o output] [build flags] [package]",
+	Usage: "[-target android|" + strings.Join(applePlatforms, "|") + "] [-bootclasspath <path>] [-classpath <path>] [-o output] [build flags] [package]",
 	Short: "build a library for Android and iOS",
 	Long: `
 Bind generates language bindings for the package named by the import
 path, and compiles a library for the named target system.
 
-The -target flag takes a target system name, either android (the
-default) or ios.
+The -target flag takes either android (the default), or one or more
+comma-delimited Apple platforms (` + strings.Join(applePlatforms, ", ") + `).
 
 For -target android, the bind command produces an AAR (Android ARchive)
 file that archives the precompiled Java API stub classes, the compiled
@@ -52,9 +52,9 @@ instruction sets (arm, arm64, 386, amd64). A subset of instruction sets
 can be selected by specifying target type with the architecture name. E.g.,
 -target=android/arm,android/386.
 
-For -target ios, gomobile must be run on an OS X machine with Xcode
-installed. The generated Objective-C types can be prefixed with the -prefix
-flag.
+For Apple -target platforms, gomobile must be run on an OS X machine with
+Xcode installed. The generated Objective-C types can be prefixed with the
+-prefix flag.
 
 For -target android, the -bootclasspath and -classpath flags are used to
 control the bootstrap classpath and the classpath for Go wrappers to Java
@@ -76,21 +76,21 @@ func runBind(cmd *command) error {
 
 	args := cmd.flag.Args()
 
-	targetOS, targetArchs, err := parseBuildTarget(buildTarget)
+	targets, err := parseBuildTarget(buildTarget)
 	if err != nil {
 		return fmt.Errorf(`invalid -target=%q: %v`, buildTarget, err)
 	}
 
-	if bindJavaPkg != "" && targetOS != "android" {
-		return fmt.Errorf("-javapkg is supported only for android target")
-	}
-	if bindPrefix != "" && targetOS != "ios" {
-		return fmt.Errorf("-prefix is supported only for ios target")
-	}
-
-	if targetOS == "android" {
+	if isAndroidPlatform(targets[0].platform) {
+		if bindPrefix != "" {
+			return fmt.Errorf("-prefix is supported only for Apple targets")
+		}
 		if _, err := ndkRoot(); err != nil {
 			return err
+		}
+	} else {
+		if bindJavaPkg != "" {
+			return fmt.Errorf("-javapkg is supported only for android target")
 		}
 	}
 
@@ -98,7 +98,7 @@ func runBind(cmd *command) error {
 	if !buildN {
 		gobind, err = exec.LookPath("gobind")
 		if err != nil {
-			return errors.New("gobind was not found. Please run gomobile init before trying again.")
+			return errors.New("gobind was not found. Please run gomobile init before trying again")
 		}
 	} else {
 		gobind = "gobind"
@@ -107,7 +107,10 @@ func runBind(cmd *command) error {
 	if len(args) == 0 {
 		args = append(args, ".")
 	}
-	pkgs, err := importPackages(args, targetOS)
+
+	// TODO(ydnar): this should work, unless build tags affect loading a single package.
+	// Should we try to import packages with different build tags per platform?
+	pkgs, err := packages.Load(packagesConfig(targets[0]), args...)
 	if err != nil {
 		return err
 	}
@@ -115,26 +118,21 @@ func runBind(cmd *command) error {
 	// check if any of the package is main
 	for _, pkg := range pkgs {
 		if pkg.Name == "main" {
-			return fmt.Errorf("binding 'main' package (%s) is not supported", pkg.PkgPath)
+			return fmt.Errorf(`binding "main" package (%s) is not supported`, pkg.PkgPath)
 		}
 	}
 
-	switch targetOS {
-	case "android":
-		return goAndroidBind(gobind, pkgs, targetArchs)
-	case "ios":
+	switch {
+	case isAndroidPlatform(targets[0].platform):
+		return goAndroidBind(gobind, pkgs, targets)
+	case isApplePlatform(targets[0].platform):
 		if !xcodeAvailable() {
-			return fmt.Errorf("-target=ios requires XCode")
+			return fmt.Errorf("-target=%q requires Xcode", buildTarget)
 		}
-		return goIOSBind(gobind, pkgs, targetArchs)
+		return goAppleBind(gobind, pkgs, targets)
 	default:
 		return fmt.Errorf(`invalid -target=%q`, buildTarget)
 	}
-}
-
-func importPackages(args []string, targetOS string) ([]*packages.Package, error) {
-	config := packagesConfig(targetOS)
-	return packages.Load(config, args...)
 }
 
 var (
@@ -212,11 +210,12 @@ func writeFile(filename string, generate func(io.Writer) error) error {
 	return generate(f)
 }
 
-func packagesConfig(targetOS string) *packages.Config {
+func packagesConfig(t targetInfo) *packages.Config {
 	config := &packages.Config{}
 	// Add CGO_ENABLED=1 explicitly since Cgo is disabled when GOOS is different from host OS.
-	config.Env = append(os.Environ(), "GOARCH=arm64", "GOOS="+targetOS, "CGO_ENABLED=1")
-	tags := buildTags
+	config.Env = append(os.Environ(), "GOARCH="+t.arch, "GOOS="+platformOS(t.platform), "CGO_ENABLED=1")
+	tags := append(buildTags[:], platformTags(t.platform)...)
+
 	if len(tags) > 0 {
 		config.BuildFlags = []string{"-tags=" + strings.Join(tags, ",")}
 	}
@@ -224,11 +223,12 @@ func packagesConfig(targetOS string) *packages.Config {
 }
 
 // getModuleVersions returns a module information at the directory src.
-func getModuleVersions(targetOS string, targetArch string, src string) (*modfile.File, error) {
+func getModuleVersions(targetPlatform string, targetArch string, src string) (*modfile.File, error) {
 	cmd := exec.Command("go", "list")
-	cmd.Env = append(os.Environ(), "GOOS="+targetOS, "GOARCH="+targetArch)
+	cmd.Env = append(os.Environ(), "GOOS="+platformOS(targetPlatform), "GOARCH="+targetArch)
 
-	tags := buildTags
+	tags := append(buildTags[:], platformTags(targetPlatform)...)
+
 	// TODO(hyangah): probably we don't need to add all the dependencies.
 	cmd.Args = append(cmd.Args, "-m", "-json", "-tags="+strings.Join(tags, ","), "all")
 	cmd.Dir = src
@@ -281,7 +281,7 @@ func getModuleVersions(targetOS string, targetArch string, src string) (*modfile
 }
 
 // writeGoMod writes go.mod file at $WORK/src when Go modules are used.
-func writeGoMod(targetOS string, targetArch string) error {
+func writeGoMod(dir, targetPlatform, targetArch string) error {
 	m, err := areGoModulesUsed()
 	if err != nil {
 		return err
@@ -291,8 +291,8 @@ func writeGoMod(targetOS string, targetArch string) error {
 		return nil
 	}
 
-	return writeFile(filepath.Join(tmpdir, "src", "go.mod"), func(w io.Writer) error {
-		f, err := getModuleVersions(targetOS, targetArch, ".")
+	return writeFile(filepath.Join(dir, "src", "go.mod"), func(w io.Writer) error {
+		f, err := getModuleVersions(targetPlatform, targetArch, ".")
 		if err != nil {
 			return err
 		}
