@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		7DC2F7EA26DFD9870026EBED /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7DC2F7E826DFCF750026EBED /* WebKit.framework */; };
-		7DC2F7ED26DFD9890026EBED /* Mobile.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = B4C2833A1B98889100878964 /* Mobile.xcframework */; };
+		7DC2F7ED26DFD9890026EBED /* mobile.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B4C2833A1B98889100878964 /* mobile.framework */; };
 		B461D25D1B31B27700EC4870 /* tape.html in Resources */ = {isa = PBXBuildFile; fileRef = B461D25C1B31B27700EC4870 /* tape.html */; };
 		B48878331B2E714100C7CC3C /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = B488780C1B2D1C3F00C7CC3C /* AppDelegate.m */; };
 		B48878341B2E714100C7CC3C /* IvyController.m in Sources */ = {isa = PBXBuildFile; fileRef = B488780F1B2D1C3F00C7CC3C /* IvyController.m */; };
@@ -35,7 +35,7 @@
 		B48878311B2DF1B200C7CC3C /* Suggestion.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Suggestion.m; sourceTree = "<group>"; };
 		B488783B1B2F9CD500C7CC3C /* DocsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DocsController.h; sourceTree = "<group>"; };
 		B488783C1B2F9CD500C7CC3C /* DocsController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DocsController.m; sourceTree = "<group>"; };
-		B4C2833A1B98889100878964 /* Mobile.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = Mobile.xcframework; sourceTree = "<group>"; };
+		B4C2833A1B98889100878964 /* mobile.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = mobile.framework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -43,7 +43,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7DC2F7ED26DFD9890026EBED /* Mobile.xcframework in Frameworks */,
+				7DC2F7ED26DFD9890026EBED /* mobile.framework in Frameworks */,
 				7DC2F7EA26DFD9870026EBED /* WebKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -62,7 +62,7 @@
 		B48877FB1B2D1C3F00C7CC3C = {
 			isa = PBXGroup;
 			children = (
-				B4C2833A1B98889100878964 /* Mobile.xcframework */,
+				B4C2833A1B98889100878964 /* mobile.framework */,
 				B48878061B2D1C3F00C7CC3C /* ivy */,
 				B48878051B2D1C3F00C7CC3C /* Products */,
 				7DC2F7E726DFCF740026EBED /* Frameworks */,
@@ -248,7 +248,6 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
-				SUPPORTS_MACCATALYST = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALID_ARCHS = "arm64 x86_64 armv7";
 			};
@@ -297,7 +296,6 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
-				SUPPORTS_MACCATALYST = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
 				VALID_ARCHS = "arm64 x86_64 armv7";
@@ -324,9 +322,8 @@
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = ivy;
 				STRIP_STYLE = debugging;
-				SUPPORTS_MACCATALYST = YES;
-				TARGETED_DEVICE_FAMILY = "1,2,6";
-				VALID_ARCHS = "arm64 x86_64 armv7";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = "arm64 armv7";
 			};
 			name = Debug;
 		};
@@ -351,9 +348,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.google.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = ivy;
 				STRIP_STYLE = debugging;
-				SUPPORTS_MACCATALYST = YES;
-				TARGETED_DEVICE_FAMILY = "1,2,6";
-				VALID_ARCHS = "arm64 x86_64 armv7";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = "arm64 armv7";
 			};
 			name = Release;
 		};
