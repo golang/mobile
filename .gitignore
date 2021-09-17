@@ -9,6 +9,11 @@ last-change
 .idea
 .gradle
 
+# Xcode configuration files.
+*.xcworkspace
+xcuserdata
+*.entitlements
+
 # Android Studio build and IDE configuration files.
 example/bind/android/local.properties
 example/bind/android/gradlew*
