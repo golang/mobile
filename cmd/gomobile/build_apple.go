@@ -40,11 +40,24 @@ func goAppleBuild(pkg *packages.Package, bundleID string, targets []targetInfo) 
 		return nil, err
 	}
 
+	// Detect the team ID
+	teamID, err := detectTeamID()
+	if err != nil {
+		return nil, err
+	}
+
+	projPbxproj := new(bytes.Buffer)
+	if err := projPbxprojTmpl.Execute(projPbxproj, projPbxprojTmplData{
+		TeamID: teamID,
+	}); err != nil {
+		return nil, err
+	}
+
 	files := []struct {
 		name     string
 		contents []byte
 	}{
-		{tmpdir + "/main.xcodeproj/project.pbxproj", []byte(projPbxproj)},
+		{tmpdir + "/main.xcodeproj/project.pbxproj", projPbxproj.Bytes()},
 		{tmpdir + "/main/Info.plist", infoplist.Bytes()},
 		{tmpdir + "/main/Images.xcassets/AppIcon.appiconset/Contents.json", []byte(contentsJSON)},
 	}
@@ -103,12 +116,6 @@ func goAppleBuild(pkg *packages.Package, bundleID string, targets []targetInfo) 
 
 	// TODO(jbd): Set the launcher icon.
 	if err := appleCopyAssets(pkg, tmpdir); err != nil {
-		return nil, err
-	}
-
-	// Detect the team ID
-	teamID, err := detectTeamID()
-	if err != nil {
 		return nil, err
 	}
 
@@ -282,7 +289,11 @@ var infoplistTmpl = template.Must(template.New("infoplist").Parse(`<?xml version
 </plist>
 `))
 
-const projPbxproj = `// !$*UTF8*$!
+type projPbxprojTmplData struct {
+	TeamID string
+}
+
+var projPbxprojTmpl = template.Must(template.New("projPbxproj").Parse(`// !$*UTF8*$!
 {
   archiveVersion = 1;
   classes = {
@@ -370,6 +381,7 @@ const projPbxproj = `// !$*UTF8*$!
         TargetAttributes = {
           254BB83D1B1FD08900C56DE9 = {
             CreatedOnToolsVersion = 6.3.1;
+            DevelopmentTeam = {{.TeamID}};
           };
         };
       };
@@ -476,7 +488,7 @@ const projPbxproj = `// !$*UTF8*$!
   };
   rootObject = 254BB8361B1FD08900C56DE9 /* Project object */;
 }
-`
+`))
 
 const contentsJSON = `{
   "images" : [

@@ -67,7 +67,7 @@ func TestBindAndroid(t *testing.T) {
 		}
 		got := filepath.ToSlash(buf.String())
 
-		output, err := defaultOutputData()
+		output, err := defaultOutputData("")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -148,7 +148,7 @@ func TestBindApple(t *testing.T) {
 		}
 		got := filepath.ToSlash(buf.String())
 
-		output, err := defaultOutputData()
+		output, err := defaultOutputData("")
 		if err != nil {
 			t.Fatal(err)
 		}

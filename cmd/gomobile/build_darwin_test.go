@@ -61,7 +61,7 @@ func TestAppleBuild(t *testing.T) {
 			t.Fatalf("detecting team ID failed: %v", err)
 		}
 
-		output, err := defaultOutputData()
+		output, err := defaultOutputData(teamID)
 		if err != nil {
 			t.Fatal(err)
 		}

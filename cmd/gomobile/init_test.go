@@ -123,7 +123,7 @@ func diffOutput(got string, wantTmpl *template.Template) (string, error) {
 	got = filepath.ToSlash(got)
 
 	wantBuf := new(bytes.Buffer)
-	data, err := defaultOutputData()
+	data, err := defaultOutputData("")
 	if err != nil {
 		return "", err
 	}
@@ -148,13 +148,20 @@ type outputData struct {
 	Xinfo     infoplistTmplData
 }
 
-func defaultOutputData() (outputData, error) {
+func defaultOutputData(teamID string) (outputData, error) {
+	projPbxproj := new(bytes.Buffer)
+	if err := projPbxprojTmpl.Execute(projPbxproj, projPbxprojTmplData{
+		TeamID: teamID,
+	}); err != nil {
+		return outputData{}, err
+	}
+
 	data := outputData{
 		GOOS:      goos,
 		GOARCH:    goarch,
 		GOPATH:    gopath,
 		NDKARCH:   archNDK(),
-		Xproj:     projPbxproj,
+		Xproj:     projPbxproj.String(),
 		Xcontents: contentsJSON,
 		Xinfo:     infoplistTmplData{BundleID: "org.golang.todo.basic", Name: "Basic"},
 	}
