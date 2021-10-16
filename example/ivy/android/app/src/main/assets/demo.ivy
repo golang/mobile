@@ -1,4 +1,5 @@
-# This is ivy. Type a newline to advance to each new step. Type one now.
+# This is a demo of ivy. Type a newline to advance to each new step. Type one now.
+# At any time, type the word "quit" or EOF to end the demo and return to ivy.
 # Each step in the demo is one line of input followed by some output from ivy. Type a newline now to see.
 2+2
 # The first line you see above (2+2) is input; the next (4) is output from a running ivy.
@@ -24,7 +25,7 @@
 1/3 ** 2  # We'll see non-integral exponents later.
 # Even when a number is input in floating notation, it is still an exact rational number inside.
 1.2
-# In fact, ivy is a "bignum" calculator that can handle huge numbers and rationals made of huge numers.
+# In fact, ivy is a "bignum" calculator that can handle huge numbers and rationals made of huge numbers.
 1e10       # Still an integer.
 1e100      # Still an integer.
 1e10/3     # Not an integer, but an exact rational.
@@ -42,11 +43,13 @@ code '💩'      # char's inverse, the value of given character, here printed in
 # Vectors are written and displayed with spaces between the elements.
 1 2 3
 1 4/3 5/3 (2+1/3)
+# Note that without the parens this becomes (1 4/3 5/3 2)+1/3
+1 4/3 5/3 2+1/3
 # Vectors of characters print without quotes or spaces.
 'h' 'e' 'l' 'l' 'o'
 # This is a nicer way to write 'h' 'e' 'l' 'l' 'o'. It means the same.
 'hello'
-# Arithmetic works on vectors.
+# Arithmetic works elementwise on vectors.
 1 2 3 + 4 5 6
 # Arithmetic between scalar and vector also works, either way.
 23 + 1 2 3
@@ -78,13 +81,13 @@ iota 15
 */iota 100
 # Type this: */iota 10000
 # That printed using floating-point notation for manageability but it is still an integer inside.
-# max and min are binary operators that do the obvious. (Use semicolons to separate expresssions.)
+# max and min are binary operators that do the obvious. (Use semicolons to separate expressions.)
 3 max 7; 'is max and'; 3 min 7; 'is min'
 # Like all binary arithmetic operators, max applies elementwise.
 2 3 4 max 4 3 2
-# Reduce using max to find maxmimum element in vector.
+# Reduce using max to find maximum element in vector.
 max/2 34 42 233 2 2 521 14 1 4 1 55 133
-# Ivy allows multidimensional arrays. The shape operator binary rho builds them.
+# Ivy allows multidimensional arrays. The binary shape operator, rho, builds them.
 # Dimension (which may be a vector) on the left, data on the right.
 5 rho 1
 5 5 rho 1
@@ -113,6 +116,8 @@ x**10
 # That's a letter 'o', dot, star.
 # Any operator works; here is how to make an identity matrix.
 x = iota 5; x o.== x
+# Assignment is an operator, so you can save an intermediate expression.
+x o.== x = iota 5
 # Random numbers: Use a unary ? to roll an n-sided die from 1 to n.
 ?100
 ?100
@@ -144,7 +149,7 @@ x = ?10 rho 6; x
 2**64
 2**iota 64
 -1+2**63
-# Settings are made and queried with a leading right paren. )help lists the settings
+# Settings are made and queried with a leading right paren. )help helps with settings and other commands.
 )help
 # Use )base to switch input and output to base 16.
 )base 16
@@ -155,8 +160,9 @@ _
 (2**40)-1    # The largest 64-bit number base 16.
 )obase 10    # Output base 10, input base still 16.
 )base
--1+2**63            # The largest 63-bit number base 10.
--1+2**64            # The largest 64-bit number base 10.
+# The largest 63-bit number base 10.
+-1+2**40            # The largest 64-bit number base 10.
+-1+2**3F            # The largest 63-bit number base 10.
 # Go back to base 10 input and output.
 )base 10
 # Rationals can be very big too.
@@ -188,21 +194,21 @@ e**1e6
 log e**1e6
 log e**1e8
 log 1e1000000    # Yes, that is 10 to the millionth power.
-# Transcendentals. (The low bits aren't always quite right...)
+# Transcendentals. (The low bit isn't always right...)
 sin pi/2
 cos .25*pi * -1 + iota 9
 log iota 6
 # Successive approximations to e. (We force the calculation to use float using the "float" unary operator. Why?)
 (float 1+10**-iota 9) ** 10**iota 9
 # Default precision is 256 bits of mantissa. We can go up to 10000.
-)prec 3000         # Units are bits, not digits.
+)prec 3350         # Units are bits, not digits. 2 log 10 == 3.321. Add a few more bits for floating point errors.
 e
 )format '%.1000g'  # Units are digits. (Sorry for the inconsistency.)
 e
 pi
 sqrt 2
 e**1e6
-log e**1e6  # Only 904 good digits; the log algorithm is numerically weak. (Ideas welcome.)
+log e**1e6
 (2**1e3)/(3**1e2)
 # User-defined operators are declared as unary or binary (or both). This one computes the (unary) average.
 op avg x = (+/x)/rho x
@@ -218,12 +224,40 @@ op popcount n = +/n base 2
 popcount 7
 popcount 1e6
 popcount 1e100
-# Here is one to sum the digits. The unary operator text turns its argument into text, like Sprintf.
+# Here is one to sum the digits. The unary operator text turns its argument into text, like sprintf.
 op sumdigits x = t = text x; +/(code (t in '0123456789') sel t) - code '0'
 # Break it down:  The sel operator selects from the right based on the non-zero elements in the left.
 # The in operator generates a selector by choosing only the bytes that are ASCII digits.
 sumdigits 99
 sumdigits iota 10
 sumdigits '23 skidoo'  # Note: It counts only the digits.
+# The binary text operator takes a format string (% optional) on the left and formats the value.
+'%x' text 1234
+# We can use this for another version of popcount: %b is binary.
+op popcount n = +/'1' == '%b' text n
+popcount 7
+popcount 1e6
+popcount 1e100
+# A classic (expensive!) algorithm to count primes.
+op primes N = (not T in T o.* T) sel T = 1 drop iota N
+# The assignment to T gives 2..N. We use outer product to build an array of all products.
+# Then we find all elements of T that appear in the product matrix, invert that, and select from the original.
+primes 100
+# A final trick.
+# The binary ? operator "deals": x?y selects at random x distinct integers from 1..y inclusive.
+5?10
+# We can use this to shuffle a deck of cards. The suits are ♠♡♣♢, the values
+# A234567890JQK (using 0 for 10, for simplicity).
+# Create the deck using outer product with the ravel operator:
+"A234567890JQK" o., "♠♡♣♢"
+# To shuffle it, ravel into into a vector and index that by 1 through 52, shuffled.
+(, "A234567890JQK" o., "♠♡♣♢")[52?52]
+# There is no looping construct in ivy, but there is a conditional evaluator.
+# Within a user-defined operator, one can write a condition expression
+# using a binary operator, ":". If the left-hand operand is true (integer non-zero),
+# the user-defined operator will return the right-hand operand as its
+# result; otherwise execution continues.
+op a gcd b = a == b: a; a > b: b gcd a-b; a gcd b-a
+1562 gcd !11
 # That's it! Have fun.
-# For more information visit https://godoc.org/robpike.io/ivy
+# For more information visit https://pkg.go.dev/robpike.io/ivy

@@ -5,9 +5,13 @@ last-change
 *.framework
 *.xcframework
 *.aar
+*.jar
 *.iml
 .idea
 .gradle
+*.properties
+example/ivy/**/build/
+example/ivy/android/gradle/
 
 # Xcode configuration files.
 *.xcworkspace
