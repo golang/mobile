@@ -196,8 +196,46 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private String escapeHtmlTags(final String s) {
+        // Leaves entities (&-prefixed) alone unlike TextUtils.htmlEncode
+        // (https://github.com/aosp-mirror/platform_frameworks_base/blob/d59921149bb5948ffbcb9a9e832e9ac1538e05a0/core/java/android/text/TextUtils.java#L1361).
+        // Ivy mobile.Eval result may include encoding starting with &.
+
+        StringBuilder sb = new StringBuilder();
+        char c;
+        for (int i = 0; i < s.length(); i++) {
+            c = s.charAt(i);
+            switch (c) {
+                case '<':
+                    sb.append("&lt;"); //$NON-NLS-1$
+                    break;
+                case '>':
+                    sb.append("&gt;"); //$NON-NLS-1$
+                    break;
+                case '"':
+                    sb.append("&quot;"); //$NON-NLS-1$
+                    break;
+                case '\'':
+                    //http://www.w3.org/TR/xhtml1
+                    // The named character reference &apos; (the apostrophe, U+0027) was introduced in
+                    // XML 1.0 but does not appear in HTML. Authors should therefore use &#39; instead
+                    // of &apos; to work as expected in HTML 4 user agents.
+                    sb.append("&#39;"); //$NON-NLS-1$
+                    break;
+                default:
+                    sb.append(c);
+            }
+        }
+        return sb.toString();
+    }
+
     private void appendShowText(final String s, final String tag) {
         mWebView.loadUrl("javascript:appendDiv('" + TextUtils.htmlEncode(s).replaceAll("(\r\n|\n)", "<br />") + "', '" + tag + "')");
+        mWebView.setBackgroundColor(getResources().getColor(R.color.body));
+    }
+
+    private void appendShowPreformattedText(final String s, final String tag) {
+        mWebView.loadUrl("javascript:appendDiv('" + escapeHtmlTags(s).replaceAll("\r?\n", "<br/>") + "', '" + tag + "')");
         mWebView.setBackgroundColor(getResources().getColor(R.color.body));
     }
 
@@ -308,11 +346,8 @@ public class MainActivity extends AppCompatActivity {
                 public void run() {
                     String showText = result.first;
                     if (showText != null) {
-                        if (showText.startsWith("#")) {
-                            appendShowText(showText, "comment");
-                        } else {
-                            appendShowText(showText, "result");
-                        }
+                        final String tag = (showText.startsWith("#")) ? "comment" : "result";
+                        appendShowPreformattedText(showText, tag);
                     }
                     String editText = result.second;
                     if (editText != null) {
