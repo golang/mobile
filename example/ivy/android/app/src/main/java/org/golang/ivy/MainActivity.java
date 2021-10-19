@@ -244,6 +244,10 @@ public class MainActivity extends AppCompatActivity {
         if (s != null && !s.isEmpty()) {
             appendShowText(PROMPT + s, "expr");
         }
+        if (mDemo != null && s.trim().equals("quit")) {
+            unloadDemo();
+            s = " ";  // this will clear the text box.
+        }
         new IvyCallTask().execute(s);  // where call to Ivy backend occurs.
     }
 
@@ -293,7 +297,7 @@ public class MainActivity extends AppCompatActivity {
     private class IvyCallTask extends AsyncTask<String, Void, Pair<String, String> > {
         private String ivyEval(final String expr) {
             try {
-                // org.golang.ivy.Mobile was generated using
+                // mobile.Mobile was generated using
                 // gomobile bind -javapkg=org.golang.ivy robpike.io/ivy/mobile
                 return Mobile.eval(expr);  // Gobind-generated method.
             } catch (Exception e) {
@@ -318,22 +322,15 @@ public class MainActivity extends AppCompatActivity {
             String showText = null;
             while (true) {
                 String s = readDemo();
-                if (s == null) { return Pair.create(showText, null); }
-
-                int sharp = s.indexOf("#");
-                if (sharp < 0) {
-                    return Pair.create(showText, s);
+                if (s == null) {
+                    break;
                 }
-                s += "\n";
-                if (showText == null) {
-                    showText = s.substring(sharp, s.length());
-                } else {
-                    showText += s.substring(sharp, s.length());
+                if (s.startsWith("# ")) {
+                    return Pair.create(s, null);
                 }
-                if (sharp > 0) {
-                    return Pair.create(s.substring(sharp, s.length()), s.substring(0, sharp));
-                }
+                return Pair.create(null, s);
             }
+            return null;
         }
 
         @Override
@@ -355,7 +352,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             });
-
         }
     }
 }
