@@ -43,7 +43,6 @@ import mobile.Mobile;
 public class MainActivity extends AppCompatActivity {
     final String DEMO_SCRIPT = "demo.ivy";  // in assets directory.
     final String DEBUG_TAG = "Ivy";
-    final String PROMPT = "> ";
 
     private WebView mWebView;
     private EditText mEditText;
@@ -242,7 +241,7 @@ public class MainActivity extends AppCompatActivity {
     private void callIvy() {
         String s = mEditText.getText().toString().trim();
         if (s != null && !s.isEmpty()) {
-            appendShowText(PROMPT + s, "expr");
+            appendShowText(s, "expr");
         }
         if (mDemo != null && s.trim().equals("quit")) {
             unloadDemo();
