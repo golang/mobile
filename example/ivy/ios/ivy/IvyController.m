@@ -9,50 +9,46 @@
 
 @end
 
-@implementation IvyController
+@implementation IvyController {
+    NSArray *demo_lines;
+    int demo_index;
+}
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-
-    self.input = (UITextField *)[self.view viewWithTag:1];
+    
     self.input.delegate = self;
     self.input.autocorrectionType = UITextAutocorrectionTypeNo;
     self.input.keyboardType = UIKeyboardTypeNumbersAndPunctuation;
-
+    
     self.suggestionView = [[Suggestion alloc] init];
     self.suggestionView.delegate = self;
-
-    self.tape = [self.view viewWithTag:2];
+    
     self.tape.UIDelegate = self;
-
+    self->demo_lines=NULL;
+    
+    [self.okButton setTitle:@"" forState:UIControlStateNormal];
+    [self.okButton setHidden:TRUE];
+    
     [[NSNotificationCenter defaultCenter]
-        addObserver:self
-           selector:@selector(textDidChange:)
-               name:UITextFieldTextDidChangeNotification
-             object:self.input];
+     addObserver:self
+     selector:@selector(textDidChange:)
+     name:UITextFieldTextDidChangeNotification
+     object:self.input];
     [[NSNotificationCenter defaultCenter]
-        addObserver:self
-           selector:@selector(keyboardWillShow:)
-               name:UIKeyboardWillShowNotification
-             object:nil];
+     addObserver:self
+     selector:@selector(keyboardWillShow:)
+     name:UIKeyboardWillShowNotification
+     object:nil];
     [[NSNotificationCenter defaultCenter]
-        addObserver:self
-           selector:@selector(keyboardWillHide:)
-               name:UIKeyboardWillHideNotification
-             object:nil];
-
-    NSURL *bundleURL =
-        [[NSBundle mainBundle] URLForResource:@"tape" withExtension:@"html"];
-    NSURLRequest *request = [NSURLRequest requestWithURL:bundleURL];
-    [self.tape loadRequest:request];
-    self.tape.UIDelegate = self;
+     addObserver:self
+     selector:@selector(keyboardWillHide:)
+     name:UIKeyboardWillHideNotification
+     object:nil];
+    
     [self.input becomeFirstResponder];
-}
-
-- (void)viewDidAppear:(BOOL)animated
-{
-    [self.view endEditing:YES];
+    [self clear:NULL];
 }
 
 - (BOOL)textFieldShouldBeginEditing:(UITextField *)textField
@@ -75,33 +71,14 @@
 }
 
 - (BOOL)textField:(UITextField *)textField
-    shouldChangeCharactersInRange:(NSRange)range
-                replacementString:(NSString *)str
+shouldChangeCharactersInRange:(NSRange)range
+replacementString:(NSString *)str
 {
     if ([str isEqualToString:@"\n"]) {
-        [self
-            appendTape:[NSString stringWithFormat:@"<b>%@</b>", [self.input text]]];
-        NSString *expr = [self.input.text stringByAppendingString:@"\n"];
-        NSError *err;
-        NSString *result = MobileEval(expr, &err);
-        if (err != nil) {
-            result = err.description;
-        }
-        result = [result
-            stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]];
-        result =
-            [result stringByReplacingOccurrencesOfString:@"<" withString:@"&lt;"];
-        result =
-            [result stringByReplacingOccurrencesOfString:@">" withString:@"&gt;"];
-        NSMutableArray *lines =
-            (NSMutableArray *)[result componentsSeparatedByString:@"\n"];
-        for (NSMutableString *line in lines) {
-            [self appendTape:line];
-        }
-        self.input.text = @"";
+        [self enterPressed];
         return NO;
     }
-
+    
     return YES;
 }
 
@@ -121,51 +98,98 @@
     // Move the input text field up, as the keyboard has taken some of the screen.
     NSDictionary *info = [aNotification userInfo];
     CGRect kbFrame =
-        [[info objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue];
+    [[info objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue];
     NSNumber *duration =
-        [info objectForKey:UIKeyboardAnimationDurationUserInfoKey];
-
+    [info objectForKey:UIKeyboardAnimationDurationUserInfoKey];
+    
     UIViewAnimationCurve keyboardTransitionAnimationCurve;
     [[info valueForKey:UIKeyboardAnimationCurveUserInfoKey]
-        getValue:&keyboardTransitionAnimationCurve];
+     getValue:&keyboardTransitionAnimationCurve];
     UIViewAnimationOptions options =
-        keyboardTransitionAnimationCurve | keyboardTransitionAnimationCurve << 16;
-
+    keyboardTransitionAnimationCurve | keyboardTransitionAnimationCurve << 16;
+    
     [UIView animateWithDuration:duration.floatValue
-        delay:0
-        options:options
-        animations:^{
-        self.bottomConstraint.constant = kbFrame.size.height;
+                          delay:0
+                        options:options
+                     animations:^{
+        self.bottomConstraint.constant = 0 - kbFrame.size.height;
         [self.view layoutIfNeeded];
-        }
-        completion:^(BOOL finished) {
+    }
+                     completion:^(BOOL finished) {
         [self scrollTapeToBottom];
-        }];
+    }];
 }
 
 - (void)keyboardWillHide:(NSNotification *)aNotification
 {
     // Move the input text field back down.
     NSDictionary *info = [aNotification userInfo];
+    
     NSNumber *duration =
-        [info objectForKey:UIKeyboardAnimationDurationUserInfoKey];
+    [info objectForKey:UIKeyboardAnimationDurationUserInfoKey];
 
     UIViewAnimationCurve keyboardTransitionAnimationCurve;
     [[info valueForKey:UIKeyboardAnimationCurveUserInfoKey]
-        getValue:&keyboardTransitionAnimationCurve];
+     getValue:&keyboardTransitionAnimationCurve];
     UIViewAnimationOptions options =
-        keyboardTransitionAnimationCurve | keyboardTransitionAnimationCurve << 16;
-
+    keyboardTransitionAnimationCurve | keyboardTransitionAnimationCurve << 16;
+    
+    int offset = self.input.inputAccessoryView != NULL ? self.suggestionView.frame.size.height : 0;
+    
     [UIView animateWithDuration:duration.floatValue
-        delay:0
-        options:options
-        animations:^{
-        self.bottomConstraint.constant = 32;
+                          delay:0
+                        options:options
+                     animations:^{
+        self.bottomConstraint.constant = 0 - offset;
         [self.view layoutIfNeeded];
-        }
-        completion:^(BOOL finished) {
+    }
+                     completion:^(BOOL finished) {
         [self scrollTapeToBottom];
-        }];
+    }];
+}
+
+- (void)enterPressed
+{
+    NSString *text = self.input.text;
+    if ([text isEqual:@""]){
+        if(self->demo_lines==NULL){
+            return;
+        }
+        while (demo_index < self->demo_lines.count) {
+            NSString *line = self->demo_lines[self->demo_index++];
+            if([line hasPrefix:@"#"]) {
+                [self appendTape:line tag:@"comment"];
+            } else {
+                self.input.text = line;
+                break;
+            }
+        }
+    } else if (self->demo_lines!=NULL && [text isEqual:@"quit"]) {
+        [self unloadDemo];
+    } else {
+        [self appendTape:text tag:@"expr"];
+        NSString *expr = [text stringByAppendingString:@"\n"];
+        NSError *err;
+        NSString *result = MobileEval(expr, &err);
+        if (err != nil) {
+            result = err.description;
+        }
+        result = [result
+                  stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]];
+        result =
+        [result stringByReplacingOccurrencesOfString:@"<" withString:@"&lt;"];
+        result =
+        [result stringByReplacingOccurrencesOfString:@">" withString:@"&gt;"];
+        NSMutableArray *lines =
+        (NSMutableArray *)[result componentsSeparatedByString:@"\n"];
+        for (NSMutableString *line in lines) {
+            if ([line hasPrefix:@"#"])
+                [self appendTape:line tag:@"comment"];
+            else
+                [self appendTape:line tag:@"result"];
+        }
+        self.input.text = @"";
+    }
 }
 
 - (void)scrollTapeToBottom
@@ -174,11 +198,46 @@
     [self.tape evaluateJavaScript:scroll completionHandler:nil];
 }
 
-- (void)appendTape:(NSString *)text
+- (void)appendTape:(NSString *)text tag:(NSString *)tag
 {
-    NSString *injectSrc = @"appendDiv('%@');";
-    NSString *runToInject = [NSString stringWithFormat:injectSrc, text];
+    NSString *injectSrc = @"appendDiv('%@','%@');";
+    NSString *runToInject = [NSString stringWithFormat:injectSrc, text, tag];
     [self.tape evaluateJavaScript:runToInject completionHandler:nil];
+    [self scrollTapeToBottom];
 }
 
+- (void)loadDemo
+{
+    [self.okButton setHidden:FALSE];
+    NSString *text = DemoText();
+    
+    self->demo_lines = [text componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
+    self->demo_index = 0;
+    self.input.text = @"";
+    [self enterPressed];
+}
+- (void)unloadDemo
+{
+    [self.okButton setHidden:TRUE];
+    self->demo_lines=NULL;
+    self.input.text = @"";
+}
+- (IBAction)okPressed:(id)sender {
+    [self enterPressed];
+}
+
+- (IBAction)demo:(id)sender {
+    if (self->demo_lines) { // demo already running
+        [self enterPressed];
+    } else {
+        [self loadDemo];
+    }
+}
+
+- (IBAction)clear:(id)sender {
+    [self unloadDemo];
+    NSString *string = [NSString stringWithContentsOfFile:[[NSBundle mainBundle]
+                                                            pathForResource:@"tape" ofType:@"html"] encoding:NSUTF8StringEncoding error:NULL];
+    [self.tape loadHTMLString:string baseURL:NULL];
+}
 @end

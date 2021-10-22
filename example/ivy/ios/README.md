@@ -17,7 +17,7 @@ mkdir work; cd work
 go mod init work
 go get -d golang.org/x/mobile/bind@latest
 go get -d robpike.io/ivy/mobile
-gomobile bind -target=ios,iossimulator,maccatalyst,macos robpike.io/ivy/mobile
+gomobile bind -target=ios,iossimulator,maccatalyst,macos robpike.io/ivy/mobile robpike.io/ivy/demo
 ```
 
 Place the Mobile.xcframework directory in this directory, and

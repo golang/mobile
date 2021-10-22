@@ -14,8 +14,13 @@
 @property (weak, nonatomic) IBOutlet NSLayoutConstraint *bottomConstraint;
 
 // A text input field coupled to an output "tape", rendered with a WKWebView.
-@property (strong, nonatomic) UITextField *input;
+@property (weak, nonatomic) IBOutlet UITextField *input;
 @property (strong, nonatomic) Suggestion *suggestionView;
-@property (strong, nonatomic) WKWebView *tape;
+@property (weak, nonatomic) IBOutlet WKWebView *tape;
+@property (weak, nonatomic) IBOutlet UIButton *okButton;
+
+- (IBAction)clear:(id)sender;
+- (IBAction)demo:(id)sender;
+- (IBAction)okPressed:(id)sender;
 
 @end
