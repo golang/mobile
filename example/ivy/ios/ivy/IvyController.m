@@ -46,7 +46,7 @@
      selector:@selector(keyboardWillHide:)
      name:UIKeyboardWillHideNotification
      object:nil];
-    
+
     [self.input becomeFirstResponder];
     [self clear:NULL];
 }
@@ -70,18 +70,6 @@
     return YES;
 }
 
-- (BOOL)textField:(UITextField *)textField
-shouldChangeCharactersInRange:(NSRange)range
-replacementString:(NSString *)str
-{
-    if ([str isEqualToString:@"\n"]) {
-        [self enterPressed];
-        return NO;
-    }
-    
-    return YES;
-}
-
 - (void)textDidChange:(NSNotification *)notif
 {
     [self.suggestionView suggestFor:self.input.text];
@@ -101,7 +89,7 @@ replacementString:(NSString *)str
     [[info objectForKey:UIKeyboardFrameEndUserInfoKey] CGRectValue];
     NSNumber *duration =
     [info objectForKey:UIKeyboardAnimationDurationUserInfoKey];
-    
+
     UIViewAnimationCurve keyboardTransitionAnimationCurve;
     [[info valueForKey:UIKeyboardAnimationCurveUserInfoKey]
      getValue:&keyboardTransitionAnimationCurve];
@@ -190,6 +178,7 @@ replacementString:(NSString *)str
         }
         self.input.text = @"";
     }
+    [self.input becomeFirstResponder];
 }
 
 - (void)scrollTapeToBottom
@@ -210,15 +199,17 @@ replacementString:(NSString *)str
 {
     [self.okButton setHidden:FALSE];
     NSString *text = DemoText();
-    
+
     self->demo_lines = [text componentsSeparatedByCharactersInSet:[NSCharacterSet newlineCharacterSet]];
     self->demo_index = 0;
     self.input.text = @"";
+    self.input.enablesReturnKeyAutomatically=TRUE;
     [self enterPressed];
 }
 - (void)unloadDemo
 {
     [self.okButton setHidden:TRUE];
+    self.input.enablesReturnKeyAutomatically=FALSE;
     self->demo_lines=NULL;
     self.input.text = @"";
 }

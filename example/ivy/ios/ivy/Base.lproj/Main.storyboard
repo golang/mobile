@@ -64,6 +64,10 @@
                                         <rect key="contentStretch" x="1" y="1" width="1" height="1"/>
                                         <fontDescription key="fontDescription" name="Menlo-Bold" family="Menlo" pointSize="14"/>
                                         <textInputTraits key="textInputTraits" autocorrectionType="no" spellCheckingType="no" keyboardType="alphabet" keyboardAppearance="alert" enablesReturnKeyAutomatically="YES" smartDashesType="no" smartInsertDeleteType="no" smartQuotesType="no"/>
+                                        <connections>
+                                            <action selector="okPressed:" destination="BYZ-38-t0r" eventType="primaryActionTriggered" id="3BK-xS-ize"/>
+                                            <action selector="okPressed:" destination="BYZ-38-t0r" eventType="editingDidEnd" id="91o-Gh-hrf"/>
+                                        </connections>
                                     </textField>
                                     <button opaque="NO" contentMode="scaleToFill" horizontalCompressionResistancePriority="1000" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="eO6-bM-CwW">
                                         <rect key="frame" x="301.5" y="0.0" width="72.5" height="31"/>

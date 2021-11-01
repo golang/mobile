@@ -10,6 +10,7 @@ last-change
 .idea
 .gradle
 *.properties
+.DS_Store
 example/ivy/**/build/
 example/ivy/android/gradle/
 
