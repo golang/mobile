@@ -3,12 +3,12 @@
 // license that can be found in the LICENSE file.
 
 #import <WebKit/WebKit.h>
-#import "Suggestion.h"
 #import "IvyController.h"
+#import "Suggestion.h"
 
-@interface AppDelegate
-    : UIResponder <UIApplicationDelegate, UITextFieldDelegate, WKUIDelegate>
+@interface AppDelegate : UIResponder <UIApplicationDelegate, UITextFieldDelegate, WKUIDelegate>
 
-@property (strong, nonatomic) UIWindow *window;
+@property(strong, nonatomic) UIWindow *window;
 
 @end
+
