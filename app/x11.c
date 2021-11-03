@@ -7,7 +7,7 @@
 #include "_cgo_export.h"
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
-#include <X11/Xlib.h>
+#include <X11/XKBlib.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -37,6 +37,8 @@ new_window(Display *x_dpy, EGLDisplay e_dpy, int w, int h, EGLContext *ctx, EGLS
 		exit(1);
 	}
 
+	XkbSetDetectableAutoRepeat(x_dpy, True, NULL);
+
 	XVisualInfo visTemplate;
 	visTemplate.visualid = vid;
 	int num_visuals;
@@ -56,7 +58,8 @@ new_window(Display *x_dpy, EGLDisplay e_dpy, int w, int h, EGLContext *ctx, EGLS
 	}
 
 	attr.event_mask = StructureNotifyMask | ExposureMask |
-		ButtonPressMask | ButtonReleaseMask | ButtonMotionMask;
+		ButtonPressMask | ButtonReleaseMask | ButtonMotionMask |
+		KeyPressMask | KeyReleaseMask;
 	Window win = XCreateWindow(
 		x_dpy, root, 0, 0, w, h, 0, visInfo->depth, InputOutput,
 		visInfo->visual, CWColormap | CWEventMask, &attr);
@@ -87,6 +90,7 @@ new_window(Display *x_dpy, EGLDisplay e_dpy, int w, int h, EGLContext *ctx, EGLS
 }
 
 Display *x_dpy;
+XIC x_ic;
 EGLDisplay e_dpy;
 EGLContext e_ctx;
 EGLSurface e_surf;
@@ -122,6 +126,14 @@ createWindow(void) {
 		fprintf(stderr, "eglMakeCurrent failed\n");
 		exit(1);
 	}
+
+	XIM xim = XOpenIM(x_dpy, 0, 0, 0);
+
+	x_ic = XCreateIC(xim,
+			XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
+			XNClientWindow, win,
+			XNFocusWindow, win,
+			NULL);
 
 	// Window size and DPI should be initialized before starting app.
 	XEvent ev;
@@ -159,6 +171,10 @@ processEvents(void) {
 				onStop();
 				return;
 			}
+			break;
+		case KeyPress:
+		case KeyRelease:
+			onKeyEvent(&ev.xkey);
 			break;
 		}
 	}
