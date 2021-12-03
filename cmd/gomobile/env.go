@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -427,14 +428,23 @@ func (tc *ndkToolchain) ClangPrefix() string {
 }
 
 func (tc *ndkToolchain) Path(ndkRoot, toolName string) string {
-	var pref string
+	cmdFromPref := func(pref string) string {
+		return filepath.Join(ndkRoot, "toolchains", "llvm", "prebuilt", archNDK(), "bin", pref+"-"+toolName)
+	}
+
+	var cmd string
 	switch toolName {
 	case "clang", "clang++":
-		pref = tc.ClangPrefix()
+		cmd = cmdFromPref(tc.ClangPrefix())
 	default:
-		pref = tc.toolPrefix
+		cmd = cmdFromPref(tc.toolPrefix)
+		// Starting from NDK 23, GNU binutils are fully migrated to LLVM binutils.
+		// See https://android.googlesource.com/platform/ndk/+/master/docs/Roadmap.md#ndk-r23
+		if _, err := os.Stat(cmd); errors.Is(err, fs.ErrNotExist) {
+			cmd = cmdFromPref("llvm")
+		}
 	}
-	return filepath.Join(ndkRoot, "toolchains", "llvm", "prebuilt", archNDK(), "bin", pref+"-"+toolName)
+	return cmd
 }
 
 type ndkConfig map[string]ndkToolchain // map: GOOS->androidConfig.
