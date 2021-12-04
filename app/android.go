@@ -287,8 +287,12 @@ func mainUI(vm, jniEnv, ctx uintptr) error {
 
 	donec := make(chan struct{})
 	go func() {
+		// close the donec channel in a defer statement
+		// so that we could still be able to return even
+		// if mainUserFn panics.
+		defer close(donec)
+
 		mainUserFn(theApp)
-		close(donec)
 	}()
 
 	var pixelsPerPt float32
