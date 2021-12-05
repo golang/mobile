@@ -33,7 +33,6 @@ func goAppleBuild(pkg *packages.Package, bundleID string, targets []targetInfo) 
 
 	infoplist := new(bytes.Buffer)
 	if err := infoplistTmpl.Execute(infoplist, infoplistTmplData{
-		// TODO: better bundle id.
 		BundleID: bundleID + "." + productName,
 		Name:     strings.Title(path.Base(pkg.PkgPath)),
 	}); err != nil {
