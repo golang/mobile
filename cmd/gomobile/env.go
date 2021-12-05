@@ -14,13 +14,9 @@ import (
 
 // General mobile build environment. Initialized by envInit.
 var (
-	gomobilepath string // $GOPATH/pkg/gomobile
-
-	androidEnv map[string][]string // android arch -> []string
-
-	appleEnv map[string][]string
-
-	androidArmNM string
+	gomobilepath string              // $GOPATH/pkg/gomobile
+	androidEnv   map[string][]string // android arch -> []string
+	appleEnv     map[string][]string
 	appleNM      string
 )
 

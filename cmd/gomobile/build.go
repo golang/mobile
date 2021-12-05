@@ -271,11 +271,6 @@ func addBuildFlagsNVXWork(cmd *command) {
 	cmd.flag.BoolVar(&buildWork, "work", false, "")
 }
 
-type binInfo struct {
-	hasPkgApp bool
-	hasPkgAL  bool
-}
-
 func init() {
 	addBuildFlags(cmdBuild)
 	addBuildFlagsNVXWork(cmdBuild)
