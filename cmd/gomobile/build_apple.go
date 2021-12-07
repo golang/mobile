@@ -20,7 +20,7 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-func goIOSBuild(pkg *packages.Package, bundleID string, archs []string) (map[string]bool, error) {
+func goAppleBuild(pkg *packages.Package, bundleID string, targets []targetInfo) (map[string]bool, error) {
 	src := pkg.PkgPath
 	if buildO != "" && !strings.HasSuffix(buildO, ".app") {
 		return nil, fmt.Errorf("-o must have an .app for -target=ios")
@@ -31,18 +31,23 @@ func goIOSBuild(pkg *packages.Package, bundleID string, archs []string) (map[str
 		productName = "ProductName" // like xcode.
 	}
 
-	projPbxproj := new(bytes.Buffer)
-	if err := projPbxprojTmpl.Execute(projPbxproj, projPbxprojTmplData{
-		BitcodeEnabled: bitcodeEnabled,
+	infoplist := new(bytes.Buffer)
+	if err := infoplistTmpl.Execute(infoplist, infoplistTmplData{
+		BundleID: bundleID + "." + productName,
+		Name:     strings.Title(path.Base(pkg.PkgPath)),
 	}); err != nil {
 		return nil, err
 	}
 
-	infoplist := new(bytes.Buffer)
-	if err := infoplistTmpl.Execute(infoplist, infoplistTmplData{
-		// TODO: better bundle id.
-		BundleID: bundleID + "." + productName,
-		Name:     strings.Title(path.Base(pkg.PkgPath)),
+	// Detect the team ID
+	teamID, err := detectTeamID()
+	if err != nil {
+		return nil, err
+	}
+
+	projPbxproj := new(bytes.Buffer)
+	if err := projPbxprojTmpl.Execute(projPbxproj, projPbxprojTmplData{
+		TeamID: teamID,
 	}); err != nil {
 		return nil, err
 	}
@@ -76,21 +81,32 @@ func goIOSBuild(pkg *packages.Package, bundleID string, archs []string) (map[str
 		"-o", filepath.Join(tmpdir, "main/main"),
 		"-create",
 	)
+
 	var nmpkgs map[string]bool
-	for _, arch := range archs {
-		path := filepath.Join(tmpdir, arch)
+	builtArch := map[string]bool{}
+	for _, t := range targets {
+		// Only one binary per arch allowed
+		// e.g. ios/arm64 + iossimulator/amd64
+		if builtArch[t.arch] {
+			continue
+		}
+		builtArch[t.arch] = true
+
+		path := filepath.Join(tmpdir, t.platform, t.arch)
+
 		// Disable DWARF; see golang.org/issues/25148.
-		if err := goBuild(src, darwinEnv[arch], "-ldflags=-w", "-o="+path); err != nil {
+		if err := goBuild(src, appleEnv[t.String()], "-ldflags=-w", "-o="+path); err != nil {
 			return nil, err
 		}
 		if nmpkgs == nil {
 			var err error
-			nmpkgs, err = extractPkgs(darwinArmNM, path)
+			nmpkgs, err = extractPkgs(appleNM, path)
 			if err != nil {
 				return nil, err
 			}
 		}
 		cmd.Args = append(cmd.Args, path)
+
 	}
 
 	if err := runCmd(cmd); err != nil {
@@ -98,13 +114,7 @@ func goIOSBuild(pkg *packages.Package, bundleID string, archs []string) (map[str
 	}
 
 	// TODO(jbd): Set the launcher icon.
-	if err := iosCopyAssets(pkg, tmpdir); err != nil {
-		return nil, err
-	}
-
-	// Detect the team ID
-	teamID, err := detectTeamID()
-	if err != nil {
+	if err := appleCopyAssets(pkg, tmpdir); err != nil {
 		return nil, err
 	}
 
@@ -152,11 +162,11 @@ func goIOSBuild(pkg *packages.Package, bundleID string, archs []string) (map[str
 }
 
 func detectTeamID() (string, error) {
-	// Grabs the first certificate for "iPhone Developer"; will not work if there
+	// Grabs the first certificate for "Apple Development"; will not work if there
 	// are multiple certificates and the first is not desired.
 	cmd := exec.Command(
 		"security", "find-certificate",
-		"-c", "iPhone Developer", "-p",
+		"-c", "Apple Development", "-p",
 	)
 	pemString, err := cmd.Output()
 	if err != nil {
@@ -177,14 +187,14 @@ func detectTeamID() (string, error) {
 	}
 
 	if len(cert.Subject.OrganizationalUnit) == 0 {
-		err = fmt.Errorf("the signing certificate has no organizational unit (team ID).")
+		err = fmt.Errorf("the signing certificate has no organizational unit (team ID)")
 		return "", err
 	}
 
 	return cert.Subject.OrganizationalUnit[0], nil
 }
 
-func iosCopyAssets(pkg *packages.Package, xcodeProjDir string) error {
+func appleCopyAssets(pkg *packages.Package, xcodeProjDir string) error {
 	dstAssets := xcodeProjDir + "/main/assets"
 	if err := mkdir(dstAssets); err != nil {
 		return err
@@ -279,7 +289,7 @@ var infoplistTmpl = template.Must(template.New("infoplist").Parse(`<?xml version
 `))
 
 type projPbxprojTmplData struct {
-	BitcodeEnabled bool
+	TeamID string
 }
 
 var projPbxprojTmpl = template.Must(template.New("projPbxproj").Parse(`// !$*UTF8*$!
@@ -370,6 +380,7 @@ var projPbxprojTmpl = template.Must(template.New("projPbxproj").Parse(`// !$*UTF
         TargetAttributes = {
           254BB83D1B1FD08900C56DE9 = {
             CreatedOnToolsVersion = 6.3.1;
+            DevelopmentTeam = {{.TeamID}};
           };
         };
       };
@@ -422,7 +433,7 @@ var projPbxprojTmpl = template.Must(template.New("projPbxproj").Parse(`// !$*UTF
         CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
         CLANG_WARN_UNREACHABLE_CODE = YES;
         CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-        "CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+        "CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "Apple Development";
         COPY_PHASE_STRIP = NO;
         DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
         ENABLE_NS_ASSERTIONS = NO;
@@ -435,12 +446,11 @@ var projPbxprojTmpl = template.Must(template.New("projPbxproj").Parse(`// !$*UTF
         GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
         GCC_WARN_UNUSED_FUNCTION = YES;
         GCC_WARN_UNUSED_VARIABLE = YES;
-        IPHONEOS_DEPLOYMENT_TARGET = 8.3;
         MTL_ENABLE_DEBUG_INFO = NO;
         SDKROOT = iphoneos;
         TARGETED_DEVICE_FAMILY = "1,2";
         VALIDATE_PRODUCT = YES;
-        {{if not .BitcodeEnabled}}ENABLE_BITCODE = NO;{{end}}
+        ENABLE_BITCODE = YES;
       };
       name = Release;
     };

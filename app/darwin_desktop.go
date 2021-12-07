@@ -59,7 +59,6 @@ func main(f func(App)) {
 	go func() {
 		f(theApp)
 		C.stopApp()
-		// TODO(crawshaw): trigger runApp to return
 	}()
 
 	C.runApp()

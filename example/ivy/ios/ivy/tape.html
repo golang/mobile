@@ -5,39 +5,56 @@ license that can be found in the LICENSE file.
 -->
 <html>
 <head>
-<style>
-body {
-	padding: 0;
-	margin: 0;
-	font-family: Menlo, monospace;
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" charset="UTF-8">
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+        div {
+            padding: 1;
+            white-space: pre-wrap;
+            font-family: "Roboto Mono", monospace;
+        }
+        .comment {
+            color: grey;
+        }
+        .expr {
+            font-weight: bold;
+        }
+        .flow-hide {
+            text-overflow: ellipsis;
+            word-break: break-all;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        .flow-show {
+            word-break: break-all;
+        }
+    </style>
+
+    <script>
+
+function flowClick(el) {
+    el.classList.toggle("flow-hide");
+    el.classList.toggle("flow-show");
 }
 
-.flowhide {
-	text-overflow: ellipsis;
-	word-break: break-all;
-	white-space: nowrap;
-	overflow: hidden;
-}
-
-.flowshow {
-	word-break: break-all;
-}
-</style>
-<script>
-function flowclick(el) {
-	el.classList.toggle("flowhide");
-	el.classList.toggle("flowshow");
-}
-function appendDiv(text) {
+function appendDiv(txt, tag) {
     var el = document.createElement("div");
-    el.classList.add("flowhide");
-	el.innerHTML = text;
-	el.onclick = function() {
-		flowclick(el);
-	};
-	document.body.appendChild(el);
-	window.scrollBy(0, document.body.offsetHeight);
+    el.innerHTML = txt;
+    if (tag == "comment") {
+        el.classList.add("comment");
+    } else if (tag == "expr") {
+        el.classList.add("expr");
+    } else {
+        el.classList.add("flow-show");
+        el.onclick = function() {
+                flowClick(el);
+        };
+    }
+    document.body.appendChild(el);
 }
+
 </script>
 <body>
 </body>

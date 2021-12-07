@@ -5,27 +5,38 @@
 #import "DocsController.h"
 #import "mobile/Mobile.h"
 
-@interface DocsController ()
+@interface DocsController () {
+  WKWebView *webView;
+}
 
 @end
 
 @implementation DocsController
 
-- (void)viewDidLoad
-{
-    [super viewDidLoad];
-    UIWebView *webView = (UIWebView *)[self.view viewWithTag:11];
-    NSString *helpHTML = MobileHelp();
-    [webView loadHTMLString:helpHTML baseURL:NULL];
-    if ([self respondsToSelector:@selector(
-                                     setAutomaticallyAdjustsScrollViewInsets:)]) {
-        self.automaticallyAdjustsScrollViewInsets = NO;
-    }
+- (void)viewDidLoad {
+  [super viewDidLoad];
+  webView = (WKWebView *)[self.view viewWithTag:11];
+  NSString *helpHTML = MobileHelp();
+  NSRange r = [helpHTML rangeOfString:@"<head>"];
+  NSString *html = [helpHTML substringToIndex:r.location];
+
+  // With the following meta tag, WKWebView displays the fonts more nicely.
+  NSString *meta = @"<meta name='viewport' \
+        content='width=device-width, "
+                   @"initial-scale=1.0, maximum-scale=1.0, \
+        minimum-scale=1.0, "
+                   @"user-scalable=no'>";
+
+  html = [html stringByAppendingString:@"<head>"];
+  html = [html stringByAppendingString:meta];
+  html = [html stringByAppendingString:[helpHTML substringFromIndex:r.location]];
+
+  [webView loadHTMLString:html baseURL:NULL];
 }
 
-- (void)didReceiveMemoryWarning
-{
-    [super didReceiveMemoryWarning];
+- (void)didReceiveMemoryWarning {
+  [super didReceiveMemoryWarning];
 }
 
 @end
+

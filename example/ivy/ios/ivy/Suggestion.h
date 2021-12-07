@@ -16,6 +16,7 @@
 - (instancetype)initWithFrame:(CGRect)frame;
 - (void)suggestFor:(NSString *)text;
 
-@property (weak) id<SuggestionDelegate> delegate;
+@property(weak) id<SuggestionDelegate> delegate;
 
 @end
+

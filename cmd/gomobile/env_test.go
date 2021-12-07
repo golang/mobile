@@ -26,21 +26,19 @@ func TestNdkRoot(t *testing.T) {
 	}()
 
 	os.Setenv("ANDROID_HOME", home)
+	sdkNDK := filepath.Join(home, "ndk-bundle")
+	envNDK := filepath.Join(home, "android-ndk")
+	os.Setenv("ANDROID_NDK_HOME", envNDK)
 
 	if ndk, err := ndkRoot(); err == nil {
 		t.Errorf("expected error but got %q", ndk)
 	}
-
-	sdkNDK := filepath.Join(home, "ndk-bundle")
-	envNDK := filepath.Join(home, "android-ndk")
 
 	for _, dir := range []string{sdkNDK, envNDK} {
 		if err := os.Mkdir(dir, 0755); err != nil {
 			t.Fatalf("couldn't mkdir %q", dir)
 		}
 	}
-
-	os.Setenv("ANDROID_NDK_HOME", envNDK)
 
 	if ndk, _ := ndkRoot(); ndk != sdkNDK {
 		t.Errorf("got %q want %q", ndk, sdkNDK)

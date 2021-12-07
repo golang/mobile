@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"text/template"
@@ -18,6 +19,10 @@ import (
 var gopath string
 
 func TestInit(t *testing.T) {
+	if runtime.GOOS == "android" || runtime.GOOS == "ios" {
+		t.Skipf("not available on %s", runtime.GOOS)
+	}
+
 	if _, err := exec.LookPath("diff"); err != nil {
 		t.Skip("command diff not found, skipping")
 	}
@@ -118,7 +123,7 @@ func diffOutput(got string, wantTmpl *template.Template) (string, error) {
 	got = filepath.ToSlash(got)
 
 	wantBuf := new(bytes.Buffer)
-	data, err := defaultOutputData()
+	data, err := defaultOutputData("")
 	if err != nil {
 		return "", err
 	}
@@ -143,10 +148,10 @@ type outputData struct {
 	Xinfo     infoplistTmplData
 }
 
-func defaultOutputData() (outputData, error) {
+func defaultOutputData(teamID string) (outputData, error) {
 	projPbxproj := new(bytes.Buffer)
 	if err := projPbxprojTmpl.Execute(projPbxproj, projPbxprojTmplData{
-		BitcodeEnabled: bitcodeEnabled,
+		TeamID: teamID,
 	}); err != nil {
 		return outputData{}, err
 	}
@@ -156,7 +161,7 @@ func defaultOutputData() (outputData, error) {
 		GOARCH:    goarch,
 		GOPATH:    gopath,
 		NDKARCH:   archNDK(),
-		Xproj:     string(projPbxproj.Bytes()),
+		Xproj:     projPbxproj.String(),
 		Xcontents: contentsJSON,
 		Xinfo:     infoplistTmplData{BundleID: "org.golang.todo.basic", Name: "Basic"},
 	}

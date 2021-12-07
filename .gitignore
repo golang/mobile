@@ -3,10 +3,21 @@ last-change
 *.apk
 *.app
 *.framework
+*.xcframework
 *.aar
+*.jar
 *.iml
 .idea
 .gradle
+*.properties
+.DS_Store
+example/ivy/**/build/
+example/ivy/android/gradle/
+
+# Xcode configuration files.
+*.xcworkspace
+xcuserdata
+*.entitlements
 
 # Android Studio build and IDE configuration files.
 example/bind/android/local.properties

@@ -16,14 +16,16 @@
         android:label="@string/app_name"
         android:logo="@mipmap/ic_launcher"
         android:theme="@style/IvyAppTheme"
-        android:windowSoftInputMode="adjustResize|stateAlwaysVisible">
+        android:windowSoftInputMode="adjustResize|stateAlwaysVisible"
+        android:fullBackupContent="true">
         <activity
             android:name=".MainActivity"
             android:icon="@mipmap/ic_launcher"
             android:label="@string/app_name"
             android:logo="@mipmap/ic_launcher"
             android:windowSoftInputMode="adjustResize|stateUnchanged|stateAlwaysVisible"
-            android:configChanges="orientation|screenSize">
+            android:configChanges="orientation|screenSize"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

@@ -2,10 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build darwin && (arm || arm64)
-// +build darwin
-// +build arm arm64
-
 package mobileinit
 
 import (
@@ -16,24 +12,30 @@ import (
 )
 
 /*
-#include <asl.h>
 #include <stdlib.h>
+#include <os/log.h>
 
-void asl_log_wrap(const char *str) {
-	asl_log(NULL, NULL, ASL_LEVEL_NOTICE, "%s", str);
+os_log_t create_os_log() {
+	return os_log_create("org.golang.mobile", "os_log");
+}
+
+void os_log_wrap(os_log_t log, const char *str) {
+	os_log(log, "%s", str);
 }
 */
 import "C"
 
-type aslWriter struct{}
+type osWriter struct {
+	w C.os_log_t
+}
 
-func (aslWriter) Write(p []byte) (n int, err error) {
+func (o osWriter) Write(p []byte) (n int, err error) {
 	cstr := C.CString(string(p))
-	C.asl_log_wrap(cstr)
+	C.os_log_wrap(o.w, cstr)
 	C.free(unsafe.Pointer(cstr))
 	return len(p), nil
 }
 
 func init() {
-	log.SetOutput(io.MultiWriter(os.Stderr, aslWriter{}))
+	log.SetOutput(io.MultiWriter(os.Stderr, osWriter{C.create_os_log()}))
 }

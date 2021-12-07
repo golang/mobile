@@ -69,8 +69,8 @@ func TestAndroidPkgName(t *testing.T) {
 }
 
 func TestAndroidBuild(t *testing.T) {
-	if runtime.GOOS == "android" {
-		t.Skip("not available on Android")
+	if runtime.GOOS == "android" || runtime.GOOS == "ios" {
+		t.Skipf("not available on %s", runtime.GOOS)
 	}
 	buf := new(bytes.Buffer)
 	defer func() {
@@ -114,46 +114,63 @@ mkdir -p $WORK/lib/armeabi-v7a
 GOOS=android GOARCH=arm CC=$NDK_PATH/toolchains/llvm/prebuilt/{{.NDKARCH}}/bin/armv7a-linux-androideabi16-clang CXX=$NDK_PATH/toolchains/llvm/prebuilt/{{.NDKARCH}}/bin/armv7a-linux-androideabi16-clang++ CGO_ENABLED=1 GOARM=7 go build -tags tag1 -x -buildmode=c-shared -o $WORK/lib/armeabi-v7a/libbasic.so golang.org/x/mobile/example/basic
 `))
 
-func TestParseBuildTargetFlag(t *testing.T) {
-	androidArchs := strings.Join(allArchs("android"), ",")
-	iosArchs := strings.Join(allArchs("ios"), ",")
+func TestParseBuildTarget(t *testing.T) {
+	wantAndroid := "android/" + strings.Join(platformArchs("android"), ",android/")
 
 	tests := []struct {
-		in        string
-		wantErr   bool
-		wantOS    string
-		wantArchs string
+		in      string
+		wantErr bool
+		want    string
 	}{
-		{"android", false, "android", androidArchs},
-		{"android,android/arm", false, "android", androidArchs},
-		{"android/arm", false, "android", "arm"},
+		{"android", false, wantAndroid},
+		{"android,android/arm", false, wantAndroid},
+		{"android/arm", false, "android/arm"},
 
-		{"ios", false, "darwin", iosArchs},
-		{"ios,ios/arm64", false, "darwin", iosArchs},
-		{"ios/arm64", false, "darwin", "arm64"},
-		{"ios/amd64", false, "darwin", "amd64"},
+		{"ios", false, "ios/arm64,iossimulator/arm64,iossimulator/amd64"},
+		{"ios,ios/arm64", false, "ios/arm64"},
+		{"ios/arm64", false, "ios/arm64"},
 
-		{"", true, "", ""},
-		{"linux", true, "", ""},
-		{"android/x86", true, "", ""},
-		{"android/arm5", true, "", ""},
-		{"ios/mips", true, "", ""},
-		{"android,ios", true, "", ""},
-		{"ios,android", true, "", ""},
+		{"iossimulator", false, "iossimulator/arm64,iossimulator/amd64"},
+		{"iossimulator/amd64", false, "iossimulator/amd64"},
+
+		{"macos", false, "macos/arm64,macos/amd64"},
+		{"macos,ios/arm64", false, "macos/arm64,macos/amd64,ios/arm64"},
+		{"macos/arm64", false, "macos/arm64"},
+		{"macos/amd64", false, "macos/amd64"},
+
+		{"maccatalyst", false, "maccatalyst/arm64,maccatalyst/amd64"},
+		{"maccatalyst,ios/arm64", false, "maccatalyst/arm64,maccatalyst/amd64,ios/arm64"},
+		{"maccatalyst/arm64", false, "maccatalyst/arm64"},
+		{"maccatalyst/amd64", false, "maccatalyst/amd64"},
+
+		{"", true, ""},
+		{"linux", true, ""},
+		{"android/x86", true, ""},
+		{"android/arm5", true, ""},
+		{"ios/mips", true, ""},
+		{"android,ios", true, ""},
+		{"ios,android", true, ""},
+		{"ios/amd64", true, ""},
 	}
 
 	for _, tc := range tests {
-		gotOS, gotArchs, err := parseBuildTarget(tc.in)
-		if tc.wantErr {
-			if err == nil {
-				t.Errorf("-target=%q; want error, got (%q, %q, nil)", tc.in, gotOS, gotArchs)
+		t.Run(tc.in, func(t *testing.T) {
+			targets, err := parseBuildTarget(tc.in)
+			var s []string
+			for _, t := range targets {
+				s = append(s, t.String())
 			}
-			continue
-		}
-		if err != nil || gotOS != tc.wantOS || strings.Join(gotArchs, ",") != tc.wantArchs {
-			t.Errorf("-target=%q; want (%v, [%v], nil), got (%q, %q, %v)",
-				tc.in, tc.wantOS, tc.wantArchs, gotOS, gotArchs, err)
-		}
+			got := strings.Join(s, ",")
+			if tc.wantErr {
+				if err == nil {
+					t.Errorf("-target=%q; want error, got (%q, nil)", tc.in, got)
+				}
+				return
+			}
+			if err != nil || got != tc.want {
+				t.Errorf("-target=%q; want (%q, nil), got (%q, %v)", tc.in, tc.want, got, err)
+			}
+		})
 	}
 }
 
@@ -168,6 +185,7 @@ func TestRegexImportGolangXPackage(t *testing.T) {
 		{"ffffffff t github.com/example/golang.org/x/mobile", "", 0},
 		{"ffffffff t github.com/example/repo", "", 0},
 		{"ffffffff t github.com/example/repo/vendor", "", 0},
+		{"ffffffff t _golang.org/x/mobile/app", "golang.org/x/mobile/app", 2},
 	}
 
 	for _, tc := range tests {
@@ -188,7 +206,7 @@ func TestRegexImportGolangXPackage(t *testing.T) {
 }
 
 func TestBuildWithGoModules(t *testing.T) {
-	if runtime.GOOS == "android" {
+	if runtime.GOOS == "android" || runtime.GOOS == "ios" {
 		t.Skipf("gomobile are not available on %s", runtime.GOOS)
 	}
 
@@ -208,10 +226,6 @@ func TestBuildWithGoModules(t *testing.T) {
 
 	for _, target := range []string{"android", "ios"} {
 		t.Run(target, func(t *testing.T) {
-			if target == "ios" {
-				t.Skip("gomobile-build doesn't work for iOS. see https://golang.org/issue/32963")
-			}
-
 			switch target {
 			case "android":
 				androidHome := os.Getenv("ANDROID_HOME")

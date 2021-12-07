@@ -2,13 +2,13 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-#import <UIKit/UIKit.h>
-#import "Suggestion.h"
+#import <WebKit/WebKit.h>
 #import "IvyController.h"
+#import "Suggestion.h"
 
-@interface AppDelegate
-    : UIResponder <UIApplicationDelegate, UITextFieldDelegate, UIWebViewDelegate>
+@interface AppDelegate : UIResponder <UIApplicationDelegate, UITextFieldDelegate, WKUIDelegate>
 
-@property (strong, nonatomic) UIWindow *window;
+@property(strong, nonatomic) UIWindow *window;
 
 @end
+

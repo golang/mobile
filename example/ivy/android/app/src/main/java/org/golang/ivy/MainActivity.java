@@ -12,7 +12,6 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
@@ -28,10 +27,13 @@ import android.widget.ImageButton;
 import android.widget.ScrollView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+// This is in ivy.aar.
 import mobile.Mobile;
 
 /*
@@ -41,7 +43,6 @@ import mobile.Mobile;
 public class MainActivity extends AppCompatActivity {
     final String DEMO_SCRIPT = "demo.ivy";  // in assets directory.
     final String DEBUG_TAG = "Ivy";
-    final String PROMPT = "> ";
 
     private WebView mWebView;
     private EditText mEditText;
@@ -194,15 +195,57 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private String escapeHtmlTags(final String s) {
+        // Leaves entities (&-prefixed) alone unlike TextUtils.htmlEncode
+        // (https://github.com/aosp-mirror/platform_frameworks_base/blob/d59921149bb5948ffbcb9a9e832e9ac1538e05a0/core/java/android/text/TextUtils.java#L1361).
+        // Ivy mobile.Eval result may include encoding starting with &.
+
+        StringBuilder sb = new StringBuilder();
+        char c;
+        for (int i = 0; i < s.length(); i++) {
+            c = s.charAt(i);
+            switch (c) {
+                case '<':
+                    sb.append("&lt;"); //$NON-NLS-1$
+                    break;
+                case '>':
+                    sb.append("&gt;"); //$NON-NLS-1$
+                    break;
+                case '"':
+                    sb.append("&quot;"); //$NON-NLS-1$
+                    break;
+                case '\'':
+                    //http://www.w3.org/TR/xhtml1
+                    // The named character reference &apos; (the apostrophe, U+0027) was introduced in
+                    // XML 1.0 but does not appear in HTML. Authors should therefore use &#39; instead
+                    // of &apos; to work as expected in HTML 4 user agents.
+                    sb.append("&#39;"); //$NON-NLS-1$
+                    break;
+                default:
+                    sb.append(c);
+            }
+        }
+        return sb.toString();
+    }
+
     private void appendShowText(final String s, final String tag) {
         mWebView.loadUrl("javascript:appendDiv('" + TextUtils.htmlEncode(s).replaceAll("(\r\n|\n)", "<br />") + "', '" + tag + "')");
+        mWebView.setBackgroundColor(getResources().getColor(R.color.body));
+    }
+
+    private void appendShowPreformattedText(final String s, final String tag) {
+        mWebView.loadUrl("javascript:appendDiv('" + escapeHtmlTags(s).replaceAll("\r?\n", "<br/>") + "', '" + tag + "')");
         mWebView.setBackgroundColor(getResources().getColor(R.color.body));
     }
 
     private void callIvy() {
         String s = mEditText.getText().toString().trim();
         if (s != null && !s.isEmpty()) {
-            appendShowText(PROMPT + s, "expr");
+            appendShowText(s, "expr");
+        }
+        if (mDemo != null && s.trim().equals("quit")) {
+            unloadDemo();
+            s = " ";  // this will clear the text box.
         }
         new IvyCallTask().execute(s);  // where call to Ivy backend occurs.
     }
@@ -253,7 +296,7 @@ public class MainActivity extends AppCompatActivity {
     private class IvyCallTask extends AsyncTask<String, Void, Pair<String, String> > {
         private String ivyEval(final String expr) {
             try {
-                // org.golang.ivy.Mobile was generated using
+                // mobile.Mobile was generated using
                 // gomobile bind -javapkg=org.golang.ivy robpike.io/ivy/mobile
                 return Mobile.eval(expr);  // Gobind-generated method.
             } catch (Exception e) {
@@ -278,22 +321,15 @@ public class MainActivity extends AppCompatActivity {
             String showText = null;
             while (true) {
                 String s = readDemo();
-                if (s == null) { return Pair.create(showText, null); }
-
-                int sharp = s.indexOf("#");
-                if (sharp < 0) {
-                    return Pair.create(showText, s);
+                if (s == null) {
+                    break;
                 }
-                s += "\n";
-                if (showText == null) {
-                    showText = s.substring(sharp, s.length());
-                } else {
-                    showText += s.substring(sharp, s.length());
+                if (s.startsWith("# ")) {
+                    return Pair.create(s, null);
                 }
-                if (sharp > 0) {
-                    return Pair.create(s.substring(sharp, s.length()), s.substring(0, sharp));
-                }
+                return Pair.create(null, s);
             }
+            return null;
         }
 
         @Override
@@ -306,11 +342,8 @@ public class MainActivity extends AppCompatActivity {
                 public void run() {
                     String showText = result.first;
                     if (showText != null) {
-                        if (showText.startsWith("#")) {
-                            appendShowText(showText, "comment");
-                        } else {
-                            appendShowText(showText, "result");
-                        }
+                        final String tag = (showText.startsWith("#")) ? "comment" : "result";
+                        appendShowPreformattedText(showText, tag);
                     }
                     String editText = result.second;
                     if (editText != null) {
@@ -318,7 +351,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             });
-
         }
     }
 }
