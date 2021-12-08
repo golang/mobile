@@ -18,6 +18,9 @@
 @class DocI;
 
 @protocol DocI <NSObject>
+/**
+ * IM is a method.
+ */
 - (void)im;
 @end
 
