@@ -189,8 +189,8 @@ func writeFile(filename string, generate func(io.Writer) error) error {
 		fmt.Fprintf(os.Stderr, "write %s\n", filename)
 	}
 
-	if err := mkdir(filepath.Dir(filename)); err != nil {
-		return err
+	if errMkDirErr := mkdir(filepath.Dir(filename)); errMkDirErr != nil {
+		return errMkDirErr
 	}
 
 	if buildN {

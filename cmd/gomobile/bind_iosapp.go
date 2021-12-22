@@ -27,6 +27,11 @@ type archBuildResult struct {
 	targetInfo
 }
 
+type xcframeworkPayload struct {
+	libraryPath string
+	headerPath  string
+}
+
 func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) error {
 	var name string
 	var title string
@@ -85,15 +90,77 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 	// Finally combine all frameworks to an XCFramework
 	xcframeworkArgs := []string{"-create-xcframework"}
 
-	for _, buildResult := range buildResults {
-		xcframeworkArgs = append(xcframeworkArgs, "-library", buildResult.libraryPath, "-headers", buildResult.headerPath)
-	}
+	// for _, buildResult := range buildResults {
+	// 	xcframeworkArgs = append(xcframeworkArgs, "-library", buildResult.libraryPath, "-headers", buildResult.headerPath)
+	// }
 
 	xcframeworkArgs = append(xcframeworkArgs, "-output", buildO)
+
+	simulatorPayload := simulatorFrameworkPayload(buildResults, "iossimulator")
+	if simulatorPayload != nil {
+		xcframeworkArgs = append(xcframeworkArgs, "-library", simulatorPayload.libraryPath, "-headers", simulatorPayload.headerPath)
+	}
+	catalystPayload := simulatorFrameworkPayload(buildResults, "maccatalyst")
+	if catalystPayload != nil {
+		xcframeworkArgs = append(xcframeworkArgs, "-library", catalystPayload.libraryPath, "-headers", catalystPayload.headerPath)
+	}
+
+	for _, buildResult := range buildResults {
+		if !isPlatformNameSimulatorOrCatalyst(buildResult.platform) {
+			xcframeworkArgs = append(xcframeworkArgs, "-library", buildResult.libraryPath, "-headers", buildResult.headerPath)
+		}
+	}
+
 	cmd := exec.Command("xcodebuild", xcframeworkArgs...)
 	log.Println("running: xcodebuild", strings.Join(xcframeworkArgs, " "))
 	err = runCmd(cmd)
 	return err
+}
+
+func isPlatformNameSimulatorOrCatalyst(platformName string) bool {
+	return platformName == "iossimulator" || platformName == "maccatalyst"
+}
+
+func simulatorFrameworkPayload(buildResults []archBuildResult, platformName string) *xcframeworkPayload {
+	if !isPlatformNameSimulatorOrCatalyst(platformName) {
+		log.Fatalf("unsupported platform %q", platformName)
+		return nil
+	}
+
+	var filteredStaticLibPaths []string
+	for _, buildResult := range buildResults {
+		if buildResult.platform == platformName {
+			filteredStaticLibPaths = append(filteredStaticLibPaths, buildResult.libraryPath)
+		}
+	}
+
+	if len(filteredStaticLibPaths) == 0 {
+		return nil
+	} else if len(filteredStaticLibPaths) == 1 {
+		return &xcframeworkPayload{
+			headerPath:  buildResults[0].headerPath,
+			libraryPath: buildResults[0].libraryPath,
+		}
+	}
+
+	outputPath := filepath.Dir(filepath.Dir(filteredStaticLibPaths[0])) + "/" + "univesal.a"
+	if err := lipoCreate(outputPath, filteredStaticLibPaths); err != nil {
+		log.Fatalln(err)
+	}
+
+	return &xcframeworkPayload{
+		headerPath:  buildResults[0].headerPath,
+		libraryPath: outputPath,
+	}
+}
+
+func lipoCreate(outputPath string, libPaths []string) error {
+	args := []string{"lipo", "-create"}
+	args = append(args, libPaths...)
+	args = append(args, "-output", outputPath)
+	cmd := exec.Command("xcrun", args...)
+	log.Println("running: lipo", strings.Join(args, " "))
+	return runCmd(cmd)
 }
 
 const appleBindInfoPlist = `<?xml version="1.0" encoding="UTF-8"?>
