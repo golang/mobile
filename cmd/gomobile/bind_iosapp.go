@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -18,6 +19,13 @@ import (
 
 	"golang.org/x/tools/go/packages"
 )
+
+type archBuildResult struct {
+	libraryPath string
+	headerPath  string
+
+	targetInfo
+}
 
 func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) error {
 	var name string
@@ -45,8 +53,7 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 		return err
 	}
 
-	var frameworkDirs []string
-	frameworkArchCount := map[string]int{}
+	var buildResults []archBuildResult
 	targetBuildResultMutex := &sync.Mutex{}
 
 	var waitGroup sync.WaitGroup
@@ -58,15 +65,14 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 
 			log.Println("start building for target", target)
 
-			err, frameworkDir := buildTargetArch(target, gobind, pkgs, title, name, modulesUsed)
+			err, buildResult := buildTargetArch(target, gobind, pkgs, title, name, modulesUsed)
 			if err != nil {
 				log.Fatalf("%v", err)
 				return
 			}
 
 			targetBuildResultMutex.Lock()
-			frameworkDirs = append(frameworkDirs, frameworkDir)
-			frameworkArchCount[frameworkDir] = frameworkArchCount[frameworkDir] + 1
+			buildResults = append(buildResults, *buildResult)
 			targetBuildResultMutex.Unlock()
 
 			log.Println("finish building for target", target)
@@ -79,12 +85,13 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 	// Finally combine all frameworks to an XCFramework
 	xcframeworkArgs := []string{"-create-xcframework"}
 
-	for _, dir := range frameworkDirs {
-		xcframeworkArgs = append(xcframeworkArgs, "-framework", dir)
+	for _, buildResult := range buildResults {
+		xcframeworkArgs = append(xcframeworkArgs, "-library", buildResult.libraryPath, "-headers", buildResult.headerPath)
 	}
 
 	xcframeworkArgs = append(xcframeworkArgs, "-output", buildO)
 	cmd := exec.Command("xcodebuild", xcframeworkArgs...)
+	log.Println("running: xcodebuild", strings.Join(xcframeworkArgs, " "))
 	err = runCmd(cmd)
 	return err
 }
@@ -113,11 +120,11 @@ func goAppleBindArchive(name string, env []string, gosrc string) (string, error)
 	return archive, nil
 }
 
-func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Package, title string, name string, modulesUsed bool) (err error, frameworkDir string) {
+func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Package, title string, name string, modulesUsed bool) (err error, buildResult *archBuildResult) {
 	// Catalyst support requires iOS 13+
 	v, _ := strconv.ParseFloat(buildIOSVersion, 64)
 	if t.platform == "maccatalyst" && v < 13.0 {
-		return errors.New("catalyst requires -iosversion=13 or higher"), ""
+		return errors.New("catalyst requires -iosversion=13 or higher"), nil
 	}
 
 	outDir := filepath.Join(tmpdir, t.platform, t.arch) // adding arch
@@ -141,13 +148,15 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 		cmd.Args = append(cmd.Args, p.PkgPath)
 	}
 	if err := runCmd(cmd); err != nil {
-		return err, ""
+		log.Fatalln(err)
+		os.Exit(1)
+		return err, nil
 	}
 
 	env := appleEnv[t.String()][:]
 	sdk := getenv(env, "DARWIN_SDK")
 
-	frameworkDir = filepath.Join(tmpdir, t.platform, t.arch+"_framework", sdk, title+".framework")
+	frameworkDir := filepath.Join(tmpdir, t.platform, t.arch+"_framework", sdk, title+".framework")
 
 	fileBases := make([]string, len(pkgs)+1)
 	for i, pkg := range pkgs {
@@ -160,57 +169,29 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 	env = append(env, gopath)
 
 	if err := writeGoMod(outDir, t.platform, t.arch); err != nil {
-		return err, ""
+		return err, nil
 	}
 
 	// Run `go mod tidy` to force to create go.sum.
 	// Without go.sum, `go build` fails as of Go 1.16.
 	if modulesUsed {
 		if err := goModTidyAt(outSrcDir, env); err != nil {
-			return err, ""
+			return err, nil
 		}
 	}
 
-	path, err := goAppleBindArchive(name+"-"+t.platform+"-"+t.arch, env, outSrcDir)
+	staticLibPath, err := goAppleBindArchive(name+"-"+t.platform+"-"+t.arch, env, outSrcDir)
 	if err != nil {
-		return fmt.Errorf("%s/%s: %v", t.platform, t.arch, err), ""
+		return fmt.Errorf("%s/%s: %v", t.platform, t.arch, err), nil
 	}
 
 	versionsDir := filepath.Join(frameworkDir, "Versions")
 	versionsADir := filepath.Join(versionsDir, "A")
-	titlePath := filepath.Join(versionsADir, title)
-	//if frameworkArchCount[frameworkDir] > 1 {
-	//	// Not the first static lib, attach to a fat library and skip create headers
-	//	fatCmd := exec.Command(
-	//		"xcrun",
-	//		"lipo", path, titlePath, "-create", "-output", titlePath,
-	//	)
-	//	if err := runCmd(fatCmd); err != nil {
-	//		return err, ""
-	//	}
-	//	continue
-	//}
+	//titlePath := filepath.Join(versionsADir, title)
 
 	versionsAHeadersDir := filepath.Join(versionsADir, "Headers")
 	if err := mkdir(versionsAHeadersDir); err != nil {
-		return err, ""
-	}
-	if err := symlink("A", filepath.Join(versionsDir, "Current")); err != nil {
-		return err, ""
-	}
-	if err := symlink("Versions/Current/Headers", filepath.Join(frameworkDir, "Headers")); err != nil {
-		return err, ""
-	}
-	if err := symlink(filepath.Join("Versions/Current", title), filepath.Join(frameworkDir, title)); err != nil {
-		return err, ""
-	}
-
-	lipoCmd := exec.Command(
-		"xcrun",
-		"lipo", path, "-create", "-o", titlePath,
-	)
-	if err := runCmd(lipoCmd); err != nil {
-		return err, ""
+		return err, nil
 	}
 
 	// Copy header file next to output archive.
@@ -222,7 +203,7 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 			filepath.Join(gobindDir, bindPrefix+title+".objc.h"),
 		)
 		if err != nil {
-			return err, ""
+			return err, nil
 		}
 	} else {
 		for _, fileBase := range fileBases {
@@ -232,7 +213,7 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 				filepath.Join(gobindDir, fileBase+".objc.h"),
 			)
 			if err != nil {
-				return err, ""
+				return err, nil
 			}
 		}
 		err := copyFile(
@@ -240,7 +221,7 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 			filepath.Join(gobindDir, "ref.h"),
 		)
 		if err != nil {
-			return err, ""
+			return err, nil
 		}
 		headerFiles = append(headerFiles, title+".h")
 		err = writeFile(filepath.Join(versionsAHeadersDir, title+".h"), func(w io.Writer) error {
@@ -249,22 +230,12 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 			})
 		})
 		if err != nil {
-			return err, ""
+			return err, nil
 		}
 	}
 
-	if err := mkdir(filepath.Join(versionsADir, "Resources")); err != nil {
-		return err, ""
-	}
 	if err := symlink("Versions/Current/Resources", filepath.Join(frameworkDir, "Resources")); err != nil {
-		return err, ""
-	}
-	err = writeFile(filepath.Join(frameworkDir, "Resources", "Info.plist"), func(w io.Writer) error {
-		_, err := w.Write([]byte(appleBindInfoPlist))
-		return err
-	})
-	if err != nil {
-		return err, ""
+		return err, nil
 	}
 
 	var mmVals = struct {
@@ -278,13 +249,18 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 		return appleModuleMapTmpl.Execute(w, mmVals)
 	})
 	if err != nil {
-		return err, ""
+		return err, nil
 	}
 	err = symlink(filepath.Join("Versions/Current/Modules"), filepath.Join(frameworkDir, "Modules"))
 	if err != nil {
-		return err, ""
+		return err, nil
 	}
-	return err, frameworkDir
+	frameworkHeaderPath := filepath.Join(frameworkDir, "Versions", "A", "Headers")
+	return err, &archBuildResult{
+		headerPath:  frameworkHeaderPath,
+		libraryPath: staticLibPath,
+		targetInfo:  t,
+	}
 }
 
 var appleBindHeaderTmpl = template.Must(template.New("apple.h").Parse(`
