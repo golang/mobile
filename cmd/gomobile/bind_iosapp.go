@@ -204,7 +204,6 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 		}
 	}
 
-	// staticLibPath, err := goAppleBindArchive(name+"-"+t.platform+"-"+t.arch, env, outSrcDir)
 	staticLibPath, err := goAppleBindArchive(name+"-"+t.platform+"-"+t.arch, env, outSrcDir)
 	if err != nil {
 		return fmt.Errorf("%s/%s: %v", t.platform, t.arch, err), nil
