@@ -21,8 +21,10 @@ import (
 )
 
 type archBuildResult struct {
-	libraryPath string
-	headerPath  string
+	libraryPath   string
+	headerPath    string
+	titlePath     string
+	frameworkPath string
 
 	targetInfo
 }
@@ -59,6 +61,7 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 	}
 
 	var buildResults []archBuildResult
+	var platformBuildResults = make(map[string][]archBuildResult)
 	targetBuildResultMutex := &sync.Mutex{}
 
 	var waitGroup sync.WaitGroup
@@ -78,6 +81,10 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 
 			targetBuildResultMutex.Lock()
 			buildResults = append(buildResults, *buildResult)
+			if platformBuildResults[target.platform] == nil {
+				platformBuildResults[target.platform] = []archBuildResult{}
+			}
+			platformBuildResults[target.platform] = append(platformBuildResults[target.platform], *buildResult)
 			targetBuildResultMutex.Unlock()
 
 			log.Println("finish building for target", target)
@@ -90,77 +97,29 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 	// Finally combine all frameworks to an XCFramework
 	xcframeworkArgs := []string{"-create-xcframework"}
 
-	// for _, buildResult := range buildResults {
-	// 	xcframeworkArgs = append(xcframeworkArgs, "-library", buildResult.libraryPath, "-headers", buildResult.headerPath)
-	// }
+	refinedBuildResults := []archBuildResult{}
 
-	xcframeworkArgs = append(xcframeworkArgs, "-output", buildO)
-
-	simulatorPayload := simulatorFrameworkPayload(buildResults, "iossimulator")
-	if simulatorPayload != nil {
-		xcframeworkArgs = append(xcframeworkArgs, "-library", simulatorPayload.libraryPath, "-headers", simulatorPayload.headerPath)
-	}
-	catalystPayload := simulatorFrameworkPayload(buildResults, "maccatalyst")
-	if catalystPayload != nil {
-		xcframeworkArgs = append(xcframeworkArgs, "-library", catalystPayload.libraryPath, "-headers", catalystPayload.headerPath)
-	}
-
-	for _, buildResult := range buildResults {
-		if !isPlatformNameSimulatorOrCatalyst(buildResult.platform) {
-			xcframeworkArgs = append(xcframeworkArgs, "-library", buildResult.libraryPath, "-headers", buildResult.headerPath)
+	// Merge binary for single target
+	for _, buildResults := range platformBuildResults {
+		if len(buildResults) == 2 {
+			mergeArchsForSinglePlatform(buildResults[0].titlePath, buildResults[1].titlePath)
+			refinedBuildResults = append(refinedBuildResults, buildResults[0])
+		} else if len(buildResults) == 1 {
+			refinedBuildResults = append(refinedBuildResults, buildResults[0])
+		} else {
+			log.Fatalln("unexpected number of build results", len(buildResults))
 		}
 	}
 
+	for _, result := range refinedBuildResults {
+		xcframeworkArgs = append(xcframeworkArgs, "-framework", result.frameworkPath)
+	}
+
+	xcframeworkArgs = append(xcframeworkArgs, "-output", buildO)
 	cmd := exec.Command("xcodebuild", xcframeworkArgs...)
 	log.Println("running: xcodebuild", strings.Join(xcframeworkArgs, " "))
 	err = runCmd(cmd)
 	return err
-}
-
-func isPlatformNameSimulatorOrCatalyst(platformName string) bool {
-	return platformName == "iossimulator" || platformName == "maccatalyst"
-}
-
-func simulatorFrameworkPayload(buildResults []archBuildResult, platformName string) *xcframeworkPayload {
-	if !isPlatformNameSimulatorOrCatalyst(platformName) {
-		log.Fatalf("unsupported platform %q", platformName)
-		return nil
-	}
-
-	var filteredStaticLibPaths []string
-	for _, buildResult := range buildResults {
-		if buildResult.platform == platformName {
-			filteredStaticLibPaths = append(filteredStaticLibPaths, buildResult.libraryPath)
-		}
-	}
-
-	if len(filteredStaticLibPaths) == 0 {
-		return nil
-	} else if len(filteredStaticLibPaths) == 1 {
-		return &xcframeworkPayload{
-			headerPath:  buildResults[0].headerPath,
-			libraryPath: buildResults[0].libraryPath,
-		}
-	}
-
-	outputPath := filepath.Dir(filepath.Dir(filteredStaticLibPaths[0])) + "/" + "univesal.a"
-	if err := lipoCreate(outputPath, filteredStaticLibPaths); err != nil {
-		log.Fatalln(err)
-	}
-
-	return &xcframeworkPayload{
-		headerPath:  buildResults[0].headerPath,
-		libraryPath: outputPath,
-	}
-}
-
-func lipoCreate(outputPath string, libPaths []string) error {
-	args := []string{"lipo", "-create"}
-	args = append(args, libPaths...)
-	args = append(args, "-output", outputPath)
-	cmd := exec.Command("xcrun", args...)
-	log.Println("running: lipo", strings.Join(args, " "))
-	return runCmd(cmd)
 }
 
 const appleBindInfoPlist = `<?xml version="1.0" encoding="UTF-8"?>
@@ -187,7 +146,19 @@ func goAppleBindArchive(name string, env []string, gosrc string) (string, error)
 	return archive, nil
 }
 
+func mergeArchsForSinglePlatform(from string, to string) error {
+	fatCmd := exec.Command(
+		"xcrun",
+		"lipo", from, to, "-create", "-output", to,
+	)
+	if err := runCmd(fatCmd); err != nil {
+		return err
+	}
+	return nil
+}
+
 func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Package, title string, name string, modulesUsed bool) (err error, buildResult *archBuildResult) {
+	log.Println("build for target:", t)
 	// Catalyst support requires iOS 13+
 	v, _ := strconv.ParseFloat(buildIOSVersion, 64)
 	if t.platform == "maccatalyst" && v < 13.0 {
@@ -223,7 +194,7 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 	env := appleEnv[t.String()][:]
 	sdk := getenv(env, "DARWIN_SDK")
 
-	frameworkDir := filepath.Join(tmpdir, t.platform, t.arch+"_framework", sdk, title+".framework")
+	frameworkDir := filepath.Join(tmpdir, t.platform, sdk, title+"_"+t.arch+".framework")
 
 	fileBases := make([]string, len(pkgs)+1)
 	for i, pkg := range pkgs {
@@ -247,6 +218,7 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 		}
 	}
 
+	// staticLibPath, err := goAppleBindArchive(name+"-"+t.platform+"-"+t.arch, env, outSrcDir)
 	staticLibPath, err := goAppleBindArchive(name+"-"+t.platform+"-"+t.arch, env, outSrcDir)
 	if err != nil {
 		return fmt.Errorf("%s/%s: %v", t.platform, t.arch, err), nil
@@ -254,10 +226,27 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 
 	versionsDir := filepath.Join(frameworkDir, "Versions")
 	versionsADir := filepath.Join(versionsDir, "A")
-	//titlePath := filepath.Join(versionsADir, title)
-
+	titlePath := filepath.Join(versionsADir, title)
 	versionsAHeadersDir := filepath.Join(versionsADir, "Headers")
 	if err := mkdir(versionsAHeadersDir); err != nil {
+		return err, nil
+	}
+	if err := symlink("A", filepath.Join(versionsDir, "Current")); err != nil {
+		return err, nil
+	}
+	if err := symlink("Versions/Current/Headers", filepath.Join(frameworkDir, "Headers")); err != nil {
+		return err, nil
+	}
+	if err := symlink(filepath.Join("Versions/Current", title), filepath.Join(frameworkDir, title)); err != nil {
+		return err, nil
+	}
+
+	log.Println("staticLibPath:" + staticLibPath)
+	lipoCmd := exec.Command(
+		"xcrun",
+		"lipo", staticLibPath, "-create", "-o", titlePath,
+	)
+	if err := runCmd(lipoCmd); err != nil {
 		return err, nil
 	}
 
@@ -301,7 +290,19 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 		}
 	}
 
+	if err := mkdir(filepath.Join(versionsADir, "Resources")); err != nil {
+		return err, nil
+	}
+
 	if err := symlink("Versions/Current/Resources", filepath.Join(frameworkDir, "Resources")); err != nil {
+		return err, nil
+	}
+
+	err = writeFile(filepath.Join(frameworkDir, "Resources", "Info.plist"), func(w io.Writer) error {
+		_, err := w.Write([]byte(appleBindInfoPlist))
+		return err
+	})
+	if err != nil {
 		return err, nil
 	}
 
@@ -324,9 +325,11 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 	}
 	frameworkHeaderPath := filepath.Join(frameworkDir, "Versions", "A", "Headers")
 	return err, &archBuildResult{
-		headerPath:  frameworkHeaderPath,
-		libraryPath: staticLibPath,
-		targetInfo:  t,
+		headerPath:    frameworkHeaderPath,
+		libraryPath:   staticLibPath,
+		titlePath:     titlePath,
+		targetInfo:    t,
+		frameworkPath: frameworkDir,
 	}
 }
 
