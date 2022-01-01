@@ -185,15 +185,12 @@ func copyFile(dst, src string) error {
 }
 
 func writeFile(filename string, generate func(io.Writer) error) error {
-	fmt.Println("write file:", filename)
 	if buildV {
 		fmt.Fprintf(os.Stderr, "write %s\n", filename)
 	}
 
-	dirToMake := filepath.Dir(filename)
-	fmt.Println("dirToMake:", dirToMake)
-	if err := mkdir(dirToMake); err != nil {
-		fmt.Println(err)
+	if err := mkdir(filepath.Dir(filename)); err != nil {
+		return err
 	}
 
 	if buildN {
