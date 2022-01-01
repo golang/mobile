@@ -21,17 +21,10 @@ import (
 )
 
 type archBuildResult struct {
-	libraryPath   string
-	headerPath    string
 	titlePath     string
 	frameworkPath string
 
 	targetInfo
-}
-
-type xcframeworkPayload struct {
-	libraryPath string
-	headerPath  string
 }
 
 func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) error {
@@ -323,10 +316,7 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 	if err != nil {
 		return err, nil
 	}
-	frameworkHeaderPath := filepath.Join(frameworkDir, "Versions", "A", "Headers")
 	return err, &archBuildResult{
-		headerPath:    frameworkHeaderPath,
-		libraryPath:   staticLibPath,
 		titlePath:     titlePath,
 		targetInfo:    t,
 		frameworkPath: frameworkDir,
