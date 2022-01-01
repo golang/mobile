@@ -194,7 +194,7 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 	env := appleEnv[t.String()][:]
 	sdk := getenv(env, "DARWIN_SDK")
 
-	frameworkDir := filepath.Join(tmpdir, t.platform, sdk, title+"_"+t.arch+".framework")
+	frameworkDir := filepath.Join(tmpdir, t.platform, sdk, t.arch, title+".framework")
 
 	fileBases := make([]string, len(pkgs)+1)
 	for i, pkg := range pkgs {
