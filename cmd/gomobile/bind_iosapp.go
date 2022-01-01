@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -64,11 +63,9 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 		go func(target targetInfo, targetBuildResultMutex *sync.Mutex) {
 			defer waitGroup.Done()
 
-			log.Println("start building for target", target)
-
 			err, buildResult := buildTargetArch(target, gobind, pkgs, title, name, modulesUsed)
 			if err != nil {
-				log.Fatalf("%v", err)
+				fmt.Errorf("%v", err)
 				return
 			}
 
@@ -79,8 +76,6 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 			}
 			platformBuildResults[target.platform] = append(platformBuildResults[target.platform], *buildResult)
 			targetBuildResultMutex.Unlock()
-
-			log.Println("finish building for target", target)
 
 		}(target, targetBuildResultMutex)
 	}
@@ -100,7 +95,7 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 		} else if len(buildResults) == 1 {
 			refinedBuildResults = append(refinedBuildResults, buildResults[0])
 		} else {
-			log.Fatalln("unexpected number of build results", len(buildResults))
+			fmt.Errorf("unexpected number of build results", len(buildResults))
 		}
 	}
 
@@ -110,7 +105,6 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 
 	xcframeworkArgs = append(xcframeworkArgs, "-output", buildO)
 	cmd := exec.Command("xcodebuild", xcframeworkArgs...)
-	log.Println("running: xcodebuild", strings.Join(xcframeworkArgs, " "))
 	err = runCmd(cmd)
 	return err
 }
@@ -151,7 +145,6 @@ func mergeArchsForSinglePlatform(from string, to string) error {
 }
 
 func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Package, title string, name string, modulesUsed bool) (err error, buildResult *archBuildResult) {
-	log.Println("build for target:", t)
 	// Catalyst support requires iOS 13+
 	v, _ := strconv.ParseFloat(buildIOSVersion, 64)
 	if t.platform == "maccatalyst" && v < 13.0 {
@@ -179,7 +172,7 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 		cmd.Args = append(cmd.Args, p.PkgPath)
 	}
 	if err := runCmd(cmd); err != nil {
-		log.Fatalln(err)
+		fmt.Errorf("%v", err)
 		os.Exit(1)
 		return err, nil
 	}
@@ -234,7 +227,6 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 		return err, nil
 	}
 
-	log.Println("staticLibPath:" + staticLibPath)
 	lipoCmd := exec.Command(
 		"xcrun",
 		"lipo", staticLibPath, "-create", "-o", titlePath,
