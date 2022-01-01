@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -59,13 +58,15 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 	var waitGroup sync.WaitGroup
 	waitGroup.Add(len(targets))
 
+	var parallelBuildError error
+
 	for _, target := range targets {
 		go func(target targetInfo, targetBuildResultMutex *sync.Mutex) {
 			defer waitGroup.Done()
 
-			err, buildResult := buildTargetArch(target, gobind, pkgs, title, name, modulesUsed)
+			buildResult, err := buildTargetArch(target, gobind, pkgs, title, name, modulesUsed)
 			if err != nil {
-				fmt.Errorf("%v", err)
+				parallelBuildError = fmt.Errorf("cannot build %s [%s]: %v", target.platform, target.arch, err)
 				return
 			}
 
@@ -82,6 +83,10 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 
 	waitGroup.Wait()
 
+	if parallelBuildError != nil {
+		return parallelBuildError
+	}
+
 	// Finally combine all frameworks to an XCFramework
 	xcframeworkArgs := []string{"-create-xcframework"}
 
@@ -95,8 +100,12 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 		} else if len(buildResults) == 1 {
 			refinedBuildResults = append(refinedBuildResults, buildResults[0])
 		} else {
-			fmt.Errorf("unexpected number of build results", len(buildResults))
+			err = fmt.Errorf("unexpected number of build results: %v", len(buildResults))
 		}
+	}
+
+	if err != nil {
+		return err
 	}
 
 	for _, result := range refinedBuildResults {
@@ -144,11 +153,11 @@ func mergeArchsForSinglePlatform(from string, to string) error {
 	return nil
 }
 
-func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Package, title string, name string, modulesUsed bool) (err error, buildResult *archBuildResult) {
+func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Package, title string, name string, modulesUsed bool) (buildResult *archBuildResult, err error) {
 	// Catalyst support requires iOS 13+
 	v, _ := strconv.ParseFloat(buildIOSVersion, 64)
 	if t.platform == "maccatalyst" && v < 13.0 {
-		return errors.New("catalyst requires -iosversion=13 or higher"), nil
+		return nil, errors.New("catalyst requires -iosversion=13 or higher")
 	}
 
 	outDir := filepath.Join(tmpdir, t.platform, t.arch) // adding arch
@@ -172,9 +181,7 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 		cmd.Args = append(cmd.Args, p.PkgPath)
 	}
 	if err := runCmd(cmd); err != nil {
-		fmt.Errorf("%v", err)
-		os.Exit(1)
-		return err, nil
+		return nil, err
 	}
 
 	env := appleEnv[t.String()][:]
@@ -193,20 +200,20 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 	env = append(env, gopath)
 
 	if err := writeGoMod(outDir, t.platform, t.arch); err != nil {
-		return err, nil
+		return nil, err
 	}
 
 	// Run `go mod tidy` to force to create go.sum.
 	// Without go.sum, `go build` fails as of Go 1.16.
 	if modulesUsed {
 		if err := goModTidyAt(outSrcDir, env); err != nil {
-			return err, nil
+			return nil, err
 		}
 	}
 
 	staticLibPath, err := goAppleBindArchive(name+"-"+t.platform+"-"+t.arch, env, outSrcDir)
 	if err != nil {
-		return fmt.Errorf("%s/%s: %v", t.platform, t.arch, err), nil
+		return nil, fmt.Errorf("%s/%s: %v", t.platform, t.arch, err)
 	}
 
 	versionsDir := filepath.Join(frameworkDir, "Versions")
@@ -214,16 +221,16 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 	titlePath := filepath.Join(versionsADir, title)
 	versionsAHeadersDir := filepath.Join(versionsADir, "Headers")
 	if err := mkdir(versionsAHeadersDir); err != nil {
-		return err, nil
+		return nil, err
 	}
 	if err := symlink("A", filepath.Join(versionsDir, "Current")); err != nil {
-		return err, nil
+		return nil, err
 	}
 	if err := symlink("Versions/Current/Headers", filepath.Join(frameworkDir, "Headers")); err != nil {
-		return err, nil
+		return nil, err
 	}
 	if err := symlink(filepath.Join("Versions/Current", title), filepath.Join(frameworkDir, title)); err != nil {
-		return err, nil
+		return nil, err
 	}
 
 	lipoCmd := exec.Command(
@@ -231,7 +238,7 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 		"lipo", staticLibPath, "-create", "-o", titlePath,
 	)
 	if err := runCmd(lipoCmd); err != nil {
-		return err, nil
+		return nil, err
 	}
 
 	// Copy header file next to output archive.
@@ -243,7 +250,7 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 			filepath.Join(gobindDir, bindPrefix+title+".objc.h"),
 		)
 		if err != nil {
-			return err, nil
+			return nil, err
 		}
 	} else {
 		for _, fileBase := range fileBases {
@@ -253,7 +260,7 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 				filepath.Join(gobindDir, fileBase+".objc.h"),
 			)
 			if err != nil {
-				return err, nil
+				return nil, err
 			}
 		}
 		err := copyFile(
@@ -261,7 +268,7 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 			filepath.Join(gobindDir, "ref.h"),
 		)
 		if err != nil {
-			return err, nil
+			return nil, err
 		}
 		headerFiles = append(headerFiles, title+".h")
 		err = writeFile(filepath.Join(versionsAHeadersDir, title+".h"), func(w io.Writer) error {
@@ -270,16 +277,16 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 			})
 		})
 		if err != nil {
-			return err, nil
+			return nil, err
 		}
 	}
 
 	if err := mkdir(filepath.Join(versionsADir, "Resources")); err != nil {
-		return err, nil
+		return nil, err
 	}
 
 	if err := symlink("Versions/Current/Resources", filepath.Join(frameworkDir, "Resources")); err != nil {
-		return err, nil
+		return nil, err
 	}
 
 	err = writeFile(filepath.Join(frameworkDir, "Resources", "Info.plist"), func(w io.Writer) error {
@@ -287,7 +294,7 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 		return err
 	})
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 
 	var mmVals = struct {
@@ -301,17 +308,17 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 		return appleModuleMapTmpl.Execute(w, mmVals)
 	})
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
 	err = symlink(filepath.Join("Versions/Current/Modules"), filepath.Join(frameworkDir, "Modules"))
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
-	return err, &archBuildResult{
+	return &archBuildResult{
 		titlePath:     titlePath,
 		targetInfo:    t,
 		frameworkPath: frameworkDir,
-	}
+	}, err
 }
 
 var appleBindHeaderTmpl = template.Must(template.New("apple.h").Parse(`
