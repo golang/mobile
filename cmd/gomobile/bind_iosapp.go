@@ -94,7 +94,7 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 	for _, buildResults := range platformBuildResults {
 		if len(buildResults) == 2 {
 			mergeArchsForSinglePlatform(buildResults[0].titlePath, buildResults[1].titlePath)
-			refinedBuildResults = append(refinedBuildResults, buildResults[0])
+			refinedBuildResults = append(refinedBuildResults, buildResults[1])
 		} else if len(buildResults) == 1 {
 			refinedBuildResults = append(refinedBuildResults, buildResults[0])
 		} else {
