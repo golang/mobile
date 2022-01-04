@@ -16,7 +16,7 @@ package gl
 #cgo android      CFLAGS: -Dos_android
 #cgo ios          CFLAGS: -Dos_ios
 #cgo darwin,!ios  CFLAGS: -Dos_macos
-#cgo darwin       CFLAGS: -DGL_SILENCE_DEPRECATION
+#cgo darwin       CFLAGS: -DGL_SILENCE_DEPRECATION -DGLES_SILENCE_DEPRECATION
 #cgo linux        CFLAGS: -Dos_linux
 #cgo openbsd      CFLAGS: -Dos_openbsd
 
