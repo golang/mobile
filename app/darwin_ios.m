@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <sys/utsname.h>
 
+#define GLES_SILENCE_DEPRECATION
+
 #import <UIKit/UIKit.h>
 #import <GLKit/GLKit.h>
 

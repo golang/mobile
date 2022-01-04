@@ -15,6 +15,7 @@
 #endif
 
 #ifdef os_ios
+#define GLES_SILENCE_DEPRECATION
 #include <OpenGLES/ES2/glext.h>
 #endif
 
