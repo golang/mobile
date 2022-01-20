@@ -21,8 +21,6 @@ import (
 type archBuildResult struct {
 	titlePath     string
 	frameworkPath string
-
-	targetInfo
 }
 
 func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) error {
@@ -52,7 +50,7 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 	}
 
 	var platformBuildResults = make(map[string][]archBuildResult)
-	targetBuildResultMutex := &sync.Mutex{}
+	var targetBuildResultMutex sync.Mutex
 
 	var waitGroup sync.WaitGroup
 	waitGroup.Add(len(targets))
@@ -60,7 +58,7 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 	var parallelBuildError error
 
 	for _, target := range targets {
-		go func(target targetInfo, targetBuildResultMutex *sync.Mutex) {
+		go func(target targetInfo) {
 			defer waitGroup.Done()
 
 			buildResult, err := buildTargetArch(target, gobind, pkgs, title, name, modulesUsed)
@@ -70,13 +68,13 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 			}
 
 			targetBuildResultMutex.Lock()
+			defer targetBuildResultMutex.Unlock()
 			if platformBuildResults[target.platform] == nil {
 				platformBuildResults[target.platform] = []archBuildResult{}
 			}
 			platformBuildResults[target.platform] = append(platformBuildResults[target.platform], *buildResult)
-			targetBuildResultMutex.Unlock()
 
-		}(target, targetBuildResultMutex)
+		}(target)
 	}
 
 	waitGroup.Wait()
@@ -314,7 +312,6 @@ func buildTargetArch(t targetInfo, gobindCommandPath string, pkgs []*packages.Pa
 	}
 	return &archBuildResult{
 		titlePath:     titlePath,
-		targetInfo:    t,
 		frameworkPath: frameworkDir,
 	}, err
 }
