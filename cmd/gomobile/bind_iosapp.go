@@ -23,7 +23,7 @@ type archBuildResult struct {
 	frameworkPath string
 }
 
-func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) error {
+func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo, buildWorkers int) error {
 	var name string
 	var title string
 
@@ -55,15 +55,20 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 	var waitGroup sync.WaitGroup
 	waitGroup.Add(len(targets))
 
-	var parallelBuildError error
+	var parallelBuildErrorBuffer = make(chan error, len(targets))
+	semophore := make(chan struct{}, buildWorkers)
 
 	for _, target := range targets {
 		go func(target targetInfo) {
-			defer waitGroup.Done()
+			semophore <- struct{}{}
+			defer func() {
+				<-semophore
+				waitGroup.Done()
+			}()
 
 			buildResult, err := buildTargetArch(target, gobind, pkgs, title, name, modulesUsed)
 			if err != nil {
-				parallelBuildError = fmt.Errorf("cannot build %s [%s]: %v", target.platform, target.arch, err)
+				parallelBuildErrorBuffer <- fmt.Errorf("cannot build %s [%s]: %v", target.platform, target.arch, err)
 				return
 			}
 
@@ -75,9 +80,10 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 	}
 
 	waitGroup.Wait()
+	close(parallelBuildErrorBuffer)
 
-	if parallelBuildError != nil {
-		return parallelBuildError
+	for buildErr := range parallelBuildErrorBuffer {
+		return buildErr
 	}
 
 	// Finally combine all frameworks to an XCFramework

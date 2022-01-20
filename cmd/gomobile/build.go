@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -243,6 +244,7 @@ var (
 	buildTarget     string      // -target
 	buildTrimpath   bool        // -trimpath
 	buildWork       bool        // -work
+	buildWorkers    int         // -j
 	buildBundleID   string      // -bundleid
 	buildIOSVersion string      // -iosversion
 	buildAndroidAPI int         // -androidapi
@@ -262,6 +264,7 @@ func addBuildFlags(cmd *command) {
 	cmd.flag.BoolVar(&buildI, "i", false, "")
 	cmd.flag.BoolVar(&buildTrimpath, "trimpath", false, "")
 	cmd.flag.Var(&buildTags, "tags", "")
+	cmd.flag.IntVar(&buildWorkers, "j", runtime.NumCPU(), "")
 }
 
 func addBuildFlagsNVXWork(cmd *command) {
