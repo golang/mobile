@@ -69,9 +69,6 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 
 			targetBuildResultMutex.Lock()
 			defer targetBuildResultMutex.Unlock()
-			if platformBuildResults[target.platform] == nil {
-				platformBuildResults[target.platform] = []archBuildResult{}
-			}
 			platformBuildResults[target.platform] = append(platformBuildResults[target.platform], *buildResult)
 
 		}(target)
