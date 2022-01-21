@@ -55,7 +55,7 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo, 
 	var waitGroup sync.WaitGroup
 	waitGroup.Add(len(targets))
 
-	var parallelBuildErrorBuffer = make(chan error, len(targets))
+	parallelBuildErrorBuffer := make(chan error, len(targets))
 	semophore := make(chan struct{}, buildWorkers)
 
 	for _, target := range targets {
