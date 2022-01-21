@@ -56,13 +56,13 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo, 
 	waitGroup.Add(len(targets))
 
 	parallelBuildErrorBuffer := make(chan error, len(targets))
-	semophore := make(chan struct{}, buildWorkers)
+	semaphore := make(chan struct{}, buildWorkers)
 
 	for _, target := range targets {
 		go func(target targetInfo) {
-			semophore <- struct{}{}
+			semaphore <- struct{}{}
 			defer func() {
-				<-semophore
+				<-semaphore
 				waitGroup.Done()
 			}()
 
