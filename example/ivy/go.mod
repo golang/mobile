@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	golang.org/x/mobile v0.0.0-20210924032853-1c027f395ef7
-	robpike.io/ivy v0.1.4
+	robpike.io/ivy v0.2.7
 )
 
 require (
