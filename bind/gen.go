@@ -22,7 +22,7 @@ type (
 
 	// varMode describes the lifetime of an argument or
 	// return value. Modes are used to guide the conversion
-	// of string and byte slice values accross the language
+	// of string and byte slice values across the language
 	// barrier. The same conversion mode must be used for
 	// both the conversion before a foreign call and the
 	// corresponding conversion after the call.
@@ -35,7 +35,7 @@ const (
 	// modeTransient are for function arguments that
 	// are not used after the function returns.
 	// Transient byte slices don't need copying
-	// when passed accross the language barrier.
+	// when passed across the language barrier.
 	modeTransient varMode = iota
 	// modeRetained are for returned values and for function
 	// arguments that are used after the function returns.
@@ -54,7 +54,7 @@ func (list ErrorList) Error() string {
 	return buf.String()
 }
 
-// interfaceInfo comes from Init and collects the auxillary information
+// interfaceInfo comes from Init and collects the auxiliary information
 // needed to generate bindings for an exported Go interface in a bound
 // package.
 type interfaceInfo struct {
@@ -63,7 +63,7 @@ type interfaceInfo struct {
 	summary ifaceSummary
 }
 
-// structInfo comes from Init and collects the auxillary information
+// structInfo comes from Init and collects the auxiliary information
 // needed to generate bindings for an exported Go struct in a bound
 // package.
 type structInfo struct {

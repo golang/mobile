@@ -849,7 +849,7 @@ func (g *JavaGen) genFuncSignature(o *types.Func, jm *java.Func, hasThis bool) {
 	if returnsError {
 		if jm != nil {
 			if jm.Throws == "" {
-				g.errorf("%s declares an error return value but the overriden method does not throw", o)
+				g.errorf("%s declares an error return value but the overridden method does not throw", o)
 				return
 			}
 			g.Printf(" throws %s", jm.Throws)

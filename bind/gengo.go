@@ -559,7 +559,7 @@ func (g *goGen) gen() error {
 	return nil
 }
 
-// pkgName retuns the package name and adds the package to the list of
+// pkgName returns the package name and adds the package to the list of
 // imports.
 func (g *goGen) pkgName(pkg *types.Package) string {
 	// The error type has no package

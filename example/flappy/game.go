@@ -28,7 +28,7 @@ const (
 	gopherTile = 1 // which tile the gopher is standing on (0-indexed)
 
 	initScrollV = 1     // initial scroll velocity
-	scrollA     = 0.001 // scroll accelleration
+	scrollA     = 0.001 // scroll acceleration
 	gravity     = 0.1   // gravity
 	jumpV       = -5    // jump velocity
 	flapV       = -1.5  // flap velocity

@@ -16,7 +16,7 @@
 // The gomobile tool auto-generates a default AndroidManifest file by default
 // unless the package directory contains the AndroidManifest.xml. Users can
 // customize app behavior, such as permissions and app name, by providing
-// the AndroidManifest file. This is irrelevent to iOS.
+// the AndroidManifest file. This is irrelevant to iOS.
 //
 // Note: This demo is an early preview of Go 1.5. In order to build this
 // program as an Android APK using the gomobile tool.
