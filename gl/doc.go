@@ -22,7 +22,7 @@ https://www.khronos.org/opengles/sdk/docs/man/
 One notable departure from the C API is the introduction of types
 to represent common uses of GLint: Texture, Surface, Buffer, etc.
 
-Debug Logging
+# Debug Logging
 
 A tracing version of the OpenGL bindings is behind the `gldebug` build
 tag. It acts as a simplified version of apitrace. Build your Go binary

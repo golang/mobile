@@ -30,8 +30,7 @@ Commands:
 
 Use 'gomobile help [command]' for more information about that command.
 
-
-Build a library for Android and iOS
+# Build a library for Android and iOS
 
 Usage:
 
@@ -76,8 +75,7 @@ The -v flag provides verbose output, including the list of packages built.
 The build flags -a, -n, -x, -gcflags, -ldflags, -tags, -trimpath, and -work
 are shared with the build command. For documentation, see 'go help build'.
 
-
-Compile android APK and iOS app
+# Compile android APK and iOS app
 
 Usage:
 
@@ -128,15 +126,13 @@ The -v flag provides verbose output, including the list of packages built.
 The build flags -a, -i, -n, -x, -gcflags, -ldflags, -tags, -trimpath, and -work are
 shared with the build command. For documentation, see 'go help build'.
 
-
-Remove object files and cached gomobile files
+# Remove object files and cached gomobile files
 
 Usage:
 
 	gomobile clean
 
-Clean removes object files and cached NDK files downloaded by gomobile init
-
+# Clean removes object files and cached NDK files downloaded by gomobile init
 
 Build OpenAL for Android
 
@@ -148,8 +144,7 @@ If a OpenAL source directory is specified with -openal, init will
 build an Android version of OpenAL for use with gomobile build
 and gomobile install.
 
-
-Compile android APK and install on device
+# Compile android APK and install on device
 
 Usage:
 
@@ -164,8 +159,7 @@ The build flags -a, -i, -n, -x, -gcflags, -ldflags, -tags, -trimpath, and -work 
 shared with the build command.
 For documentation, see 'go help build'.
 
-
-Print version
+# Print version
 
 Usage:
 

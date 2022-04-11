@@ -122,7 +122,7 @@ func buildSrcJar(src string) error {
 // These entries are directly at the root of the archive.
 //
 //	AndroidManifest.xml (mandatory)
-// 	classes.jar (mandatory)
+//	classes.jar (mandatory)
 //	assets/ (optional)
 //	jni/<abi>/libgojni.so
 //	R.txt (mandatory)

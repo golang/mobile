@@ -7,15 +7,17 @@
 // It is used by the language specific importers to determine the set of
 // wrapper types to be generated.
 //
-// For example, in the Go file
+// # For example, in the Go file
 //
 // package javaprogram
 //
 // import "Java/java/lang"
 //
 // func F() {
-//     o := lang.Object.New()
-//     ...
+//
+//	o := lang.Object.New()
+//	...
+//
 // }
 //
 // the java importer uses this package to determine that the "java/lang"
@@ -39,7 +41,7 @@ import (
 
 // References is the result of analyzing a Go file or set of Go packages.
 //
-// For example, the Go file
+// # For example, the Go file
 //
 // package pkg
 //
@@ -124,7 +126,9 @@ func AnalyzePackages(pkgs []*packages.Package, pkgPrefix string) (*References, e
 // import "Prefix/some/Package"
 //
 // type T struct {
-//     Package.Class
+//
+//	Package.Class
+//
 // }
 func (v *refsSaver) findEmbeddingStructs(pkgpath string, pkg *ast.Package) {
 	var names []string

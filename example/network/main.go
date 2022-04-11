@@ -11,7 +11,7 @@
 // In order to access the network from the Android app, its AndroidManifest.xml
 // file must include the permission to access the network.
 //
-//   http://developer.android.com/guide/topics/manifest/manifest-intro.html#perms
+//	http://developer.android.com/guide/topics/manifest/manifest-intro.html#perms
 //
 // The gomobile tool auto-generates a default AndroidManifest file by default
 // unless the package directory contains the AndroidManifest.xml. Users can
@@ -25,19 +25,20 @@
 //
 // Get the network example and use gomobile to build or install it on your device.
 //
-//   $ go get -d golang.org/x/mobile/example/network
-//   $ gomobile build golang.org/x/mobile/example/network # will build an APK
+//	$ go get -d golang.org/x/mobile/example/network
+//	$ gomobile build golang.org/x/mobile/example/network # will build an APK
 //
-//   # plug your Android device to your computer or start an Android emulator.
-//   # if you have adb installed on your machine, use gomobile install to
-//   # build and deploy the APK to an Android target.
-//   $ gomobile install golang.org/x/mobile/example/network
+//	# plug your Android device to your computer or start an Android emulator.
+//	# if you have adb installed on your machine, use gomobile install to
+//	# build and deploy the APK to an Android target.
+//	$ gomobile install golang.org/x/mobile/example/network
 //
 // Switch to your device or emulator to start the network application from
 // the launcher.
 // You can also run the application on your desktop by running the command
 // below. (Note: It currently doesn't work on Windows.)
-//   $ go install golang.org/x/mobile/example/network && network
+//
+//	$ go install golang.org/x/mobile/example/network && network
 package main
 
 import (

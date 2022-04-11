@@ -11,7 +11,7 @@ generated and automatically packaged for Android or iOS by
 `gomobile bind`. For more details on installing and using the gomobile
 tool, see https://golang.org/x/mobile/cmd/gomobile.
 
-Binding Go
+# Binding Go
 
 Gobind generates target language (Java or Objective-C) bindings for
 each exported symbol in a Go package. The Go package you choose to
@@ -24,7 +24,7 @@ package can then be _ imported into a Go program, typically built
 with -buildmode=c-archive for iOS or -buildmode=c-shared for Android.
 These details are handled by the `gomobile bind` command.
 
-Passing Go objects to target languages
+# Passing Go objects to target languages
 
 Consider a type for counting:
 
@@ -85,7 +85,7 @@ The equivalent of calling newCounter in Go is GoMypkgNewCounter in Objective-C.
 The returned GoMypkgCounter* holds a reference to an underlying Go
 *Counter.
 
-Passing target language objects to Go
+# Passing target language objects to Go
 
 For a Go interface:
 
@@ -125,7 +125,6 @@ The Java implementation can be used like so:
 	Printer printer = new SysPrint();
 	Myfmt.printHello(printer);
 
-
 For Objective-C binding, gobind generates a protocol that declares
 methods corresponding to Go interface's methods.
 
@@ -154,32 +153,31 @@ The Objective-C implementation can be used like so:
 	SysPrint* printer = [[SysPrint alloc] init];
 	GoMyfmtPrintHello(printer);
 
-
-Type restrictions
+# Type restrictions
 
 At present, only a subset of Go types are supported.
 
 All exported symbols in the package must have types that are supported.
 Supported types include:
 
-	- Signed integer and floating point types.
+  - Signed integer and floating point types.
 
-	- String and boolean types.
+  - String and boolean types.
 
-	- Byte slice types. Note that byte slices are passed by reference,
-	  and support mutation.
+  - Byte slice types. Note that byte slices are passed by reference,
+    and support mutation.
 
-	- Any function type all of whose parameters and results have
-	  supported types. Functions must return either no results,
-	  one result, or two results where the type of the second is
-	  the built-in 'error' type.
+  - Any function type all of whose parameters and results have
+    supported types. Functions must return either no results,
+    one result, or two results where the type of the second is
+    the built-in 'error' type.
 
-	- Any interface type, all of whose exported methods have
-	  supported function types.
+  - Any interface type, all of whose exported methods have
+    supported function types.
 
-	- Any struct type, all of whose exported methods have
-	  supported function types and all of whose exported fields
-	  have supported types.
+  - Any struct type, all of whose exported methods have
+    supported function types and all of whose exported fields
+    have supported types.
 
 Unexported symbols have no effect on the cross-language interface, and
 as such are not restricted.
@@ -190,8 +188,7 @@ Go types, but this is a work in progress.
 Exceptions and panics are not yet supported. If either pass a language
 boundary, the program will exit.
 
-
-Reverse bindings
+# Reverse bindings
 
 Gobind also supports accessing API from Java or Objective C from Go.
 Similar to how Cgo supports the magic "C" import, gobind recognizes
@@ -225,7 +222,7 @@ For more details on binding the the native API, see the design proposals,
 https://golang.org/issues/16876 (Java) and https://golang.org/issues/17102
 (Objective C).
 
-Avoid reference cycles
+# Avoid reference cycles
 
 The language bindings maintain a reference to each object that has been
 proxied. When a proxy object becomes unreachable, its finalizer reports
@@ -246,7 +243,7 @@ We recommend that implementations of foreign interfaces do not hold
 references to proxies of objects. That is: if you implement a Go
 interface in Java, do not store an instance of Seq.Object inside it.
 
-Further reading
+# Further reading
 
 Examples can be found in http://golang.org/x/mobile/example.
 

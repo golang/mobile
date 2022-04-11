@@ -9,7 +9,7 @@ package paint // import "golang.org/x/mobile/event/paint"
 
 // Event indicates that the app is ready to paint the next frame of the GUI.
 //
-//A frame is completed by calling the App's Publish method.
+// A frame is completed by calling the App's Publish method.
 type Event struct {
 	// External is true for paint events sent by the screen driver.
 	//

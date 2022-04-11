@@ -154,14 +154,14 @@ func (e *engine) Release() {}
 // affine draws each pixel of dst using bilinear interpolation of the
 // affine-transformed position in src. This is equivalent to:
 //
-//      for each (x,y) in dst:
-//              dst(x,y) = bilinear interpolation of src(a*(x,y))
+//	for each (x,y) in dst:
+//	        dst(x,y) = bilinear interpolation of src(a*(x,y))
 //
 // While this is the simpler implementation, it can be counter-
 // intuitive as an affine transformation is usually described in terms
 // of the source, not the destination. For example, a scale transform
 //
-//      Affine{{2, 0, 0}, {0, 2, 0}}
+//	Affine{{2, 0, 0}, {0, 2, 0}}
 //
 // will produce a dst that is half the size of src. To perform a
 // traditional affine transform, use the inverse of the affine matrix.

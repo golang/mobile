@@ -240,6 +240,7 @@ func convRune(r rune) rune {
 // into the standard keycodes used by the key package.
 //
 // To get a sense of the key map, see the diagram on
+//
 //	http://boredzo.org/blog/archives/2007-05-22/virtual-key-codes
 func convVirtualKeyCode(vkcode uint16) key.Code {
 	switch vkcode {

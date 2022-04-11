@@ -17,7 +17,7 @@
 // On Ubuntu 14.04 'Trusty', you may have to install this library
 // by running the command below.
 //
-// 		sudo apt-get install libopenal-dev
+//	sudo apt-get install libopenal-dev
 //
 // When compiled for Android, this package uses OpenAL Soft. Please add its
 // license file to the open source notices of your application.

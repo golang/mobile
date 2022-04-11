@@ -178,16 +178,17 @@ func javapPath() (string, error) {
 //
 // Compiled from "System.java"
 // public final class java.lang.System {
-//   public static final java.io.InputStream in;
-//     descriptor: Ljava/io/InputStream;
-//   public static final java.io.PrintStream out;
-//     descriptor: Ljava/io/PrintStream;
-//   public static final java.io.PrintStream err;
-//     descriptor: Ljava/io/PrintStream;
-//   public static void setIn(java.io.InputStream);
-//     descriptor: (Ljava/io/InputStream;)V
 //
-//   ...
+//	public static final java.io.InputStream in;
+//	  descriptor: Ljava/io/InputStream;
+//	public static final java.io.PrintStream out;
+//	  descriptor: Ljava/io/PrintStream;
+//	public static final java.io.PrintStream err;
+//	  descriptor: Ljava/io/PrintStream;
+//	public static void setIn(java.io.InputStream);
+//	  descriptor: (Ljava/io/InputStream;)V
+//
+//	...
 //
 // }
 func (j *Importer) Import(refs *importers.References) ([]*Class, error) {
@@ -409,27 +410,27 @@ func combineSigs(clsMap map[string]*Class, sigs ...CommonSig) CommonSig {
 //
 // For example, the class
 //
-// class A {
-//   void f();
-// }
+//	class A {
+//		void f();
+//	}
 //
 // is by itself represented by the Go interface
 //
-// type A interface {
-//   f()
-// }
+//	type A interface {
+//		f()
+//	}
 //
 // However, if class
 //
-// class B extends A {
-//   void f(int);
-// }
+//	class B extends A {
+//		void f(int);
+//	}
 //
 // is also imported, it will be represented as
 //
-// type B interface {
-//   f(...int32)
-// }
+//	type B interface {
+//		f(...int32)
+//	}
 //
 // To make Go B assignable to Go A, the signature of A's f must
 // be updated to f(...int32) as well.
