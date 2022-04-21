@@ -7,13 +7,14 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
+	"path/filepath"
+
+	"golang.org/x/mobile/internal/sdkpath"
 )
 
 // MinSDK is the targeted sdk version for support by package binres.
-const MinSDK = 15
+const MinSDK = 16
 
-// Requires environment variable ANDROID_HOME to be set.
 func apiResources() ([]byte, error) {
 	apiResPath, err := apiResourcesPath()
 	if err != nil {
@@ -50,14 +51,11 @@ func apiResources() ([]byte, error) {
 }
 
 func apiResourcesPath() (string, error) {
-	// TODO(elias.naur): use the logic from gomobile's androidAPIPath and use the any installed version of the
-	// Android SDK instead. Currently, the binres_test.go tests fail on anything newer than android-15.
-	sdkdir := os.Getenv("ANDROID_HOME")
-	if sdkdir == "" {
-		return "", fmt.Errorf("ANDROID_HOME env var not set")
+	platformDir, err := sdkpath.AndroidAPIPath(MinSDK)
+	if err != nil {
+		return "", err
 	}
-	platform := fmt.Sprintf("android-%v", MinSDK)
-	return path.Join(sdkdir, "platforms", platform, "android.jar"), nil
+	return filepath.Join(platformDir, "android.jar"), nil
 }
 
 // PackResources produces a stripped down gzip version of the resources.arsc from api jar.

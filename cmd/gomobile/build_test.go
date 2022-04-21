@@ -14,6 +14,8 @@ import (
 	"strings"
 	"testing"
 	"text/template"
+
+	"golang.org/x/mobile/internal/sdkpath"
 )
 
 func TestRFC1034Label(t *testing.T) {
@@ -228,12 +230,8 @@ func TestBuildWithGoModules(t *testing.T) {
 		t.Run(target, func(t *testing.T) {
 			switch target {
 			case "android":
-				androidHome := os.Getenv("ANDROID_HOME")
-				if androidHome == "" {
-					t.Skip("ANDROID_HOME not found, skipping bind")
-				}
-				if _, err := androidAPIPath(); err != nil {
-					t.Skip("No android API platform found in $ANDROID_HOME, skipping bind")
+				if _, err := sdkpath.AndroidAPIPath(minAndroidAPI); err != nil {
+					t.Skip("No compatible android API platform found, skipping bind")
 				}
 			case "ios":
 				if !xcodeAvailable() {

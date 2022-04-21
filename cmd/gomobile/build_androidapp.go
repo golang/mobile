@@ -25,7 +25,7 @@ import (
 )
 
 func goAndroidBuild(pkg *packages.Package, targets []targetInfo) (map[string]bool, error) {
-	ndkRoot, err := ndkRoot()
+	ndkRoot, err := ndkRoot(targets...)
 	if err != nil {
 		return nil, err
 	}

@@ -13,7 +13,7 @@
 // however that would limit gomobile to working with newer versions of
 // the Android OS, so we do this while we wait.
 //
-// Requires ANDROID_HOME be set to the path of the Android SDK, and
+// Respects ANDROID_HOME to set the path of the Android SDK.
 // javac must be on the PATH.
 package main
 
@@ -29,6 +29,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"golang.org/x/mobile/internal/sdkpath"
 )
 
 var outfile = flag.String("o", "", "result will be written file")
@@ -52,9 +54,9 @@ func main() {
 }
 
 func gendex() error {
-	androidHome := os.Getenv("ANDROID_HOME")
-	if androidHome == "" {
-		return errors.New("ANDROID_HOME not set")
+	androidHome, err := sdkpath.AndroidHome()
+	if err != nil {
+		return fmt.Errorf("couldn't find Android SDK: %w", err)
 	}
 	if err := os.MkdirAll(tmpdir+"/work/org/golang/app", 0775); err != nil {
 		return err

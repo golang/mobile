@@ -12,15 +12,15 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 
+	"golang.org/x/mobile/internal/sdkpath"
 	"golang.org/x/tools/go/packages"
 )
 
 func goAndroidBind(gobind string, pkgs []*packages.Package, targets []targetInfo) error {
-	if sdkDir := os.Getenv("ANDROID_HOME"); sdkDir == "" {
-		return fmt.Errorf("this command requires ANDROID_HOME environment variable (path to the Android SDK)")
+	if _, err := sdkpath.AndroidHome(); err != nil {
+		return fmt.Errorf("this command requires the Android SDK to be installed: %w", err)
 	}
 
 	// Run gobind to generate the bindings
@@ -270,7 +270,7 @@ func buildAAR(srcDir, androidDir string, pkgs []*packages.Package, targets []tar
 
 const (
 	javacTargetVer = "1.7"
-	minAndroidAPI  = 15
+	minAndroidAPI  = 16
 )
 
 func buildJar(w io.Writer, srcDir string) error {
@@ -369,47 +369,4 @@ func writeJar(w io.Writer, dir string) error {
 		return err
 	}
 	return jarw.Close()
-}
-
-// androidAPIPath returns an android SDK platform directory under ANDROID_HOME.
-// If there are multiple platforms that satisfy the minimum version requirement
-// androidAPIPath returns the latest one among them.
-func androidAPIPath() (string, error) {
-	sdk := os.Getenv("ANDROID_HOME")
-	if sdk == "" {
-		return "", fmt.Errorf("ANDROID_HOME environment var is not set")
-	}
-	sdkDir, err := os.Open(filepath.Join(sdk, "platforms"))
-	if err != nil {
-		return "", fmt.Errorf("failed to find android SDK platform: %v", err)
-	}
-	defer sdkDir.Close()
-	fis, err := sdkDir.Readdir(-1)
-	if err != nil {
-		return "", fmt.Errorf("failed to find android SDK platform (API level: %d): %v", buildAndroidAPI, err)
-	}
-
-	var apiPath string
-	var apiVer int
-	for _, fi := range fis {
-		name := fi.Name()
-		if !strings.HasPrefix(name, "android-") {
-			continue
-		}
-		n, err := strconv.Atoi(name[len("android-"):])
-		if err != nil || n < buildAndroidAPI {
-			continue
-		}
-		p := filepath.Join(sdkDir.Name(), name)
-		_, err = os.Stat(filepath.Join(p, "android.jar"))
-		if err == nil && apiVer < n {
-			apiPath = p
-			apiVer = n
-		}
-	}
-	if apiVer == 0 {
-		return "", fmt.Errorf("failed to find android SDK platform (API level: %d) in %s",
-			buildAndroidAPI, sdkDir.Name())
-	}
-	return apiPath, nil
 }

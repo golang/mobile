@@ -16,6 +16,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"golang.org/x/mobile/internal/sdkpath"
 )
 
 func init() {
@@ -408,10 +410,9 @@ func compareStrings(t *testing.T, a, b []string) error {
 			}
 		}
 		if err == nil && v == "__" {
-			if !strings.HasPrefix(x, "4.0.") {
+			if !strings.HasPrefix(x, "4.1.") {
 				// as of the time of this writing, the current version of build tools being targeted
-				// reports 4.0.4-1406430. Previously, this was 4.0.3. This number is likely still due
-				// to change so only report error if 4.x incremented.
+				// reports 4.1.2-1425332.
 				//
 				// TODO this check has the potential to hide real errors but can be fixed once more
 				// of the xml document is unmarshalled and XML can be queried to assure this is related
@@ -455,9 +456,8 @@ func compareStrings(t *testing.T, a, b []string) error {
 }
 
 func TestOpenTable(t *testing.T) {
-	sdkdir := os.Getenv("ANDROID_HOME")
-	if sdkdir == "" {
-		t.Skip("ANDROID_HOME env var not set")
+	if _, err := sdkpath.AndroidHome(); err != nil {
+		t.Skipf("Could not locate Android SDK: %v", err)
 	}
 	tbl, err := OpenTable()
 	if err != nil {
@@ -577,8 +577,10 @@ func TestTableMarshal(t *testing.T) {
 			if typ.entryCount != xtyp.entryCount {
 				t.Fatal("typ.entryCount doesn't match")
 			}
-			if typ.entriesStart != xtyp.entriesStart {
-				t.Fatal("typ.entriesStart doesn't match")
+			// Config size can differ after serialization due to the loss of extended fields
+			// during reserialization, but the fixed portions of the Type header must not change.
+			if uint32(typ.headerByteSize)-typ.config.size != uint32(xtyp.headerByteSize)-uint32(xtyp.config.size) {
+				t.Fatal("fixed size header portions don't match")
 			}
 			if len(typ.indices) != len(xtyp.indices) {
 				t.Fatal("typ.indices length don't match")
@@ -629,9 +631,8 @@ func TestTableMarshal(t *testing.T) {
 
 func checkResources(t *testing.T) {
 	t.Helper()
-	sdkdir := os.Getenv("ANDROID_HOME")
-	if sdkdir == "" {
-		t.Skip("ANDROID_HOME env var not set")
+	if _, err := sdkpath.AndroidHome(); err != nil {
+		t.Skip("Could not locate Android SDK")
 	}
 	rscPath, err := apiResourcesPath()
 	if err != nil {
@@ -643,9 +644,8 @@ func checkResources(t *testing.T) {
 }
 
 func BenchmarkTableRefByName(b *testing.B) {
-	sdkdir := os.Getenv("ANDROID_HOME")
-	if sdkdir == "" {
-		b.Fatal("ANDROID_HOME env var not set")
+	if _, err := sdkpath.AndroidHome(); err != nil {
+		b.Fatal("Could not locate Android SDK")
 	}
 
 	b.ReportAllocs()

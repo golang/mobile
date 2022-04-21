@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bufio"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -10,6 +12,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"golang.org/x/mobile/internal/sdkpath"
 )
 
 // General mobile build environment. Initialized by envInit.
@@ -276,29 +280,155 @@ func envInit() (err error) {
 	return nil
 }
 
-func ndkRoot() (string, error) {
+// abi maps GOARCH values to Android ABI strings.
+// See https://developer.android.com/ndk/guides/abis
+func abi(goarch string) string {
+	switch goarch {
+	case "arm":
+		return "armeabi-v7a"
+	case "arm64":
+		return "arm64-v8a"
+	case "386":
+		return "x86"
+	case "amd64":
+		return "x86_64"
+	default:
+		return ""
+	}
+}
+
+// checkNDKRoot returns nil if the NDK in `ndkRoot` supports the current configured
+// API version and all the specified Android targets.
+func checkNDKRoot(ndkRoot string, targets []targetInfo) error {
+	platformsJson, err := os.Open(filepath.Join(ndkRoot, "meta", "platforms.json"))
+	if err != nil {
+		return err
+	}
+	defer platformsJson.Close()
+	decoder := json.NewDecoder(platformsJson)
+	supportedVersions := struct {
+		Min int
+		Max int
+	}{}
+	if err := decoder.Decode(&supportedVersions); err != nil {
+		return err
+	}
+	if supportedVersions.Min > buildAndroidAPI ||
+		supportedVersions.Max < buildAndroidAPI {
+		return fmt.Errorf("unsupported API version %d (not in %d..%d)", buildAndroidAPI, supportedVersions.Min, supportedVersions.Max)
+	}
+	abisJson, err := os.Open(filepath.Join(ndkRoot, "meta", "abis.json"))
+	if err != nil {
+		return err
+	}
+	defer abisJson.Close()
+	decoder = json.NewDecoder(abisJson)
+	abis := make(map[string]struct{})
+	if err := decoder.Decode(&abis); err != nil {
+		return err
+	}
+	for _, target := range targets {
+		if !isAndroidPlatform(target.platform) {
+			continue
+		}
+		if _, found := abis[abi(target.arch)]; !found {
+			return fmt.Errorf("ndk does not support %s", target.platform)
+		}
+	}
+	return nil
+}
+
+// compatibleNDKRoots searches the side-by-side NDK dirs for compatible SDKs.
+func compatibleNDKRoots(ndkForest string, targets []targetInfo) ([]string, error) {
+	ndkDirs, err := ioutil.ReadDir(ndkForest)
+	if err != nil {
+		return nil, err
+	}
+	compatibleNDKRoots := []string{}
+	var lastErr error
+	for _, dirent := range ndkDirs {
+		ndkRoot := filepath.Join(ndkForest, dirent.Name())
+		lastErr = checkNDKRoot(ndkRoot, targets)
+		if lastErr == nil {
+			compatibleNDKRoots = append(compatibleNDKRoots, ndkRoot)
+		}
+	}
+	if len(compatibleNDKRoots) > 0 {
+		return compatibleNDKRoots, nil
+	}
+	return nil, lastErr
+}
+
+// ndkVersion returns the full version number of an installed copy of the NDK,
+// or "" if it cannot be determined.
+func ndkVersion(ndkRoot string) string {
+	properties, err := os.Open(filepath.Join(ndkRoot, "source.properties"))
+	if err != nil {
+		return ""
+	}
+	defer properties.Close()
+	// Parse the version number out of the .properties file.
+	// See https://en.wikipedia.org/wiki/.properties
+	scanner := bufio.NewScanner(properties)
+	for scanner.Scan() {
+		line := scanner.Text()
+		tokens := strings.SplitN(line, "=", 2)
+		if len(tokens) != 2 {
+			continue
+		}
+		if strings.TrimSpace(tokens[0]) == "Pkg.Revision" {
+			return strings.TrimSpace(tokens[1])
+		}
+	}
+	return ""
+}
+
+// ndkRoot returns the root path of an installed NDK that supports all the
+// specified Android targets. For details of NDK locations, see
+// https://github.com/android/ndk-samples/wiki/Configure-NDK-Path
+func ndkRoot(targets ...targetInfo) (string, error) {
 	if buildN {
 		return "$NDK_PATH", nil
 	}
 
-	androidHome := os.Getenv("ANDROID_HOME")
-	if androidHome != "" {
-		ndkRoot := filepath.Join(androidHome, "ndk-bundle")
-		_, err := os.Stat(ndkRoot)
-		if err == nil {
-			return ndkRoot, nil
+	// Try the ANDROID_NDK_HOME variable.  This approach is deprecated, but it
+	// has the highest priority because it represents an explicit user choice.
+	if ndkRoot := os.Getenv("ANDROID_NDK_HOME"); ndkRoot != "" {
+		if err := checkNDKRoot(ndkRoot, targets); err != nil {
+			return "", fmt.Errorf("ANDROID_NDK_HOME specifies %s, which is unusable: %w", ndkRoot, err)
 		}
+		return ndkRoot, nil
 	}
 
-	ndkRoot := os.Getenv("ANDROID_NDK_HOME")
-	if ndkRoot != "" {
-		_, err := os.Stat(ndkRoot)
-		if err == nil {
-			return ndkRoot, nil
-		}
+	androidHome, err := sdkpath.AndroidHome()
+	if err != nil {
+		return "", fmt.Errorf("could not locate Android SDK: %w", err)
 	}
 
-	return "", fmt.Errorf("no Android NDK found in $ANDROID_HOME/ndk-bundle nor in $ANDROID_NDK_HOME")
+	// Use the newest compatible NDK under the side-by-side path arrangement.
+	ndkForest := filepath.Join(androidHome, "ndk")
+	ndkRoots, sideBySideErr := compatibleNDKRoots(ndkForest, targets)
+	if len(ndkRoots) != 0 {
+		// Choose the latest version that supports the build configuration.
+		// NDKs whose version cannot be determined will be least preferred.
+		// In the event of a tie, the later ndkRoot will win.
+		maxVersion := ""
+		var selected string
+		for _, ndkRoot := range ndkRoots {
+			version := ndkVersion(ndkRoot)
+			if version >= maxVersion {
+				maxVersion = version
+				selected = ndkRoot
+			}
+		}
+		return selected, nil
+	}
+	// Try the deprecated NDK location.
+	ndkRoot := filepath.Join(androidHome, "ndk-bundle")
+	if legacyErr := checkNDKRoot(ndkRoot, targets); legacyErr != nil {
+		return "", fmt.Errorf("no usable NDK in %s: %w, %v", androidHome, sideBySideErr, legacyErr)
+	}
+	return ndkRoot, nil
 }
 
 func envClang(sdkName string) (clang, cflags string, err error) {

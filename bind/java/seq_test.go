@@ -17,6 +17,7 @@ import (
 	"testing"
 
 	"golang.org/x/mobile/internal/importers/java"
+	"golang.org/x/mobile/internal/sdkpath"
 )
 
 var gomobileBin string
@@ -98,8 +99,8 @@ func TestJavaSeqBench(t *testing.T) {
 // runTest runs the Android java test class specified with javaCls. If javaPkg is
 // set, it is passed with the -javapkg flag to gomobile. The pkgNames lists the Go
 // packages to bind for the test.
-// This requires the gradle command in PATH and
-// the Android SDK whose path is available through ANDROID_HOME environment variable.
+// This requires the gradle command to be in PATH and the Android SDK to be
+// installed.
 func runTest(t *testing.T, pkgNames []string, javaPkg, javaCls string) {
 	if gomobileBin == "" {
 		t.Skipf("no gomobile on %s", runtime.GOOS)
@@ -108,8 +109,8 @@ func runTest(t *testing.T, pkgNames []string, javaPkg, javaCls string) {
 	if err != nil {
 		t.Skip("command gradle not found, skipping")
 	}
-	if sdk := os.Getenv("ANDROID_HOME"); sdk == "" {
-		t.Skip("ANDROID_HOME environment var not set, skipping")
+	if _, err := sdkpath.AndroidHome(); err != nil {
+		t.Skip("Android SDK not found, skipping")
 	}
 
 	cwd, err := os.Getwd()

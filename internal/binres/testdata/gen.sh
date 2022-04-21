@@ -1,10 +1,10 @@
 #! /usr/bin/env bash
 
 # version of build-tools tests run against
-AAPT=${ANDROID_HOME}/build-tools/23.0.1/aapt
+AAPT=${ANDROID_HOME:-${HOME}/Android/Sdk}/build-tools/32.0.0/aapt
 
 # minimum version of android api for resource identifiers supported
-APIJAR=${ANDROID_HOME}/platforms/android-15/android.jar
+APIJAR=${ANDROID_HOME:-${HOME}/Android/Sdk}/platforms/android-16/android.jar
 
 for f in *.xml; do
 	RES=""

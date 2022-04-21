@@ -17,6 +17,7 @@ import (
 	"strconv"
 	"strings"
 
+	"golang.org/x/mobile/internal/sdkpath"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -60,7 +61,7 @@ Flag -iosversion sets the minimal version of the iOS SDK to compile against.
 The default version is 13.0.
 
 Flag -androidapi sets the Android API version to compile against.
-The default and minimum is 15.
+The default and minimum is 16.
 
 The -bundleid flag is required for -target ios and sets the bundle ID to use
 with the app.
@@ -215,7 +216,7 @@ func printcmd(format string, args ...interface{}) {
 	if tmpdir != "" {
 		cmd = strings.Replace(cmd, tmpdir, "$WORK", -1)
 	}
-	if androidHome := os.Getenv("ANDROID_HOME"); androidHome != "" {
+	if androidHome, err := sdkpath.AndroidHome(); err == nil {
 		cmd = strings.Replace(cmd, androidHome, "$ANDROID_HOME", -1)
 	}
 	if gomobilepath != "" {

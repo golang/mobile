@@ -82,10 +82,13 @@ const (
 
 	ResXMLResourceMap ResType = 0x0180
 
-	ResTablePackage  ResType = 0x0200
-	ResTableType     ResType = 0x0201
-	ResTableTypeSpec ResType = 0x0202
-	ResTableLibrary  ResType = 0x0203
+	ResTablePackage           ResType = 0x0200
+	ResTableType              ResType = 0x0201
+	ResTableTypeSpec          ResType = 0x0202
+	ResTableLibrary           ResType = 0x0203
+	ResTableOverlayable       ResType = 0x0204
+	ResTableOverlayablePolicy ResType = 0x0205
+	ResTableStagedAlias       ResType = 0x0206
 )
 
 var (
@@ -247,14 +250,14 @@ func UnmarshalXML(r io.Reader, withIcon bool) (*XML, error) {
 							Space: "",
 							Local: "platformBuildVersionCode",
 						},
-						Value: "15",
+						Value: "16",
 					},
 					xml.Attr{
 						Name: xml.Name{
 							Space: "",
 							Local: "platformBuildVersionName",
 						},
-						Value: "4.0.4-1406430",
+						Value: "4.1.2-1425332",
 					})
 
 				q = append(q, ltoken{tkn, line})

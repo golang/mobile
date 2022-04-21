@@ -16,6 +16,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"golang.org/x/mobile/internal/sdkpath"
 )
 
 var (
@@ -122,11 +124,10 @@ func installOpenAL(gomobilepath string) error {
 	if buildN {
 		cmake = "cmake"
 	} else {
-		sdkRoot := os.Getenv("ANDROID_HOME")
-		if sdkRoot == "" {
+		sdkRoot, err := sdkpath.AndroidHome()
+		if err != nil {
 			return nil
 		}
-		var err error
 		cmake, err = exec.LookPath("cmake")
 		if err != nil {
 			cmakePath := filepath.Join(sdkRoot, "cmake")

@@ -8,8 +8,7 @@
 // Genarsc generates stripped down version of android.jar resources used
 // for validation of manifest entries.
 //
-// Requires ANDROID_HOME be set to the path of the Android SDK and the
-// current sdk platform installed that matches MinSDK.
+// Requires the selected Android SDK to support the MinSDK platform version.
 package main
 
 import (

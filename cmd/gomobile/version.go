@@ -11,6 +11,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"golang.org/x/mobile/internal/sdkpath"
 )
 
 var cmdVersion = &command{
@@ -56,8 +58,7 @@ func runVersion(cmd *command) (err error) {
 		platforms += "," + strings.Join(applePlatforms, ",")
 	}
 
-	// ANDROID_HOME, sdk build tool version
-	androidapi, _ := androidAPIPath()
+	androidapi, _ := sdkpath.AndroidAPIPath(buildAndroidAPI)
 
 	fmt.Printf("gomobile version %s (%s); androidSDK=%s\n", version, platforms, androidapi)
 	return nil

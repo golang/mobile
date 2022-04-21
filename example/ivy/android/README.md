@@ -11,15 +11,11 @@ Requirements
   - Android NDK
   - `golang.org/x/mobile/cmd/gomobile`
 
-The `gomobile` command uses `ANDROID_HOME` and `ANDROID_NDK_HOME` environment variables.
+The `gomobile` command respects the `ANDROID_HOME` and `ANDROID_NDK_HOME` environment variables.  If `gomobile` can't find your SDK and NDK, you can set these environment variables to specify their locations:
 ```
 export ANDROID_HOME=/path/to/sdk-directory
 export ANDROID_NDK_HOME=/path/to/ndk-directory
 ```
-
-Note: Both ANDROID_SDK_ROOT and ANDROID_NDK_HOME are deprecated in Android tooling, but `gomobile` still uses it. In many cases, `ANDROID_HOME` corresponds to the new [`ANDROID_SDK_ROOT`](https://developer.android.com/studio/command-line/variables). If you installed NDK using [Android Studio's SDK manager](https://developer.android.com/studio/projects/install-ndk#default-version), use the `$ANDROID_SDK_ROOT/ndk/<ndk-version>/` directory as `ANDROID_NDK_HOME` (where `<ndk-version>` is the NDK version you want to use when compiling `robpike.io/ivy` for Android.
-
-(TODO: update `gomobile` to work with modern Android layout)
 
 From this directory, run:
 

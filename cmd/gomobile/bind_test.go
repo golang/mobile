@@ -14,18 +14,22 @@ import (
 	"strings"
 	"testing"
 	"text/template"
+
+	"golang.org/x/mobile/internal/sdkpath"
 )
 
 func TestBindAndroid(t *testing.T) {
-	androidHome := os.Getenv("ANDROID_HOME")
-	if androidHome == "" {
-		t.Skip("ANDROID_HOME not found, skipping bind")
-	}
-	platform, err := androidAPIPath()
+	platform, err := sdkpath.AndroidAPIPath(minAndroidAPI)
 	if err != nil {
-		t.Skip("No android API platform found in $ANDROID_HOME, skipping bind")
+		t.Skip("No compatible Android API platform found, skipping bind")
 	}
-	platform = strings.Replace(platform, androidHome, "$ANDROID_HOME", -1)
+	// platform is a path like "/path/to/Android/sdk/platforms/android-32"
+	components := strings.Split(platform, string(filepath.Separator))
+	if len(components) < 2 {
+		t.Fatalf("API path is too short: %s", platform)
+	}
+	components = components[len(components)-2:]
+	platformRel := filepath.Join("$ANDROID_HOME", components[0], components[1])
 
 	defer func() {
 		xout = os.Stderr
@@ -77,7 +81,7 @@ func TestBindAndroid(t *testing.T) {
 			JavaPkg         string
 		}{
 			outputData:      output,
-			AndroidPlatform: platform,
+			AndroidPlatform: platformRel,
 			JavaPkg:         tc.javaPkg,
 		}
 
@@ -273,12 +277,8 @@ func TestBindWithGoModules(t *testing.T) {
 		t.Run(target, func(t *testing.T) {
 			switch target {
 			case "android":
-				androidHome := os.Getenv("ANDROID_HOME")
-				if androidHome == "" {
-					t.Skip("ANDROID_HOME not found, skipping bind")
-				}
-				if _, err := androidAPIPath(); err != nil {
-					t.Skip("No android API platform found in $ANDROID_HOME, skipping bind")
+				if _, err := sdkpath.AndroidAPIPath(minAndroidAPI); err != nil {
+					t.Skip("No compatible Android API platform found, skipping bind")
 				}
 			case "ios":
 				if !xcodeAvailable() {
