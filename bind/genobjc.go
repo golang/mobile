@@ -894,6 +894,7 @@ func (g *ObjcGen) genInterfaceInterface(obj *types.TypeName, summary ifaceSummar
 }
 
 func (g *ObjcGen) genInterfaceH(obj *types.TypeName, t *types.Interface) {
+	doc := g.docs[obj.Name()]
 	summary := makeIfaceSummary(t)
 	if !summary.implementable {
 		g.genInterfaceInterface(obj, summary, false)
@@ -906,6 +907,7 @@ func (g *ObjcGen) genInterfaceH(obj *types.TypeName, t *types.Interface) {
 			continue
 		}
 		s := g.funcSummary(nil, m)
+		g.objcdoc(doc.Member(m.Name()))
 		g.Printf("- %s;\n", s.asMethod(g))
 	}
 	g.Printf("@end\n")
