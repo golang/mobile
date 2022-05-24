@@ -337,7 +337,22 @@ func goCmdAt(at string, subcmd string, srcs []string, env []string, args ...stri
 	return runCmd(cmd)
 }
 
+func pkgSoftLink(at string) error {
+	if bindGoPathPkgLink {
+		symlink := at + "/../pkg"
+		target := goEnv("GOPATH") + "/pkg"
+		if buildV {
+			fmt.Fprintf(os.Stderr, "try to create link, %v->%v", symlink, target)
+		}
+		return os.Symlink(target, symlink)
+	}
+	return nil
+}
+
 func goModTidyAt(at string, env []string) error {
+	if err := pkgSoftLink(at); err != nil {
+		return err
+	}
 	cmd := exec.Command("go", "mod", "tidy")
 	if buildV {
 		cmd.Args = append(cmd.Args, "-v")
