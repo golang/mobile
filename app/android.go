@@ -249,6 +249,8 @@ func onConfigurationChanged(activity *C.ANativeActivity) {
 
 //export onLowMemory
 func onLowMemory(activity *C.ANativeActivity) {
+	runtime.GC()
+	debug.FreeOSMemory()
 }
 
 var (
