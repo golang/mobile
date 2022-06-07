@@ -51,7 +51,9 @@ import (
 	"os"
 	"time"
 	"unsafe"
-
+	"runtime"
+	"runtime/debug"
+	
 	"golang.org/x/mobile/app/internal/callfn"
 	"golang.org/x/mobile/event/key"
 	"golang.org/x/mobile/event/lifecycle"
