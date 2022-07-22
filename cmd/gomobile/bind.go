@@ -128,10 +128,13 @@ func runBind(cmd *command) error {
 	case isAndroidPlatform(targets[0].platform):
 		return goAndroidBind(gobind, pkgs, targets)
 	case isApplePlatform(targets[0].platform):
+		if buildWorkerError := validateBuildWorkers(buildWorkers); buildWorkerError != nil {
+			return buildWorkerError
+		}
 		if !xcodeAvailable() {
 			return fmt.Errorf("-target=%q requires Xcode", buildTarget)
 		}
-		return goAppleBind(gobind, pkgs, targets)
+		return goAppleBind(gobind, pkgs, targets, buildWorkers)
 	default:
 		return fmt.Errorf(`invalid -target=%q`, buildTarget)
 	}
@@ -322,4 +325,12 @@ func areGoModulesUsed() (bool, error) {
 		return false, nil
 	}
 	return true, nil
+}
+
+func validateBuildWorkers(workers int) error {
+	if workers < 1 {
+		return fmt.Errorf("invalid workers %d: must be >= 1", workers)
+	} else {
+		return nil
+	}
 }
