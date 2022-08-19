@@ -22,7 +22,7 @@ to install the gomobile command, build the
 [basic](https://golang.org/x/mobile/example/basic)
 and the [bind](https://golang.org/x/mobile/example/bind) example apps.
 
---
+---
 
 Contributions to Go are appreciated. See https://golang.org/doc/contribute.html.
 
