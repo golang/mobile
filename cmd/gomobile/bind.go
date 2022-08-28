@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"golang.org/x/mobile/internal/sdkpath"
 	"golang.org/x/mod/modfile"
@@ -282,7 +283,7 @@ func getModuleVersions(targetPlatform string, targetArch string, src string) (*m
 	return f, nil
 }
 
-// writeGoMod writes go.mod file at $WORK/src when Go modules are used.
+// writeGoMod writes go.mod file at dir when Go modules are used.
 func writeGoMod(dir, targetPlatform, targetArch string) error {
 	m, err := areGoModulesUsed()
 	if err != nil {
@@ -293,7 +294,7 @@ func writeGoMod(dir, targetPlatform, targetArch string) error {
 		return nil
 	}
 
-	return writeFile(filepath.Join(dir, "src", "go.mod"), func(w io.Writer) error {
+	return writeFile(filepath.Join(dir, "go.mod"), func(w io.Writer) error {
 		f, err := getModuleVersions(targetPlatform, targetArch, ".")
 		if err != nil {
 			return err
@@ -312,14 +313,23 @@ func writeGoMod(dir, targetPlatform, targetArch string) error {
 	})
 }
 
+var (
+	areGoModulesUsedResult struct {
+		used bool
+		err  error
+	}
+	areGoModulesUsedOnce sync.Once
+)
+
 func areGoModulesUsed() (bool, error) {
-	out, err := exec.Command("go", "env", "GOMOD").Output()
-	if err != nil {
-		return false, err
-	}
-	outstr := strings.TrimSpace(string(out))
-	if outstr == "" {
-		return false, nil
-	}
-	return true, nil
+	areGoModulesUsedOnce.Do(func() {
+		out, err := exec.Command("go", "env", "GOMOD").Output()
+		if err != nil {
+			areGoModulesUsedResult.err = err
+			return
+		}
+		outstr := strings.TrimSpace(string(out))
+		areGoModulesUsedResult.used = outstr != ""
+	})
+	return areGoModulesUsedResult.used, areGoModulesUsedResult.err
 }

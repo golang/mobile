@@ -93,7 +93,7 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 		gopath := fmt.Sprintf("GOPATH=%s%c%s", outDir, filepath.ListSeparator, goEnv("GOPATH"))
 		env = append(env, gopath)
 
-		if err := writeGoMod(outDir, t.platform, t.arch); err != nil {
+		if err := writeGoMod(filepath.Join(outDir, "src"), t.platform, t.arch); err != nil {
 			return err
 		}
 

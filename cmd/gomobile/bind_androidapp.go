@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"golang.org/x/mobile/internal/sdkpath"
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -52,41 +53,16 @@ func goAndroidBind(gobind string, pkgs []*packages.Package, targets []targetInfo
 
 	androidDir := filepath.Join(tmpdir, "android")
 
-	modulesUsed, err := areGoModulesUsed()
-	if err != nil {
-		return err
-	}
-
 	// Generate binding code and java source code only when processing the first package.
+	var wg errgroup.Group
 	for _, t := range targets {
-		if err := writeGoMod(tmpdir, "android", t.arch); err != nil {
-			return err
-		}
-
-		env := androidEnv[t.arch]
-		// Add the generated packages to GOPATH for reverse bindings.
-		gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
-		env = append(env, gopath)
-
-		// Run `go mod tidy` to force to create go.sum.
-		// Without go.sum, `go build` fails as of Go 1.16.
-		if modulesUsed {
-			if err := goModTidyAt(filepath.Join(tmpdir, "src"), env); err != nil {
-				return err
-			}
-		}
-
-		toolchain := ndk.Toolchain(t.arch)
-		err := goBuildAt(
-			filepath.Join(tmpdir, "src"),
-			"./gobind",
-			env,
-			"-buildmode=c-shared",
-			"-o="+filepath.Join(androidDir, "src/main/jniLibs/"+toolchain.abi+"/libgojni.so"),
-		)
-		if err != nil {
-			return err
-		}
+		t := t
+		wg.Go(func() error {
+			return buildAndroidSO(androidDir, t.arch)
+		})
+	}
+	if err := wg.Wait(); err != nil {
+		return err
 	}
 
 	jsrc := filepath.Join(tmpdir, "java")
@@ -369,4 +345,57 @@ func writeJar(w io.Writer, dir string) error {
 		return err
 	}
 	return jarw.Close()
+}
+
+// buildAndroidSO generates an Android libgojni.so file to outputDir.
+// buildAndroidSO is concurrent-safe.
+func buildAndroidSO(outputDir string, arch string) error {
+	// Copy the environment variables to make this function concurrent-safe.
+	env := make([]string, len(androidEnv[arch]))
+	copy(env, androidEnv[arch])
+
+	// Add the generated packages to GOPATH for reverse bindings.
+	gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
+	env = append(env, gopath)
+
+	modulesUsed, err := areGoModulesUsed()
+	if err != nil {
+		return err
+	}
+
+	srcDir := filepath.Join(tmpdir, "src")
+
+	if modulesUsed {
+		// Copy the source directory for each architecture for concurrent building.
+		newSrcDir := filepath.Join(tmpdir, "src-android-"+arch)
+		if !buildN {
+			if err := doCopyAll(newSrcDir, srcDir); err != nil {
+				return err
+			}
+		}
+		srcDir = newSrcDir
+
+		if err := writeGoMod(srcDir, "android", arch); err != nil {
+			return err
+		}
+
+		// Run `go mod tidy` to force to create go.sum.
+		// Without go.sum, `go build` fails as of Go 1.16.
+		if err := goModTidyAt(srcDir, env); err != nil {
+			return err
+		}
+	}
+
+	toolchain := ndk.Toolchain(arch)
+	if err := goBuildAt(
+		srcDir,
+		"./gobind",
+		env,
+		"-buildmode=c-shared",
+		"-o="+filepath.Join(outputDir, "src", "main", "jniLibs", toolchain.abi, "libgojni.so"),
+	); err != nil {
+		return err
+	}
+
+	return nil
 }
