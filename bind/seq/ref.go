@@ -78,7 +78,7 @@ func ToRefNum(obj interface{}) int32 {
 	}
 	refs.Unlock()
 
-	return int32(num)
+	return num
 }
 
 // FromRefNum returns the Ref for a refnum. If the refnum specifies a
