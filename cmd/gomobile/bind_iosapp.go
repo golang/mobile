@@ -14,6 +14,7 @@ import (
 	"strings"
 	"text/template"
 
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -38,6 +39,49 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 		return err
 	}
 
+	outDirsForPlatform := map[string]string{}
+	for _, t := range targets {
+		outDirsForPlatform[t.platform] = filepath.Join(tmpdir, t.platform)
+	}
+
+	// Run the gobind command for each platform
+	var wg errgroup.Group
+	for platform, outDir := range outDirsForPlatform {
+		platform := platform
+		outDir := outDir
+		wg.Go(func() error {
+			// Catalyst support requires iOS 13+
+			v, _ := strconv.ParseFloat(buildIOSVersion, 64)
+			if platform == "maccatalyst" && v < 13.0 {
+				return errors.New("catalyst requires -iosversion=13 or higher")
+			}
+
+			// Run gobind once per platform to generate the bindings
+			cmd := exec.Command(
+				gobind,
+				"-lang=go,objc",
+				"-outdir="+outDir,
+			)
+			cmd.Env = append(cmd.Env, "GOOS="+platformOS(platform))
+			cmd.Env = append(cmd.Env, "CGO_ENABLED=1")
+			tags := append(buildTags[:], platformTags(platform)...)
+			cmd.Args = append(cmd.Args, "-tags="+strings.Join(tags, ","))
+			if bindPrefix != "" {
+				cmd.Args = append(cmd.Args, "-prefix="+bindPrefix)
+			}
+			for _, p := range pkgs {
+				cmd.Args = append(cmd.Args, p.PkgPath)
+			}
+			if err := runCmd(cmd); err != nil {
+				return err
+			}
+			return nil
+		})
+	}
+	if err := wg.Wait(); err != nil {
+		return err
+	}
+
 	modulesUsed, err := areGoModulesUsed()
 	if err != nil {
 		return err
@@ -46,35 +90,9 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 	var frameworkDirs []string
 	frameworkArchCount := map[string]int{}
 	for _, t := range targets {
-		// Catalyst support requires iOS 13+
-		v, _ := strconv.ParseFloat(buildIOSVersion, 64)
-		if t.platform == "maccatalyst" && v < 13.0 {
-			return errors.New("catalyst requires -iosversion=13 or higher")
-		}
-
-		outDir := filepath.Join(tmpdir, t.platform)
+		outDir := outDirsForPlatform[t.platform]
 		outSrcDir := filepath.Join(outDir, "src")
 		gobindDir := filepath.Join(outSrcDir, "gobind")
-
-		// Run gobind once per platform to generate the bindings
-		cmd := exec.Command(
-			gobind,
-			"-lang=go,objc",
-			"-outdir="+outDir,
-		)
-		cmd.Env = append(cmd.Env, "GOOS="+platformOS(t.platform))
-		cmd.Env = append(cmd.Env, "CGO_ENABLED=1")
-		tags := append(buildTags[:], platformTags(t.platform)...)
-		cmd.Args = append(cmd.Args, "-tags="+strings.Join(tags, ","))
-		if bindPrefix != "" {
-			cmd.Args = append(cmd.Args, "-prefix="+bindPrefix)
-		}
-		for _, p := range pkgs {
-			cmd.Args = append(cmd.Args, p.PkgPath)
-		}
-		if err := runCmd(cmd); err != nil {
-			return err
-		}
 
 		env := appleEnv[t.String()][:]
 		sdk := getenv(env, "DARWIN_SDK")
