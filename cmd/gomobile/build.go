@@ -332,7 +332,15 @@ func goCmdAt(at string, subcmd string, srcs []string, env []string, args ...stri
 	}
 	cmd.Args = append(cmd.Args, args...)
 	cmd.Args = append(cmd.Args, srcs...)
-	cmd.Env = append([]string{}, env...)
+
+	// Specify GOMODCACHE explicitly. The default cache path is GOPATH[0]/pkg/mod,
+	// but the path varies when GOPATH is specified at env, which results in cold cache.
+	if gmc, err := goModCachePath(); err == nil {
+		env = append([]string{"GOMODCACHE=" + gmc}, env...)
+	} else {
+		env = append([]string{}, env...)
+	}
+	cmd.Env = env
 	cmd.Dir = at
 	return runCmd(cmd)
 }
@@ -342,7 +350,15 @@ func goModTidyAt(at string, env []string) error {
 	if buildV {
 		cmd.Args = append(cmd.Args, "-v")
 	}
-	cmd.Env = append([]string{}, env...)
+
+	// Specify GOMODCACHE explicitly. The default cache path is GOPATH[0]/pkg/mod,
+	// but the path varies when GOPATH is specified at env, which results in cold cache.
+	if gmc, err := goModCachePath(); err == nil {
+		env = append([]string{"GOMODCACHE=" + gmc}, env...)
+	} else {
+		env = append([]string{}, env...)
+	}
+	cmd.Env = env
 	cmd.Dir = at
 	return runCmd(cmd)
 }
@@ -421,4 +437,12 @@ type targetInfo struct {
 
 func (t targetInfo) String() string {
 	return t.platform + "/" + t.arch
+}
+
+func goModCachePath() (string, error) {
+	out, err := exec.Command("go", "env", "GOMODCACHE").Output()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
 }
