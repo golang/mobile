@@ -291,7 +291,7 @@ func filterReferences(types []*Named, refs *importers.References, typeMap map[st
 	}
 }
 
-// mangleMethodsNames assigns unique Go names to ObjC methods. If a method name is unique
+// mangleMethodNames assigns unique Go names to ObjC methods. If a method name is unique
 // within the same method list, its name is used with its first letter in upper case.
 // Multiple methods with the same name have their full signature appended, with : removed.
 func mangleMethodNames(allFuncs []*Func) {

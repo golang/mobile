@@ -396,12 +396,12 @@ func GetListenerfv(param int, v []float32) {
 	alGetListenerfv(param, v)
 }
 
-// GetListenerf sets the float32 value for the listener parameter.
+// SetListenerf sets the float32 value for the listener parameter.
 func SetListenerf(param int, v float32) {
 	alListenerf(param, v)
 }
 
-// GetListenerf sets the float32 vector value of the listener parameter.
+// SetListenerfv sets the float32 vector value of the listener parameter.
 func SetListenerfv(param int, v []float32) {
 	alListenerfv(param, v)
 }
