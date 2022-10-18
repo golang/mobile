@@ -7,8 +7,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"runtime"
@@ -17,6 +15,19 @@ import (
 
 	"golang.org/x/tools/go/packages/packagestest"
 )
+
+func TestMain(m *testing.M) {
+	// To avoid recompiling the gobind command (and to support compiler options
+	// like -race and -coverage), allow the test binary itself to re-exec itself
+	// as the gobind command by setting an environment variable.
+	if os.Getenv("GOBIND_TEST_IS_GOBIND") != "" {
+		main()
+		os.Exit(0)
+	}
+	os.Setenv("GOBIND_TEST_IS_GOBIND", "1")
+
+	os.Exit(m.Run())
+}
 
 var tests = []struct {
 	name string
@@ -64,55 +75,55 @@ var tests = []struct {
 	},
 }
 
-var gobindBin string
-
-func TestMain(m *testing.M) {
-	os.Exit(testMain(m))
+func mustHaveBindTestdata(t testing.TB) {
+	switch runtime.GOOS {
+	case "android", "ios":
+		t.Skipf("skipping: test cannot access ../../bind/testdata on %s/%s", runtime.GOOS, runtime.GOARCH)
+	}
 }
 
-func testMain(m *testing.M) int {
-	bin, err := ioutil.TempFile("", "*.exe")
+func gobindBin(t testing.TB) string {
+	switch runtime.GOOS {
+	case "js", "ios":
+		t.Skipf("skipping: cannot exec subprocess on %s/%s", runtime.GOOS, runtime.GOARCH)
+	}
+
+	p, err := os.Executable()
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
-	bin.Close()
-	defer os.Remove(bin.Name())
-	if runtime.GOOS != "android" {
-		if out, err := exec.Command("go", "build", "-o", bin.Name(), "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
-			log.Fatalf("gobind build failed: %v: %s", err, out)
-		}
-		gobindBin = bin.Name()
-	}
-	return m.Run()
+	return p
 }
 
 func runGobind(t testing.TB, lang, pkg, goos string, exported *packagestest.Exported) error {
-	if gobindBin == "" {
-		t.Skipf("gobind is not available on %s", runtime.GOOS)
-	}
-	cmd := exec.Command(gobindBin, "-lang", lang, pkg)
+	cmd := exec.Command(gobindBin(t), "-lang", lang, pkg)
 	cmd.Dir = exported.Config.Dir
 	cmd.Env = exported.Config.Env
 	if goos != "" {
 		// Add CGO_ENABLED=1 explicitly since Cgo is disabled when GOOS is different from host OS.
 		cmd.Env = append(cmd.Env, "GOOS="+goos, "CGO_ENABLED=1")
 	}
-	if out, err := cmd.CombinedOutput(); err != nil {
-		var cmd string
-		for _, env := range exported.Config.Env {
-			if strings.HasPrefix(env, "GO111MODULE=") {
-				cmd = env + " "
-				break
-			}
-		}
-		cmd += fmt.Sprintf("gobind -lang %s %s", lang, pkg)
-		return fmt.Errorf("%s failed: %v: %s", cmd, err, out)
+	stderr := new(strings.Builder)
+	cmd.Stderr = stderr
+	stdout := new(strings.Builder)
+	cmd.Stdout = stdout
+	err := cmd.Run()
+	if testing.Verbose() && stdout.Len() > 0 {
+		t.Logf("stdout (%v):\n%s", cmd, stderr)
+	}
+	if stderr.Len() > 0 {
+		t.Logf("stderr (%v):\n%s", cmd, stderr)
+	}
+	if err != nil {
+		return fmt.Errorf("%v: %w", cmd, err)
 	}
 	return nil
 }
 
 func TestGobind(t *testing.T) { packagestest.TestAll(t, testGobind) }
 func testGobind(t *testing.T, exporter packagestest.Exporter) {
+	mustHaveBindTestdata(t)
+
 	_, javapErr := exec.LookPath("javap")
 	exported := packagestest.Export(t, exporter, []packagestest.Module{{
 		Name:  "golang.org/x/mobile",
@@ -137,9 +148,7 @@ func testGobind(t *testing.T, exporter packagestest.Exporter) {
 
 func TestDocs(t *testing.T) { packagestest.TestAll(t, testDocs) }
 func testDocs(t *testing.T, exporter packagestest.Exporter) {
-	if gobindBin == "" {
-		t.Skipf("gobind is not available on %s", runtime.GOOS)
-	}
+	mustHaveBindTestdata(t)
 
 	const docsrc = `
 package doctest
@@ -165,7 +174,7 @@ type Struct struct{
 
 	const comment = "This is a comment."
 	for _, lang := range []string{"java", "objc"} {
-		cmd := exec.Command(gobindBin, "-lang", lang, "example.com/doctest")
+		cmd := exec.Command(gobindBin(t), "-lang", lang, "example.com/doctest")
 		cmd.Dir = exported.Config.Dir
 		cmd.Env = exported.Config.Env
 		out, err := cmd.CombinedOutput()
