@@ -376,9 +376,13 @@ func defaultFileName(lang string, pkg *types.Package) string {
 }
 
 func packageDir(path string) (string, error) {
-	pkgs, err := packages.Load(nil, path)
+	mode := packages.NeedFiles
+	pkgs, err := packages.Load(&packages.Config{Mode: mode}, path)
 	if err != nil {
 		return "", err
+	}
+	if len(pkgs) == 0 || len(pkgs[0].GoFiles) == 0 {
+		return "", fmt.Errorf("no Go package in %v", path)
 	}
 	pkg := pkgs[0]
 	if len(pkg.Errors) > 0 {
