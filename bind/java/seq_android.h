@@ -6,15 +6,14 @@
 #define __GO_SEQ_ANDROID_HDR__
 
 #include <stdint.h>
-#include <android/log.h>
 // For abort()
 #include <stdlib.h>
 #include <jni.h>
 
-#define LOG_INFO(...) __android_log_print(ANDROID_LOG_INFO, "go/Seq", __VA_ARGS__)
+#define LOG_INFO(...) printf(__VA_ARGS__)
 #define LOG_FATAL(...)                                             \
   {                                                                \
-    __android_log_print(ANDROID_LOG_FATAL, "go/Seq", __VA_ARGS__); \
+    printf(__VA_ARGS__); \
     abort();                                                       \
   }
 

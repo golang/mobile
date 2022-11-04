@@ -6,6 +6,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -61,10 +62,14 @@ func goJavaBind(gobind string, pkgs []*packages.Package, targets []targetInfo) e
 		return err
 	}
 
+	w, err := os.Create(buildO)
+	if err != nil {
+		return err
+	}
 	jsrc := filepath.Join(tmpdir, "java")
-	// if err := buildAAR(jsrc, outputDir, pkgs, targets); err != nil {
-	// 	return err
-	// }
+	if err := buildJar(w, jsrc); err != nil {
+		return err
+	}
 	return buildSrcJar(jsrc)
 }
 
@@ -78,6 +83,7 @@ func buildJavaSO(outputDir string, arch string) error {
 	// Add the generated packages to GOPATH for reverse bindings.
 	gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
 	env = append(env, gopath)
+	env = append(env, "CGO_CFLAGS=\"-I/opt/homebrew/opt/openjdk/include/\"")
 
 	modulesUsed, err := areGoModulesUsed()
 	if err != nil {

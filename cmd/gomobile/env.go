@@ -82,7 +82,7 @@ func platformOS(platform string) string {
 func platformTags(platform string) []string {
 	switch platform {
 	case "java":
-		return []string{"java"}
+		return []string{"android"}
 	case "android":
 		return []string{"android"}
 	case "ios", "iossimulator":

@@ -6,7 +6,7 @@
 // generated gomobile_bind package and compiled along with the
 // generated binding files.
 
-#include <android/log.h>
+// #include <android/log.h>
 #include <errno.h>
 #include <jni.h>
 #include <stdint.h>
@@ -55,7 +55,7 @@ static JNIEnv *go_seq_get_thread_env(void) {
 		if (ret != JNI_EDETACHED) {
 			LOG_FATAL("failed to get thread env");
 		}
-		if ((*jvm)->AttachCurrentThread(jvm, &env, NULL) != JNI_OK) {
+		if ((*jvm)->AttachCurrentThread(jvm, (void**) &env, NULL) != JNI_OK) {
 			LOG_FATAL("failed to attach current thread");
 		}
 		pthread_setspecific(jnienvs, env);
