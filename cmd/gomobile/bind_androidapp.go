@@ -162,7 +162,7 @@ func buildAAR(srcDir, androidDir string, pkgs []*packages.Package, targets []tar
 	if err != nil {
 		return err
 	}
-	if err := buildJar(w, srcDir); err != nil {
+	if err := buildAndroidJar(w, srcDir); err != nil {
 		return err
 	}
 
@@ -245,11 +245,11 @@ func buildAAR(srcDir, androidDir string, pkgs []*packages.Package, targets []tar
 }
 
 const (
-	javacTargetVer = "1.7"
+	javacTargetVer = "1.8"
 	minAndroidAPI  = 16
 )
 
-func buildJar(w io.Writer, srcDir string) error {
+func buildAndroidJar(w io.Writer, srcDir string) error {
 	var srcFiles []string
 	if buildN {
 		srcFiles = []string{"*.java"}

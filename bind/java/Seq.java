@@ -4,7 +4,7 @@
 
 package go;
 
-import android.content.Context;
+// import android.content.Context;
 
 import java.lang.ref.PhantomReference;
 import java.lang.ref.Reference;
@@ -34,15 +34,29 @@ public class Seq {
 	private static final GoRefQueue goRefQueue = new GoRefQueue();
 
 	static {
-		System.loadLibrary("gojni");
+		if ("The Android Project".equals(System.getProperty("java.vendor"))) {
+			System.loadLibrary("gojni");
+		} else {
+			String arch = System.getProperty("os.arch");
+			if ("aarch64".equals(arch)) {
+				arch = "arm64";
+			} else if ("x86_64".equals(arch)) {
+				arch = "amd64";
+			}
+			try {
+				NativeUtils.loadLibraryFromJar("/jniLibs/" + arch + "/libgojni.so");
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
 		init();
 		Universe.touch();
 	}
 
 	// setContext sets the context in the go-library to be used in RunOnJvm.
-	public static void setContext(Context context) {
-		setContext((java.lang.Object)context);
-	}
+	// public static void setContext(Context context) {
+	// 	setContext((java.lang.Object)context);
+	// }
 
 	private static native void init();
 
