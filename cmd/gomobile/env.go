@@ -28,6 +28,10 @@ func isAndroidPlatform(platform string) bool {
 	return platform == "android"
 }
 
+func isJavaPlatform(platform string) bool {
+	return platform == "java"
+}
+
 func isApplePlatform(platform string) bool {
 	return contains(applePlatforms, platform)
 }
@@ -44,6 +48,8 @@ func platformArchs(platform string) []string {
 		return []string{"arm64", "amd64"}
 	case "android":
 		return []string{"arm", "arm64", "386", "amd64"}
+	case "java":
+		return []string{runtime.GOARCH}
 	default:
 		panic(fmt.Sprintf("unexpected platform: %s", platform))
 	}
@@ -56,6 +62,8 @@ func isSupportedArch(platform, arch string) bool {
 // platformOS returns the correct GOOS value for platform.
 func platformOS(platform string) string {
 	switch platform {
+	case "java":
+		return runtime.GOOS
 	case "android":
 		return "android"
 	case "ios", "iossimulator":
@@ -73,6 +81,8 @@ func platformOS(platform string) string {
 
 func platformTags(platform string) []string {
 	switch platform {
+	case "java":
+		return []string{"java"}
 	case "android":
 		return []string{"android"}
 	case "ios", "iossimulator":

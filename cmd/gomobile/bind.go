@@ -25,7 +25,7 @@ import (
 var cmdBind = &command{
 	run:   runBind,
 	Name:  "bind",
-	Usage: "[-target android|" + strings.Join(applePlatforms, "|") + "] [-bootclasspath <path>] [-classpath <path>] [-o output] [build flags] [package]",
+	Usage: "[-target android|" + strings.Join(applePlatforms, "|") + "|java] [-bootclasspath <path>] [-classpath <path>] [-o output] [build flags] [package]",
 	Short: "build a library for Android and iOS",
 	Long: `
 Bind generates language bindings for the package named by the import
@@ -133,6 +133,8 @@ func runBind(cmd *command) error {
 			return fmt.Errorf("-target=%q requires Xcode", buildTarget)
 		}
 		return goAppleBind(gobind, pkgs, targets)
+	case isJavaPlatform(targets[0].platform):
+		return goJavaBind(gobind, pkgs, targets)
 	default:
 		return fmt.Errorf(`invalid -target=%q`, buildTarget)
 	}
