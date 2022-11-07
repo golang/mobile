@@ -275,6 +275,11 @@ func buildJar(w io.Writer, srcDir string) error {
 		}
 	}
 
+	cp := exec.Command("cp", "-r", filepath.Join(tmpdir, "java", "src", "main", "jniLibs"), dst)
+	if err := runCmd(cp); err != nil {
+		return err
+	}
+
 	bClspath, err := bootClasspath()
 
 	if err != nil {

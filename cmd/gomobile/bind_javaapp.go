@@ -113,13 +113,15 @@ func buildJavaSO(outputDir string, arch string) error {
 		}
 	}
 
-	toolchain := ndk.Toolchain(arch)
+	if arch == "arm64" {
+		arch = "aarch64"
+	}
 	if err := goBuildAt(
 		srcDir,
 		"./gobind",
 		env,
 		"-buildmode=c-shared",
-		"-o="+filepath.Join(outputDir, "src", "main", "jniLibs", toolchain.abi, "libgojni.dylib"),
+		"-o="+filepath.Join(outputDir, "src", "main", "jniLibs", arch, "libgojni.so"),
 	); err != nil {
 		return err
 	}

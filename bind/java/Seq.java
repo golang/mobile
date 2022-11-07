@@ -34,7 +34,15 @@ public class Seq {
 	private static final GoRefQueue goRefQueue = new GoRefQueue();
 
 	static {
-		System.loadLibrary("gojni");
+		if ("The Android Project".equals(System.getProperty("java.vendor"))) {
+			System.loadLibrary("gojni");
+		} else {
+			try {
+				NativeUtils.loadLibraryFromJar("/jniLibs/" + System.getProperty("os.arch") + "/libgojni.so");
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
 		init();
 		Universe.touch();
 	}
