@@ -83,7 +83,12 @@ func buildJavaSO(outputDir string, arch string) error {
 	// Add the generated packages to GOPATH for reverse bindings.
 	gopath := fmt.Sprintf("GOPATH=%s%c%s", tmpdir, filepath.ListSeparator, goEnv("GOPATH"))
 	env = append(env, gopath)
-	env = append(env, "CGO_CFLAGS=\"-I/opt/homebrew/opt/openjdk/include/\"")
+	javac, err := exec.LookPath("javac")
+	if err != nil {
+		return err
+	}
+	javaHome := strings.TrimSuffix(javac, "/bin/javac")
+	env = append(env, "CGO_CFLAGS=\"-I"+javaHome+"/include/\"")
 
 	modulesUsed, err := areGoModulesUsed()
 	if err != nil {
