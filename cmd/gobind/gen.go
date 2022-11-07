@@ -163,11 +163,12 @@ func genPkg(lang string, p *types.Package, astFiles []*ast.File, allPkg []*types
 		closer()
 		if p == nil {
 			// Copy support files
-			dir, err := packageDir(gomobiledir + "/bind/objc")
-			if err != nil {
-				errorf("unable to import bind/objc: %v", err)
-				return
-			}
+			// dir, err := packageDir("golang.org/x/mobile/bind/objc")
+			// if err != nil {
+			// 	errorf("unable to import bind/objc: %v", err)
+			// 	return
+			// }
+			dir := gomobiledir + "/bind/objc"
 			copyFile(filepath.Join("src", "gobind", "seq_darwin.m"), filepath.Join(dir, "seq_darwin.m.support"))
 			copyFile(filepath.Join("src", "gobind", "seq_darwin.go"), filepath.Join(dir, "seq_darwin.go.support"))
 			copyFile(filepath.Join("src", "gobind", "ref.h"), filepath.Join(dir, "ref.h"))
