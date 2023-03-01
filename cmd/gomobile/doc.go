@@ -52,7 +52,7 @@ example, in Android Studio (1.2+), an AAR file can be imported using
 the module import wizard (File > New > New Module > Import .JAR or
 .AAR package), and setting it as a new dependency
 (File > Project Structure > Dependencies).  This requires 'javac'
-(version 1.7+) and Android SDK (API level 15 or newer) to build the
+(version 1.7+) and Android SDK (API level 16 or newer) to build the
 library for Android. The environment variable ANDROID_HOME must be set
 to the path to Android SDK. Use the -javapkg flag to specify the Java
 package prefix for the generated classes.
@@ -113,7 +113,7 @@ Flag -iosversion sets the minimal version of the iOS SDK to compile against.
 The default version is 13.0.
 
 Flag -androidapi sets the Android API version to compile against.
-The default and minimum is 15.
+The default and minimum is 16.
 
 The -bundleid flag is required for -target ios and sets the bundle ID to use
 with the app.
@@ -132,9 +132,9 @@ Usage:
 
 	gomobile clean
 
-# Clean removes object files and cached NDK files downloaded by gomobile init
+Clean removes object files and cached NDK files downloaded by gomobile init.
 
-Build OpenAL for Android
+# Build OpenAL for Android
 
 Usage:
 
