@@ -53,6 +53,7 @@ public class Seq {
 		Universe.touch();
 	}
 
+	// TODO we probably need to make this file go templatable, to support plain JVM and Android better.
 	// setContext sets the context in the go-library to be used in RunOnJvm.
 	// public static void setContext(Context context) {
 	// 	setContext((java.lang.Object)context);
