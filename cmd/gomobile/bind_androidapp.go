@@ -245,7 +245,7 @@ func buildAAR(srcDir, androidDir string, pkgs []*packages.Package, targets []tar
 }
 
 const (
-	javacTargetVer = "1.7"
+	javacTargetVer = "1.8"
 	minAndroidAPI  = 16
 )
 
