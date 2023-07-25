@@ -218,7 +218,7 @@ to create an Android Activity subclass MainActivity:
 Gobind also recognizes Java interfaces as well as Objective C classes and
 protocols the same way.
 
-For more details on binding the the native API, see the design proposals,
+For more details on binding the native API, see the design proposals,
 https://golang.org/issues/16876 (Java) and https://golang.org/issues/17102
 (Objective C).
 
