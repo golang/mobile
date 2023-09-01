@@ -3,7 +3,6 @@
 // license that can be found in the LICENSE file.
 
 //go:build ignore
-// +build ignore
 
 // The gendebug program takes gl.go and generates a version of it
 // where each function includes tracing code that writes its arguments
@@ -885,8 +884,7 @@ const preamble = `// Copyright 2014 The Go Authors.  All rights reserved.
 // Code generated from gl.go using go generate. DO NOT EDIT.
 // See doc.go for details.
 
-// +build darwin linux openbsd windows
-// +build gldebug
+//go:build (darwin || linux || openbsd || windows) && gldebug
 
 package gl
 

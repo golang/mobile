@@ -3,7 +3,6 @@
 // license that can be found in the LICENSE file.
 
 //go:build aaa && bbb
-// +build aaa,bbb
 
 // This file tests that tags work with gomobile.
 package testpkg

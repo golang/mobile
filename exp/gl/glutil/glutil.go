@@ -3,7 +3,6 @@
 // license that can be found in the LICENSE file.
 
 //go:build darwin || linux || windows
-// +build darwin linux windows
 
 package glutil // import "golang.org/x/mobile/exp/gl/glutil"
 

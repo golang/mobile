@@ -6,8 +6,6 @@
 // See doc.go for details.
 
 //go:build (darwin || linux || openbsd || windows) && gldebug
-// +build darwin linux openbsd windows
-// +build gldebug
 
 package gl
 

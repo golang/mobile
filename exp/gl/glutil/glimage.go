@@ -3,7 +3,6 @@
 // license that can be found in the LICENSE file.
 
 //go:build linux || darwin || windows
-// +build linux darwin windows
 
 package glutil
 

@@ -3,7 +3,6 @@
 // license that can be found in the LICENSE file.
 
 //go:build darwin || linux || windows
-// +build darwin linux windows
 
 // An app that paints green if golang.org is reachable when the app first
 // starts, or red otherwise.

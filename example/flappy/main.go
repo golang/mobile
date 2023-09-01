@@ -3,7 +3,6 @@
 // license that can be found in the LICENSE file.
 
 //go:build darwin || linux
-// +build darwin linux
 
 // Flappy Gopher is a simple one-button game that uses the
 // mobile framework and the experimental sprite engine.
