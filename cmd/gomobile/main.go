@@ -9,7 +9,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"flag"
 	"fmt"
 	"html/template"
@@ -24,8 +23,10 @@ import (
 
 var (
 	gomobileName = "gomobile"
-	goVersionOut = []byte(nil)
+	goVersion    string
 )
+
+const minimumGoMinorVersion = 18
 
 func printUsage(w io.Writer) {
 	bufw := bufio.NewWriter(w)
@@ -58,7 +59,7 @@ func main() {
 		return
 	}
 
-	if err := determineGoVersion(); err != nil {
+	if _, err := ensureGoVersion(); err != nil {
 		fmt.Fprintf(os.Stderr, "%s: %v\n", gomobileName, err)
 		os.Exit(1)
 	}
@@ -84,20 +85,25 @@ func main() {
 	os.Exit(2)
 }
 
-func determineGoVersion() error {
+func ensureGoVersion() (string, error) {
+	if goVersion != "" {
+		return goVersion, nil
+	}
+
 	goVersionOut, err := exec.Command("go", "version").CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("'go version' failed: %v, %s", err, goVersionOut)
+		return "", fmt.Errorf("'go version' failed: %v, %s", err, goVersionOut)
 	}
 	var minor int
 	if _, err := fmt.Sscanf(string(goVersionOut), "go version go1.%d", &minor); err != nil {
 		// Ignore unknown versions; it's probably a devel version.
-		return nil
+		return "", nil
 	}
-	if minor < 16 {
-		return errors.New("Go 1.16 or newer is required")
+	goVersion = fmt.Sprintf("go1.%d", minor)
+	if minor < minimumGoMinorVersion {
+		return "", fmt.Errorf("Go 1.%d or newer is required", minimumGoMinorVersion)
 	}
-	return nil
+	return goVersion, nil
 }
 
 func help(args []string) {

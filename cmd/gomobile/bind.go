@@ -251,7 +251,9 @@ func getModuleVersions(targetPlatform string, targetArch string, src string) (*m
 	}
 
 	f := &modfile.File{}
-	f.AddModuleStmt("gobind")
+	if err := f.AddModuleStmt("gobind"); err != nil {
+		return nil, err
+	}
 	e := json.NewDecoder(bytes.NewReader(output))
 	for {
 		var mod *Module
@@ -266,13 +268,19 @@ func getModuleVersions(targetPlatform string, targetArch string, src string) (*m
 					// replaced by a local directory
 					p = mod.Replace.Dir
 				}
-				f.AddReplace(mod.Path, mod.Version, p, v)
+				if err := f.AddReplace(mod.Path, mod.Version, p, v); err != nil {
+					return nil, err
+				}
 			} else {
 				// When the version part is empty, the module is local and mod.Dir represents the location.
 				if v := mod.Version; v == "" {
-					f.AddReplace(mod.Path, mod.Version, mod.Dir, "")
+					if err := f.AddReplace(mod.Path, mod.Version, mod.Dir, ""); err != nil {
+						return nil, err
+					}
 				} else {
-					f.AddRequire(mod.Path, v)
+					if err := f.AddRequire(mod.Path, v); err != nil {
+						return nil, err
+					}
 				}
 			}
 		}
@@ -280,6 +288,19 @@ func getModuleVersions(targetPlatform string, targetArch string, src string) (*m
 			break
 		}
 	}
+
+	v, err := ensureGoVersion()
+	if err != nil {
+		return nil, err
+	}
+	// ensureGoVersion can return an empty string for a devel version. In this case, use the minimum version.
+	if v == "" {
+		v = fmt.Sprintf("go1.%d", minimumGoMinorVersion)
+	}
+	if err := f.AddGoStmt(strings.TrimPrefix(v, "go")); err != nil {
+		return nil, err
+	}
+
 	return f, nil
 }
 
