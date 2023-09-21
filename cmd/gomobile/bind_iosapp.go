@@ -269,6 +269,14 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 	xcframeworkArgs := []string{"-create-xcframework"}
 
 	for _, dir := range frameworkDirs {
+		// On macOS, a temporary directory starts with /var, which is a symbolic link to /private/var.
+		// And in gomobile, a temporary directory is usually used as a working directly.
+		// Unfortunately, xcodebuild in Xcode 15 seems to have a bug and might not be able to understand fullpaths with symbolic links.
+		// As a workaround, resolve the path with symbolic links by filepath.EvalSymlinks.
+		dir, err := filepath.EvalSymlinks(dir)
+		if err != nil {
+			return err
+		}
 		xcframeworkArgs = append(xcframeworkArgs, "-framework", dir)
 	}
 
