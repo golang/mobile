@@ -226,7 +226,7 @@ func packagesConfig(t targetInfo) *packages.Config {
 }
 
 // getModuleVersions returns a module information at the directory src.
-func getModuleVersions(targetPlatform string, targetArch string, src string) (*modfile.File, error) {
+func getModuleVersions(targetPlatform string, targetArch string, src string, dir string) (*modfile.File, error) {
 	cmd := exec.Command("go", "list")
 	cmd.Env = append(os.Environ(), "GOOS="+platformOS(targetPlatform), "GOARCH="+targetArch)
 
@@ -289,6 +289,17 @@ func getModuleVersions(targetPlatform string, targetArch string, src string) (*m
 		}
 	}
 
+	for _, subdir := range []string{"Java", "ObjC"} {
+		if _, err := os.Stat(filepath.Join(dir, subdir)); err == nil {
+			if err := f.AddReplace(subdir, "", filepath.Join(dir, subdir), ""); err != nil {
+				return nil, err
+			}
+			if err := os.WriteFile(filepath.Join(dir, subdir, "go.mod"), []byte("module "+subdir+"\n"), 0644); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	v, err := ensureGoVersion()
 	if err != nil {
 		return nil, err
@@ -316,7 +327,7 @@ func writeGoMod(dir, targetPlatform, targetArch string) error {
 	}
 
 	return writeFile(filepath.Join(dir, "go.mod"), func(w io.Writer) error {
-		f, err := getModuleVersions(targetPlatform, targetArch, ".")
+		f, err := getModuleVersions(targetPlatform, targetArch, ".", dir)
 		if err != nil {
 			return err
 		}
