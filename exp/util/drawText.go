@@ -59,7 +59,7 @@ func (t *Text) Draw(sz size.Event, x, y int, scaleX, scaleY geom.Pt, s string) {
 	// split string by newline
 	lines := strings.Split(s, "\n")
 
-	// draw each string on a seperate line
+	// draw each string on a separate line
 	for i, v := range lines {
 		drawText(t.m.RGBA, int(geom.Pt(x)/scaleX), int(geom.Pt(y)/scaleY)+i*10, v)
 	}
