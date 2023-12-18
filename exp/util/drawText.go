@@ -48,7 +48,7 @@ func NewText(images *glutil.Images) *Text {
 func (t *Text) Draw(sz size.Event, x, y int, scaleX, scaleY geom.Pt, s string) {
 	if sz.WidthPx == 0 && sz.HeightPx == 0 {
 		return
-	} else if t.m == nil {
+	} else if t.sz != sz {
 		t.sz = sz
 		if t.m != nil {
 			t.m.Release()
