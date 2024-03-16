@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -230,6 +231,14 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 			if err != nil {
 				return err
 			}
+
+			err = writeFile(filepath.Join(frameworkDir, "Info.plist"), func(w io.Writer) error {
+				_, err := w.Write([]byte(appleBlankInfoPlist))
+				return err
+			})
+			if err != nil {
+				return err
+			}
 		}
 
 		if err := mkdir(filepath.Join(versionsADir, "Resources")); err != nil {
@@ -239,7 +248,15 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 			return err
 		}
 		err = writeFile(filepath.Join(frameworkDir, "Resources", "Info.plist"), func(w io.Writer) error {
-			_, err := w.Write([]byte(appleBindInfoPlist))
+			infoFrameworkPlistlData := infoFrameworkPlistlData{
+				BundleID:       title,
+				ExecutableName: title,
+			}
+			infoplist := new(bytes.Buffer)
+			if err := infoFrameworkPlistTmpl.Execute(infoplist, infoFrameworkPlistlData); err != nil {
+				return err
+			}
+			_, err := w.Write(infoplist.Bytes())
 			return err
 		})
 		if err != nil {
@@ -286,13 +303,30 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 	return err
 }
 
-const appleBindInfoPlist = `<?xml version="1.0" encoding="UTF-8"?>
+const appleBlankInfoPlist = `<?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
     <plist version="1.0">
       <dict>
       </dict>
     </plist>
 `
+
+type infoFrameworkPlistlData struct {
+	BundleID       string
+	ExecutableName string
+}
+
+var infoFrameworkPlistTmpl = template.Must(template.New("infoFrameworkPlist").Parse(`<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleExecutable</key>
+  <string>{{.ExecutableName}}</string>
+  <key>CFBundleIdentifier</key>
+  <string>{{.BundleID}}</string>
+</dict>
+</plist>
+`))
 
 var appleModuleMapTmpl = template.Must(template.New("iosmmap").Parse(`framework module "{{.Module}}" {
 	header "ref.h"
