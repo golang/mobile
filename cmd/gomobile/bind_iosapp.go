@@ -6,6 +6,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -249,8 +250,8 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 		}
 		err = writeFile(filepath.Join(frameworkDir, "Resources", "Info.plist"), func(w io.Writer) error {
 			infoFrameworkPlistlData := infoFrameworkPlistlData{
-				BundleID:       rfc1034Label(title),
-				ExecutableName: title,
+				BundleID:       escapePlistValue(rfc1034Label(title)),
+				ExecutableName: escapePlistValue(title),
 			}
 			infoplist := new(bytes.Buffer)
 			if err := infoFrameworkPlistTmpl.Execute(infoplist, infoFrameworkPlistlData); err != nil {
@@ -327,6 +328,12 @@ var infoFrameworkPlistTmpl = template.Must(template.New("infoFrameworkPlist").Pa
 </dict>
 </plist>
 `))
+
+func escapePlistValue(value string) string {
+	var b bytes.Buffer
+	xml.EscapeText(&b, []byte(value))
+	return b.String()
+}
 
 var appleModuleMapTmpl = template.Must(template.New("iosmmap").Parse(`framework module "{{.Module}}" {
 	header "ref.h"
