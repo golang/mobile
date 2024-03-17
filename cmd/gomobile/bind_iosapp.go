@@ -249,7 +249,7 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 		}
 		err = writeFile(filepath.Join(frameworkDir, "Resources", "Info.plist"), func(w io.Writer) error {
 			infoFrameworkPlistlData := infoFrameworkPlistlData{
-				BundleID:       title,
+				BundleID:       rfc1034Label(title),
 				ExecutableName: title,
 			}
 			infoplist := new(bytes.Buffer)
