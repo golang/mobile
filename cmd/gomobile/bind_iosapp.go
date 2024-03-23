@@ -151,9 +151,12 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 		frameworkDirs = append(frameworkDirs, frameworkDir)
 		frameworkArchCount[frameworkDir] = frameworkArchCount[frameworkDir] + 1
 
-		versionsDir := filepath.Join(frameworkDir, "Versions")
-		versionsADir := filepath.Join(versionsDir, "A")
-		titlePath := filepath.Join(versionsADir, title)
+		frameworkLayout, err := frameworkLayoutForTarget(t)
+		if err != nil {
+			return err
+		}
+
+		titlePath := filepath.Join(frameworkDir, frameworkLayout.binaryPath, title)
 		if frameworkArchCount[frameworkDir] > 1 {
 			// Not the first static lib, attach to a fat library and skip create headers
 			fatCmd := exec.Command(
@@ -166,18 +169,19 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 			continue
 		}
 
-		versionsAHeadersDir := filepath.Join(versionsADir, "Headers")
-		if err := mkdir(versionsAHeadersDir); err != nil {
+		headersDir := filepath.Join(frameworkDir, frameworkLayout.headerPath)
+		if err := mkdir(headersDir); err != nil {
 			return err
 		}
-		if err := symlink("A", filepath.Join(versionsDir, "Current")); err != nil {
-			return err
-		}
-		if err := symlink("Versions/Current/Headers", filepath.Join(frameworkDir, "Headers")); err != nil {
-			return err
-		}
-		if err := symlink(filepath.Join("Versions/Current", title), filepath.Join(frameworkDir, title)); err != nil {
-			return err
+		if frameworkLayout.currentSymlink != "" {
+			// symlink Versions/Current to Versions/A
+			if err := symlink("A", filepath.Join(frameworkDir, frameworkLayout.currentSymlink)); err != nil {
+				return err
+			}
+			// Create a symlink from framework root to the binary in the Versions/Current directory.
+			if err := symlink(filepath.Join(frameworkLayout.currentSymlink, title), filepath.Join(frameworkDir, title)); err != nil {
+				return err
+			}
 		}
 
 		lipoCmd := exec.Command(
@@ -199,7 +203,7 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 		if len(fileBases) == 1 {
 			headerFiles = append(headerFiles, title+".h")
 			err := copyFile(
-				filepath.Join(versionsAHeadersDir, title+".h"),
+				filepath.Join(headersDir, title+".h"),
 				filepath.Join(gobindDir, bindPrefix+title+".objc.h"),
 			)
 			if err != nil {
@@ -209,7 +213,7 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 			for _, fileBase := range fileBases {
 				headerFiles = append(headerFiles, fileBase+".objc.h")
 				err := copyFile(
-					filepath.Join(versionsAHeadersDir, fileBase+".objc.h"),
+					filepath.Join(headersDir, fileBase+".objc.h"),
 					filepath.Join(gobindDir, fileBase+".objc.h"),
 				)
 				if err != nil {
@@ -217,14 +221,14 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 				}
 			}
 			err := copyFile(
-				filepath.Join(versionsAHeadersDir, "ref.h"),
+				filepath.Join(headersDir, "ref.h"),
 				filepath.Join(gobindDir, "ref.h"),
 			)
 			if err != nil {
 				return err
 			}
 			headerFiles = append(headerFiles, title+".h")
-			err = writeFile(filepath.Join(versionsAHeadersDir, title+".h"), func(w io.Writer) error {
+			err = writeFile(filepath.Join(headersDir, title+".h"), func(w io.Writer) error {
 				return appleBindHeaderTmpl.Execute(w, map[string]interface{}{
 					"pkgs": pkgs, "title": title, "bases": fileBases,
 				})
@@ -232,23 +236,14 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 			if err != nil {
 				return err
 			}
-
-			err = writeFile(filepath.Join(frameworkDir, "Info.plist"), func(w io.Writer) error {
-				_, err := w.Write([]byte(appleBlankInfoPlist))
-				return err
-			})
-			if err != nil {
-				return err
-			}
 		}
 
-		if err := mkdir(filepath.Join(versionsADir, "Resources")); err != nil {
+		frameworkInfoPlistDir := filepath.Join(frameworkDir, frameworkLayout.infoPlistPath)
+		if err := mkdir(frameworkInfoPlistDir); err != nil {
 			return err
 		}
-		if err := symlink("Versions/Current/Resources", filepath.Join(frameworkDir, "Resources")); err != nil {
-			return err
-		}
-		err = writeFile(filepath.Join(frameworkDir, "Resources", "Info.plist"), func(w io.Writer) error {
+		// TODO: more keys
+		err = writeFile(filepath.Join(frameworkInfoPlistDir, "Info.plist"), func(w io.Writer) error {
 			infoFrameworkPlistlData := infoFrameworkPlistlData{
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -281,13 +276,10 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 			Module:  title,
 			Headers: headerFiles,
 		}
-		err = writeFile(filepath.Join(versionsADir, "Modules", "module.modulemap"), func(w io.Writer) error {
+		modulesDir := filepath.Join(frameworkDir, frameworkLayout.modulePath)
+		err = writeFile(filepath.Join(modulesDir, "module.modulemap"), func(w io.Writer) error {
 			return appleModuleMapTmpl.Execute(w, mmVals)
 		})
-		if err != nil {
-			return err
-		}
-		err = symlink(filepath.Join("Versions/Current/Modules"), filepath.Join(frameworkDir, "Modules"))
 		if err != nil {
 			return err
 		}
@@ -314,6 +306,38 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 	return err
 }
 
+type frameworkLayout struct {
+	headerPath     string
+	binaryPath     string
+	modulePath     string
+	infoPlistPath  string
+	currentSymlink string
+}
+
+// As of Xcode 15.3 the layout must follow this spec (and can't include symlinks):
+// https://developer.apple.com/documentation/bundleresources/placing_content_in_a_bundle
+func frameworkLayoutForTarget(t targetInfo) (*frameworkLayout, error) {
+	// TODO: check if maccatalyst is shoud be macos or ios
+	if t.platform == "macos" || t.platform == "maccatalyst" {
+		return &frameworkLayout{
+			headerPath:     "Versions/A/Headers",
+			binaryPath:     "Versions/A",
+			modulePath:     "Versions/A/Modules",
+			infoPlistPath:  "Versions/A/Resources",
+			currentSymlink: "Versions/Current",
+		}, nil
+	} else if t.platform == "ios" || t.platform == "iossimulator" {
+		return &frameworkLayout{
+			headerPath:    "/Headers",
+			binaryPath:    "/",
+			modulePath:    "/Modules",
+			infoPlistPath: "/",
+		}, nil
+	}
+
+	return nil, fmt.Errorf("unsupported platform %q", t.platform)
+}
+
 const appleBlankInfoPlist = `<?xml version="1.0" encoding="UTF-8"?>
     <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
     <plist version="1.0">
@@ -335,6 +359,16 @@ var infoFrameworkPlistTmpl = template.Must(template.New("infoFrameworkPlist").Pa
   <string>{{.ExecutableName}}</string>
   <key>CFBundleIdentifier</key>
   <string>{{.BundleID}}</string>
+	<key>CFBundleName</key>
+	<string>TODO_REAL_VAL</string>
+	<key>MinimumOSVersion</key>
+	<string>100.0</string>
+	<key>CFBundleVersion</key>
+	<string>1.0</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundlePackageType</key>
+	<string>FMWK</string>
 </dict>
 </plist>
 `))
