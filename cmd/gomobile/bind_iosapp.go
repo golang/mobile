@@ -303,7 +303,8 @@ type frameworkLayout struct {
 // frameworkLayoutForTarget generates the filestructure for a framework for the given target platform (macos, ios, etc),
 // according to Apple's spec https://developer.apple.com/documentation/bundleresources/placing_content_in_a_bundle
 func frameworkLayoutForTarget(t targetInfo, title string) (*frameworkLayout, error) {
-	if t.platform == "macos" || t.platform == "maccatalyst" {
+	switch t.platform {
+	case "macos", "maccatalyst":
 		return &frameworkLayout{
 			headerPath:    "Versions/A/Headers",
 			binaryPath:    "Versions/A",
@@ -314,12 +315,12 @@ func frameworkLayoutForTarget(t targetInfo, title string) (*frameworkLayout, err
 				filepath.Join("Versions/Current", title): title,
 			},
 		}, nil
-	} else if t.platform == "ios" || t.platform == "iossimulator" {
+	case "ios", "iossimulator":
 		return &frameworkLayout{
-			headerPath:    "/Headers",
-			binaryPath:    "/",
-			modulePath:    "/Modules",
-			infoPlistPath: "/",
+			headerPath:    "Headers",
+			binaryPath:    "",
+			modulePath:    "Modules",
+			infoPlistPath: "",
 		}, nil
 	}
 
