@@ -338,19 +338,13 @@ func frameworkLayoutForTarget(t targetInfo, title string) (*frameworkLayout, err
 	return nil, fmt.Errorf("unsupported platform %q", t.platform)
 }
 
-const appleBlankInfoPlist = `<?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-    <plist version="1.0">
-      <dict>
-      </dict>
-    </plist>
-`
-
 type infoFrameworkPlistlData struct {
 	BundleID       string
 	ExecutableName string
 }
 
+// Minimum OS version == 100.0 is a workaround for SPM issue
+// https://github.com/firebase/firebase-ios-sdk/pull/12439/files#diff-f4eb4ff5ec89af999cbe8fa3ffe5647d7853ffbc9c1515b337ca043c684b6bb4R679
 var infoFrameworkPlistTmpl = template.Must(template.New("infoFrameworkPlist").Parse(`<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -359,16 +353,10 @@ var infoFrameworkPlistTmpl = template.Must(template.New("infoFrameworkPlist").Pa
   <string>{{.ExecutableName}}</string>
   <key>CFBundleIdentifier</key>
   <string>{{.BundleID}}</string>
-	<key>CFBundleName</key>
-	<string>TODO_REAL_VAL</string>
-	<key>MinimumOSVersion</key>
-	<string>100.0</string>
-	<key>CFBundleVersion</key>
-	<string>1.0</string>
-	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
-	<key>CFBundlePackageType</key>
-	<string>FMWK</string>
+  <key>MinimumOSVersion</key>
+  <string>100.0</string>
+  <key>CFBundlePackageType</key>
+  <string>FMWK</string>
 </dict>
 </plist>
 `))
