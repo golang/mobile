@@ -296,13 +296,12 @@ type frameworkLayout struct {
 	binaryPath    string
 	modulePath    string
 	infoPlistPath string
-	// src (relative to dst) -> dst (relative to bundle root)
+	// symlinks to create in the framework. Maps src (relative to dst) -> dst (relative to bundle root)
 	symlinks map[string]string
 }
 
-// MacOS and iOS require different layouts for frameworks.
-// https://developer.apple.com/documentation/bundleresources/placing_content_in_a_bundle
-// As of Xcode 15.3 this is enforced, and can't use symlinks
+// frameworkLayoutForTarget generates the filestructure for a framework for the given target platform (macos, ios, etc),
+// according to Apple's spec https://developer.apple.com/documentation/bundleresources/placing_content_in_a_bundle
 func frameworkLayoutForTarget(t targetInfo, title string) (*frameworkLayout, error) {
 	if t.platform == "macos" || t.platform == "maccatalyst" {
 		return &frameworkLayout{
@@ -332,6 +331,7 @@ type infoFrameworkPlistlData struct {
 	ExecutableName string
 }
 
+// infoFrameworkPlistTmpl is a template for the Info.plist file in a framework.
 // Minimum OS version == 100.0 is a workaround for SPM issue
 // https://github.com/firebase/firebase-ios-sdk/pull/12439/files#diff-f4eb4ff5ec89af999cbe8fa3ffe5647d7853ffbc9c1515b337ca043c684b6bb4R679
 var infoFrameworkPlistTmpl = template.Must(template.New("infoFrameworkPlist").Parse(`<?xml version="1.0" encoding="UTF-8"?>
