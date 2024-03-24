@@ -977,7 +977,7 @@ func (g *ObjcGen) genInterfaceMethodProxy(obj *types.TypeName, m *types.Func) {
 
 	if isErrorType(obj.Type()) && m.Name() == "Error" {
 		// As a special case, ObjC NSErrors are passed to Go pretending to implement the Go error interface.
-		// They don't actually have an Error method, so calls to to it needs to be rerouted.
+		// They don't actually have an Error method, so calls to it needs to be rerouted.
 		g.Printf("%s = [o localizedDescription];\n", s.retParams[0].name)
 	} else {
 		if s.ret == "void" {
