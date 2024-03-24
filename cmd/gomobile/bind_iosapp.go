@@ -251,12 +251,17 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 		err = writeFile(filepath.Join(frameworkDir, "Resources", "Info.plist"), func(w io.Writer) error {
 			infoFrameworkPlistlData := infoFrameworkPlistlData{
 <<<<<<< HEAD
+<<<<<<< HEAD
 				BundleID:       escapePlistValue(rfc1034Label(title)),
 				ExecutableName: escapePlistValue(title),
 =======
 				BundleID:       rfc1034Label(title),
 				ExecutableName: title,
 >>>>>>> aaa3fc2 (Add escaping using rfc1034Label (aligns to Apple docs and prior convention in the package).)
+=======
+				BundleID:       escapePlistValue(rfc1034Label(title)),
+				ExecutableName: escapePlistValue(title),
+>>>>>>> 6277c7d (Add XML (plist) escaping)
 			}
 			infoplist := new(bytes.Buffer)
 			if err := infoFrameworkPlistTmpl.Execute(infoplist, infoFrameworkPlistlData); err != nil {
