@@ -232,7 +232,6 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 		if err := mkdir(frameworkInfoPlistDir); err != nil {
 			return err
 		}
-		// TODO: more keys
 		err = writeFile(filepath.Join(frameworkInfoPlistDir, "Info.plist"), func(w io.Writer) error {
 			infoFrameworkPlistlData := infoFrameworkPlistlData{
 <<<<<<< HEAD
