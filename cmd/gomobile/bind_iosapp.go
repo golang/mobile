@@ -307,11 +307,13 @@ type frameworkLayout struct {
 	binaryPath    string
 	modulePath    string
 	infoPlistPath string
-	symlinks      map[string]string
+	// src (relative to dst) -> dst (relative to bundle root)
+	symlinks map[string]string
 }
 
-// As of Xcode 15.3 the layout must follow this spec (not just using symlinks):
+// MacOS and iOS require different layouts for frameworks.
 // https://developer.apple.com/documentation/bundleresources/placing_content_in_a_bundle
+// As of Xcode 15.3 this is enforced, and can't use symlinks
 func frameworkLayoutForTarget(t targetInfo, title string) (*frameworkLayout, error) {
 	if t.platform == "macos" || t.platform == "maccatalyst" {
 		return &frameworkLayout{
