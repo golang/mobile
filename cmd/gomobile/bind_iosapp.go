@@ -151,7 +151,7 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 		frameworkDirs = append(frameworkDirs, frameworkDir)
 		frameworkArchCount[frameworkDir] = frameworkArchCount[frameworkDir] + 1
 
-		frameworkLayout, err := frameworkLayoutForTarget(t)
+		frameworkLayout, err := frameworkLayoutForTarget(t, title)
 		if err != nil {
 			return err
 		}
@@ -172,16 +172,6 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 		headersDir := filepath.Join(frameworkDir, frameworkLayout.headerPath)
 		if err := mkdir(headersDir); err != nil {
 			return err
-		}
-		if frameworkLayout.currentSymlink != "" {
-			// symlink Versions/Current to Versions/A
-			if err := symlink("A", filepath.Join(frameworkDir, frameworkLayout.currentSymlink)); err != nil {
-				return err
-			}
-			// Create a symlink from framework root to the binary in the Versions/Current directory.
-			if err := symlink(filepath.Join(frameworkLayout.currentSymlink, title), filepath.Join(frameworkDir, title)); err != nil {
-				return err
-			}
 		}
 
 		lipoCmd := exec.Command(
@@ -283,6 +273,12 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 		if err != nil {
 			return err
 		}
+
+		for dst, src := range frameworkLayout.symlinks {
+			if err := symlink(dst, filepath.Join(frameworkDir, src)); err != nil {
+				return err
+			}
+		}
 	}
 
 	// Finally combine all frameworks to an XCFramework
@@ -307,24 +303,26 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 }
 
 type frameworkLayout struct {
-	headerPath     string
-	binaryPath     string
-	modulePath     string
-	infoPlistPath  string
-	currentSymlink string
+	headerPath    string
+	binaryPath    string
+	modulePath    string
+	infoPlistPath string
+	symlinks      map[string]string
 }
 
-// As of Xcode 15.3 the layout must follow this spec (and can't include symlinks):
+// As of Xcode 15.3 the layout must follow this spec (not just using symlinks):
 // https://developer.apple.com/documentation/bundleresources/placing_content_in_a_bundle
-func frameworkLayoutForTarget(t targetInfo) (*frameworkLayout, error) {
-	// TODO: check if maccatalyst is shoud be macos or ios
+func frameworkLayoutForTarget(t targetInfo, title string) (*frameworkLayout, error) {
 	if t.platform == "macos" || t.platform == "maccatalyst" {
 		return &frameworkLayout{
-			headerPath:     "Versions/A/Headers",
-			binaryPath:     "Versions/A",
-			modulePath:     "Versions/A/Modules",
-			infoPlistPath:  "Versions/A/Resources",
-			currentSymlink: "Versions/Current",
+			headerPath:    "Versions/A/Headers",
+			binaryPath:    "Versions/A",
+			modulePath:    "Versions/A/Modules",
+			infoPlistPath: "Versions/A/Resources",
+			symlinks: map[string]string{
+				"A":                                      "Versions/Current",
+				filepath.Join("Versions/Current", title): title,
+			},
 		}, nil
 	} else if t.platform == "ios" || t.platform == "iossimulator" {
 		return &frameworkLayout{
