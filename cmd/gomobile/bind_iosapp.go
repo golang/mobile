@@ -263,8 +263,8 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 			return err
 		}
 
-		for dst, src := range frameworkLayout.symlinks {
-			if err := symlink(dst, filepath.Join(frameworkDir, src)); err != nil {
+		for src, dst := range frameworkLayout.symlinks {
+			if err := symlink(src, filepath.Join(frameworkDir, dst)); err != nil {
 				return err
 			}
 		}
@@ -296,7 +296,7 @@ type frameworkLayout struct {
 	binaryPath    string
 	modulePath    string
 	infoPlistPath string
-	// symlinks to create in the framework. Maps src (relative to dst) -> dst (relative to bundle root)
+	// symlinks to create in the framework. Maps src (relative to dst) -> dst (relative to framework bundle root)
 	symlinks map[string]string
 }
 
