@@ -321,9 +321,9 @@ func frameworkLayoutForTarget(t targetInfo, title string) (*frameworkLayout, err
 	case "ios", "iossimulator":
 		return &frameworkLayout{
 			headerPath:    "Headers",
-			binaryPath:    "",
+			binaryPath:    ".",
 			modulePath:    "Modules",
-			infoPlistPath: "",
+			infoPlistPath: ".",
 		}, nil
 	}
 
