@@ -313,6 +313,8 @@ func frameworkLayoutForTarget(t targetInfo, title string) (*frameworkLayout, err
 			symlinks: map[string]string{
 				"A":                                      "Versions/Current",
 				"Versions/Current/Resources":             "Resources",
+				"Versions/Current/Headers":               "Headers",
+				"Versions/Current/Modules":               "Modules",
 				filepath.Join("Versions/Current", title): title,
 			},
 		}, nil
