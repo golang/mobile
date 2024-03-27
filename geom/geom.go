@@ -74,7 +74,7 @@ import "fmt"
 //
 // The unit Pt is a typographical point, 1/72 of an inch (0.3527 mm).
 //
-// It can be be converted to a length in current device pixels by
+// It can be converted to a length in current device pixels by
 // multiplying with PixelsPerPt after app initialization is complete.
 type Pt float32
 
