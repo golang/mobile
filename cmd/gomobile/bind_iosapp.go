@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
+	"time"
 
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/tools/go/packages"
@@ -233,9 +234,11 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 			return err
 		}
 		err = writeFile(filepath.Join(frameworkInfoPlistDir, "Info.plist"), func(w io.Writer) error {
+			fmVersion := fmt.Sprintf("0.0.%d", time.Now().Unix())
 			infoFrameworkPlistlData := infoFrameworkPlistlData{
 				BundleID:       escapePlistValue(rfc1034Label(title)),
 				ExecutableName: escapePlistValue(title),
+				Version:        escapePlistValue(fmVersion),
 			}
 			infoplist := new(bytes.Buffer)
 			if err := infoFrameworkPlistTmpl.Execute(infoplist, infoFrameworkPlistlData); err != nil {
@@ -333,6 +336,7 @@ func frameworkLayoutForTarget(t targetInfo, title string) (*frameworkLayout, err
 type infoFrameworkPlistlData struct {
 	BundleID       string
 	ExecutableName string
+	Version        string
 }
 
 // infoFrameworkPlistTmpl is a template for the Info.plist file in a framework.
@@ -348,6 +352,10 @@ var infoFrameworkPlistTmpl = template.Must(template.New("infoFrameworkPlist").Pa
   <string>{{.BundleID}}</string>
   <key>MinimumOSVersion</key>
   <string>100.0</string>
+  <key>CFBundleShortVersionString</key>
+  <string>{{.Version}}</string>
+  <key>CFBundleVersion</key>
+  <string>{{.Version}}</string>
   <key>CFBundlePackageType</key>
   <string>FMWK</string>
 </dict>
