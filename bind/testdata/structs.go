@@ -25,6 +25,38 @@ func IdentityWithError(s *S) (*S, error) {
 	return s, nil
 }
 
+func (s *S) Repeat(n int) []*S {
+	t := make([]*S, n)
+	for i := range t {
+		t[i] = s
+	}
+	return t
+}
+
+func (s *S) RepeatWithError(n int) ([]*S, error) {
+	return Repeat(s, n), nil
+}
+
+func Repeat(s *S, n int) []*S {
+	t := make([]*S, n)
+	for i := range t {
+		t[i] = s
+	}
+	return t
+}
+
+func RepeatWithError(s *S, n int) ([]*S, error) {
+	return Repeat(s, n), nil
+}
+
+func FirstSum(s []*S) float64 {
+	return s[0].Sum()
+}
+
+func FirstSumWithError(s []*S) (float64, error) {
+	return s[0].Sum(), nil
+}
+
 type (
 	S2 struct{}
 	I  interface {

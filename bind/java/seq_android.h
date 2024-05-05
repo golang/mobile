@@ -30,6 +30,10 @@ typedef struct nbyteslice {
 	void *ptr;
 	jsize len;
 } nbyteslice;
+typedef struct nrefnumslice {
+	void *ptr;
+	jsize len;
+} nrefnumslice;
 typedef jlong nint;
 
 extern void go_seq_dec_ref(int32_t ref);
@@ -47,6 +51,8 @@ extern jobject go_seq_get_exception(JNIEnv *env);
 
 extern jbyteArray go_seq_to_java_bytearray(JNIEnv *env, nbyteslice s, int copy);
 extern nbyteslice go_seq_from_java_bytearray(JNIEnv *env, jbyteArray s, int copy);
+extern jobjectArray go_seq_to_java_objectarray(JNIEnv *env, nrefnumslice arr);
+extern nrefnumslice go_seq_from_java_objectarray(JNIEnv *env, jobjectArray arr);
 extern void go_seq_release_byte_array(JNIEnv *env, jbyteArray arr, jbyte* ptr);
 
 extern jstring go_seq_to_java_string(JNIEnv *env, nstring str);

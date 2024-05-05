@@ -135,6 +135,13 @@ func (j *javaClassInfo) toJavaType(T types.Type) *java.Type {
 			case types.Uint8: // Byte.
 				return &java.Type{Kind: java.Array, Elem: &java.Type{Kind: java.Byte}}
 			}
+		case *types.Pointer:
+			switch e.Elem().(type) {
+			case *types.Named:
+				if isJavaType(e) {
+					return &java.Type{Kind: java.Array, Elem: &java.Type{Kind: java.Object, Class: classNameFor(e)}}
+				}
+			}
 		}
 		return nil
 	case *types.Named:
@@ -641,8 +648,18 @@ func (g *JavaGen) jniType(T types.Type) string {
 			return "TODO"
 		}
 	case *types.Slice:
-		return "jbyteArray"
-
+		switch e := T.Elem().(type) {
+		case *types.Basic:
+			switch e.Kind() {
+			case types.Uint8: // Byte.
+				return "jbyteArray"
+			}
+		case *types.Pointer:
+			switch e.Elem().(type) {
+			case *types.Named:
+				return "jobjectArray"
+			}
+		}
 	case *types.Pointer:
 		if _, ok := T.Elem().(*types.Named); ok {
 			return g.jniType(T.Elem())
@@ -915,6 +932,13 @@ func (g *JavaGen) genJavaToC(varName string, t types.Type, mode varMode) {
 			default:
 				g.errorf("unsupported type: %s", t)
 			}
+		case *types.Pointer:
+			switch e.Elem().(type) {
+			case *types.Named:
+				g.Printf("nobjectarray _%s = go_seq_from_java_objectarray(env, %s, %d);\n", varName, varName, toCFlag(mode == modeRetained))
+			default:
+				g.errorf("unsupported type: %s", t)
+			}
 		default:
 			g.errorf("unsupported type: %s", t)
 		}
@@ -949,6 +973,13 @@ func (g *JavaGen) genCToJava(toName, fromName string, t types.Type, mode varMode
 			switch e.Kind() {
 			case types.Uint8: // Byte.
 				g.Printf("jbyteArray %s = go_seq_to_java_bytearray(env, %s, %d);\n", toName, fromName, toCFlag(mode == modeRetained))
+			default:
+				g.errorf("unsupported type: %s", t)
+			}
+		case *types.Pointer:
+			switch e.Elem().(type) {
+			case *types.Named:
+				g.Printf("jobjectArray %s = go_seq_to_java_objectarray(env, %s, %d);\n", toName, fromName, toCFlag(mode == modeRetained))
 			default:
 				g.errorf("unsupported type: %s", t)
 			}

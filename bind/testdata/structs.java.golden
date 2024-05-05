@@ -30,6 +30,8 @@ public final class S implements Seq.Proxy {
     public final native void setY(double v);
     
     public native S identity() throws Exception;
+    public native S[] repeat(long n);
+    public native S[] repeatWithError(long n) throws Exception;
     public native double sum();
     @Override public boolean equals(Object o) {
         if (o == null || !(o instanceof S)) {
@@ -176,7 +178,7 @@ import go.Seq;
 
 public abstract class Structs {
     static {
-        Seq.touch(); // for loading the native library
+    Seq.touch(); // for loading the native library
         _init();
     }
     
@@ -200,7 +202,10 @@ public abstract class Structs {
         public native void m();
     }
     
-    
+    public static native double firstSum(S[] s);
+    public static native double firstSumWithError(S[] s) throws Exception;
     public static native S identity(S s);
     public static native S identityWithError(S s) throws Exception;
+    public static native S[] repeat(S s, long n);
+    public static native S[] repeatWithError(S s, long n) throws Exception;
 }
