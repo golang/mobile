@@ -65,7 +65,7 @@ classes.
 
 The -v flag provides verbose output, including the list of packages built.
 
-The build flags -a, -n, -x, -gcflags, -ldflags, -tags, -trimpath, and -work
+The build flags -a, -n, -x, -gcflags, -ldflags, -tags, -glflags, -trimpath, and -work
 are shared with the build command. For documentation, see 'go help build'.
 `,
 }
@@ -231,9 +231,10 @@ func getModuleVersions(targetPlatform string, targetArch string, src string) (*m
 	cmd.Env = append(os.Environ(), "GOOS="+platformOS(targetPlatform), "GOARCH="+targetArch)
 
 	tags := append(buildTags[:], platformTags(targetPlatform)...)
+	glflags := buildGoListFlags
 
 	// TODO(hyangah): probably we don't need to add all the dependencies.
-	cmd.Args = append(cmd.Args, "-m", "-json", "-tags="+strings.Join(tags, ","), "all")
+	cmd.Args = append(cmd.Args, glflags, "-m", "-json", "-tags="+strings.Join(tags, ","), "all")
 	cmd.Dir = src
 
 	output, err := cmd.Output()
