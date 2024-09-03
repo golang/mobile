@@ -63,10 +63,14 @@ For -target android, the -bootclasspath and -classpath flags are used to
 control the bootstrap classpath and the classpath for Go wrappers to Java
 classes.
 
+The -golistflags flag passes args to the go list command. 
+Example: -golistflags="-mod=readonly"
+
 The -v flag provides verbose output, including the list of packages built.
 
-The build flags -a, -n, -x, -gcflags, -ldflags, -tags, -glflags, -trimpath, and -work
-are shared with the build command. For documentation, see 'go help build'.
+The build flags -a, -n, -x, -gcflags, -ldflags, -tags, 
+-trimpath, and -work are shared with the build command. For documentation, 
+see 'go help build'.
 `,
 }
 
@@ -231,10 +235,10 @@ func getModuleVersions(targetPlatform string, targetArch string, src string) (*m
 	cmd.Env = append(os.Environ(), "GOOS="+platformOS(targetPlatform), "GOARCH="+targetArch)
 
 	tags := append(buildTags[:], platformTags(targetPlatform)...)
-	glflags := buildGoListFlags
+	golistflags := buildGoListFlags
 
 	// TODO(hyangah): probably we don't need to add all the dependencies.
-	cmd.Args = append(cmd.Args, glflags, "-m", "-json", "-tags="+strings.Join(tags, ","), "all")
+	cmd.Args = append(cmd.Args, golistflags, "-m", "-json", "-tags="+strings.Join(tags, ","), "all")
 	cmd.Dir = src
 
 	output, err := cmd.Output()
