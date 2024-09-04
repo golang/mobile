@@ -381,7 +381,7 @@ func (g *ClassGen) genCMethodBody(cls *java.Class, f *java.Func, virtual bool) {
 		g.Printf("Nonvirtual")
 	}
 	if f.Ret != nil {
-		g.Printf(f.Ret.JNICallType())
+		g.Printf("%s", f.Ret.JNICallType())
 	} else {
 		g.Printf("Void")
 	}
@@ -430,7 +430,7 @@ func (g *ClassGen) genFuncDecl(local bool, fs *java.FuncSet) {
 		if i == len(fs.Params)-1 && fs.Variadic {
 			g.Printf("...")
 		}
-		g.Printf(g.goType(a, local))
+		g.Printf("%s", g.goType(a, local))
 	}
 	g.Printf(")")
 	if fs.Throws {
@@ -879,7 +879,7 @@ func (g *ClassGen) genInterface(cls *java.Class) {
 		if !g.isFuncSetSupported(fs) {
 			continue
 		}
-		g.Printf(fs.GoName)
+		g.Printf("%s", fs.GoName)
 		g.genFuncDecl(true, fs)
 		g.Printf("\n")
 	}
@@ -904,7 +904,7 @@ func flattenName(n string) string {
 	return strings.Replace(strings.Replace(n, ".", "_", -1), "$", "_", -1)
 }
 
-var (
+const (
 	classesPkgHeader = gobindPreamble + `
 package Java
 

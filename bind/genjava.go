@@ -437,7 +437,7 @@ func (g *JavaGen) genConstructor(f *types.Func, n string, jcls bool) {
 			if i > 0 {
 				g.Printf(", ")
 			}
-			g.Printf(g.paramName(params, i))
+			g.Printf("%s", g.paramName(params, i))
 		}
 		g.Printf(");\n")
 	}
@@ -447,7 +447,7 @@ func (g *JavaGen) genConstructor(f *types.Func, n string, jcls bool) {
 		if i > 0 {
 			g.Printf(", ")
 		}
-		g.Printf(g.paramName(params, i))
+		g.Printf("%s", g.paramName(params, i))
 	}
 	g.Printf(");\n")
 	g.Printf("Seq.trackGoRef(refnum, this);\n")
@@ -757,21 +757,21 @@ func (g *JavaGen) genJNIFuncSignature(o *types.Func, sName string, jm *java.Func
 	g.Printf("Java_%s_", g.jniPkgName())
 	if sName != "" {
 		if proxy {
-			g.Printf(java.JNIMangle(g.className()))
+			g.Printf("%s", java.JNIMangle(g.className()))
 			// 0024 is the mangled form of $, for naming inner classes.
 			g.Printf("_00024proxy%s", sName)
 		} else {
-			g.Printf(java.JNIMangle(g.javaTypeName(sName)))
+			g.Printf("%s", java.JNIMangle(g.javaTypeName(sName)))
 		}
 	} else {
-		g.Printf(java.JNIMangle(g.className()))
+		g.Printf("%s", java.JNIMangle(g.className()))
 	}
 	g.Printf("_")
 	if jm != nil {
-		g.Printf(jm.JNIName)
+		g.Printf("%s", jm.JNIName)
 	} else {
 		oName := javaNameReplacer(lowerFirst(o.Name()))
-		g.Printf(java.JNIMangle(oName))
+		g.Printf("%s", java.JNIMangle(oName))
 	}
 	g.Printf("(JNIEnv* env, ")
 	if sName != "" {
@@ -839,9 +839,9 @@ func (g *JavaGen) genFuncSignature(o *types.Func, jm *java.Func, hasThis bool) {
 
 	g.Printf("%s ", ret)
 	if jm != nil {
-		g.Printf(jm.Name)
+		g.Printf("%s", jm.Name)
 	} else {
-		g.Printf(javaNameReplacer(lowerFirst(o.Name())))
+		g.Printf("%s", javaNameReplacer(lowerFirst(o.Name())))
 	}
 	g.Printf("(")
 	g.genFuncArgs(o, jm, hasThis)
