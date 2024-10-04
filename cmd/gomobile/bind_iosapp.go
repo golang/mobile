@@ -321,7 +321,7 @@ func frameworkLayoutForTarget(t targetInfo, title string) (*frameworkLayout, err
 				filepath.Join("Versions/Current", title): title,
 			},
 		}, nil
-	case "ios", "iossimulator":
+	case "ios", "iossimulator", "appletvos", "appletvsimulator", "xros", "xrsimulator":
 		return &frameworkLayout{
 			headerPath:    "Headers",
 			binaryPath:    ".",
