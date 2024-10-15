@@ -436,15 +436,21 @@ func envClang(sdkName string) (clang, cflags string, err error) {
 		return sdkName + "-clang", "-isysroot " + sdkName, nil
 	}
 	cmd := exec.Command("xcrun", "--sdk", sdkName, "--find", "clang")
-	out, err := cmd.CombinedOutput()
+	out, err := cmd.Output()
 	if err != nil {
+		if ee := (*exec.ExitError)(nil); errors.As(err, &ee) {
+			out = append(out, ee.Stderr...)
+		}
 		return "", "", fmt.Errorf("xcrun --find: %v\n%s", err, out)
 	}
 	clang = strings.TrimSpace(string(out))
 
 	cmd = exec.Command("xcrun", "--sdk", sdkName, "--show-sdk-path")
-	out, err = cmd.CombinedOutput()
+	out, err = cmd.Output()
 	if err != nil {
+		if ee := (*exec.ExitError)(nil); errors.As(err, &ee) {
+			out = append(out, ee.Stderr...)
+		}
 		return "", "", fmt.Errorf("xcrun --show-sdk-path: %v\n%s", err, out)
 	}
 	sdk := strings.TrimSpace(string(out))
