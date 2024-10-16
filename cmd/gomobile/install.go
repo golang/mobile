@@ -23,6 +23,9 @@ attached mobile device.
 
 Only -target android is supported. The 'adb' tool must be on the PATH.
 
+The -cache flag specifies the build cache directory. If not specified,
+ioutil.TempDir() is used.
+
 The build flags -a, -i, -n, -x, -gcflags, -ldflags, -tags, -trimpath, and -work are
 shared with the build command.
 For documentation, see 'go help build'.
