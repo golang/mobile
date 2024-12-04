@@ -9,6 +9,7 @@ package main
 // with the bindings.
 
 // #cgo android CFLAGS: -D__GOBIND_ANDROID__
+// #cgo java CFLAGS: -D__GOBIND_JAVA__
 // #cgo darwin CFLAGS: -D__GOBIND_DARWIN__
 // #include <stdlib.h>
 // #include "seq.h"
