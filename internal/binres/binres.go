@@ -250,7 +250,7 @@ func UnmarshalXML(r io.Reader, withIcon bool) (*XML, error) {
 							Space: "",
 							Local: "platformBuildVersionCode",
 						},
-						Value: "16",
+						Value: fmt.Sprintf("%v", MinSDK),
 					},
 					xml.Attr{
 						Name: xml.Name{
