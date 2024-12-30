@@ -57,6 +57,11 @@ func main() {
 					game.Press(down)
 				}
 			case key.Event:
+				if e.Code == key.CodeEscape || e.Code == key.CodeQ {
+					onStop()
+					glctx = nil
+					return
+				}
 				if e.Code != key.CodeSpacebar {
 					break
 				}
