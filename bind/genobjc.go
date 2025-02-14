@@ -1060,7 +1060,7 @@ func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 	if oinf != nil {
 		for _, sup := range oinf.supers {
 			if !sup.Protocol {
-				g.Printf(sup.Name)
+				g.Printf("%s", sup.Name)
 			} else {
 				prots = append(prots, sup.Name)
 			}

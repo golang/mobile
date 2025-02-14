@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -103,7 +104,7 @@ func compareBytes(a, b []byte) error {
 			fmt.Fprint(buf, "... output truncated.\n")
 		}
 	}
-	return fmt.Errorf(buf.String())
+	return errors.New(buf.String())
 }
 
 func TestBootstrap(t *testing.T) {
@@ -329,7 +330,7 @@ func compareElements(have, want *XML) error {
 		}
 	}
 	if buf.Len() > 0 {
-		return fmt.Errorf(buf.String())
+		return errors.New(buf.String())
 	}
 	return nil
 }

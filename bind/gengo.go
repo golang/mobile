@@ -341,7 +341,7 @@ func (g *goGen) genInterface(obj *types.TypeName) {
 		g.Printf(") ")
 
 		if res.Len() == 1 {
-			g.Printf(g.typeString(res.At(0).Type()))
+			g.Printf("%s", g.typeString(res.At(0).Type()))
 		} else if res.Len() == 2 {
 			g.Printf("(%s, error)", g.typeString(res.At(0).Type()))
 		}
