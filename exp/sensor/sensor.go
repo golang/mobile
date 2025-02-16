@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // Package sensor provides sensor events from various movement sensors.
-package sensor // import "golang.org/x/mobile/exp/sensor"
+package sensor
 
 import (
 	"errors"

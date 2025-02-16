@@ -167,4 +167,4 @@ Usage:
 
 Version prints versions of the gomobile binary and tools
 */
-package main // import "golang.org/x/mobile/cmd/gomobile"
+package main

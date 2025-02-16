@@ -22,7 +22,7 @@
 // license file to the open source notices of your application.
 // OpenAL Soft's license file could be found at
 // http://repo.or.cz/w/openal-soft.git/blob/HEAD:/COPYING.
-package al // import "golang.org/x/mobile/exp/audio/al"
+package al
 
 // Capability represents OpenAL extension capabilities.
 type Capability int32

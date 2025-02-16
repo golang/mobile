@@ -7,7 +7,7 @@
 // It is intended to serve as a reference implementation for testing
 // other sprite Engines written against OpenGL, or other more exotic
 // modern hardware interfaces.
-package portable // import "golang.org/x/mobile/exp/sprite/portable"
+package portable
 
 import (
 	"image"

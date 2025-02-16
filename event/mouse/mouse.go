@@ -5,7 +5,7 @@
 // Package mouse defines an event for mouse input.
 //
 // See the golang.org/x/mobile/app package for details on the event model.
-package mouse // import "golang.org/x/mobile/event/mouse"
+package mouse
 
 import (
 	"fmt"
