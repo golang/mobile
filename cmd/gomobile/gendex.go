@@ -1,4 +1,4 @@
-// Copyright 2015 The Go Authors.  All rights reserved.
+// Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -148,7 +148,7 @@ func findLast(path string) (string, error) {
 	return path + "/" + children[len(children)-1], nil
 }
 
-var header = `// Copyright 2015 The Go Authors.  All rights reserved.
+var header = `// Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
