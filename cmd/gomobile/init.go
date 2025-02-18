@@ -220,6 +220,14 @@ func mkdir(dir string) error {
 }
 
 func symlink(src, dst string) error {
+	if _, err := os.Lstat(dst); err == nil {
+		if err = removeAll(dst); err != nil {
+			return err
+		}
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+
 	if buildX || buildN {
 		printcmd("ln -s %s %s", src, dst)
 	}
