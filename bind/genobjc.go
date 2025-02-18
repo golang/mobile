@@ -696,6 +696,13 @@ func (g *ObjcGen) genWrite(varName string, t types.Type, mode varMode) {
 			default:
 				g.errorf("unsupported type: %s", t)
 			}
+		case *types.Pointer:
+			switch e.Elem().(type) {
+			case *types.Named:
+				g.Printf("nrefnumslice _%s = go_seq_from_objc_refnumarray(%s);\n", varName, varName)
+			default:
+				g.errorf("unsupported type: %s", t)
+			}
 		default:
 			g.errorf("unsupported type: %s", t)
 		}
@@ -760,6 +767,13 @@ func (g *ObjcGen) genRead(toName, fromName string, t types.Type, mode varMode) {
 			switch e.Kind() {
 			case types.Uint8: // Byte.
 				g.Printf("NSData *%s = go_seq_to_objc_bytearray(%s, %d);\n", toName, fromName, toCFlag(mode == modeRetained))
+			default:
+				g.errorf("unsupported type: %s", t)
+			}
+		case *types.Pointer:
+			switch e.Elem().(type) {
+			case *types.Named:
+				g.Printf("NSArray *%s = go_seq_to_objc_refnumarray(%s);\n", toName, fromName)
 			default:
 				g.errorf("unsupported type: %s", t)
 			}
@@ -1046,6 +1060,11 @@ func (g *ObjcGen) genRelease(varName string, t types.Type, mode varMode) {
 					g.Printf("  free(_%s.ptr);\n", varName)
 					g.Printf("}\n")
 				}
+			}
+		case *types.Pointer:
+			switch e.Elem().(type) {
+			case *types.Named:
+				g.Printf("free(_%s.ptr);\n", varName)
 			}
 		}
 	}
@@ -1344,10 +1363,17 @@ func (g *ObjcGen) objcType(typ types.Type) string {
 			return "TODO"
 		}
 	case *types.Slice:
-		elem := g.objcType(typ.Elem())
-		// Special case: NSData seems to be a better option for byte slice.
-		if elem == "byte" {
-			return "NSData* _Nullable"
+		switch e := typ.Elem().(type) {
+		case *types.Basic:
+			switch e.Kind() {
+			case types.Uint8:
+				return "NSData* _Nullable"
+			}
+		case *types.Pointer:
+			switch e.Elem().(type) {
+			case *types.Named:
+				return "NSArray* _Nullable"
+			}
 		}
 		// TODO(hyangah): support other slice types: NSArray or CFArrayRef.
 		// Investigate the performance implication.
