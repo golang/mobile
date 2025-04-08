@@ -6,7 +6,6 @@
 // generated gomobile_bind package and compiled along with the
 // generated binding files.
 
-#include <android/log.h>
 #include <errno.h>
 #include <jni.h>
 #include <stdint.h>
@@ -18,6 +17,12 @@
 #include "_cgo_export.h"
 
 #define NULL_REFNUM 41
+
+#ifndef __GOBIND_ANDROID__
+#define ACT_ENV_CAST (void**)
+#else
+#define ACT_ENV_CAST
+#endif
 
 // initClasses are only exported from Go if reverse bindings are used.
 // If they're not, weakly define a no-op function.
@@ -55,7 +60,7 @@ static JNIEnv *go_seq_get_thread_env(void) {
 		if (ret != JNI_EDETACHED) {
 			LOG_FATAL("failed to get thread env");
 		}
-		if ((*jvm)->AttachCurrentThread(jvm, &env, NULL) != JNI_OK) {
+		if ((*jvm)->AttachCurrentThread(jvm, ACT_ENV_CAST &env, NULL) != JNI_OK) {
 			LOG_FATAL("failed to attach current thread");
 		}
 		pthread_setspecific(jnienvs, env);

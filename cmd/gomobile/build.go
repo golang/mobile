@@ -394,7 +394,7 @@ func parseBuildTarget(buildTarget string) ([]targetInfo, error) {
 		}
 	}
 
-	var isAndroid, isApple bool
+	var isAndroid, isApple, isJava bool
 	for _, target := range strings.Split(buildTarget, ",") {
 		tuple := strings.SplitN(target, "/", 2)
 		platform := tuple[0]
@@ -404,11 +404,13 @@ func parseBuildTarget(buildTarget string) ([]targetInfo, error) {
 			isAndroid = true
 		} else if isApplePlatform(platform) {
 			isApple = true
+		} else if isJavaPlatform(platform) {
+			isJava = true
 		} else {
 			return nil, fmt.Errorf("unsupported platform: %q", platform)
 		}
-		if isAndroid && isApple {
-			return nil, fmt.Errorf(`cannot mix android and Apple platforms`)
+		if isAndroid && isApple && isJava {
+			return nil, fmt.Errorf(`cannot mix android and Apple and Java platforms`)
 		}
 
 		if hasArch {
