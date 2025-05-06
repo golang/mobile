@@ -26,10 +26,15 @@ var (
 	androidEnv   map[string][]string // android arch -> []string
 	appleEnv     map[string][]string
 	appleNM      string
+	javaEnv      map[string][]string
 )
 
 func isAndroidPlatform(platform string) bool {
 	return platform == "android"
+}
+
+func isJavaPlatform(platform string) bool {
+	return platform == "java"
 }
 
 func isApplePlatform(platform string) bool {
@@ -48,6 +53,8 @@ func platformArchs(platform string) []string {
 		return []string{"arm64", "amd64"}
 	case "android":
 		return []string{"arm", "arm64", "386", "amd64"}
+	case "java":
+		return []string{"arm64", "amd64"}
 	default:
 		panic(fmt.Sprintf("unexpected platform: %s", platform))
 	}
@@ -60,6 +67,8 @@ func isSupportedArch(platform, arch string) bool {
 // platformOS returns the correct GOOS value for platform.
 func platformOS(platform string) string {
 	switch platform {
+	case "java":
+		return runtime.GOOS
 	case "android":
 		return "android"
 	case "ios", "iossimulator":
@@ -79,8 +88,10 @@ func platformOS(platform string) string {
 
 func platformTags(platform string) []string {
 	switch platform {
+	case "java":
+		return []string{"java"}
 	case "android":
-		return []string{"android"}
+		return []string{"android", "java"}
 	case "ios", "iossimulator":
 		return []string{"ios"}
 	case "macos":
@@ -191,10 +202,34 @@ func envInit() (err error) {
 				"CC=" + clang,
 				"CXX=" + clangpp,
 				"CGO_ENABLED=1",
+				"GOFLAGS=" + "-tags=" + strings.Join(platformTags("android"), ","),
 			}
 			if arch == "arm" {
 				androidEnv[arch] = append(androidEnv[arch], "GOARM=7")
 			}
+		}
+	}
+
+	javaHome := os.Getenv("JAVA_HOME")
+	if javaHome == "" {
+		javac, err := exec.LookPath("javac")
+		if err != nil {
+			return err
+		}
+		javac, err = filepath.EvalSymlinks(javac)
+		if err != nil {
+			return err
+		}
+		javaHome = strings.TrimSuffix(javac, "/bin/javac")
+	}
+
+	javaEnv = make(map[string][]string)
+	for _, arch := range platformArchs("java") {
+		javaEnv[arch] = []string{
+			"GOARCH=" + arch,
+			"CGO_ENABLED=1",
+			"GOFLAGS=" + "-tags=" + strings.Join(platformTags("java"), ","),
+			"CGO_CFLAGS=\"-I" + javaHome + "/include/\" \"-I" + javaHome + "/include/" + osname + "/\"",
 		}
 	}
 
