@@ -11,7 +11,6 @@ import (
 	"go/token"
 	"go/types"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -203,7 +202,7 @@ func genObjcPackages(dir string, types []*objc.Named, embedders []importers.Stru
 		pkgFile := filepath.Join(pkgDir, "package.go")
 		buf.Reset()
 		cg.GenPackage(i)
-		if err := ioutil.WriteFile(pkgFile, buf.Bytes(), 0600); err != nil {
+		if err := os.WriteFile(pkgFile, buf.Bytes(), 0600); err != nil {
 			return err
 		}
 	}
@@ -213,7 +212,7 @@ func genObjcPackages(dir string, types []*objc.Named, embedders []importers.Stru
 	if err := os.MkdirAll(objcBase, 0700); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(filepath.Join(objcBase, "interfaces.go"), buf.Bytes(), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(objcBase, "interfaces.go"), buf.Bytes(), 0600); err != nil {
 		return err
 	}
 	goBase := filepath.Join(dir, "src", "gobind")
@@ -222,17 +221,17 @@ func genObjcPackages(dir string, types []*objc.Named, embedders []importers.Stru
 	}
 	buf.Reset()
 	cg.GenGo()
-	if err := ioutil.WriteFile(filepath.Join(goBase, "interfaces_darwin.go"), buf.Bytes(), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(goBase, "interfaces_darwin.go"), buf.Bytes(), 0600); err != nil {
 		return err
 	}
 	buf.Reset()
 	cg.GenH()
-	if err := ioutil.WriteFile(filepath.Join(goBase, "interfaces.h"), buf.Bytes(), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(goBase, "interfaces.h"), buf.Bytes(), 0600); err != nil {
 		return err
 	}
 	buf.Reset()
 	cg.GenM()
-	if err := ioutil.WriteFile(filepath.Join(goBase, "interfaces_darwin.m"), buf.Bytes(), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(goBase, "interfaces_darwin.m"), buf.Bytes(), 0600); err != nil {
 		return err
 	}
 	return nil
@@ -256,7 +255,7 @@ func genJavaPackages(dir string, classes []*java.Class, embedders []importers.St
 		pkgFile := filepath.Join(pkgDir, "package.go")
 		buf.Reset()
 		cg.GenPackage(i)
-		if err := ioutil.WriteFile(pkgFile, buf.Bytes(), 0600); err != nil {
+		if err := os.WriteFile(pkgFile, buf.Bytes(), 0600); err != nil {
 			return err
 		}
 	}
@@ -266,7 +265,7 @@ func genJavaPackages(dir string, classes []*java.Class, embedders []importers.St
 	if err := os.MkdirAll(javaBase, 0700); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(filepath.Join(javaBase, "interfaces.go"), buf.Bytes(), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(javaBase, "interfaces.go"), buf.Bytes(), 0600); err != nil {
 		return err
 	}
 	goBase := filepath.Join(dir, "src", "gobind")
@@ -275,17 +274,17 @@ func genJavaPackages(dir string, classes []*java.Class, embedders []importers.St
 	}
 	buf.Reset()
 	cg.GenGo()
-	if err := ioutil.WriteFile(filepath.Join(goBase, "classes_android.go"), buf.Bytes(), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(goBase, "classes_android.go"), buf.Bytes(), 0600); err != nil {
 		return err
 	}
 	buf.Reset()
 	cg.GenH()
-	if err := ioutil.WriteFile(filepath.Join(goBase, "classes.h"), buf.Bytes(), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(goBase, "classes.h"), buf.Bytes(), 0600); err != nil {
 		return err
 	}
 	buf.Reset()
 	cg.GenC()
-	if err := ioutil.WriteFile(filepath.Join(goBase, "classes_android.c"), buf.Bytes(), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(goBase, "classes_android.c"), buf.Bytes(), 0600); err != nil {
 		return err
 	}
 	return nil
