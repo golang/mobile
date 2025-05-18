@@ -8,7 +8,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"testing"
@@ -28,7 +27,7 @@ func TestWriter(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	f, err := ioutil.TempFile("", "testapk-")
+	f, err := os.CreateTemp("", "testapk-")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -141,7 +140,7 @@ const androidManifest = `
 `
 
 func writeTempFile(data string) (string, error) {
-	f, err := ioutil.TempFile("", "gofmt")
+	f, err := os.CreateTemp("", "gofmt")
 	if err != nil {
 		return "", err
 	}

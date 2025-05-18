@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -197,7 +196,7 @@ func writeFile(filename string, generate func(io.Writer) error) error {
 	}
 
 	if buildN {
-		return generate(ioutil.Discard)
+		return generate(io.Discard)
 	}
 
 	f, err := os.Create(filename)

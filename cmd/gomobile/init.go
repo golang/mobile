@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -63,7 +62,7 @@ func runInit(cmd *command) error {
 		tmpdir = filepath.Join(gomobilepath, "work")
 	} else {
 		var err error
-		tmpdir, err = ioutil.TempDir(gomobilepath, "work-")
+		tmpdir, err = os.MkdirTemp(gomobilepath, "work-")
 		if err != nil {
 			return err
 		}
@@ -153,7 +152,7 @@ func installOpenAL(gomobilepath string) error {
 		alTmpDir = filepath.Join(gomobilepath, "work")
 	} else {
 		var err error
-		alTmpDir, err = ioutil.TempDir(gomobilepath, "openal-release-")
+		alTmpDir, err = os.MkdirTemp(gomobilepath, "openal-release-")
 		if err != nil {
 			return err
 		}
