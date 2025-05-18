@@ -10,7 +10,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math"
 	"os"
@@ -108,7 +107,7 @@ func compareBytes(a, b []byte) error {
 }
 
 func TestBootstrap(t *testing.T) {
-	bin, err := ioutil.ReadFile("testdata/bootstrap.bin")
+	bin, err := os.ReadFile("testdata/bootstrap.bin")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -218,7 +217,7 @@ func TestEncode(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	bin, err := ioutil.ReadFile("testdata/bootstrap.bin")
+	bin, err := os.ReadFile("testdata/bootstrap.bin")
 	if err != nil {
 		log.Fatal(err)
 	}
