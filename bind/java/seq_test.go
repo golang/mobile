@@ -7,7 +7,6 @@ package java
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -28,7 +27,7 @@ func TestMain(m *testing.M) {
 
 func testMain(m *testing.M) int {
 	// Build gomobile and gobind and put them into PATH.
-	binDir, err := ioutil.TempDir("", "bind-java-test-")
+	binDir, err := os.MkdirTemp("", "bind-java-test-")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -117,7 +116,7 @@ func runTest(t *testing.T, pkgNames []string, javaPkg, javaCls string) {
 	if err != nil {
 		t.Fatalf("failed pwd: %v", err)
 	}
-	tmpdir, err := ioutil.TempDir("", "bind-java-seq-test-")
+	tmpdir, err := os.MkdirTemp("", "bind-java-seq-test-")
 	if err != nil {
 		t.Fatalf("failed to prepare temp dir: %v", err)
 	}
@@ -164,20 +163,20 @@ func runTest(t *testing.T, pkgNames []string, javaPkg, javaCls string) {
 	}
 
 	fname = filepath.Join(tmpdir, "src/main/AndroidManifest.xml")
-	err = ioutil.WriteFile(fname, []byte(androidmanifest), 0700)
+	err = os.WriteFile(fname, []byte(androidmanifest), 0700)
 	if err != nil {
 		t.Fatalf("failed to write android manifest file: %v", err)
 	}
 
 	// Add a dummy string resource to avoid errors from the Android build system.
 	fname = filepath.Join(tmpdir, "src/main/res/values/strings.xml")
-	err = ioutil.WriteFile(fname, []byte(stringsxml), 0700)
+	err = os.WriteFile(fname, []byte(stringsxml), 0700)
 	if err != nil {
 		t.Fatalf("failed to write strings.xml file: %v", err)
 	}
 
 	fname = filepath.Join(tmpdir, "build.gradle")
-	err = ioutil.WriteFile(fname, []byte(buildgradle), 0700)
+	err = os.WriteFile(fname, []byte(buildgradle), 0700)
 	if err != nil {
 		t.Fatalf("failed to write build.gradle file: %v", err)
 	}
