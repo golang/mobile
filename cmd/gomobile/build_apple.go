@@ -9,7 +9,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -69,7 +68,7 @@ func goAppleBuild(pkg *packages.Package, bundleID string, targets []targetInfo) 
 			printcmd("echo \"%s\" > %s", file.contents, file.name)
 		}
 		if !buildN {
-			if err := ioutil.WriteFile(file.name, file.contents, 0644); err != nil {
+			if err := os.WriteFile(file.name, file.contents, 0644); err != nil {
 				return nil, err
 			}
 		}

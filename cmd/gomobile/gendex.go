@@ -23,7 +23,6 @@ import (
 	"flag"
 	"fmt"
 	"go/format"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -40,7 +39,7 @@ func main() {
 	flag.Parse()
 
 	var err error
-	tmpdir, err = ioutil.TempDir("", "gendex-")
+	tmpdir, err = os.MkdirTemp("", "gendex-")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -98,7 +97,7 @@ func gendex() error {
 		os.Stderr.Write(out)
 		return err
 	}
-	src, err := ioutil.ReadFile(tmpdir + "/classes.dex")
+	src, err := os.ReadFile(tmpdir + "/classes.dex")
 	if err != nil {
 		return err
 	}

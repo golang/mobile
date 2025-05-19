@@ -12,7 +12,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"math"
 	"os"
@@ -232,7 +232,7 @@ func ReadAsset() string {
 	}
 	defer rc.Close()
 
-	b, err := ioutil.ReadAll(rc)
+	b, err := io.ReadAll(rc)
 	if err != nil {
 		log.Fatal(err)
 	}

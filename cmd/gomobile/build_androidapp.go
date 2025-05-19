@@ -13,7 +13,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path"
@@ -37,7 +36,7 @@ func goAndroidBuild(pkg *packages.Package, targets []targetInfo) (map[string]boo
 	dir := filepath.Dir(pkg.GoFiles[0])
 
 	manifestPath := filepath.Join(dir, "AndroidManifest.xml")
-	manifestData, err := ioutil.ReadFile(manifestPath)
+	manifestData, err := os.ReadFile(manifestPath)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return nil, err
@@ -129,7 +128,7 @@ func goAndroidBuild(pkg *packages.Package, targets []targetInfo) (map[string]boo
 			fmt.Fprintf(os.Stderr, "apk: %s\n", name)
 		}
 		if buildN {
-			return ioutil.Discard, nil
+			return io.Discard, nil
 		}
 		return apkw.Create(name)
 	}

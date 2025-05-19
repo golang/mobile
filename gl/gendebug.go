@@ -18,7 +18,6 @@ import (
 	"go/parser"
 	"go/printer"
 	"go/token"
-	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
@@ -835,7 +834,7 @@ func main() {
 		os.Stdout.Write(b)
 		return
 	}
-	if err := ioutil.WriteFile(*outfile, b, 0666); err != nil {
+	if err := os.WriteFile(*outfile, b, 0666); err != nil {
 		die(err)
 	}
 }

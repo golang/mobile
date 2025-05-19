@@ -9,7 +9,6 @@ import (
 	"image"
 	"image/color"
 	_ "image/png"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -56,7 +55,7 @@ func TestAndroidApp(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	tmpdir, err := ioutil.TempDir("", "app-test-")
+	tmpdir, err := os.MkdirTemp("", "app-test-")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -144,7 +143,7 @@ func buildEnvInit() (cleanup func(), err error) {
 		tmpdir = "$WORK"
 		cleanupFn = func() {}
 	} else {
-		tmpdir, err = ioutil.TempDir("", "gomobile-work-")
+		tmpdir, err = os.MkdirTemp("", "gomobile-work-")
 		if err != nil {
 			return nil, err
 		}
@@ -340,7 +339,7 @@ func checkNDKRoot(ndkRoot string, targets []targetInfo) error {
 
 // compatibleNDKRoots searches the side-by-side NDK dirs for compatible SDKs.
 func compatibleNDKRoots(ndkForest string, targets []targetInfo) ([]string, error) {
-	ndkDirs, err := ioutil.ReadDir(ndkForest)
+	ndkDirs, err := os.ReadDir(ndkForest)
 	if err != nil {
 		return nil, err
 	}
