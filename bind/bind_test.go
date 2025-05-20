@@ -21,9 +21,11 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 
+	"golang.org/x/exp/slices"
 	"golang.org/x/mobile/internal/importers"
 	"golang.org/x/mobile/internal/importers/java"
 	"golang.org/x/mobile/internal/importers/objc"
@@ -287,7 +289,7 @@ func genJavaPackages(t *testing.T, dir string, cg *ClassGen) {
 func TestGenJava(t *testing.T) {
 	allTests := tests
 	if java.IsAvailable() {
-		allTests = append(append([]string{}, allTests...), javaTests...)
+		allTests = slices.Concat(allTests, javaTests)
 	}
 	for _, filename := range allTests {
 		var pkg *types.Package
