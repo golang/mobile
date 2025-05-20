@@ -12,6 +12,8 @@ import (
 	"strings"
 
 	"golang.org/x/mobile/internal/importers/objc"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // TODO(hyangah): handle method name conflicts.
@@ -101,7 +103,7 @@ func (g *ObjcGen) namePrefixOf(pkg *types.Package) string {
 		return "Universe"
 	}
 	p := g.Prefix
-	return p + strings.Title(pkg.Name())
+	return p + cases.Title(language.English).String(pkg.Name())
 }
 
 func (g *ObjcGen) GenGoH() error {

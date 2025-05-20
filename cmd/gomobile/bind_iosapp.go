@@ -18,6 +18,8 @@ import (
 	"time"
 
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -27,7 +29,7 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 
 	if buildO == "" {
 		name = pkgs[0].Name
-		title = strings.Title(name)
+		title = cases.Title(language.English).String(name)
 		buildO = title + ".xcframework"
 	} else {
 		if !strings.HasSuffix(buildO, ".xcframework") {
@@ -35,7 +37,7 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 		}
 		base := filepath.Base(buildO)
 		name = base[:len(base)-len(".xcframework")]
-		title = strings.Title(name)
+		title = cases.Title(language.English).String(name)
 	}
 
 	if err := removeAll(buildO); err != nil {
@@ -185,7 +187,7 @@ func goAppleBind(gobind string, pkgs []*packages.Package, targets []targetInfo) 
 
 		fileBases := make([]string, len(pkgs)+1)
 		for i, pkg := range pkgs {
-			fileBases[i] = bindPrefix + strings.Title(pkg.Name)
+			fileBases[i] = bindPrefix + cases.Title(language.English).String(pkg.Name)
 		}
 		fileBases[len(fileBases)-1] = "Universe"
 

@@ -16,6 +16,8 @@ import (
 	"strings"
 	"text/template"
 
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -33,7 +35,7 @@ func goAppleBuild(pkg *packages.Package, bundleID string, targets []targetInfo) 
 	infoplist := new(bytes.Buffer)
 	if err := infoplistTmpl.Execute(infoplist, infoplistTmplData{
 		BundleID: bundleID + "." + productName,
-		Name:     strings.Title(path.Base(pkg.PkgPath)),
+		Name:     cases.Title(language.English).String(path.Base(pkg.PkgPath)),
 	}); err != nil {
 		return nil, err
 	}

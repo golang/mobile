@@ -20,6 +20,8 @@ import (
 	"strings"
 
 	"golang.org/x/mobile/internal/binres"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -47,7 +49,7 @@ func goAndroidBuild(pkg *packages.Package, targets []targetInfo) (map[string]boo
 		err := manifestTmpl.Execute(buf, manifestTmplData{
 			// TODO(crawshaw): a better package path.
 			JavaPkgPath: "org.golang.todo." + libName,
-			Name:        strings.Title(appName),
+			Name:        cases.Title(language.English).String(appName),
 			LibName:     libName,
 		})
 		if err != nil {

@@ -15,6 +15,8 @@ import (
 	"strings"
 
 	"golang.org/x/mobile/internal/importers/java"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 // TODO(crawshaw): disallow basic android java type names in exported symbols.
@@ -1038,7 +1040,7 @@ func JavaClassName(pkg *types.Package) string {
 	if pkg == nil {
 		return "Universe"
 	}
-	return javaNameReplacer(strings.Title(pkg.Name()))
+	return javaNameReplacer(cases.Title(language.English).String(pkg.Name()))
 }
 
 func (g *JavaGen) genConst(o *types.Const) {

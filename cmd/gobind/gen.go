@@ -21,6 +21,8 @@ import (
 	"golang.org/x/mobile/internal/importers"
 	"golang.org/x/mobile/internal/importers/java"
 	"golang.org/x/mobile/internal/importers/objc"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -142,12 +144,12 @@ func genPkg(lang string, p *types.Package, astFiles []*ast.File, allPkg []*types
 		processErr(g.GenGoH())
 		io.Copy(w, &buf)
 		closer()
-		hname := strings.Title(fname[:len(fname)-2]) + ".objc.h"
+		hname := cases.Title(language.English).String(fname[:len(fname)-2]) + ".objc.h"
 		w, closer = writer(filepath.Join("src", "gobind", hname))
 		processErr(g.GenH())
 		io.Copy(w, &buf)
 		closer()
-		mname := strings.Title(fname[:len(fname)-2]) + "_darwin.m"
+		mname := cases.Title(language.English).String(fname[:len(fname)-2]) + "_darwin.m"
 		w, closer = writer(filepath.Join("src", "gobind", mname))
 		conf.Writer = w
 		processErr(g.GenM())
