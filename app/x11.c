@@ -58,6 +58,7 @@ new_window(Display *x_dpy, EGLDisplay e_dpy, int w, int h, EGLContext *ctx, EGLS
 	}
 
 	attr.event_mask = StructureNotifyMask | ExposureMask |
+		KeyPressMask | KeyReleaseMask |
 		ButtonPressMask | ButtonReleaseMask | ButtonMotionMask;
 	Window win = XCreateWindow(
 		x_dpy, root, 0, 0, w, h, 0, visInfo->depth, InputOutput,
@@ -144,6 +145,10 @@ processEvents(void) {
 		XEvent ev;
 		XNextEvent(x_dpy, &ev);
 		switch (ev.type) {
+		case KeyPress:
+		case KeyRelease:
+			onKey(ev.xkey.window, XLookupKeysym(&(ev.xkey), 0), ev.type == KeyPress ? 1 : 2);
+			break;
 		case ButtonPress:
 			onTouchBegin((float)ev.xbutton.x, (float)ev.xbutton.y);
 			break;
