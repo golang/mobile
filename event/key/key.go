@@ -78,6 +78,13 @@ const (
 	ModControl Modifiers = 1 << 1
 	ModAlt     Modifiers = 1 << 2
 	ModMeta    Modifiers = 1 << 3 // called "Command" on OS X
+
+	// CapsLock & NumLock is not a part of standard modifiers but has to be here to support all keyboard layouts
+	ModCapsLock    Modifiers = 1 << 4
+	ModNumLock     Modifiers = 1 << 5
+	ModModeSwitch  Modifiers = 1 << 6 // Currently experimental. See https://wiki.archlinux.org/index.php/X_keyboard_extension
+	ModLevel3Shift Modifiers = 1 << 7 // Currently experimental. See https://wiki.archlinux.org/index.php/X_keyboard_extension
+
 )
 
 // Code is the identity of a key relative to a notional "standard" keyboard.
@@ -204,7 +211,8 @@ const (
 	CodeF23 Code = 114
 	CodeF24 Code = 115
 
-	CodeHelp Code = 117
+	CodeHelp  Code = 117
+	CodeProps Code = 118 // alternatively Menu
 
 	CodeMute       Code = 127
 	CodeVolumeUp   Code = 128
