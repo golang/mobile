@@ -64,6 +64,8 @@ classes.
 
 The -v flag provides verbose output, including the list of packages built.
 
+The -pkglink flag is use link to gopath pkg
+
 The build flags -a, -n, -x, -gcflags, -ldflags, -tags, -trimpath, and -work
 are shared with the build command. For documentation, see 'go help build'.
 `,
@@ -142,6 +144,7 @@ var (
 	bindJavaPkg       string // -javapkg
 	bindClasspath     string // -classpath
 	bindBootClasspath string // -bootclasspath
+	bindGoPathPkgLink bool   //-pkglink
 )
 
 func init() {
@@ -152,6 +155,7 @@ func init() {
 		"custom Objective-C name prefix. Valid only with -target=ios.")
 	cmdBind.flag.StringVar(&bindClasspath, "classpath", "", "The classpath for imported Java classes. Valid only with -target=android.")
 	cmdBind.flag.StringVar(&bindBootClasspath, "bootclasspath", "", "The bootstrap classpath for imported Java classes. Valid only with -target=android.")
+	cmdBind.flag.BoolVar(&bindGoPathPkgLink, "pkglink", true, "pkglink link gopath pkg")
 }
 
 func bootClasspath() (string, error) {
