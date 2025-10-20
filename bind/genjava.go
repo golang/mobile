@@ -45,7 +45,7 @@ type javaClassInfo struct {
 	genNoargCon bool
 }
 
-// Init intializes the embedded Generator and initializes the Java class information
+// Init initializes the embedded Generator and initializes the Java class information
 // needed to generate structs that extend Java classes and interfaces.
 func (g *JavaGen) Init(classes []*java.Class) {
 	g.Generator.Init()

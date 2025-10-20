@@ -20,7 +20,6 @@ type (
 	// ClassGen generates Go and C stubs for Java classes so import statements
 	// on the form
 	//
-	//
 	// import "Java/classpath/to/Class"
 	//
 	// will work.

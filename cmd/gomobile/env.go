@@ -390,7 +390,7 @@ func ndkRoot(targets ...targetInfo) (string, error) {
 		return "$NDK_PATH", nil
 	}
 
-	// Try the ANDROID_NDK_HOME variable.  This approach is deprecated, but it
+	// Try the ANDROID_NDK_HOME variable. This approach is deprecated, but it
 	// has the highest priority because it represents an explicit user choice.
 	if ndkRoot := os.Getenv("ANDROID_NDK_HOME"); ndkRoot != "" {
 		if err := checkNDKRoot(ndkRoot, targets); err != nil {

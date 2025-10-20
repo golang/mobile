@@ -53,7 +53,7 @@ func run() {
 
 	// We need to give appropriate environment variables like CC or CXX so that the returned packages no longer have errors.
 	// However, getting such environment variables is difficult or impossible so far.
-	// Gomobile can obtain such environment variables in env.go, but this logic assumes some condiitons gobind doesn't assume.
+	// Gomobile can obtain such environment variables in env.go, but this logic assumes some conditions gobind doesn't assume.
 	cfg := &packages.Config{
 		Mode: packages.NeedName | packages.NeedFiles |
 			packages.NeedImports | packages.NeedDeps |
