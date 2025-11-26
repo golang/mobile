@@ -318,6 +318,9 @@ func goCmdAt(at string, subcmd string, srcs []string, env []string, args ...stri
 	if buildX {
 		cmd.Args = append(cmd.Args, "-x")
 	}
+	if buildA {
+		cmd.Args = append(cmd.Args, "-a")
+	}
 	if buildGcflags != "" {
 		cmd.Args = append(cmd.Args, "-gcflags", buildGcflags)
 	}
