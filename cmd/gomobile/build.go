@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -341,7 +342,7 @@ func goCmdAt(at string, subcmd string, srcs []string, env []string, args ...stri
 	if gmc, err := goModCachePath(); err == nil {
 		env = append([]string{"GOMODCACHE=" + gmc}, env...)
 	} else {
-		env = append([]string{}, env...)
+		env = slices.Clone(env)
 	}
 	cmd.Env = env
 	cmd.Dir = at
@@ -359,7 +360,7 @@ func goModTidyAt(at string, env []string) error {
 	if gmc, err := goModCachePath(); err == nil {
 		env = append([]string{"GOMODCACHE=" + gmc}, env...)
 	} else {
-		env = append([]string{}, env...)
+		env = slices.Clone(env)
 	}
 	cmd.Env = env
 	cmd.Dir = at
