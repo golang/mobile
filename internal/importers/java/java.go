@@ -21,7 +21,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"golang.org/x/mobile/internal/importers"
+	"vortex.studio/mobile/internal/importers"
 )
 
 // Class is the bind representation of a Java class or

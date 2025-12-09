@@ -14,10 +14,10 @@ import (
 
 	_ "image/png"
 
-	"golang.org/x/mobile/asset"
-	"golang.org/x/mobile/exp/f32"
-	"golang.org/x/mobile/exp/sprite"
-	"golang.org/x/mobile/exp/sprite/clock"
+	"vortex.studio/mobile/asset"
+	"vortex.studio/mobile/exp/f32"
+	"vortex.studio/mobile/exp/sprite"
+	"vortex.studio/mobile/exp/sprite/clock"
 )
 
 const (

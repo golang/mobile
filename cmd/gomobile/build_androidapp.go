@@ -19,7 +19,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"golang.org/x/mobile/internal/binres"
+	"vortex.studio/mobile/internal/binres"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -170,11 +170,11 @@ func goAndroidBuild(pkg *packages.Package, targets []targetInfo) (map[string]boo
 
 	for _, t := range targets {
 		toolchain := ndk.Toolchain(t.arch)
-		if nmpkgs[t.arch]["golang.org/x/mobile/exp/audio/al"] {
+		if nmpkgs[t.arch]["vortex.studio/mobile/exp/audio/al"] {
 			dst := "lib/" + toolchain.abi + "/libopenal.so"
 			src := filepath.Join(gomobilepath, dst)
 			if _, err := os.Stat(src); err != nil {
-				return nil, errors.New("the Android requires the golang.org/x/mobile/exp/audio/al, but the OpenAL libraries was not found. Please run gomobile init with the -openal flag pointing to an OpenAL source directory.")
+				return nil, errors.New("the Android requires the vortex.studio/mobile/exp/audio/al, but the OpenAL libraries was not found. Please run gomobile init with the -openal flag pointing to an OpenAL source directory.")
 			}
 			if err := apkwWriteFile(dst, src); err != nil {
 				return nil, err
@@ -232,7 +232,7 @@ func goAndroidBuild(pkg *packages.Package, targets []targetInfo) (map[string]boo
 		}
 	}
 
-	bxml, err := binres.UnmarshalXML(bytes.NewReader(manifestData), arsc.iconPath != "")
+	bxml, err := binres.UnmarshalXML(bytes.NewReader(manifestData), arsc.iconPath != "", buildAndroidMinSDK, buildAndroidTargetSDK)
 	if err != nil {
 		return nil, err
 	}

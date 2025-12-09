@@ -15,8 +15,8 @@ import (
 	"strings"
 	"testing"
 
-	"golang.org/x/mobile/internal/importers/java"
-	"golang.org/x/mobile/internal/sdkpath"
+	"vortex.studio/mobile/internal/importers/java"
+	"vortex.studio/mobile/internal/sdkpath"
 )
 
 var gomobileBin string
@@ -40,10 +40,10 @@ func testMain(m *testing.M) int {
 		gocmd := filepath.Join(runtime.GOROOT(), "bin", "go")
 		gomobileBin = filepath.Join(binDir, "gomobile"+exe)
 		gobindBin := filepath.Join(binDir, "gobind"+exe)
-		if out, err := exec.Command(gocmd, "build", "-o", gomobileBin, "golang.org/x/mobile/cmd/gomobile").CombinedOutput(); err != nil {
+		if out, err := exec.Command(gocmd, "build", "-o", gomobileBin, "vortex.studio/mobile/cmd/gomobile").CombinedOutput(); err != nil {
 			log.Fatalf("gomobile build failed: %v: %s", err, out)
 		}
-		if out, err := exec.Command(gocmd, "build", "-o", gobindBin, "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
+		if out, err := exec.Command(gocmd, "build", "-o", gobindBin, "vortex.studio/mobile/cmd/gobind").CombinedOutput(); err != nil {
 			log.Fatalf("gobind build failed: %v: %s", err, out)
 		}
 		path := binDir
@@ -60,21 +60,21 @@ func TestClasses(t *testing.T) {
 		t.Skipf("java importer is not available")
 	}
 	runTest(t, []string{
-		"golang.org/x/mobile/bind/testdata/testpkg/javapkg",
+		"vortex.studio/mobile/bind/testdata/testpkg/javapkg",
 	}, "", "ClassesTest")
 }
 
 func TestCustomPkg(t *testing.T) {
 	runTest(t, []string{
-		"golang.org/x/mobile/bind/testdata/testpkg",
+		"vortex.studio/mobile/bind/testdata/testpkg",
 	}, "org.golang.custompkg", "CustomPkgTest")
 }
 
 func TestJavaSeqTest(t *testing.T) {
 	runTest(t, []string{
-		"golang.org/x/mobile/bind/testdata/testpkg",
-		"golang.org/x/mobile/bind/testdata/testpkg/secondpkg",
-		"golang.org/x/mobile/bind/testdata/testpkg/simplepkg",
+		"vortex.studio/mobile/bind/testdata/testpkg",
+		"vortex.studio/mobile/bind/testdata/testpkg/secondpkg",
+		"vortex.studio/mobile/bind/testdata/testpkg/simplepkg",
 	}, "", "SeqTest")
 }
 
@@ -92,7 +92,7 @@ func TestJavaSeqBench(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping benchmark in short mode.")
 	}
-	runTest(t, []string{"golang.org/x/mobile/bind/testdata/benchmark"}, "", "SeqBench")
+	runTest(t, []string{"vortex.studio/mobile/bind/testdata/benchmark"}, "", "SeqBench")
 }
 
 // runTest runs the Android java test class specified with javaCls. If javaPkg is

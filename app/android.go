@@ -51,14 +51,14 @@ import (
 	"time"
 	"unsafe"
 
-	"golang.org/x/mobile/app/internal/callfn"
-	"golang.org/x/mobile/event/key"
-	"golang.org/x/mobile/event/lifecycle"
-	"golang.org/x/mobile/event/paint"
-	"golang.org/x/mobile/event/size"
-	"golang.org/x/mobile/event/touch"
-	"golang.org/x/mobile/geom"
-	"golang.org/x/mobile/internal/mobileinit"
+	"vortex.studio/mobile/app/internal/callfn"
+	"vortex.studio/mobile/event/key"
+	"vortex.studio/mobile/event/lifecycle"
+	"vortex.studio/mobile/event/paint"
+	"vortex.studio/mobile/event/size"
+	"vortex.studio/mobile/event/touch"
+	"vortex.studio/mobile/geom"
+	"vortex.studio/mobile/internal/mobileinit"
 )
 
 // RunOnJVM runs fn on a new goroutine locked to an OS thread with a JNIEnv.

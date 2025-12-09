@@ -14,7 +14,7 @@ import (
 	"testing"
 	"text/template"
 
-	"golang.org/x/mobile/internal/sdkpath"
+	"vortex.studio/mobile/internal/sdkpath"
 )
 
 func TestRFC1034Label(t *testing.T) {
@@ -88,7 +88,7 @@ func TestAndroidBuild(t *testing.T) {
 	if goos == "windows" {
 		os.Setenv("HOMEDRIVE", "C:")
 	}
-	cmdBuild.flag.Parse([]string{"golang.org/x/mobile/example/basic"})
+	cmdBuild.flag.Parse([]string{"vortex.studio/mobile/example/basic"})
 	oldTags := buildTags
 	buildTags = []string{"tag1"}
 	defer func() {
@@ -112,7 +112,7 @@ func TestAndroidBuild(t *testing.T) {
 var androidBuildTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
 WORK=$WORK
 mkdir -p $WORK/lib/armeabi-v7a
-GOMODCACHE=$GOPATH/pkg/mod GOOS=android GOARCH=arm CC=$NDK_PATH/toolchains/llvm/prebuilt/{{.NDKARCH}}/bin/armv7a-linux-androideabi16-clang CXX=$NDK_PATH/toolchains/llvm/prebuilt/{{.NDKARCH}}/bin/armv7a-linux-androideabi16-clang++ CGO_ENABLED=1 GOARM=7 go build -tags tag1 -x -buildmode=c-shared -o $WORK/lib/armeabi-v7a/libbasic.so golang.org/x/mobile/example/basic
+GOMODCACHE=$GOPATH/pkg/mod GOOS=android GOARCH=arm CC=$NDK_PATH/toolchains/llvm/prebuilt/{{.NDKARCH}}/bin/armv7a-linux-androideabi16-clang CXX=$NDK_PATH/toolchains/llvm/prebuilt/{{.NDKARCH}}/bin/armv7a-linux-androideabi16-clang++ CGO_ENABLED=1 GOARM=7 go build -tags tag1 -x -buildmode=c-shared -o $WORK/lib/armeabi-v7a/libbasic.so vortex.studio/mobile/example/basic
 `))
 
 func TestParseBuildTarget(t *testing.T) {
@@ -181,12 +181,12 @@ func TestRegexImportGolangXPackage(t *testing.T) {
 		want    string
 		wantLen int
 	}{
-		{"ffffffff t golang.org/x/mobile", "golang.org/x/mobile", 2},
-		{"ffffffff t github.com/example/repo/vendor/golang.org/x/mobile", "golang.org/x/mobile", 2},
-		{"ffffffff t github.com/example/golang.org/x/mobile", "", 0},
+		{"ffffffff t vortex.studio/mobile", "vortex.studio/mobile", 2},
+		{"ffffffff t github.com/example/repo/vendor/vortex.studio/mobile", "vortex.studio/mobile", 2},
+		{"ffffffff t github.com/example/vortex.studio/mobile", "", 0},
 		{"ffffffff t github.com/example/repo", "", 0},
 		{"ffffffff t github.com/example/repo/vendor", "", 0},
-		{"ffffffff t _golang.org/x/mobile/app", "golang.org/x/mobile/app", 2},
+		{"ffffffff t _vortex.studio/mobile/app", "vortex.studio/mobile/app", 2},
 	}
 
 	for _, tc := range tests {
@@ -217,7 +217,7 @@ func TestBuildWithGoModules(t *testing.T) {
 	}
 	defer os.RemoveAll(dir)
 
-	if out, err := exec.Command("go", "build", "-o="+dir, "golang.org/x/mobile/cmd/gomobile").CombinedOutput(); err != nil {
+	if out, err := exec.Command("go", "build", "-o="+dir, "vortex.studio/mobile/cmd/gomobile").CombinedOutput(); err != nil {
 		t.Fatalf("%v: %s", err, string(out))
 	}
 	path := dir
@@ -253,7 +253,7 @@ func TestBuildWithGoModules(t *testing.T) {
 			}{
 				{
 					Name: "Absolute Path",
-					Path: "golang.org/x/mobile/example/basic",
+					Path: "vortex.studio/mobile/example/basic",
 				},
 				{
 					Name: "Relative Path",

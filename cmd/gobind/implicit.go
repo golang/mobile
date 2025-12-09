@@ -5,7 +5,7 @@
 package main
 
 import (
-	_ "golang.org/x/mobile/bind"
-	_ "golang.org/x/mobile/bind/java"
-	_ "golang.org/x/mobile/bind/objc"
+	_ "vortex.studio/mobile/bind"
+	_ "vortex.studio/mobile/bind/java"
+	_ "vortex.studio/mobile/bind/objc"
 )

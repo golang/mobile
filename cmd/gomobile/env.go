@@ -16,7 +16,7 @@ import (
 	"runtime"
 	"strings"
 
-	"golang.org/x/mobile/internal/sdkpath"
+	"vortex.studio/mobile/internal/sdkpath"
 )
 
 // General mobile build environment. Initialized by envInit.

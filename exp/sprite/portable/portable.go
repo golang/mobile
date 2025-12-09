@@ -15,10 +15,10 @@ import (
 
 	xdraw "golang.org/x/image/draw"
 	"golang.org/x/image/math/f64"
-	"golang.org/x/mobile/event/size"
-	"golang.org/x/mobile/exp/f32"
-	"golang.org/x/mobile/exp/sprite"
-	"golang.org/x/mobile/exp/sprite/clock"
+	"vortex.studio/mobile/event/size"
+	"vortex.studio/mobile/exp/f32"
+	"vortex.studio/mobile/exp/sprite"
+	"vortex.studio/mobile/exp/sprite/clock"
 )
 
 // Engine builds a sprite Engine that renders onto dst.

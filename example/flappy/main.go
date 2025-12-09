@@ -12,17 +12,17 @@ import (
 	"math/rand"
 	"time"
 
-	"golang.org/x/mobile/app"
-	"golang.org/x/mobile/event/key"
-	"golang.org/x/mobile/event/lifecycle"
-	"golang.org/x/mobile/event/paint"
-	"golang.org/x/mobile/event/size"
-	"golang.org/x/mobile/event/touch"
-	"golang.org/x/mobile/exp/gl/glutil"
-	"golang.org/x/mobile/exp/sprite"
-	"golang.org/x/mobile/exp/sprite/clock"
-	"golang.org/x/mobile/exp/sprite/glsprite"
-	"golang.org/x/mobile/gl"
+	"vortex.studio/mobile/app"
+	"vortex.studio/mobile/event/key"
+	"vortex.studio/mobile/event/lifecycle"
+	"vortex.studio/mobile/event/paint"
+	"vortex.studio/mobile/event/size"
+	"vortex.studio/mobile/event/touch"
+	"vortex.studio/mobile/exp/gl/glutil"
+	"vortex.studio/mobile/exp/sprite"
+	"vortex.studio/mobile/exp/sprite/clock"
+	"vortex.studio/mobile/exp/sprite/glsprite"
+	"vortex.studio/mobile/gl"
 )
 
 func main() {

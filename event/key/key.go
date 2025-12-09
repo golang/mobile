@@ -8,7 +8,7 @@
 //
 // On-screen software keyboards do not send key events.
 //
-// See the golang.org/x/mobile/app package for details on the event model.
+// See the vortex.studio/mobile/app package for details on the event model.
 package key
 
 import (

@@ -5,5 +5,5 @@
 package bind
 
 import (
-	_ "golang.org/x/mobile/bind/seq"
+	_ "vortex.studio/mobile/bind/seq"
 )

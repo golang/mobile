@@ -17,7 +17,7 @@ import (
 	"strings"
 	"testing"
 
-	"golang.org/x/mobile/internal/sdkpath"
+	"vortex.studio/mobile/internal/sdkpath"
 )
 
 func init() {
@@ -212,7 +212,7 @@ func TestEncode(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	bx, err := UnmarshalXML(f, false)
+	bx, err := UnmarshalXML(f, false, 16, 16)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -262,7 +262,7 @@ func TestRawValueByName(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	bx, err := UnmarshalXML(f, false)
+	bx, err := UnmarshalXML(f, false, 16, 16)
 	if err != nil {
 		t.Fatal(err)
 	}

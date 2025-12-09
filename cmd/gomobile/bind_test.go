@@ -14,7 +14,7 @@ import (
 	"testing"
 	"text/template"
 
-	"golang.org/x/mobile/internal/sdkpath"
+	"vortex.studio/mobile/internal/sdkpath"
 )
 
 func TestBindAndroid(t *testing.T) {
@@ -62,7 +62,7 @@ func TestBindAndroid(t *testing.T) {
 		if goos == "windows" {
 			os.Setenv("HOMEDRIVE", "C:")
 		}
-		cmdBind.flag.Parse([]string{"golang.org/x/mobile/asset"})
+		cmdBind.flag.Parse([]string{"vortex.studio/mobile/asset"})
 		err := runBind(cmdBind)
 		if err != nil {
 			t.Log(buf.String())
@@ -144,7 +144,7 @@ func TestBindApple(t *testing.T) {
 		if goos == "windows" {
 			os.Setenv("HOMEDRIVE", "C:")
 		}
-		cmdBind.flag.Parse([]string{"golang.org/x/mobile/asset"})
+		cmdBind.flag.Parse([]string{"vortex.studio/mobile/asset"})
 		if err := runBind(cmdBind); err != nil {
 			t.Log(buf.String())
 			t.Fatal(err)
@@ -185,7 +185,7 @@ func TestBindApple(t *testing.T) {
 
 var bindAndroidTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
 WORK=$WORK
-GOOS=android CGO_ENABLED=1 gobind -lang=go,java -outdir=$WORK{{if .JavaPkg}} -javapkg={{.JavaPkg}}{{end}} golang.org/x/mobile/asset
+GOOS=android CGO_ENABLED=1 gobind -lang=go,java -outdir=$WORK{{if .JavaPkg}} -javapkg={{.JavaPkg}}{{end}} vortex.studio/mobile/asset
 mkdir -p $WORK/src-android-arm
 PWD=$WORK/src-android-arm GOMODCACHE=$GOPATH/pkg/mod GOOS=android GOARCH=arm CC=$NDK_PATH/toolchains/llvm/prebuilt/{{.NDKARCH}}/bin/armv7a-linux-androideabi16-clang CXX=$NDK_PATH/toolchains/llvm/prebuilt/{{.NDKARCH}}/bin/armv7a-linux-androideabi16-clang++ CGO_ENABLED=1 GOARM=7 GOPATH=$WORK:$GOPATH go mod tidy
 PWD=$WORK/src-android-arm GOMODCACHE=$GOPATH/pkg/mod GOOS=android GOARCH=arm CC=$NDK_PATH/toolchains/llvm/prebuilt/{{.NDKARCH}}/bin/armv7a-linux-androideabi16-clang CXX=$NDK_PATH/toolchains/llvm/prebuilt/{{.NDKARCH}}/bin/armv7a-linux-androideabi16-clang++ CGO_ENABLED=1 GOARM=7 GOPATH=$WORK:$GOPATH go build -x -buildmode=c-shared -o=$WORK/android/src/main/jniLibs/armeabi-v7a/libgojni.so ./gobind
@@ -196,7 +196,7 @@ jar c -C $WORK/javac-output .
 var bindAppleTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/pkg/gomobile
 WORK=$WORK
 rm -r -f "{{.Output}}.xcframework"
-GOOS=ios CGO_ENABLED=1 gobind -lang=go,objc -outdir=$WORK/ios -tags=ios{{if .Prefix}} -prefix={{.Prefix}}{{end}} golang.org/x/mobile/asset
+GOOS=ios CGO_ENABLED=1 gobind -lang=go,objc -outdir=$WORK/ios -tags=ios{{if .Prefix}} -prefix={{.Prefix}}{{end}} vortex.studio/mobile/asset
 mkdir -p $WORK/ios/src-arm64
 PWD=$WORK/ios/src-arm64 GOMODCACHE=$GOPATH/pkg/mod GOOS=ios GOARCH=arm64 GOFLAGS=-tags=ios CC=iphoneos-clang CXX=iphoneos-clang++ CGO_CFLAGS=-isysroot iphoneos -miphoneos-version-min=13.0 -fembed-bitcode -arch arm64 CGO_CXXFLAGS=-isysroot iphoneos -miphoneos-version-min=13.0 -fembed-bitcode -arch arm64 CGO_LDFLAGS=-isysroot iphoneos -miphoneos-version-min=13.0 -fembed-bitcode -arch arm64 CGO_ENABLED=1 DARWIN_SDK=iphoneos GOPATH=$WORK/ios:$GOPATH go mod tidy
 PWD=$WORK/ios/src-arm64 GOMODCACHE=$GOPATH/pkg/mod GOOS=ios GOARCH=arm64 GOFLAGS=-tags=ios CC=iphoneos-clang CXX=iphoneos-clang++ CGO_CFLAGS=-isysroot iphoneos -miphoneos-version-min=13.0 -fembed-bitcode -arch arm64 CGO_CXXFLAGS=-isysroot iphoneos -miphoneos-version-min=13.0 -fembed-bitcode -arch arm64 CGO_LDFLAGS=-isysroot iphoneos -miphoneos-version-min=13.0 -fembed-bitcode -arch arm64 CGO_ENABLED=1 DARWIN_SDK=iphoneos GOPATH=$WORK/ios:$GOPATH go build -x -buildmode=c-archive -o $WORK/{{.Output}}-ios-arm64.a ./gobind
@@ -243,7 +243,7 @@ func TestBindAppleAll(t *testing.T) {
 	if goos == "windows" {
 		os.Setenv("HOMEDRIVE", "C:")
 	}
-	cmdBind.flag.Parse([]string{"golang.org/x/mobile/asset"})
+	cmdBind.flag.Parse([]string{"vortex.studio/mobile/asset"})
 	if err := runBind(cmdBind); err != nil {
 		t.Log(buf.String())
 		t.Fatal(err)
@@ -254,7 +254,7 @@ const ambiguousPathsGoMod = `module ambiguouspaths
 
 go 1.18
 
-require golang.org/x/mobile v0.0.0-20230905140555-fbe1c053b6a9
+require vortex.studio/mobile v0.0.0-20230905140555-fbe1c053b6a9
 
 require (
 	golang.org/x/exp/shiny v0.0.0-20230817173708-d852ddb80c63 // indirect
@@ -270,8 +270,8 @@ golang.org/x/exp/shiny v0.0.0-20230817173708-d852ddb80c63 h1:3AGKexOYqL+ztdWdkB1
 golang.org/x/exp/shiny v0.0.0-20230817173708-d852ddb80c63/go.mod h1:UH99kUObWAZkDnWqppdQe5ZhPYESUw8I0zVV1uWBR+0=
 golang.org/x/image v0.11.0 h1:ds2RoQvBvYTiJkwpSFDwCcDFNX7DqjL2WsUgTNk0Ooo=
 golang.org/x/image v0.11.0/go.mod h1:bglhjqbqVuEb9e9+eNR45Jfu7D+T4Qan+NhQk8Ck2P8=
-golang.org/x/mobile v0.0.0-20230905140555-fbe1c053b6a9 h1:LaLfQUz4L1tfuOlrtEouZLZ0qHDwKn87E1NKoiudP/o=
-golang.org/x/mobile v0.0.0-20230905140555-fbe1c053b6a9/go.mod h1:2jxcxt/JNJik+N+QcB8q308+SyrE3bu43+sGZDmJ02M=
+vortex.studio/mobile v0.0.0-20230905140555-fbe1c053b6a9 h1:LaLfQUz4L1tfuOlrtEouZLZ0qHDwKn87E1NKoiudP/o=
+vortex.studio/mobile v0.0.0-20230905140555-fbe1c053b6a9/go.mod h1:2jxcxt/JNJik+N+QcB8q308+SyrE3bu43+sGZDmJ02M=
 golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4/go.mod h1:jJ57K6gSWd91VN4djpZkiMVwK6gcyfeH4XE8wZrZaV4=
 golang.org/x/mod v0.8.0/go.mod h1:iBbtSCu2XBx23ZKBPSOrRkjjQPZFPuis4dIYUhu/chs=
 golang.org/x/net v0.0.0-20190620200207-3b0461eec859/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
@@ -307,7 +307,7 @@ golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7/go.mod h1:I/5z698sn9Ka8T
 const ambiguousPathsGo = `package ambiguouspaths
 
 import (
-	_ "golang.org/x/mobile/app"
+	_ "vortex.studio/mobile/app"
 )
 
 func Dummy() {}
@@ -320,10 +320,10 @@ func TestBindWithGoModules(t *testing.T) {
 
 	dir := t.TempDir()
 
-	if out, err := exec.Command("go", "build", "-o="+dir, "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
+	if out, err := exec.Command("go", "build", "-o="+dir, "vortex.studio/mobile/cmd/gobind").CombinedOutput(); err != nil {
 		t.Fatalf("%v: %s", err, string(out))
 	}
-	if out, err := exec.Command("go", "build", "-o="+dir, "golang.org/x/mobile/cmd/gomobile").CombinedOutput(); err != nil {
+	if out, err := exec.Command("go", "build", "-o="+dir, "vortex.studio/mobile/cmd/gomobile").CombinedOutput(); err != nil {
 		t.Fatalf("%v: %s", err, string(out))
 	}
 	path := dir
@@ -374,7 +374,7 @@ func TestBindWithGoModules(t *testing.T) {
 			}{
 				{
 					Name: "Absolute Path",
-					Path: "golang.org/x/mobile/bind/testdata/cgopkg",
+					Path: "vortex.studio/mobile/bind/testdata/cgopkg",
 				},
 				{
 					Name: "Relative Path",

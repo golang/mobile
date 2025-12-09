@@ -878,7 +878,7 @@ type Context3 interface {
 //
 // This interface is an internal implementation detail and should only be used
 // by the package responsible for managing the screen, such as
-// golang.org/x/mobile/app.
+// vortex.studio/mobile/app.
 type Worker interface {
 	// WorkAvailable returns a channel that communicates when DoWork should be
 	// called.

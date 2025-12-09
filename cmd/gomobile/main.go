@@ -156,7 +156,7 @@ func helpDocumentation(path string) {
 		w.WriteString(cmd.Long)
 	}
 
-	w.WriteString("*/\npackage main // import \"golang.org/x/mobile/cmd/gomobile\"\n")
+	w.WriteString("*/\npackage main // import \"vortex.studio/mobile/cmd/gomobile\"\n")
 
 	if err := os.WriteFile(path, w.Bytes(), 0666); err != nil {
 		log.Fatal(err)
@@ -191,7 +191,7 @@ var usageTmpl = template.Must(template.New("usage").Parse(
 
 To install:
 
-	$ go install golang.org/x/mobile/cmd/gomobile@latest
+	$ go install vortex.studio/mobile/cmd/gomobile@latest
 	$ gomobile init
 
 At least Go 1.16 is required.

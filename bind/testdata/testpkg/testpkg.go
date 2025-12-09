@@ -3,7 +3,7 @@
 // license that can be found in the LICENSE file.
 
 // Package testpkg contains bound functions for testing the cgo-JNI interface.
-// This is used in tests of golang.org/x/mobile/bind/java.
+// This is used in tests of vortex.studio/mobile/bind/java.
 package testpkg
 
 //go:generate gobind -lang=go -outdir=go_testpkg .
@@ -20,11 +20,11 @@ import (
 	"syscall"
 	"time"
 
-	"golang.org/x/mobile/asset"
+	"vortex.studio/mobile/asset"
 
-	"golang.org/x/mobile/bind/testdata/testpkg/secondpkg"
-	"golang.org/x/mobile/bind/testdata/testpkg/simplepkg"
-	"golang.org/x/mobile/bind/testdata/testpkg/unboundpkg"
+	"vortex.studio/mobile/bind/testdata/testpkg/secondpkg"
+	"vortex.studio/mobile/bind/testdata/testpkg/simplepkg"
+	"vortex.studio/mobile/bind/testdata/testpkg/unboundpkg"
 )
 
 const (

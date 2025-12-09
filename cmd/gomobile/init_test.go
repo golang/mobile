@@ -174,7 +174,7 @@ var initTmpl = template.Must(template.New("output").Parse(`GOMOBILE={{.GOPATH}}/
 rm -r -f "$GOMOBILE"
 mkdir -p $GOMOBILE
 WORK={{.GOPATH}}/pkg/gomobile/work
-GOMODCACHE={{.GOPATH}}/pkg/mod go install -x golang.org/x/mobile/cmd/gobind@latest
+GOMODCACHE={{.GOPATH}}/pkg/mod go install -x vortex.studio/mobile/cmd/gobind@latest
 cp $OPENAL_PATH/include/AL/al.h $GOMOBILE/include/AL/al.h
 mkdir -p $GOMOBILE/include/AL
 cp $OPENAL_PATH/include/AL/alc.h $GOMOBILE/include/AL/alc.h

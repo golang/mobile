@@ -28,12 +28,12 @@ import (
 	"runtime"
 	"sync"
 
-	"golang.org/x/mobile/event/key"
-	"golang.org/x/mobile/event/lifecycle"
-	"golang.org/x/mobile/event/paint"
-	"golang.org/x/mobile/event/size"
-	"golang.org/x/mobile/event/touch"
-	"golang.org/x/mobile/geom"
+	"vortex.studio/mobile/event/key"
+	"vortex.studio/mobile/event/lifecycle"
+	"vortex.studio/mobile/event/paint"
+	"vortex.studio/mobile/event/size"
+	"vortex.studio/mobile/event/touch"
+	"vortex.studio/mobile/geom"
 )
 
 var initThreadID uint64

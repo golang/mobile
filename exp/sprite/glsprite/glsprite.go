@@ -14,12 +14,12 @@ import (
 	"image"
 	"image/draw"
 
-	"golang.org/x/mobile/event/size"
-	"golang.org/x/mobile/exp/f32"
-	"golang.org/x/mobile/exp/gl/glutil"
-	"golang.org/x/mobile/exp/sprite"
-	"golang.org/x/mobile/exp/sprite/clock"
-	"golang.org/x/mobile/geom"
+	"vortex.studio/mobile/event/size"
+	"vortex.studio/mobile/exp/f32"
+	"vortex.studio/mobile/exp/gl/glutil"
+	"vortex.studio/mobile/exp/sprite"
+	"vortex.studio/mobile/exp/sprite/clock"
+	"vortex.studio/mobile/geom"
 )
 
 type node struct {

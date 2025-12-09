@@ -11,13 +11,13 @@ import (
 	"log"
 	"net"
 
-	"golang.org/x/mobile/app"
-	"golang.org/x/mobile/app/internal/apptest"
-	"golang.org/x/mobile/event/lifecycle"
-	"golang.org/x/mobile/event/paint"
-	"golang.org/x/mobile/event/size"
-	"golang.org/x/mobile/event/touch"
-	"golang.org/x/mobile/gl"
+	"vortex.studio/mobile/app"
+	"vortex.studio/mobile/app/internal/apptest"
+	"vortex.studio/mobile/event/lifecycle"
+	"vortex.studio/mobile/event/paint"
+	"vortex.studio/mobile/event/size"
+	"vortex.studio/mobile/event/touch"
+	"vortex.studio/mobile/gl"
 )
 
 func main() {

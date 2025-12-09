@@ -9,8 +9,8 @@ package glutil
 import (
 	"fmt"
 
-	"golang.org/x/mobile/exp/f32"
-	"golang.org/x/mobile/gl"
+	"vortex.studio/mobile/exp/f32"
+	"vortex.studio/mobile/gl"
 )
 
 // CreateProgram creates, compiles, and links a gl.Program.

@@ -16,7 +16,7 @@ import (
 	"strings"
 	"sync"
 
-	"golang.org/x/mobile/internal/sdkpath"
+	"vortex.studio/mobile/internal/sdkpath"
 	"golang.org/x/mod/modfile"
 	"golang.org/x/tools/go/packages"
 )

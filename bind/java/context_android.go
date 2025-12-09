@@ -12,7 +12,7 @@ import "C"
 import (
 	"unsafe"
 
-	"golang.org/x/mobile/internal/mobileinit"
+	"vortex.studio/mobile/internal/mobileinit"
 )
 
 //export setContext

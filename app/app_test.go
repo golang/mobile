@@ -16,8 +16,8 @@ import (
 	"testing"
 	"time"
 
-	"golang.org/x/mobile/app/internal/apptest"
-	"golang.org/x/mobile/event/size"
+	"vortex.studio/mobile/app/internal/apptest"
+	"vortex.studio/mobile/event/size"
 )
 
 // TestAndroidApp tests the lifecycle, event, and window semantics of a
@@ -66,7 +66,7 @@ func TestAndroidApp(t *testing.T) {
 	}
 	defer os.Chdir(origWD)
 
-	run(t, "gomobile", "install", "golang.org/x/mobile/app/internal/testapp")
+	run(t, "gomobile", "install", "vortex.studio/mobile/app/internal/testapp")
 
 	ln, err := net.Listen("tcp4", "localhost:0")
 	if err != nil {

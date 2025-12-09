@@ -16,7 +16,7 @@ import (
 	"os"
 	"strconv"
 
-	"golang.org/x/mobile/internal/binres"
+	"vortex.studio/mobile/internal/binres"
 )
 
 const tmpl = `// Copyright 2016 The Go Authors. All rights reserved.

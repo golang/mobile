@@ -38,7 +38,7 @@ import (
 	"sync"
 	"unsafe"
 
-	"golang.org/x/mobile/internal/mobileinit"
+	"vortex.studio/mobile/internal/mobileinit"
 )
 
 var assetOnce sync.Once

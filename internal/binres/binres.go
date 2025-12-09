@@ -205,7 +205,8 @@ var skipSynthesize bool
 
 // UnmarshalXML decodes an AndroidManifest.xml document returning type XML
 // containing decoded resources.
-func UnmarshalXML(r io.Reader, withIcon bool) (*XML, error) {
+// minSdkVersion and targetSdkVersion are used to synthesize the uses-sdk element.
+func UnmarshalXML(r io.Reader, withIcon bool, minSdkVersion, targetSdkVersion int) (*XML, error) {
 	tbl, err := OpenTable()
 	if err != nil {
 		return nil, err
@@ -250,14 +251,14 @@ func UnmarshalXML(r io.Reader, withIcon bool) (*XML, error) {
 							Space: "",
 							Local: "platformBuildVersionCode",
 						},
-						Value: "16",
+						Value: strconv.Itoa(targetSdkVersion),
 					},
 					xml.Attr{
 						Name: xml.Name{
 							Space: "",
 							Local: "platformBuildVersionName",
 						},
-						Value: "4.1.2-1425332",
+						Value: fmt.Sprintf("%d.0.0", targetSdkVersion),
 					})
 
 				q = append(q, ltoken{tkn, line})
@@ -269,12 +270,19 @@ func UnmarshalXML(r io.Reader, withIcon bool) (*XML, error) {
 							Local: "uses-sdk",
 						},
 						Attr: []xml.Attr{
-							xml.Attr{
+							{
 								Name: xml.Name{
 									Space: androidSchema,
 									Local: "minSdkVersion",
 								},
-								Value: fmt.Sprintf("%v", MinSDK),
+								Value: strconv.Itoa(minSdkVersion),
+							},
+							{
+								Name: xml.Name{
+									Space: androidSchema,
+									Local: "targetSdkVersion",
+								},
+								Value: strconv.Itoa(targetSdkVersion),
 							},
 						},
 					}

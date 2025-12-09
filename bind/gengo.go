@@ -516,7 +516,7 @@ func (g *goGen) genPreamble() {
 	g.Printf(goPreamble, pkgName, pkgPath)
 	g.Printf("import (\n")
 	g.Indent()
-	g.Printf("_seq \"golang.org/x/mobile/bind/seq\"\n")
+	g.Printf("_seq \"vortex.studio/mobile/bind/seq\"\n")
 	for _, imp := range g.imports {
 		g.Printf("%s\n", imp)
 	}

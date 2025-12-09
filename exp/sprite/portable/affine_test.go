@@ -14,9 +14,9 @@ import (
 	"runtime"
 	"testing"
 
-	"golang.org/x/mobile/event/size"
-	"golang.org/x/mobile/exp/f32"
-	"golang.org/x/mobile/geom"
+	"vortex.studio/mobile/event/size"
+	"vortex.studio/mobile/exp/f32"
+	"vortex.studio/mobile/geom"
 )
 
 func TestAffine(t *testing.T) {

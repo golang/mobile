@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"testing"
 
-	"golang.org/x/mobile/internal/importers"
+	"vortex.studio/mobile/internal/importers"
 )
 
 func TestImport(t *testing.T) {

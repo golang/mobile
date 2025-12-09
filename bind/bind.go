@@ -6,7 +6,7 @@
 //
 // See the documentation on the gobind command for usage details
 // and the list of currently supported types.
-// (http://godoc.org/golang.org/x/mobile/cmd/gobind)
+// (http://godoc.org/vortex.studio/mobile/cmd/gobind)
 package bind
 
 // TODO(crawshaw): slice support

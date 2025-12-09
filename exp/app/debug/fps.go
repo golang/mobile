@@ -13,9 +13,9 @@ import (
 	"image/draw"
 	"time"
 
-	"golang.org/x/mobile/event/size"
-	"golang.org/x/mobile/exp/gl/glutil"
-	"golang.org/x/mobile/geom"
+	"vortex.studio/mobile/event/size"
+	"vortex.studio/mobile/exp/gl/glutil"
+	"vortex.studio/mobile/geom"
 )
 
 // FPS draws a count of the frames rendered per second.
