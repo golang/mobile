@@ -137,11 +137,18 @@ func buildEnvInit() (cleanup func(), err error) {
 			fmt.Printf("WORK=%s\n", tmpdir)
 			return
 		}
-		removeAll(tmpdir)
+		if buildCache == "" {
+			removeAll(tmpdir)
+		}
 	}
 	if buildN {
 		tmpdir = "$WORK"
 		cleanupFn = func() {}
+	} else if buildCache != "" {
+		tmpdir = buildCache
+		if err = os.MkdirAll(tmpdir, 0700); err != nil {
+			return nil, err
+		}
 	} else {
 		tmpdir, err = os.MkdirTemp("", "gomobile-work-")
 		if err != nil {
