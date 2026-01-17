@@ -71,8 +71,9 @@ output file name depends on the package built.
 
 The -v flag provides verbose output, including the list of packages built.
 
-The build flags -a, -i, -n, -x, -gcflags, -ldflags, -tags, -trimpath, and -work are
-shared with the build command. For documentation, see 'go help build'.
+The build flags -a, -i, -n, -x, -gcflags, -ldflags, -tags, -trimpath, -work,
+and -overlay are shared with the build command. For documentation, see
+'go help build'.
 `,
 }
 
@@ -248,6 +249,7 @@ var (
 	buildIOSVersion string      // -iosversion
 	buildAndroidAPI int         // -androidapi
 	buildTags       stringsFlag // -tags
+	buildOverlay    string      // -overlay
 )
 
 func addBuildFlags(cmd *command) {
@@ -258,6 +260,7 @@ func addBuildFlags(cmd *command) {
 	cmd.flag.StringVar(&buildBundleID, "bundleid", "", "")
 	cmd.flag.StringVar(&buildIOSVersion, "iosversion", "13.0", "")
 	cmd.flag.IntVar(&buildAndroidAPI, "androidapi", minAndroidAPI, "")
+	cmd.flag.StringVar(&buildOverlay, "overlay", "", "")
 
 	cmd.flag.BoolVar(&buildA, "a", false, "")
 	cmd.flag.BoolVar(&buildI, "i", false, "")
@@ -326,6 +329,9 @@ func goCmdAt(at string, subcmd string, srcs []string, env []string, args ...stri
 	}
 	if buildLdflags != "" {
 		cmd.Args = append(cmd.Args, "-ldflags", buildLdflags)
+	}
+	if buildOverlay != "" {
+		cmd.Args = append(cmd.Args, "-overlay", buildOverlay)
 	}
 	if buildTrimpath {
 		cmd.Args = append(cmd.Args, "-trimpath")
