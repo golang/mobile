@@ -71,8 +71,8 @@ output file name depends on the package built.
 
 The -v flag provides verbose output, including the list of packages built.
 
-The build flags -a, -i, -n, -x, -gcflags, -ldflags, -tags, -trimpath, -work,
-and -overlay are shared with the build command. For documentation, see
+The build flags -a, -i, -n, -x, -gcflags, -ldflags, -overlay, -tags, -trimpath,
+and -work are shared with the build command. For documentation, see
 'go help build'.
 `,
 }
@@ -242,6 +242,7 @@ var (
 	buildO          string      // -o
 	buildGcflags    string      // -gcflags
 	buildLdflags    string      // -ldflags
+	buildOverlay    string      // -overlay
 	buildTarget     string      // -target
 	buildTrimpath   bool        // -trimpath
 	buildWork       bool        // -work
@@ -249,18 +250,17 @@ var (
 	buildIOSVersion string      // -iosversion
 	buildAndroidAPI int         // -androidapi
 	buildTags       stringsFlag // -tags
-	buildOverlay    string      // -overlay
 )
 
 func addBuildFlags(cmd *command) {
 	cmd.flag.StringVar(&buildO, "o", "", "")
 	cmd.flag.StringVar(&buildGcflags, "gcflags", "", "")
 	cmd.flag.StringVar(&buildLdflags, "ldflags", "", "")
+	cmd.flag.StringVar(&buildOverlay, "overlay", "", "")
 	cmd.flag.StringVar(&buildTarget, "target", "android", "")
 	cmd.flag.StringVar(&buildBundleID, "bundleid", "", "")
 	cmd.flag.StringVar(&buildIOSVersion, "iosversion", "13.0", "")
 	cmd.flag.IntVar(&buildAndroidAPI, "androidapi", minAndroidAPI, "")
-	cmd.flag.StringVar(&buildOverlay, "overlay", "", "")
 
 	cmd.flag.BoolVar(&buildA, "a", false, "")
 	cmd.flag.BoolVar(&buildI, "i", false, "")
