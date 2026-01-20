@@ -187,10 +187,17 @@ func envInit() (err error) {
 			androidEnv[arch] = []string{
 				"GOOS=android",
 				"GOARCH=" + arch,
-				"CC=" + clang,
-				"CXX=" + clangpp,
 				"CGO_ENABLED=1",
 			}
+
+			// Only set CC/CXX if neither is provided in the current environment.
+			if os.Getenv("CC") == "" {
+				androidEnv[arch] = append(androidEnv[arch], "CC=" + clang)
+			}
+			if os.Getenv("CXX") == "" {
+				androidEnv[arch] = append(androidEnv[arch], "CXX=" + clangpp)
+			}
+
 			if arch == "arm" {
 				androidEnv[arch] = append(androidEnv[arch], "GOARM=7")
 			}
@@ -531,9 +538,19 @@ func archNDK() string {
 			// Android NDK does not contain arm64 toolchains (until and
 			// including NDK 23), use use x86_64 instead. See:
 			// https://github.com/android/ndk/issues/1299
+			//
+			// Some Android environments (e.g. Termux with a custom NDK) do
+			// provide an arm64 host toolchain. Detect Termux via PREFIX and
+			// use the arm64 host toolchain in that case.
 			if runtime.GOOS == "darwin" {
 				arch = "x86_64"
 				break
+			}
+			if runtime.GOOS == "android" && strings.Contains(os.Getenv("PREFIX"), "com.termux") {
+				if _, err := os.Stat("/data/data/com.termux/files/usr/bin/clang"); err == nil {
+					arch = "arm64"
+					break
+				}
 			}
 			fallthrough
 		default:
