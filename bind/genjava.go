@@ -610,7 +610,7 @@ func isJavaPrimitive(T types.Type) bool {
 
 // jniType returns a string that can be used as a JNI type.
 func (g *JavaGen) jniType(T types.Type) string {
-	switch T := T.(type) {
+	switch T := types.Unalias(T).(type) {
 	case *types.Basic:
 		switch T.Kind() {
 		case types.Bool, types.UntypedBool:
@@ -644,7 +644,7 @@ func (g *JavaGen) jniType(T types.Type) string {
 		return "jbyteArray"
 
 	case *types.Pointer:
-		if _, ok := T.Elem().(*types.Named); ok {
+		if _, ok := types.Unalias(T.Elem()).(*types.Named); ok {
 			return g.jniType(T.Elem())
 		}
 		g.errorf("unsupported pointer to type: %s", T)
@@ -697,7 +697,7 @@ func (g *JavaGen) javaType(T types.Type) string {
 	} else if isJavaType(T) {
 		return classNameFor(T)
 	}
-	switch T := T.(type) {
+	switch T := types.Unalias(T).(type) {
 	case *types.Basic:
 		return g.javaBasicType(T)
 	case *types.Slice:
@@ -705,7 +705,7 @@ func (g *JavaGen) javaType(T types.Type) string {
 		return elem + "[]"
 
 	case *types.Pointer:
-		if _, ok := T.Elem().(*types.Named); ok {
+		if _, ok := types.Unalias(T.Elem()).(*types.Named); ok {
 			return g.javaType(T.Elem())
 		}
 		g.errorf("unsupported pointer to type: %s", T)
@@ -898,7 +898,7 @@ func (g *JavaGen) genCRetClear(varName string, t types.Type, exc string) {
 }
 
 func (g *JavaGen) genJavaToC(varName string, t types.Type, mode varMode) {
-	switch t := t.(type) {
+	switch t := types.Unalias(t).(type) {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.String:
@@ -907,7 +907,7 @@ func (g *JavaGen) genJavaToC(varName string, t types.Type, mode varMode) {
 			g.Printf("%s _%s = (%s)%s;\n", g.cgoType(t), varName, g.cgoType(t), varName)
 		}
 	case *types.Slice:
-		switch e := t.Elem().(type) {
+		switch e := types.Unalias(t.Elem()).(type) {
 		case *types.Basic:
 			switch e.Kind() {
 			case types.Uint8: // Byte.
@@ -933,7 +933,7 @@ func (g *JavaGen) genJavaToC(varName string, t types.Type, mode varMode) {
 }
 
 func (g *JavaGen) genCToJava(toName, fromName string, t types.Type, mode varMode) {
-	switch t := t.(type) {
+	switch t := types.Unalias(t).(type) {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.String:
@@ -944,7 +944,7 @@ func (g *JavaGen) genCToJava(toName, fromName string, t types.Type, mode varMode
 			g.Printf("%s %s = (%s)%s;\n", g.jniType(t), toName, g.jniType(t), fromName)
 		}
 	case *types.Slice:
-		switch e := t.Elem().(type) {
+		switch e := types.Unalias(t.Elem()).(type) {
 		case *types.Basic:
 			switch e.Kind() {
 			case types.Uint8: // Byte.
@@ -958,7 +958,7 @@ func (g *JavaGen) genCToJava(toName, fromName string, t types.Type, mode varMode
 	case *types.Pointer:
 		// TODO(crawshaw): test *int
 		// TODO(crawshaw): test **Generator
-		switch t := t.Elem().(type) {
+		switch t := types.Unalias(t.Elem()).(type) {
 		case *types.Named:
 			g.genFromRefnum(toName, fromName, t, t.Obj())
 		default:
@@ -1259,10 +1259,10 @@ func (g *JavaGen) genJNIFuncBody(o *types.Func, sName string, jm *java.Func, isj
 
 // genRelease cleans up arguments that weren't copied in genJavaToC.
 func (g *JavaGen) genRelease(varName string, t types.Type, mode varMode) {
-	switch t := t.(type) {
+	switch t := types.Unalias(t).(type) {
 	case *types.Basic:
 	case *types.Slice:
-		switch e := t.Elem().(type) {
+		switch e := types.Unalias(t.Elem()).(type) {
 		case *types.Basic:
 			switch e.Kind() {
 			case types.Uint8: // Byte.
@@ -1364,7 +1364,7 @@ func (g *JavaGen) GenH() error {
 }
 
 func (g *JavaGen) jniCallType(t types.Type) string {
-	switch t := t.(type) {
+	switch t := types.Unalias(t).(type) {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.Bool, types.UntypedBool:
@@ -1391,7 +1391,7 @@ func (g *JavaGen) jniCallType(t types.Type) string {
 	case *types.Slice:
 		return "Object"
 	case *types.Pointer:
-		if _, ok := t.Elem().(*types.Named); ok {
+		if _, ok := types.Unalias(t.Elem()).(*types.Named); ok {
 			return g.jniCallType(t.Elem())
 		}
 		g.errorf("unsupported pointer to type: %s", t)
@@ -1411,7 +1411,7 @@ func (g *JavaGen) jniSigType(T types.Type) string {
 	if isErrorType(T) {
 		return "Ljava/lang/Exception;"
 	}
-	switch T := T.(type) {
+	switch T := types.Unalias(T).(type) {
 	case *types.Basic:
 		switch T.Kind() {
 		case types.Bool, types.UntypedBool:
@@ -1441,7 +1441,7 @@ func (g *JavaGen) jniSigType(T types.Type) string {
 	case *types.Slice:
 		return "[" + g.jniSigType(T.Elem())
 	case *types.Pointer:
-		if _, ok := T.Elem().(*types.Named); ok {
+		if _, ok := types.Unalias(T.Elem()).(*types.Named); ok {
 			return g.jniSigType(T.Elem())
 		}
 		g.errorf("unsupported pointer to type: %s", T)

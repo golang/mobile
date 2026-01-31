@@ -99,7 +99,7 @@ func (g *goGen) genFuncBody(o *types.Func, selectorLHS string) {
 }
 
 func (g *goGen) genWrite(toVar, fromVar string, t types.Type, mode varMode) {
-	switch t := t.(type) {
+	switch t := types.Unalias(t).(type) {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.String:
@@ -111,7 +111,7 @@ func (g *goGen) genWrite(toVar, fromVar string, t types.Type, mode varMode) {
 			g.Printf("%s := C.%s(%s)\n", toVar, g.cgoType(t), fromVar)
 		}
 	case *types.Slice:
-		switch e := t.Elem().(type) {
+		switch e := types.Unalias(t.Elem()).(type) {
 		case *types.Basic:
 			switch e.Kind() {
 			case types.Uint8: // Byte.
@@ -125,7 +125,7 @@ func (g *goGen) genWrite(toVar, fromVar string, t types.Type, mode varMode) {
 	case *types.Pointer:
 		// TODO(crawshaw): test *int
 		// TODO(crawshaw): test **Generator
-		switch t := t.Elem().(type) {
+		switch t := types.Unalias(t.Elem()).(type) {
 		case *types.Named:
 			g.genToRefNum(toVar, fromVar)
 		default:
@@ -384,7 +384,7 @@ func (g *goGen) genInterface(obj *types.TypeName) {
 }
 
 func (g *goGen) genRead(toVar, fromVar string, typ types.Type, mode varMode) {
-	switch t := typ.(type) {
+	switch t := types.Unalias(typ).(type) {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.String:
@@ -395,7 +395,7 @@ func (g *goGen) genRead(toVar, fromVar string, typ types.Type, mode varMode) {
 			g.Printf("%s := %s(%s)\n", toVar, t.Underlying().String(), fromVar)
 		}
 	case *types.Slice:
-		switch e := t.Elem().(type) {
+		switch e := types.Unalias(t.Elem()).(type) {
 		case *types.Basic:
 			switch e.Kind() {
 			case types.Uint8: // Byte.
@@ -407,7 +407,7 @@ func (g *goGen) genRead(toVar, fromVar string, typ types.Type, mode varMode) {
 			g.errorf("unsupported type: %s", t)
 		}
 	case *types.Pointer:
-		switch u := t.Elem().(type) {
+		switch u := types.Unalias(t.Elem()).(type) {
 		case *types.Named:
 			o := u.Obj()
 			oPkg := o.Pkg()
@@ -471,7 +471,7 @@ func (g *goGen) genRead(toVar, fromVar string, typ types.Type, mode varMode) {
 func (g *goGen) typeString(typ types.Type) string {
 	pkg := g.Pkg
 
-	switch t := typ.(type) {
+	switch t := types.Unalias(typ).(type) {
 	case *types.Named:
 		obj := t.Obj()
 		if obj.Pkg() == nil { // e.g. error type is *types.Named.
@@ -490,7 +490,7 @@ func (g *goGen) typeString(typ types.Type) string {
 			g.errorf("unsupported named type %s / %T", t, t)
 		}
 	case *types.Pointer:
-		switch t := t.Elem().(type) {
+		switch t := types.Unalias(t.Elem()).(type) {
 		case *types.Named:
 			return fmt.Sprintf("*%s", g.typeString(t))
 		default:

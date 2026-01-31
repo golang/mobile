@@ -37,6 +37,7 @@ var updateFlag = flag.Bool("update", false, "Update the golden files.")
 
 var tests = []string{
 	"", // The universe package with the error type.
+	"testdata/aliases.go",
 	"testdata/basictypes.go",
 	"testdata/structs.go",
 	"testdata/interfaces.go",
