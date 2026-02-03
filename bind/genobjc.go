@@ -688,17 +688,11 @@ func (g *ObjcGen) genWrite(varName string, t types.Type, mode varMode) {
 			g.Printf("%s _%s = (%s)%s;\n", g.cgoType(t), varName, g.cgoType(t), varName)
 		}
 	case *types.Slice:
-		switch e := types.Unalias(t.Elem()).(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				g.Printf("nbyteslice _%s = go_seq_from_objc_bytearray(%s, %d);\n", varName, varName, toCFlag(mode == modeRetained))
-			default:
-				g.errorf("unsupported type: %s", t)
-			}
-		default:
-			g.errorf("unsupported type: %s", t)
+		if isBytesSlice(t) {
+			g.Printf("nbyteslice _%s = go_seq_from_objc_bytearray(%s, %d);\n", varName, varName, toCFlag(mode == modeRetained))
+			return
 		}
+		g.errorf("unsupported type: %s", t)
 	case *types.Named:
 		switch u := t.Underlying().(type) {
 		case *types.Interface:
@@ -755,17 +749,11 @@ func (g *ObjcGen) genRead(toName, fromName string, t types.Type, mode varMode) {
 			g.Printf("%s %s = (%s)%s;\n", g.objcType(t), toName, g.objcType(t), fromName)
 		}
 	case *types.Slice:
-		switch e := types.Unalias(t.Elem()).(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				g.Printf("NSData *%s = go_seq_to_objc_bytearray(%s, %d);\n", toName, fromName, toCFlag(mode == modeRetained))
-			default:
-				g.errorf("unsupported type: %s", t)
-			}
-		default:
-			g.errorf("unsupported type: %s", t)
+		if isBytesSlice(t) {
+			g.Printf("NSData *%s = go_seq_to_objc_bytearray(%s, %d);\n", toName, fromName, toCFlag(mode == modeRetained))
+			return
 		}
+		g.errorf("unsupported type: %s", t)
 	case *types.Pointer:
 		switch t := types.Unalias(t.Elem()).(type) {
 		case *types.Named:
@@ -1035,18 +1023,12 @@ func (g *ObjcGen) genInterfaceMethodProxy(obj *types.TypeName, m *types.Func) {
 func (g *ObjcGen) genRelease(varName string, t types.Type, mode varMode) {
 	switch t := types.Unalias(t).(type) {
 	case *types.Slice:
-		switch e := types.Unalias(t.Elem()).(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				if mode == modeTransient {
-					// If the argument was not mutable, go_seq_from_objc_bytearray created a copy.
-					// Free it here.
-					g.Printf("if (![%s isKindOfClass:[NSMutableData class]]) {\n", varName)
-					g.Printf("  free(_%s.ptr);\n", varName)
-					g.Printf("}\n")
-				}
-			}
+		if isBytesSlice(t) && mode == modeTransient {
+			// If the argument was not mutable, go_seq_from_objc_bytearray created a copy.
+			// Free it here.
+			g.Printf("if (![%s isKindOfClass:[NSMutableData class]]) {\n", varName)
+			g.Printf("  free(_%s.ptr);\n", varName)
+			g.Printf("}\n")
 		}
 	}
 }
@@ -1290,7 +1272,7 @@ func (g *ObjcGen) refTypeBase(typ types.Type) string {
 }
 
 func (g *ObjcGen) objcParamType(t types.Type) string {
-	switch typ := t.Underlying().(type) {
+	switch typ := types.Unalias(t).(type) {
 	case *types.Basic:
 		switch typ.Kind() {
 		case types.String, types.UntypedString:

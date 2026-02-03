@@ -394,17 +394,10 @@ func (g *Generator) cgoType(t types.Type) string {
 			g.errorf("unsupported basic type: %s", t)
 		}
 	case *types.Slice:
-		switch e := t.Elem().Underlying().(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				return "nbyteslice"
-			default:
-				g.errorf("unsupported slice type: %s", t)
-			}
-		default:
-			g.errorf("unsupported slice type: %s", t)
+		if isBytesSlice(t) {
+			return "nbyteslice"
 		}
+		g.errorf("unsupported slice type: %s", t)
 	case *types.Pointer:
 		if _, ok := types.Unalias(t.Elem()).(*types.Named); ok {
 			return g.cgoType(t.Elem())
@@ -504,10 +497,7 @@ func (g *Generator) isSupported(t types.Type) bool {
 		}
 		return false
 	case *types.Slice:
-		switch e := t.Elem().Underlying().(type) {
-		case *types.Basic:
-			return e.Kind() == types.Uint8
-		}
+		return isBytesSlice(t)
 	case *types.Pointer:
 		switch t := types.Unalias(t.Elem()).(type) {
 		case *types.Named:

@@ -129,12 +129,8 @@ func (j *javaClassInfo) toJavaType(T types.Type) *java.Type {
 		}
 		return &java.Type{Kind: kind}
 	case *types.Slice:
-		switch e := T.Elem().(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				return &java.Type{Kind: java.Array, Elem: &java.Type{Kind: java.Byte}}
-			}
+		if isBytesSlice(T) {
+			return &java.Type{Kind: java.Array, Elem: &java.Type{Kind: java.Byte}}
 		}
 		return nil
 	case *types.Named:
@@ -907,17 +903,11 @@ func (g *JavaGen) genJavaToC(varName string, t types.Type, mode varMode) {
 			g.Printf("%s _%s = (%s)%s;\n", g.cgoType(t), varName, g.cgoType(t), varName)
 		}
 	case *types.Slice:
-		switch e := types.Unalias(t.Elem()).(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				g.Printf("nbyteslice _%s = go_seq_from_java_bytearray(env, %s, %d);\n", varName, varName, toCFlag(mode == modeRetained))
-			default:
-				g.errorf("unsupported type: %s", t)
-			}
-		default:
-			g.errorf("unsupported type: %s", t)
+		if isBytesSlice(t) {
+			g.Printf("nbyteslice _%s = go_seq_from_java_bytearray(env, %s, %d);\n", varName, varName, toCFlag(mode == modeRetained))
+			return
 		}
+		g.errorf("unsupported type: %s", t)
 	case *types.Named:
 		switch u := t.Underlying().(type) {
 		case *types.Interface:
@@ -944,17 +934,11 @@ func (g *JavaGen) genCToJava(toName, fromName string, t types.Type, mode varMode
 			g.Printf("%s %s = (%s)%s;\n", g.jniType(t), toName, g.jniType(t), fromName)
 		}
 	case *types.Slice:
-		switch e := types.Unalias(t.Elem()).(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				g.Printf("jbyteArray %s = go_seq_to_java_bytearray(env, %s, %d);\n", toName, fromName, toCFlag(mode == modeRetained))
-			default:
-				g.errorf("unsupported type: %s", t)
-			}
-		default:
-			g.errorf("unsupported type: %s", t)
+		if isBytesSlice(t) {
+			g.Printf("jbyteArray %s = go_seq_to_java_bytearray(env, %s, %d);\n", toName, fromName, toCFlag(mode == modeRetained))
+			return
 		}
+		g.errorf("unsupported type: %s", t)
 	case *types.Pointer:
 		// TODO(crawshaw): test *int
 		// TODO(crawshaw): test **Generator
@@ -1262,14 +1246,8 @@ func (g *JavaGen) genRelease(varName string, t types.Type, mode varMode) {
 	switch t := types.Unalias(t).(type) {
 	case *types.Basic:
 	case *types.Slice:
-		switch e := types.Unalias(t.Elem()).(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				if mode == modeTransient {
-					g.Printf("go_seq_release_byte_array(env, %s, _%s.ptr);\n", varName, varName)
-				}
-			}
+		if isBytesSlice(t) && mode == modeTransient {
+			g.Printf("go_seq_release_byte_array(env, %s, _%s.ptr);\n", varName, varName)
 		}
 	}
 }

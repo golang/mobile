@@ -111,17 +111,11 @@ func (g *goGen) genWrite(toVar, fromVar string, t types.Type, mode varMode) {
 			g.Printf("%s := C.%s(%s)\n", toVar, g.cgoType(t), fromVar)
 		}
 	case *types.Slice:
-		switch e := types.Unalias(t.Elem()).(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				g.Printf("%s := fromSlice(%s, %v)\n", toVar, fromVar, mode == modeRetained)
-			default:
-				g.errorf("unsupported type: %s", t)
-			}
-		default:
-			g.errorf("unsupported type: %s", t)
+		if isBytesSlice(t) {
+			g.Printf("%s := fromSlice(%s, %v)\n", toVar, fromVar, mode == modeRetained)
+			return
 		}
+		g.errorf("unsupported type: %s", t)
 	case *types.Pointer:
 		// TODO(crawshaw): test *int
 		// TODO(crawshaw): test **Generator
@@ -395,17 +389,11 @@ func (g *goGen) genRead(toVar, fromVar string, typ types.Type, mode varMode) {
 			g.Printf("%s := %s(%s)\n", toVar, t.Underlying().String(), fromVar)
 		}
 	case *types.Slice:
-		switch e := types.Unalias(t.Elem()).(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				g.Printf("%s := toSlice(%s, %v)\n", toVar, fromVar, mode == modeRetained)
-			default:
-				g.errorf("unsupported type: %s", t)
-			}
-		default:
-			g.errorf("unsupported type: %s", t)
+		if isBytesSlice(t) {
+			g.Printf("%s := toSlice(%s, %v)\n", toVar, fromVar, mode == modeRetained)
+			return
 		}
+		g.errorf("unsupported type: %s", t)
 	case *types.Pointer:
 		switch u := types.Unalias(t.Elem()).(type) {
 		case *types.Named:

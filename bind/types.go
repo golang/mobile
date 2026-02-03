@@ -143,7 +143,7 @@ func isRefType(t types.Type) bool {
 }
 
 func isNullableType(t types.Type) bool {
-	t = t.Underlying()
+	t = types.Unalias(t)
 	return types.AssignableTo(types.Typ[types.UntypedNil].Underlying(), t) || t.String() == "string" // string is mapped to NSString*, which is nullable
 }
 
@@ -170,4 +170,9 @@ func pkgFirstElem(p *types.Package) string {
 func isWrapperType(t types.Type) bool {
 	e := typePkgFirstElem(t)
 	return e == "Java" || e == "ObjC"
+}
+
+func isBytesSlice(t *types.Slice) bool {
+	e, ok := types.Unalias(t.Elem()).(*types.Basic)
+	return ok && e.Kind() == types.Byte
 }
