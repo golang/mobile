@@ -1,6 +1,6 @@
 module golang.org/x/mobile
 
-go 1.24.0
+go 1.25.0
 
 require (
 	golang.org/x/exp/shiny v0.0.0-20260112195511-716be5621a96
