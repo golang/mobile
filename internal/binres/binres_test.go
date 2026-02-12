@@ -1,4 +1,4 @@
-// Copyright 2015 The Go Authors.  All rights reserved.
+// Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -8,8 +8,8 @@ import (
 	"bytes"
 	"encoding"
 	"encoding/xml"
+	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math"
 	"os"
@@ -103,11 +103,11 @@ func compareBytes(a, b []byte) error {
 			fmt.Fprint(buf, "... output truncated.\n")
 		}
 	}
-	return fmt.Errorf(buf.String())
+	return errors.New(buf.String())
 }
 
 func TestBootstrap(t *testing.T) {
-	bin, err := ioutil.ReadFile("testdata/bootstrap.bin")
+	bin, err := os.ReadFile("testdata/bootstrap.bin")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -217,7 +217,7 @@ func TestEncode(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	bin, err := ioutil.ReadFile("testdata/bootstrap.bin")
+	bin, err := os.ReadFile("testdata/bootstrap.bin")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -329,7 +329,7 @@ func compareElements(have, want *XML) error {
 		}
 	}
 	if buf.Len() > 0 {
-		return fmt.Errorf(buf.String())
+		return errors.New(buf.String())
 	}
 	return nil
 }

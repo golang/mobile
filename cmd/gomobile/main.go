@@ -1,4 +1,4 @@
-// Copyright 2015 The Go Authors.  All rights reserved.
+// Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -128,7 +127,7 @@ func help(args []string) {
 	os.Exit(2)
 }
 
-const documentationHeader = `// Copyright 2015 The Go Authors.  All rights reserved.
+const documentationHeader = `// Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -159,7 +158,7 @@ func helpDocumentation(path string) {
 
 	w.WriteString("*/\npackage main // import \"golang.org/x/mobile/cmd/gomobile\"\n")
 
-	if err := ioutil.WriteFile(path, w.Bytes(), 0666); err != nil {
+	if err := os.WriteFile(path, w.Bytes(), 0666); err != nil {
 		log.Fatal(err)
 	}
 }

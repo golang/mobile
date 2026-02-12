@@ -45,7 +45,7 @@ type javaClassInfo struct {
 	genNoargCon bool
 }
 
-// Init intializes the embedded Generator and initializes the Java class information
+// Init initializes the embedded Generator and initializes the Java class information
 // needed to generate structs that extend Java classes and interfaces.
 func (g *JavaGen) Init(classes []*java.Class) {
 	g.Generator.Init()
@@ -129,12 +129,8 @@ func (j *javaClassInfo) toJavaType(T types.Type) *java.Type {
 		}
 		return &java.Type{Kind: kind}
 	case *types.Slice:
-		switch e := T.Elem().(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				return &java.Type{Kind: java.Array, Elem: &java.Type{Kind: java.Byte}}
-			}
+		if isBytesSlice(T) {
+			return &java.Type{Kind: java.Array, Elem: &java.Type{Kind: java.Byte}}
 		}
 		return nil
 	case *types.Named:
@@ -437,7 +433,7 @@ func (g *JavaGen) genConstructor(f *types.Func, n string, jcls bool) {
 			if i > 0 {
 				g.Printf(", ")
 			}
-			g.Printf(g.paramName(params, i))
+			g.Printf("%s", g.paramName(params, i))
 		}
 		g.Printf(");\n")
 	}
@@ -447,7 +443,7 @@ func (g *JavaGen) genConstructor(f *types.Func, n string, jcls bool) {
 		if i > 0 {
 			g.Printf(", ")
 		}
-		g.Printf(g.paramName(params, i))
+		g.Printf("%s", g.paramName(params, i))
 	}
 	g.Printf(");\n")
 	g.Printf("Seq.trackGoRef(refnum, this);\n")
@@ -610,7 +606,7 @@ func isJavaPrimitive(T types.Type) bool {
 
 // jniType returns a string that can be used as a JNI type.
 func (g *JavaGen) jniType(T types.Type) string {
-	switch T := T.(type) {
+	switch T := types.Unalias(T).(type) {
 	case *types.Basic:
 		switch T.Kind() {
 		case types.Bool, types.UntypedBool:
@@ -644,7 +640,7 @@ func (g *JavaGen) jniType(T types.Type) string {
 		return "jbyteArray"
 
 	case *types.Pointer:
-		if _, ok := T.Elem().(*types.Named); ok {
+		if _, ok := types.Unalias(T.Elem()).(*types.Named); ok {
 			return g.jniType(T.Elem())
 		}
 		g.errorf("unsupported pointer to type: %s", T)
@@ -697,7 +693,7 @@ func (g *JavaGen) javaType(T types.Type) string {
 	} else if isJavaType(T) {
 		return classNameFor(T)
 	}
-	switch T := T.(type) {
+	switch T := types.Unalias(T).(type) {
 	case *types.Basic:
 		return g.javaBasicType(T)
 	case *types.Slice:
@@ -705,7 +701,7 @@ func (g *JavaGen) javaType(T types.Type) string {
 		return elem + "[]"
 
 	case *types.Pointer:
-		if _, ok := T.Elem().(*types.Named); ok {
+		if _, ok := types.Unalias(T.Elem()).(*types.Named); ok {
 			return g.javaType(T.Elem())
 		}
 		g.errorf("unsupported pointer to type: %s", T)
@@ -757,21 +753,21 @@ func (g *JavaGen) genJNIFuncSignature(o *types.Func, sName string, jm *java.Func
 	g.Printf("Java_%s_", g.jniPkgName())
 	if sName != "" {
 		if proxy {
-			g.Printf(java.JNIMangle(g.className()))
+			g.Printf("%s", java.JNIMangle(g.className()))
 			// 0024 is the mangled form of $, for naming inner classes.
 			g.Printf("_00024proxy%s", sName)
 		} else {
-			g.Printf(java.JNIMangle(g.javaTypeName(sName)))
+			g.Printf("%s", java.JNIMangle(g.javaTypeName(sName)))
 		}
 	} else {
-		g.Printf(java.JNIMangle(g.className()))
+		g.Printf("%s", java.JNIMangle(g.className()))
 	}
 	g.Printf("_")
 	if jm != nil {
-		g.Printf(jm.JNIName)
+		g.Printf("%s", jm.JNIName)
 	} else {
 		oName := javaNameReplacer(lowerFirst(o.Name()))
-		g.Printf(java.JNIMangle(oName))
+		g.Printf("%s", java.JNIMangle(oName))
 	}
 	g.Printf("(JNIEnv* env, ")
 	if sName != "" {
@@ -839,9 +835,9 @@ func (g *JavaGen) genFuncSignature(o *types.Func, jm *java.Func, hasThis bool) {
 
 	g.Printf("%s ", ret)
 	if jm != nil {
-		g.Printf(jm.Name)
+		g.Printf("%s", jm.Name)
 	} else {
-		g.Printf(javaNameReplacer(lowerFirst(o.Name())))
+		g.Printf("%s", javaNameReplacer(lowerFirst(o.Name())))
 	}
 	g.Printf("(")
 	g.genFuncArgs(o, jm, hasThis)
@@ -898,7 +894,7 @@ func (g *JavaGen) genCRetClear(varName string, t types.Type, exc string) {
 }
 
 func (g *JavaGen) genJavaToC(varName string, t types.Type, mode varMode) {
-	switch t := t.(type) {
+	switch t := types.Unalias(t).(type) {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.String:
@@ -907,17 +903,11 @@ func (g *JavaGen) genJavaToC(varName string, t types.Type, mode varMode) {
 			g.Printf("%s _%s = (%s)%s;\n", g.cgoType(t), varName, g.cgoType(t), varName)
 		}
 	case *types.Slice:
-		switch e := t.Elem().(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				g.Printf("nbyteslice _%s = go_seq_from_java_bytearray(env, %s, %d);\n", varName, varName, toCFlag(mode == modeRetained))
-			default:
-				g.errorf("unsupported type: %s", t)
-			}
-		default:
-			g.errorf("unsupported type: %s", t)
+		if isBytesSlice(t) {
+			g.Printf("nbyteslice _%s = go_seq_from_java_bytearray(env, %s, %d);\n", varName, varName, toCFlag(mode == modeRetained))
+			return
 		}
+		g.errorf("unsupported type: %s", t)
 	case *types.Named:
 		switch u := t.Underlying().(type) {
 		case *types.Interface:
@@ -933,7 +923,7 @@ func (g *JavaGen) genJavaToC(varName string, t types.Type, mode varMode) {
 }
 
 func (g *JavaGen) genCToJava(toName, fromName string, t types.Type, mode varMode) {
-	switch t := t.(type) {
+	switch t := types.Unalias(t).(type) {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.String:
@@ -944,21 +934,15 @@ func (g *JavaGen) genCToJava(toName, fromName string, t types.Type, mode varMode
 			g.Printf("%s %s = (%s)%s;\n", g.jniType(t), toName, g.jniType(t), fromName)
 		}
 	case *types.Slice:
-		switch e := t.Elem().(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				g.Printf("jbyteArray %s = go_seq_to_java_bytearray(env, %s, %d);\n", toName, fromName, toCFlag(mode == modeRetained))
-			default:
-				g.errorf("unsupported type: %s", t)
-			}
-		default:
-			g.errorf("unsupported type: %s", t)
+		if isBytesSlice(t) {
+			g.Printf("jbyteArray %s = go_seq_to_java_bytearray(env, %s, %d);\n", toName, fromName, toCFlag(mode == modeRetained))
+			return
 		}
+		g.errorf("unsupported type: %s", t)
 	case *types.Pointer:
 		// TODO(crawshaw): test *int
 		// TODO(crawshaw): test **Generator
-		switch t := t.Elem().(type) {
+		switch t := types.Unalias(t.Elem()).(type) {
 		case *types.Named:
 			g.genFromRefnum(toName, fromName, t, t.Obj())
 		default:
@@ -1259,17 +1243,11 @@ func (g *JavaGen) genJNIFuncBody(o *types.Func, sName string, jm *java.Func, isj
 
 // genRelease cleans up arguments that weren't copied in genJavaToC.
 func (g *JavaGen) genRelease(varName string, t types.Type, mode varMode) {
-	switch t := t.(type) {
+	switch t := types.Unalias(t).(type) {
 	case *types.Basic:
 	case *types.Slice:
-		switch e := t.Elem().(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				if mode == modeTransient {
-					g.Printf("go_seq_release_byte_array(env, %s, _%s.ptr);\n", varName, varName)
-				}
-			}
+		if isBytesSlice(t) && mode == modeTransient {
+			g.Printf("go_seq_release_byte_array(env, %s, _%s.ptr);\n", varName, varName)
 		}
 	}
 }
@@ -1364,7 +1342,7 @@ func (g *JavaGen) GenH() error {
 }
 
 func (g *JavaGen) jniCallType(t types.Type) string {
-	switch t := t.(type) {
+	switch t := types.Unalias(t).(type) {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.Bool, types.UntypedBool:
@@ -1391,7 +1369,7 @@ func (g *JavaGen) jniCallType(t types.Type) string {
 	case *types.Slice:
 		return "Object"
 	case *types.Pointer:
-		if _, ok := t.Elem().(*types.Named); ok {
+		if _, ok := types.Unalias(t.Elem()).(*types.Named); ok {
 			return g.jniCallType(t.Elem())
 		}
 		g.errorf("unsupported pointer to type: %s", t)
@@ -1411,7 +1389,7 @@ func (g *JavaGen) jniSigType(T types.Type) string {
 	if isErrorType(T) {
 		return "Ljava/lang/Exception;"
 	}
-	switch T := T.(type) {
+	switch T := types.Unalias(T).(type) {
 	case *types.Basic:
 		switch T.Kind() {
 		case types.Bool, types.UntypedBool:
@@ -1441,7 +1419,7 @@ func (g *JavaGen) jniSigType(T types.Type) string {
 	case *types.Slice:
 		return "[" + g.jniSigType(T.Elem())
 	case *types.Pointer:
-		if _, ok := T.Elem().(*types.Named); ok {
+		if _, ok := types.Unalias(T.Elem()).(*types.Named); ok {
 			return g.jniSigType(T.Elem())
 		}
 		g.errorf("unsupported pointer to type: %s", T)

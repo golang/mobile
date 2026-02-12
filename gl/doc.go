@@ -1,4 +1,4 @@
-// Copyright 2014 The Go Authors.  All rights reserved.
+// Copyright 2014 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -42,7 +42,7 @@ error messages. For example,
 The gldebug tracing has very high overhead, so make sure to remove
 the build tag before deploying any binaries.
 */
-package gl // import "golang.org/x/mobile/gl"
+package gl
 
 /*
 Implementation details.

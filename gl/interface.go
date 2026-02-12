@@ -1,4 +1,4 @@
-// Copyright 2014 The Go Authors.  All rights reserved.
+// Copyright 2014 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -81,7 +81,7 @@ type Context interface {
 	// http://www.khronos.org/opengles/sdk/docs/man3/html/glBlendFunc.xhtml
 	BlendFunc(sfactor, dfactor Enum)
 
-	// BlendFunc sets the pixel RGB and alpha blending factors separately.
+	// BlendFuncSeparate sets the pixel RGB and alpha blending factors separately.
 	//
 	// http://www.khronos.org/opengles/sdk/docs/man3/html/glBlendFuncSeparate.xhtml
 	BlendFuncSeparate(sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha Enum)
@@ -192,7 +192,7 @@ type Context interface {
 	// http://www.khronos.org/opengles/sdk/docs/man3/html/glGenTextures.xhtml
 	CreateTexture() Texture
 
-	// CreateTVertexArray creates a vertex array.
+	// CreateVertexArray creates a vertex array.
 	//
 	// http://www.khronos.org/opengles/sdk/docs/man3/html/glGenVertexArrays.xhtml
 	CreateVertexArray() VertexArray
@@ -599,7 +599,7 @@ type Context interface {
 	// http://www.khronos.org/opengles/sdk/docs/man3/html/glStencilFunc.xhtml
 	StencilFunc(fn Enum, ref int, mask uint32)
 
-	// StencilFunc sets the front or back stencil test reference value.
+	// StencilFuncSeparate sets the front or back stencil test reference value.
 	//
 	// http://www.khronos.org/opengles/sdk/docs/man3/html/glStencilFuncSeparate.xhtml
 	StencilFuncSeparate(face, fn Enum, ref int, mask uint32)
@@ -737,7 +737,7 @@ type Context interface {
 	// http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 	Uniform4i(dst Uniform, v0, v1, v2, v3 int32)
 
-	// Uniform4i writes an ivec4 uniform array of len(src)/4 elements.
+	// Uniform4iv writes an ivec4 uniform array of len(src)/4 elements.
 	//
 	// http://www.khronos.org/opengles/sdk/docs/man3/html/glUniform.xhtml
 	Uniform4iv(dst Uniform, src []int32)

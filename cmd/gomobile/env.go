@@ -1,3 +1,7 @@
+// Copyright 2015 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package main
 
 import (
@@ -6,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -63,9 +66,11 @@ func platformOS(platform string) string {
 	case "macos", "maccatalyst":
 		// For "maccatalyst", Go packages should be built with GOOS=darwin,
 		// not GOOS=ios, since the underlying OS (and kernel, runtime) is macOS.
+		// But, using GOOS=darwin with build-tag ios leads to corrupt builds: https://go.dev/issue/52299
+		// => So we use GOOS=ios for now.
 		// We also apply a "macos" or "maccatalyst" build tag, respectively.
 		// See below for additional context.
-		return "darwin"
+		return "ios"
 	default:
 		panic(fmt.Sprintf("unexpected platform: %s", platform))
 	}
@@ -82,17 +87,17 @@ func platformTags(platform string) []string {
 	case "maccatalyst":
 		// Mac Catalyst is a subset of iOS APIs made available on macOS
 		// designed to ease porting apps developed for iPad to macOS.
-		// See https://developer.apple.com/mac-catalyst/.
-		// Because of this, when building a Go package targeting maccatalyst,
-		// GOOS=darwin (not ios). To bridge the gap and enable maccatalyst
-		// packages to be compiled, we also specify the "ios" build tag.
+		// See
+		//   https://developer.apple.com/mac-catalyst/.
+		//   https://stackoverflow.com/questions/12132933/preprocessor-macro-for-os-x-targets/49560690#49560690
+		//
+		// Historically gomobile used GOOS=darwin with build tag ios when
+		// targeting Mac Catalyst. However, this configuration is not officially
+		// supported and leads to corrupt builds after go1.18: https://go.dev/issues/52299
+		// Use GOOS=ios.
 		// To help discriminate between darwin, ios, macos, and maccatalyst
 		// targets, there is also a "maccatalyst" tag.
-		// Some additional context on this can be found here:
-		// https://stackoverflow.com/questions/12132933/preprocessor-macro-for-os-x-targets/49560690#49560690
-		// TODO(ydnar): remove tag "ios" when cgo supports Catalyst
-		// See golang.org/issues/47228
-		return []string{"ios", "macos", "maccatalyst"}
+		return []string{"macos", "maccatalyst"}
 	default:
 		panic(fmt.Sprintf("unexpected platform: %s", platform))
 	}
@@ -138,7 +143,7 @@ func buildEnvInit() (cleanup func(), err error) {
 		tmpdir = "$WORK"
 		cleanupFn = func() {}
 	} else {
-		tmpdir, err = ioutil.TempDir("", "gomobile-work-")
+		tmpdir, err = os.MkdirTemp("", "gomobile-work-")
 		if err != nil {
 			return nil, err
 		}
@@ -217,17 +222,11 @@ func envInit() (err error) {
 				cflags += " -mios-simulator-version-min=" + buildIOSVersion
 				cflags += " -fembed-bitcode"
 			case "maccatalyst":
-				// Mac Catalyst is a subset of iOS APIs made available on macOS
-				// designed to ease porting apps developed for iPad to macOS.
-				// See https://developer.apple.com/mac-catalyst/.
-				// Because of this, when building a Go package targeting maccatalyst,
-				// GOOS=darwin (not ios). To bridge the gap and enable maccatalyst
-				// packages to be compiled, we also specify the "ios" build tag.
-				// To help discriminate between darwin, ios, macos, and maccatalyst
-				// targets, there is also a "maccatalyst" tag.
-				// Some additional context on this can be found here:
-				// https://stackoverflow.com/questions/12132933/preprocessor-macro-for-os-x-targets/49560690#49560690
-				goos = "darwin"
+				// See the comment about maccatalyst's GOOS, build tags configuration
+				// in platformOS and platformTags.
+				// Using GOOS=darwin with build-tag ios leads to corrupt builds: https://go.dev/issue/52299
+				// => So we use GOOS=ios for now.
+				goos = "ios"
 				sdk = "macosx"
 				clang, cflags, err = envClang(sdk)
 				// TODO(ydnar): the following 3 lines MAY be needed to compile
@@ -340,7 +339,7 @@ func checkNDKRoot(ndkRoot string, targets []targetInfo) error {
 
 // compatibleNDKRoots searches the side-by-side NDK dirs for compatible SDKs.
 func compatibleNDKRoots(ndkForest string, targets []targetInfo) ([]string, error) {
-	ndkDirs, err := ioutil.ReadDir(ndkForest)
+	ndkDirs, err := os.ReadDir(ndkForest)
 	if err != nil {
 		return nil, err
 	}
@@ -391,7 +390,7 @@ func ndkRoot(targets ...targetInfo) (string, error) {
 		return "$NDK_PATH", nil
 	}
 
-	// Try the ANDROID_NDK_HOME variable.  This approach is deprecated, but it
+	// Try the ANDROID_NDK_HOME variable. This approach is deprecated, but it
 	// has the highest priority because it represents an explicit user choice.
 	if ndkRoot := os.Getenv("ANDROID_NDK_HOME"); ndkRoot != "" {
 		if err := checkNDKRoot(ndkRoot, targets); err != nil {
@@ -436,15 +435,21 @@ func envClang(sdkName string) (clang, cflags string, err error) {
 		return sdkName + "-clang", "-isysroot " + sdkName, nil
 	}
 	cmd := exec.Command("xcrun", "--sdk", sdkName, "--find", "clang")
-	out, err := cmd.CombinedOutput()
+	out, err := cmd.Output()
 	if err != nil {
+		if ee := (*exec.ExitError)(nil); errors.As(err, &ee) {
+			out = append(out, ee.Stderr...)
+		}
 		return "", "", fmt.Errorf("xcrun --find: %v\n%s", err, out)
 	}
 	clang = strings.TrimSpace(string(out))
 
 	cmd = exec.Command("xcrun", "--sdk", sdkName, "--show-sdk-path")
-	out, err = cmd.CombinedOutput()
+	out, err = cmd.Output()
 	if err != nil {
+		if ee := (*exec.ExitError)(nil); errors.As(err, &ee) {
+			out = append(out, ee.Stderr...)
+		}
 		return "", "", fmt.Errorf("xcrun --show-sdk-path: %v\n%s", err, out)
 	}
 	sdk := strings.TrimSpace(string(out))

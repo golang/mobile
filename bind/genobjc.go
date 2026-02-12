@@ -679,7 +679,7 @@ func (g *ObjcGen) genSetter(oName string, f *types.Var) {
 }
 
 func (g *ObjcGen) genWrite(varName string, t types.Type, mode varMode) {
-	switch t := t.(type) {
+	switch t := types.Unalias(t).(type) {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.String:
@@ -688,17 +688,11 @@ func (g *ObjcGen) genWrite(varName string, t types.Type, mode varMode) {
 			g.Printf("%s _%s = (%s)%s;\n", g.cgoType(t), varName, g.cgoType(t), varName)
 		}
 	case *types.Slice:
-		switch e := t.Elem().(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				g.Printf("nbyteslice _%s = go_seq_from_objc_bytearray(%s, %d);\n", varName, varName, toCFlag(mode == modeRetained))
-			default:
-				g.errorf("unsupported type: %s", t)
-			}
-		default:
-			g.errorf("unsupported type: %s", t)
+		if isBytesSlice(t) {
+			g.Printf("nbyteslice _%s = go_seq_from_objc_bytearray(%s, %d);\n", varName, varName, toCFlag(mode == modeRetained))
+			return
 		}
+		g.errorf("unsupported type: %s", t)
 	case *types.Named:
 		switch u := t.Underlying().(type) {
 		case *types.Interface:
@@ -744,7 +738,7 @@ func (g *ObjcGen) genRefRead(toName, fromName string, t types.Type) {
 }
 
 func (g *ObjcGen) genRead(toName, fromName string, t types.Type, mode varMode) {
-	switch t := t.(type) {
+	switch t := types.Unalias(t).(type) {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.String:
@@ -755,19 +749,13 @@ func (g *ObjcGen) genRead(toName, fromName string, t types.Type, mode varMode) {
 			g.Printf("%s %s = (%s)%s;\n", g.objcType(t), toName, g.objcType(t), fromName)
 		}
 	case *types.Slice:
-		switch e := t.Elem().(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				g.Printf("NSData *%s = go_seq_to_objc_bytearray(%s, %d);\n", toName, fromName, toCFlag(mode == modeRetained))
-			default:
-				g.errorf("unsupported type: %s", t)
-			}
-		default:
-			g.errorf("unsupported type: %s", t)
+		if isBytesSlice(t) {
+			g.Printf("NSData *%s = go_seq_to_objc_bytearray(%s, %d);\n", toName, fromName, toCFlag(mode == modeRetained))
+			return
 		}
+		g.errorf("unsupported type: %s", t)
 	case *types.Pointer:
-		switch t := t.Elem().(type) {
+		switch t := types.Unalias(t.Elem()).(type) {
 		case *types.Named:
 			g.genRefRead(toName, fromName, types.NewPointer(t))
 		default:
@@ -1033,20 +1021,14 @@ func (g *ObjcGen) genInterfaceMethodProxy(obj *types.TypeName, m *types.Func) {
 
 // genRelease cleans up arguments that weren't copied in genWrite.
 func (g *ObjcGen) genRelease(varName string, t types.Type, mode varMode) {
-	switch t := t.(type) {
+	switch t := types.Unalias(t).(type) {
 	case *types.Slice:
-		switch e := t.Elem().(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				if mode == modeTransient {
-					// If the argument was not mutable, go_seq_from_objc_bytearray created a copy.
-					// Free it here.
-					g.Printf("if (![%s isKindOfClass:[NSMutableData class]]) {\n", varName)
-					g.Printf("  free(_%s.ptr);\n", varName)
-					g.Printf("}\n")
-				}
-			}
+		if isBytesSlice(t) && mode == modeTransient {
+			// If the argument was not mutable, go_seq_from_objc_bytearray created a copy.
+			// Free it here.
+			g.Printf("if (![%s isKindOfClass:[NSMutableData class]]) {\n", varName)
+			g.Printf("  free(_%s.ptr);\n", varName)
+			g.Printf("}\n")
 		}
 	}
 }
@@ -1060,7 +1042,7 @@ func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 	if oinf != nil {
 		for _, sup := range oinf.supers {
 			if !sup.Protocol {
-				g.Printf(sup.Name)
+				g.Printf("%s", sup.Name)
 			} else {
 				prots = append(prots, sup.Name)
 			}
@@ -1290,15 +1272,13 @@ func (g *ObjcGen) refTypeBase(typ types.Type) string {
 }
 
 func (g *ObjcGen) objcParamType(t types.Type) string {
-
-	switch typ := t.(type) {
+	switch typ := types.Unalias(t).(type) {
 	case *types.Basic:
 		switch typ.Kind() {
 		case types.String, types.UntypedString:
 			return "NSString* _Nullable"
 		}
 	}
-
 	return g.objcType(t)
 
 }
@@ -1309,7 +1289,7 @@ func (g *ObjcGen) objcType(typ types.Type) string {
 		return "NSError* _Nullable"
 	}
 
-	switch typ := typ.(type) {
+	switch typ := types.Unalias(typ).(type) {
 	case *types.Basic:
 		switch typ.Kind() {
 		case types.Bool, types.UntypedBool:
@@ -1354,7 +1334,7 @@ func (g *ObjcGen) objcType(typ types.Type) string {
 		g.errorf("unsupported type: %s", typ)
 		return "TODO"
 	case *types.Pointer:
-		if _, ok := typ.Elem().(*types.Named); ok {
+		if _, ok := types.Unalias(typ.Elem()).(*types.Named); ok {
 			return g.objcType(typ.Elem()) + "* _Nullable"
 		}
 		g.errorf("unsupported pointer to type: %s", typ)

@@ -16,9 +16,9 @@ import (
 	"flag"
 	"fmt"
 	"go/format"
-	"io/ioutil"
 	"log"
 	"math"
+	"os"
 )
 
 // N is the number of entries in the sin look-up table. It must be a power of 2.
@@ -42,7 +42,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := ioutil.WriteFile(*filename, data, 0644); err != nil {
+	if err := os.WriteFile(*filename, data, 0644); err != nil {
 		log.Fatal(err)
 	}
 }

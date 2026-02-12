@@ -1,4 +1,4 @@
-// Copyright 2015 The Go Authors.  All rights reserved.
+// Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -68,8 +67,8 @@ Example: -golistflags="-mod=readonly"
 
 The -v flag provides verbose output, including the list of packages built.
 
-The build flags -a, -n, -x, -gcflags, -ldflags, -tags, 
--trimpath, and -work are shared with the build command. For documentation, 
+The build flags -a, -n, -x, -gcflags, -ldflags, -overlay, -tags, -trimpath,
+and -work are shared with the build command. For documentation,
 see 'go help build'.
 `,
 }
@@ -201,7 +200,7 @@ func writeFile(filename string, generate func(io.Writer) error) error {
 	}
 
 	if buildN {
-		return generate(ioutil.Discard)
+		return generate(io.Discard)
 	}
 
 	f, err := os.Create(filename)

@@ -1,4 +1,4 @@
-// Copyright 2015 The Go Authors.  All rights reserved.
+// Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -8,7 +8,6 @@ import (
 	"archive/zip"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -73,7 +72,7 @@ func goAndroidBind(gobind string, pkgs []*packages.Package, targets []targetInfo
 }
 
 func buildSrcJar(src string) error {
-	var out io.Writer = ioutil.Discard
+	var out io.Writer = io.Discard
 	if !buildN {
 		ext := filepath.Ext(buildO)
 		f, err := os.Create(buildO[:len(buildO)-len(ext)] + "-sources.jar")
@@ -110,7 +109,7 @@ func buildSrcJar(src string) error {
 //
 // javac and jar commands are needed to build classes.jar.
 func buildAAR(srcDir, androidDir string, pkgs []*packages.Package, targets []targetInfo) (err error) {
-	var out io.Writer = ioutil.Discard
+	var out io.Writer = io.Discard
 	if buildO == "" {
 		buildO = pkgs[0].Name + ".aar"
 	}

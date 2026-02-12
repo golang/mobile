@@ -111,7 +111,7 @@ func isExported(t types.Type) bool {
 	if isErrorType(t) {
 		return true
 	}
-	switch t := t.(type) {
+	switch t := types.Unalias(t).(type) {
 	case *types.Basic:
 		return true
 	case *types.Named:
@@ -127,7 +127,7 @@ func isRefType(t types.Type) bool {
 	if isErrorType(t) {
 		return false
 	}
-	switch t := t.(type) {
+	switch t := types.Unalias(t).(type) {
 	case *types.Named:
 		switch u := t.Underlying().(type) {
 		case *types.Interface:
@@ -143,11 +143,12 @@ func isRefType(t types.Type) bool {
 }
 
 func isNullableType(t types.Type) bool {
+	t = types.Unalias(t)
 	return types.AssignableTo(types.Typ[types.UntypedNil].Underlying(), t) || t.String() == "string" // string is mapped to NSString*, which is nullable
 }
 
 func typePkgFirstElem(t types.Type) string {
-	nt, ok := t.(*types.Named)
+	nt, ok := types.Unalias(t).(*types.Named)
 	if !ok {
 		return ""
 	}
@@ -169,4 +170,9 @@ func pkgFirstElem(p *types.Package) string {
 func isWrapperType(t types.Type) bool {
 	e := typePkgFirstElem(t)
 	return e == "Java" || e == "ObjC"
+}
+
+func isBytesSlice(t *types.Slice) bool {
+	e, ok := types.Unalias(t.Elem()).(*types.Basic)
+	return ok && e.Kind() == types.Byte
 }

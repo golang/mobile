@@ -12,7 +12,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"math"
 	"os"
@@ -232,7 +232,7 @@ func ReadAsset() string {
 	}
 	defer rc.Close()
 
-	b, err := ioutil.ReadAll(rc)
+	b, err := io.ReadAll(rc)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -621,7 +621,7 @@ func NewMyStruct(ctx context.Context) *MyStruct {
 
 type Int32Constructed struct{}
 
-// Test that constuctors that clash with the internal proxy constructor
+// Test that constructors that clash with the internal proxy constructor
 // are skipped.
 func NewInt32Constructed(i int32) *Int32Constructed {
 	return nil

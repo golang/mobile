@@ -1,4 +1,4 @@
-// Copyright 2014 The Go Authors.  All rights reserved.
+// Copyright 2014 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"go/ast"
 	"go/types"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -54,7 +53,7 @@ func run() {
 
 	// We need to give appropriate environment variables like CC or CXX so that the returned packages no longer have errors.
 	// However, getting such environment variables is difficult or impossible so far.
-	// Gomobile can obtain such environment variables in env.go, but this logic assumes some condiitons gobind doesn't assume.
+	// Gomobile can obtain such environment variables in env.go, but this logic assumes some conditions gobind doesn't assume.
 	cfg := &packages.Config{
 		Mode: packages.NeedName | packages.NeedFiles |
 			packages.NeedImports | packages.NeedDeps |
@@ -102,7 +101,7 @@ func run() {
 	if len(classes) > 0 || len(otypes) > 0 {
 		srcDir := *outdir
 		if srcDir == "" {
-			srcDir, err = ioutil.TempDir(os.TempDir(), "gobind-")
+			srcDir, err = os.MkdirTemp(os.TempDir(), "gobind-")
 			if err != nil {
 				log.Fatal(err)
 			}
