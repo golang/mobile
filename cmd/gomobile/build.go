@@ -234,30 +234,28 @@ func printcmd(format string, args ...interface{}) {
 
 // "Build flags", used by multiple commands.
 var (
-	buildA           bool        // -a
-	buildI           bool        // -i
-	buildN           bool        // -n
-	buildV           bool        // -v
-	buildX           bool        // -x
-	buildO           string      // -o
-	buildGcflags     string      // -gcflags
-  buildGoListFlags string      // -golistflags
-	buildLdflags     string      // -ldflags
-  buildOverlay     string      // -overlay
-	buildTarget      string      // -target
-	buildTrimpath    bool        // -trimpath
-	buildWork        bool        // -work
-	buildBundleID    string      // -bundleid
-	buildIOSVersion  string      // -iosversion
-	buildAndroidAPI  int         // -androidapi
-	buildTags        stringsFlag // -tags
+	buildA          bool        // -a
+	buildI          bool        // -i
+	buildN          bool        // -n
+	buildV          bool        // -v
+	buildX          bool        // -x
+	buildO          string      // -o
+	buildGcflags    string      // -gcflags
+	buildLdflags    string      // -ldflags
+	buildOverlay    string      // -overlay
+	buildTarget     string      // -target
+	buildTrimpath   bool        // -trimpath
+	buildWork       bool        // -work
+	buildBundleID   string      // -bundleid
+	buildIOSVersion string      // -iosversion
+	buildAndroidAPI int         // -androidapi
+	buildTags       stringsFlag // -tags
 )
 
 func addBuildFlags(cmd *command) {
 	cmd.flag.StringVar(&buildO, "o", "", "")
 	cmd.flag.StringVar(&buildGcflags, "gcflags", "", "")
-	cmd.flag.StringVar(&buildGoListFlags, "golistflags", "", "")
-  cmd.flag.StringVar(&buildLdflags, "ldflags", "", "")
+	cmd.flag.StringVar(&buildLdflags, "ldflags", "", "")
 	cmd.flag.StringVar(&buildOverlay, "overlay", "", "")
 	cmd.flag.StringVar(&buildTarget, "target", "android", "")
 	cmd.flag.StringVar(&buildBundleID, "bundleid", "", "")
