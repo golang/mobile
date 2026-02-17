@@ -10,6 +10,8 @@ import (
 	"go/types"
 	"math"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"golang.org/x/mobile/internal/importers/objc"
 )
@@ -668,7 +670,7 @@ func (g *ObjcGen) genGetter(oName string, f *types.Var) {
 func (g *ObjcGen) genSetter(oName string, f *types.Var) {
 	t := f.Type()
 
-	g.Printf("- (void)set%s:(%s)v {\n", f.Name(), g.objcType(t))
+	g.Printf("- (void)set%s:(%s)v {\n", objcCapitalize(f.Name()), g.objcType(t))
 	g.Indent()
 	g.Printf("int32_t refnum = go_seq_go_to_refnum(self._ref);\n")
 	g.genWrite("v", f.Type(), modeRetained)
@@ -1390,6 +1392,46 @@ func embeddedObjcTypes(t *types.Struct) []string {
 
 func isObjcType(t types.Type) bool {
 	return typePkgFirstElem(t) == "ObjC"
+}
+
+// objcCapitalize ...
+func objcCapitalize(s string) string {
+	switch utf8.RuneCount([]byte(s)) {
+	case 0:
+		return s
+
+	case 1:
+		r, _ := utf8.DecodeRuneInString(s)
+		return string(unicode.ToTitle(r))
+
+	default:
+		var sb strings.Builder
+		sb.Grow(len(s))
+
+		// title case first
+		r, n := utf8.DecodeRuneInString(s)
+		sb.WriteRune(unicode.ToTitle(r))
+		s = s[n:]
+
+		// lower case second
+		r, n = utf8.DecodeRuneInString(s)
+		sb.WriteRune(unicode.ToLower(r))
+		s = s[n:]
+
+		// just copy the rest
+		for len(s) > 0 {
+			r, n = utf8.DecodeRuneInString(s)
+			if r == utf8.RuneError {
+				return sb.String()
+			}
+
+			sb.WriteRune(r)
+
+			s = s[n:]
+		}
+
+		return sb.String()
+	}
 }
 
 var objcNameReplacer = newNameSanitizer([]string{
