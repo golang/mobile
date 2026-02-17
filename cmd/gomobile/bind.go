@@ -231,9 +231,8 @@ func getModuleVersions(targetPlatform string, targetArch string, src string) (*m
 	cmd.Env = append(os.Environ(), "GOOS="+platformOS(targetPlatform), "GOARCH="+targetArch)
 
 	tags := append(buildTags[:], platformTags(targetPlatform)...)
-
 	// TODO(hyangah): probably we don't need to add all the dependencies.
-	cmd.Args = append(cmd.Args, "-m", "-json", "-tags="+strings.Join(tags, ","), "all")
+	cmd.Args = append(cmd.Args, "-mod=mod", "-m", "-json", "-tags="+strings.Join(tags, ","), "all")
 	cmd.Dir = src
 
 	output, err := cmd.Output()
