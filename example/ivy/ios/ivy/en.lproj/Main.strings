@@ -1,0 +1,18 @@
+
+/* Class = "UITextField"; placeholder = "Type an expression"; ObjectID = "9SS-TP-C7c"; */
+"9SS-TP-C7c.placeholder" = "Type an expression";
+
+/* Class = "UIViewController"; title = "Ivy Controller"; ObjectID = "BYZ-38-t0r"; */
+"BYZ-38-t0r.title" = "Ivy Controller";
+
+/* Class = "UIBarButtonItem"; title = "Help"; ObjectID = "GSn-BW-al6"; */
+"GSn-BW-al6.title" = "Help";
+
+/* Class = "UINavigationItem"; title = "Ivy"; ObjectID = "KhW-J4-UcU"; */
+"KhW-J4-UcU.title" = "Ivy";
+
+/* Class = "UINavigationItem"; title = "Documentation"; ObjectID = "lf7-H3-aZF"; */
+"lf7-H3-aZF.title" = "Documentation";
+
+/* Class = "UIViewController"; title = "Docs"; ObjectID = "rfr-rm-AXI"; */
+"rfr-rm-AXI.title" = "Docs";

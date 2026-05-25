@@ -1,0 +1,25 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 30
+    defaultConfig {
+        applicationId 'org.golang.ivy'
+        minSdkVersion 15
+        targetSdkVersion 30
+        versionCode 4
+        versionName '1.4.0'
+    }
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    productFlavors {
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.0.0'
+    implementation files('ivy.aar')
+}
