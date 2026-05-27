@@ -64,8 +64,9 @@ classes.
 
 The -v flag provides verbose output, including the list of packages built.
 
-The build flags -a, -n, -x, -gcflags, -ldflags, -tags, -trimpath, and -work
-are shared with the build command. For documentation, see 'go help build'.
+The build flags -a, -n, -x, -gcflags, -ldflags, -overlay, -tags, -trimpath,
+and -work are shared with the build command. For documentation,
+see 'go help build'.
 `,
 }
 
@@ -81,6 +82,19 @@ func runBind(cmd *command) error {
 	targets, err := parseBuildTarget(buildTarget)
 	if err != nil {
 		return fmt.Errorf(`invalid -target=%q: %v`, buildTarget, err)
+	}
+
+	if !mobileModuleAvailable() {
+		fmt.Fprintln(os.Stderr, `gomobile bind requires golang.org/x/mobile in the current module, but it is not in the module dependency graph.
+
+Add it with:
+
+	go get -tool golang.org/x/mobile/cmd/gobind
+
+This records a tool directive in go.mod so subsequent go mod tidy runs keep
+the dependency. See https://go.dev/doc/modules/managing-dependencies#tools
+for details and https://go.dev/issue/77183 for background.`)
+		return errors.New("missing golang.org/x/mobile dependency")
 	}
 
 	if isAndroidPlatform(targets[0].platform) {
@@ -352,4 +366,16 @@ func areGoModulesUsed() (bool, error) {
 		areGoModulesUsedResult.used = outstr != ""
 	})
 	return areGoModulesUsedResult.used, areGoModulesUsedResult.err
+}
+
+// mobileModuleAvailable reports whether golang.org/x/mobile/bind is
+// resolvable through the current module. In GOPATH mode or when the module
+// probe fails, it returns true and lets gobind surface any error itself.
+func mobileModuleAvailable() bool {
+	modulesUsed, err := areGoModulesUsed()
+	if err != nil || !modulesUsed {
+		return true
+	}
+	pkgs, err := packages.Load(&packages.Config{Mode: packages.NeedName}, "golang.org/x/mobile/bind")
+	return err == nil && len(pkgs) == 1 && pkgs[0].Name != "" && len(pkgs[0].Errors) == 0
 }

@@ -10,6 +10,8 @@ import (
 	"go/types"
 	"math"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"vortex.studio/mobile/internal/importers/objc"
 )
@@ -217,8 +219,8 @@ func (g *ObjcGen) GenH() error {
 			}
 			objcType := g.objcType(obj.Type())
 			g.objcdoc(g.docs[obj.Name()].Doc())
-			g.Printf("+ (%s) %s;\n", objcType, objcNameReplacer(lowerFirst(obj.Name())))
-			g.Printf("+ (void) set%s:(%s)v;\n", obj.Name(), objcType)
+			g.Printf("+ (%s) %s;\n", objcType, objcGetterName(obj.Name()))
+			g.Printf("+ (void) %s:(%s)v;\n", objcSetterName(obj.Name()), objcType)
 			g.Printf("\n")
 		}
 		g.Printf("@end\n\n")
@@ -345,7 +347,7 @@ func (g *ObjcGen) genVarM(o *types.Var) {
 	objcType := g.objcType(o.Type())
 
 	// setter
-	g.Printf("+ (void) set%s:(%s)v {\n", o.Name(), objcType)
+	g.Printf("+ (void) %s:(%s)v {\n", objcSetterName(o.Name()), objcType)
 	g.Indent()
 	g.genWrite("v", o.Type(), modeRetained)
 	g.Printf("var_set%s_%s(_v);\n", g.pkgPrefix, o.Name())
@@ -354,7 +356,7 @@ func (g *ObjcGen) genVarM(o *types.Var) {
 	g.Printf("}\n\n")
 
 	// getter
-	g.Printf("+ (%s) %s {\n", objcType, objcNameReplacer(lowerFirst(o.Name())))
+	g.Printf("+ (%s) %s {\n", objcType, objcGetterName(o.Name()))
 	g.Indent()
 	g.Printf("%s r0 = ", g.cgoType(o.Type()))
 	g.Printf("var_get%s_%s();\n", g.pkgPrefix, o.Name())
@@ -555,7 +557,7 @@ func (s *funcSummary) asFunc(g *ObjcGen) string {
 }
 
 func (s *funcSummary) asMethod(g *ObjcGen) string {
-	return fmt.Sprintf("(%s)%s%s", s.ret, objcNameReplacer(lowerFirst(s.name)), s.asSignature(g))
+	return fmt.Sprintf("(%s)%s%s", s.ret, objcGetterName(s.name), s.asSignature(g))
 }
 
 func (s *funcSummary) asSignature(g *ObjcGen) string {
@@ -617,7 +619,7 @@ func (s *funcSummary) callMethod(g *ObjcGen) string {
 		}
 		params = append(params, fmt.Sprintf("%s:&%s", key, p.name))
 	}
-	return fmt.Sprintf("%s%s", objcNameReplacer(lowerFirst(s.name)), strings.Join(params, " "))
+	return fmt.Sprintf("%s%s", objcGetterName(s.name), strings.Join(params, " "))
 }
 
 func (s *funcSummary) returnsVal() bool {
@@ -654,7 +656,7 @@ func (g *ObjcGen) genFuncM(obj *types.Func) {
 
 func (g *ObjcGen) genGetter(oName string, f *types.Var) {
 	t := f.Type()
-	g.Printf("- (%s)%s {\n", g.objcType(t), objcNameReplacer(lowerFirst(f.Name())))
+	g.Printf("- (%s)%s {\n", g.objcType(t), objcGetterName(f.Name()))
 	g.Indent()
 	g.Printf("int32_t refnum = go_seq_go_to_refnum(self._ref);\n")
 	g.Printf("%s r0 = ", g.cgoType(f.Type()))
@@ -668,7 +670,7 @@ func (g *ObjcGen) genGetter(oName string, f *types.Var) {
 func (g *ObjcGen) genSetter(oName string, f *types.Var) {
 	t := f.Type()
 
-	g.Printf("- (void)set%s:(%s)v {\n", f.Name(), g.objcType(t))
+	g.Printf("- (void)%s:(%s)v {\n", objcSetterName(f.Name()), g.objcType(t))
 	g.Indent()
 	g.Printf("int32_t refnum = go_seq_go_to_refnum(self._ref);\n")
 	g.genWrite("v", f.Type(), modeRetained)
@@ -679,7 +681,7 @@ func (g *ObjcGen) genSetter(oName string, f *types.Var) {
 }
 
 func (g *ObjcGen) genWrite(varName string, t types.Type, mode varMode) {
-	switch t := t.(type) {
+	switch t := types.Unalias(t).(type) {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.String:
@@ -688,17 +690,11 @@ func (g *ObjcGen) genWrite(varName string, t types.Type, mode varMode) {
 			g.Printf("%s _%s = (%s)%s;\n", g.cgoType(t), varName, g.cgoType(t), varName)
 		}
 	case *types.Slice:
-		switch e := t.Elem().(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				g.Printf("nbyteslice _%s = go_seq_from_objc_bytearray(%s, %d);\n", varName, varName, toCFlag(mode == modeRetained))
-			default:
-				g.errorf("unsupported type: %s", t)
-			}
-		default:
-			g.errorf("unsupported type: %s", t)
+		if isBytesSlice(t) {
+			g.Printf("nbyteslice _%s = go_seq_from_objc_bytearray(%s, %d);\n", varName, varName, toCFlag(mode == modeRetained))
+			return
 		}
+		g.errorf("unsupported type: %s", t)
 	case *types.Named:
 		switch u := t.Underlying().(type) {
 		case *types.Interface:
@@ -744,7 +740,7 @@ func (g *ObjcGen) genRefRead(toName, fromName string, t types.Type) {
 }
 
 func (g *ObjcGen) genRead(toName, fromName string, t types.Type, mode varMode) {
-	switch t := t.(type) {
+	switch t := types.Unalias(t).(type) {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.String:
@@ -755,19 +751,13 @@ func (g *ObjcGen) genRead(toName, fromName string, t types.Type, mode varMode) {
 			g.Printf("%s %s = (%s)%s;\n", g.objcType(t), toName, g.objcType(t), fromName)
 		}
 	case *types.Slice:
-		switch e := t.Elem().(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				g.Printf("NSData *%s = go_seq_to_objc_bytearray(%s, %d);\n", toName, fromName, toCFlag(mode == modeRetained))
-			default:
-				g.errorf("unsupported type: %s", t)
-			}
-		default:
-			g.errorf("unsupported type: %s", t)
+		if isBytesSlice(t) {
+			g.Printf("NSData *%s = go_seq_to_objc_bytearray(%s, %d);\n", toName, fromName, toCFlag(mode == modeRetained))
+			return
 		}
+		g.errorf("unsupported type: %s", t)
 	case *types.Pointer:
-		switch t := t.Elem().(type) {
+		switch t := types.Unalias(t.Elem()).(type) {
 		case *types.Named:
 			g.genRefRead(toName, fromName, types.NewPointer(t))
 		default:
@@ -1033,20 +1023,14 @@ func (g *ObjcGen) genInterfaceMethodProxy(obj *types.TypeName, m *types.Func) {
 
 // genRelease cleans up arguments that weren't copied in genWrite.
 func (g *ObjcGen) genRelease(varName string, t types.Type, mode varMode) {
-	switch t := t.(type) {
+	switch t := types.Unalias(t).(type) {
 	case *types.Slice:
-		switch e := t.Elem().(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				if mode == modeTransient {
-					// If the argument was not mutable, go_seq_from_objc_bytearray created a copy.
-					// Free it here.
-					g.Printf("if (![%s isKindOfClass:[NSMutableData class]]) {\n", varName)
-					g.Printf("  free(_%s.ptr);\n", varName)
-					g.Printf("}\n")
-				}
-			}
+		if isBytesSlice(t) && mode == modeTransient {
+			// If the argument was not mutable, go_seq_from_objc_bytearray created a copy.
+			// Free it here.
+			g.Printf("if (![%s isKindOfClass:[NSMutableData class]]) {\n", varName)
+			g.Printf("  free(_%s.ptr);\n", varName)
+			g.Printf("}\n")
 		}
 	}
 }
@@ -1127,7 +1111,7 @@ func (g *ObjcGen) genStructH(obj *types.TypeName, t *types.Struct) {
 		g.objcdoc(doc.Member(f.Name()))
 
 		// properties are atomic by default so explicitly say otherwise
-		g.Printf("@property (nonatomic) %s %s;\n", typ, objcNameReplacer(lowerFirst(name)))
+		g.Printf("@property (nonatomic) %s %s;\n", typ, objcGetterName(name))
 	}
 
 	// exported methods
@@ -1290,15 +1274,13 @@ func (g *ObjcGen) refTypeBase(typ types.Type) string {
 }
 
 func (g *ObjcGen) objcParamType(t types.Type) string {
-
-	switch typ := t.(type) {
+	switch typ := types.Unalias(t).(type) {
 	case *types.Basic:
 		switch typ.Kind() {
 		case types.String, types.UntypedString:
 			return "NSString* _Nullable"
 		}
 	}
-
 	return g.objcType(t)
 
 }
@@ -1309,7 +1291,7 @@ func (g *ObjcGen) objcType(typ types.Type) string {
 		return "NSError* _Nullable"
 	}
 
-	switch typ := typ.(type) {
+	switch typ := types.Unalias(typ).(type) {
 	case *types.Basic:
 		switch typ.Kind() {
 		case types.Bool, types.UntypedBool:
@@ -1354,7 +1336,7 @@ func (g *ObjcGen) objcType(typ types.Type) string {
 		g.errorf("unsupported type: %s", typ)
 		return "TODO"
 	case *types.Pointer:
-		if _, ok := typ.Elem().(*types.Named); ok {
+		if _, ok := types.Unalias(typ.Elem()).(*types.Named); ok {
 			return g.objcType(typ.Elem()) + "* _Nullable"
 		}
 		g.errorf("unsupported pointer to type: %s", typ)
@@ -1417,6 +1399,25 @@ var objcNameReplacer = newNameSanitizer([]string{
 	"id", "in", "init", "inout", "int", "long", "nil", "oneway",
 	"out", "self", "short", "signed", "super", "unsigned", "void",
 	"volatile"})
+
+// objcGetterName returns the Objective-C property/getter selector for a
+// Go field, variable or method named name. The pipeline (lowerFirst +
+// objcNameReplacer) lowercases acronym prefixes (OSName -> osName) and
+// suffixes reserved-word collisions with an underscore (ID -> id_).
+func objcGetterName(name string) string {
+	return objcNameReplacer(lowerFirst(name))
+}
+
+// objcSetterName returns the setter selector matching the property name
+// produced by objcGetterName.
+func objcSetterName(name string) string {
+	prop := objcGetterName(name)
+	if prop == "" {
+		return "set"
+	}
+	r, n := utf8.DecodeRuneInString(prop)
+	return "set" + string(unicode.ToUpper(r)) + prop[n:]
+}
 
 const (
 	objcPreamble = `// Objective-C API for talking to %[1]s Go package.

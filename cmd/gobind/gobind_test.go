@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
@@ -82,6 +83,49 @@ func mustHaveBindTestdata(t testing.TB) {
 	}
 }
 
+// copyMobileTree returns a packagestest file set for the x/mobile module rooted
+// at root. It is a stricter variant of [packagestest.MustCopyFileTree] that skips
+// the .git directory and tolerates files that disappear during the walk, which
+// avoids spurious failures when a concurrent git operation creates and then
+// removes .git/index.lock (golang/go#70207).
+func copyMobileTree(tb testing.TB, root string) map[string]any {
+	tb.Helper()
+	result := map[string]any{}
+	err := filepath.Walk(filepath.FromSlash(root), func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			// A file may vanish mid-walk (e.g. .git/index.lock from a
+			// concurrent git operation). Skip it instead of failing.
+			if os.IsNotExist(err) {
+				return nil
+			}
+			return err
+		}
+		if info.IsDir() {
+			if path != root {
+				// Skip .git: see golang/go#70207.
+				if filepath.Base(path) == ".git" {
+					return filepath.SkipDir
+				}
+				// Skip nested modules.
+				if fi, err := os.Stat(filepath.Join(path, "go.mod")); err == nil && !fi.IsDir() {
+					return filepath.SkipDir
+				}
+			}
+			return nil
+		}
+		fragment, err := filepath.Rel(root, path)
+		if err != nil {
+			return err
+		}
+		result[filepath.ToSlash(fragment)] = packagestest.Copy(path)
+		return nil
+	})
+	if err != nil {
+		tb.Fatalf("copyMobileTree(%q): %v", root, err)
+	}
+	return result
+}
+
 func gobindBin(t testing.TB) string {
 	switch runtime.GOOS {
 	case "js", "ios":
@@ -127,7 +171,7 @@ func testGobind(t *testing.T, exporter packagestest.Exporter) {
 	_, javapErr := exec.LookPath("javap")
 	exported := packagestest.Export(t, exporter, []packagestest.Module{{
 		Name:  "vortex.studio/mobile",
-		Files: packagestest.MustCopyFileTree("../.."),
+		Files: copyMobileTree(t, "../.."),
 	}})
 	defer exported.Cleanup()
 
@@ -167,7 +211,7 @@ type Struct struct{
 		{
 			// gobind requires vortex.studio/mobile to generate code for reverse bindings.
 			Name:  "vortex.studio/mobile",
-			Files: packagestest.MustCopyFileTree("../.."),
+			Files: copyMobileTree(t, "../.."),
 		},
 	})
 	defer exported.Cleanup()
@@ -196,7 +240,7 @@ func benchmarkGobind(b *testing.B, exporter packagestest.Exporter) {
 	_, javapErr := exec.LookPath("javap")
 	exported := packagestest.Export(b, exporter, []packagestest.Module{{
 		Name:  "vortex.studio/mobile",
-		Files: packagestest.MustCopyFileTree("../.."),
+		Files: copyMobileTree(b, "../.."),
 	}})
 	defer exported.Cleanup()
 

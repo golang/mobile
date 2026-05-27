@@ -402,3 +402,65 @@ func TestBindWithGoModules(t *testing.T) {
 		})
 	}
 }
+
+func TestBindMissingMobileModule(t *testing.T) {
+	if runtime.GOOS == "android" || runtime.GOOS == "ios" {
+		t.Skipf("gomobile and gobind are not available on %s", runtime.GOOS)
+	}
+
+	dir := t.TempDir()
+
+	if out, err := exec.Command("go", "build", "-o="+dir, "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
+		t.Fatalf("building gobind: %v: %s", err, string(out))
+	}
+	if out, err := exec.Command("go", "build", "-o="+dir, "golang.org/x/mobile/cmd/gomobile").CombinedOutput(); err != nil {
+		t.Fatalf("building gomobile: %v: %s", err, string(out))
+	}
+	path := dir
+	if p := os.Getenv("PATH"); p != "" {
+		path += string(filepath.ListSeparator) + p
+	}
+
+	projDir := filepath.Join(dir, "noxmobile")
+	if err := os.Mkdir(projDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	goVer := strings.TrimPrefix(runtime.Version(), "go")
+	if parts := strings.SplitN(goVer, ".", 3); len(parts) >= 2 {
+		goVer = parts[0] + "." + parts[1]
+	}
+	goMod := `module example.com/noxmobile
+
+go ` + goVer + "\n"
+	if err := os.WriteFile(filepath.Join(projDir, "go.mod"), []byte(goMod), 0644); err != nil {
+		t.Fatal(err)
+	}
+	const helloGo = `package noxmobile
+
+func Hello() string { return "hi" }
+`
+	if err := os.WriteFile(filepath.Join(projDir, "hello.go"), []byte(helloGo), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	cmd := exec.Command(filepath.Join(dir, "gomobile"), "bind", "-target=ios", ".")
+	cmd.Env = append(os.Environ(), "PATH="+path)
+	cmd.Dir = projDir
+	out, err := cmd.CombinedOutput()
+	if err == nil {
+		t.Fatalf("gomobile bind unexpectedly succeeded\noutput:\n%s", out)
+	}
+	got := string(out)
+	for _, want := range []string{
+		"gomobile bind requires golang.org/x/mobile",
+		"go get -tool golang.org/x/mobile/cmd/gobind",
+		"go.dev/issue/77183",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("error message does not contain %q\noutput:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "no Go package in golang.org/x/mobile/bind") {
+		t.Errorf("error message still contains the opaque gobind failure\noutput:\n%s", got)
+	}
+}
