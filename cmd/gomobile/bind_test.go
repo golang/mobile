@@ -410,10 +410,10 @@ func TestBindMissingMobileModule(t *testing.T) {
 
 	dir := t.TempDir()
 
-	if out, err := exec.Command("go", "build", "-o="+dir, "golang.org/x/mobile/cmd/gobind").CombinedOutput(); err != nil {
+	if out, err := exec.Command("go", "build", "-o="+dir, "vortex.studio/mobile/cmd/gobind").CombinedOutput(); err != nil {
 		t.Fatalf("building gobind: %v: %s", err, string(out))
 	}
-	if out, err := exec.Command("go", "build", "-o="+dir, "golang.org/x/mobile/cmd/gomobile").CombinedOutput(); err != nil {
+	if out, err := exec.Command("go", "build", "-o="+dir, "vortex.studio/mobile/cmd/gomobile").CombinedOutput(); err != nil {
 		t.Fatalf("building gomobile: %v: %s", err, string(out))
 	}
 	path := dir
@@ -452,15 +452,15 @@ func Hello() string { return "hi" }
 	}
 	got := string(out)
 	for _, want := range []string{
-		"gomobile bind requires golang.org/x/mobile",
-		"go get -tool golang.org/x/mobile/cmd/gobind",
+		"gomobile bind requires vortex.studio/mobile",
+		"go get -tool vortex.studio/mobile/cmd/gobind",
 		"go.dev/issue/77183",
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("error message does not contain %q\noutput:\n%s", want, got)
 		}
 	}
-	if strings.Contains(got, "no Go package in golang.org/x/mobile/bind") {
+	if strings.Contains(got, "no Go package in vortex.studio/mobile/bind") {
 		t.Errorf("error message still contains the opaque gobind failure\noutput:\n%s", got)
 	}
 }
