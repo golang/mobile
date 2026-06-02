@@ -43,6 +43,44 @@ func TestAndroidAPIPathAcceptsMajorVersionPlatforms(t *testing.T) {
 	}
 }
 
+func TestAndroidAPIPathAcceptsMixedPlatformVersions(t *testing.T) {
+	tests := []struct {
+		name      string
+		platforms []string
+		want      string
+	}{
+		{
+			name:      "minor version is newer than major-only version",
+			platforms: []string{"android-35", "android-36", "android-36.1"},
+			want:      "android-36.1",
+		},
+		{
+			name:      "higher major-only version is newer than lower minor version",
+			platforms: []string{"android-36.1", "android-37"},
+			want:      "android-37",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sdk := t.TempDir()
+			t.Setenv("ANDROID_HOME", sdk)
+			for _, name := range tt.platforms {
+				writeAndroidPlatform(t, sdk, name)
+			}
+
+			got, err := AndroidAPIPath(24)
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := filepath.Join(sdk, "platforms", tt.want)
+			if got != want {
+				t.Fatalf("AndroidAPIPath(24) = %q, want %q", got, want)
+			}
+		})
+	}
+}
+
 func writeAndroidPlatform(t *testing.T, sdk, name string) {
 	t.Helper()
 
