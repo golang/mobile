@@ -10,54 +10,42 @@ import (
 	"testing"
 )
 
-func TestAndroidAPIPathAcceptsMinorVersionPlatforms(t *testing.T) {
-	sdk := t.TempDir()
-	t.Setenv("ANDROID_HOME", sdk)
-
-	for _, name := range []string{"android-36.1", "android-37.0"} {
-		writeAndroidPlatform(t, sdk, name)
-	}
-
-	got, err := AndroidAPIPath(24)
-	if err != nil {
-		t.Fatal(err)
-	}
-	want := filepath.Join(sdk, "platforms", "android-37.0")
-	if got != want {
-		t.Fatalf("AndroidAPIPath(24) = %q, want %q", got, want)
-	}
-}
-
-func TestAndroidAPIPathAcceptsMajorVersionPlatforms(t *testing.T) {
-	sdk := t.TempDir()
-	t.Setenv("ANDROID_HOME", sdk)
-	writeAndroidPlatform(t, sdk, "android-35")
-
-	got, err := AndroidAPIPath(24)
-	if err != nil {
-		t.Fatal(err)
-	}
-	want := filepath.Join(sdk, "platforms", "android-35")
-	if got != want {
-		t.Fatalf("AndroidAPIPath(24) = %q, want %q", got, want)
-	}
-}
-
-func TestAndroidAPIPathAcceptsMixedPlatformVersions(t *testing.T) {
+func TestAndroidAPIPath(t *testing.T) {
 	tests := []struct {
 		name      string
+		api       int
 		platforms []string
 		want      string
 	}{
 		{
+			name:      "minor-only versions",
+			api:       24,
+			platforms: []string{"android-36.1", "android-37.0"},
+			want:      "android-37.0",
+		},
+		{
+			name:      "major-only version",
+			api:       24,
+			platforms: []string{"android-35"},
+			want:      "android-35",
+		},
+		{
 			name:      "minor version is newer than major-only version",
+			api:       24,
 			platforms: []string{"android-35", "android-36", "android-36.1"},
 			want:      "android-36.1",
 		},
 		{
 			name:      "higher major-only version is newer than lower minor version",
+			api:       24,
 			platforms: []string{"android-36.1", "android-37"},
 			want:      "android-37",
+		},
+		{
+			name:      "minor version below requested API is ignored",
+			api:       37,
+			platforms: []string{"android-36.1", "android-37.0"},
+			want:      "android-37.0",
 		},
 	}
 
@@ -69,13 +57,13 @@ func TestAndroidAPIPathAcceptsMixedPlatformVersions(t *testing.T) {
 				writeAndroidPlatform(t, sdk, name)
 			}
 
-			got, err := AndroidAPIPath(24)
+			got, err := AndroidAPIPath(tt.api)
 			if err != nil {
 				t.Fatal(err)
 			}
 			want := filepath.Join(sdk, "platforms", tt.want)
 			if got != want {
-				t.Fatalf("AndroidAPIPath(24) = %q, want %q", got, want)
+				t.Fatalf("AndroidAPIPath(%d) = %q, want %q", tt.api, got, want)
 			}
 		})
 	}
