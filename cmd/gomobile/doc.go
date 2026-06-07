@@ -112,6 +112,9 @@ are copied into the output.
 Flag -iosversion sets the minimal version of the iOS SDK to compile against.
 The default version is 13.0.
 
+Flag -macosversion sets the minimal version of the macOS SDK to compile against.
+By default, no minimum macOS version is set.
+
 Flag -androidapi sets the Android API version to compile against.
 The default and minimum is 16.
 

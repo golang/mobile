@@ -64,26 +64,46 @@ func AndroidAPIPath(api int) (string, error) {
 	}
 
 	var apiPath string
-	var apiVer int
+	var apiMajor int
+	var apiMinor int
 	for _, fi := range fis {
 		name := fi.Name()
-		if !strings.HasPrefix(name, "android-") {
-			continue
-		}
-		n, err := strconv.Atoi(name[len("android-"):])
-		if err != nil || n < api {
+		major, minor, ok := parseAndroidPlatformVersion(name)
+		if !ok || major < api {
 			continue
 		}
 		p := filepath.Join(sdkDir.Name(), name)
 		_, err = os.Stat(filepath.Join(p, "android.jar"))
-		if err == nil && apiVer < n {
+		if err == nil && (major > apiMajor || major == apiMajor && minor > apiMinor) {
 			apiPath = p
-			apiVer = n
+			apiMajor = major
+			apiMinor = minor
 		}
 	}
-	if apiVer == 0 {
+	if apiMajor == 0 {
 		return "", fmt.Errorf("failed to find android SDK platform (API level: %d) in %s",
 			api, sdkDir.Name())
 	}
 	return apiPath, nil
+}
+
+func parseAndroidPlatformVersion(name string) (major int, minor int, ok bool) {
+	version, ok := strings.CutPrefix(name, "android-")
+	if !ok {
+		return 0, 0, false
+	}
+
+	majorString, minorString, hasMinor := strings.Cut(version, ".")
+	major, err := strconv.Atoi(majorString)
+	if err != nil {
+		return 0, 0, false
+	}
+	if !hasMinor {
+		return major, 0, true
+	}
+	minor, err = strconv.Atoi(minorString)
+	if err != nil {
+		return 0, 0, false
+	}
+	return major, minor, true
 }

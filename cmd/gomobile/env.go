@@ -249,6 +249,9 @@ func envInit() (err error) {
 				goos = "darwin"
 				sdk = "macosx" // Note: the SDK is called "macosx", not "macos"
 				clang, cflags, err = envClang(sdk)
+				if buildMacOSVersion != "" {
+					cflags += " -mmacosx-version-min=" + buildMacOSVersion
+				}
 				if arch == "arm64" {
 					cflags += " -fembed-bitcode"
 				}
