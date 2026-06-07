@@ -177,6 +177,15 @@ uintptr_t processFn(struct fnargs* args, char* parg) {
 	case glfnDrawElements:
 		glDrawElements((GLenum)args->a0, (GLint)args->a1, (GLenum)args->a2, (void*)args->a3);
 		break;
+	case glfnDrawArraysInstanced:
+		glDrawArraysInstanced((GLenum)args->a0, (GLint)args->a1, (GLint)args->a2, (GLint)args->a3);
+		break;
+	case glfnDrawElementsInstanced:
+		glDrawElementsInstanced((GLenum)args->a0, (GLint)args->a1, (GLenum)args->a2, (void*)args->a3, (GLint)args->a4);
+		break;
+	case glfnVertexAttribDivisor:
+		glVertexAttribDivisor((GLuint)args->a0, (GLuint)args->a1);
+		break;
 	case glfnEnable:
 		glEnable((GLenum)args->a0);
 		break;

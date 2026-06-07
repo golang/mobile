@@ -22,7 +22,7 @@ the app package initialization.
 package app
 
 /*
-#cgo LDFLAGS: -landroid -llog -lEGL -lGLESv2
+#cgo LDFLAGS: -landroid -llog
 
 #include <android/configuration.h>
 #include <android/input.h>
@@ -30,22 +30,16 @@ package app
 #include <android/looper.h>
 #include <android/native_activity.h>
 #include <android/native_window.h>
-#include <EGL/egl.h>
 #include <jni.h>
 #include <pthread.h>
 #include <stdlib.h>
 
-extern EGLDisplay display;
-extern EGLSurface surface;
-
-
-char* createEGLSurface(ANativeWindow* window);
-char* destroyEGLSurface();
 int32_t getKeyRune(JNIEnv* env, AInputEvent* e);
+void showSoftKeyboard(JNIEnv* env);
+void hideSoftKeyboard(JNIEnv* env);
 */
 import "C"
 import (
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -53,11 +47,8 @@ import (
 
 	"vortex.studio/mobile/app/internal/callfn"
 	"vortex.studio/mobile/event/key"
-	"vortex.studio/mobile/event/lifecycle"
-	"vortex.studio/mobile/event/paint"
 	"vortex.studio/mobile/event/size"
 	"vortex.studio/mobile/event/touch"
-	"vortex.studio/mobile/geom"
 	"vortex.studio/mobile/internal/mobileinit"
 )
 
@@ -71,6 +62,23 @@ import (
 // ctx, a jobject representing the global android.context.Context.
 func RunOnJVM(fn func(vm, jniEnv, ctx uintptr) error) error {
 	return mobileinit.RunOnJVM(fn)
+}
+
+// ShowSoftKeyboard shows the Android soft keyboard.
+// This is useful for text input fields in games.
+func ShowSoftKeyboard() {
+	mobileinit.RunOnJVM(func(vm, env, ctx uintptr) error {
+		C.showSoftKeyboard((*C.JNIEnv)(unsafe.Pointer(env)))
+		return nil
+	})
+}
+
+// HideSoftKeyboard hides the Android soft keyboard.
+func HideSoftKeyboard() {
+	mobileinit.RunOnJVM(func(vm, env, ctx uintptr) error {
+		C.hideSoftKeyboard((*C.JNIEnv)(unsafe.Pointer(env)))
+		return nil
+	})
 }
 
 //export setCurrentContext
@@ -143,6 +151,7 @@ func onWindowFocusChanged(activity *C.ANativeActivity, hasFocus C.int) {
 
 //export onNativeWindowCreated
 func onNativeWindowCreated(activity *C.ANativeActivity, window *C.ANativeWindow) {
+	handleNativeWindowCreated(unsafe.Pointer(window))
 }
 
 //export onNativeWindowRedrawNeeded
@@ -152,13 +161,14 @@ func onNativeWindowRedrawNeeded(activity *C.ANativeActivity, window *C.ANativeWi
 	// until a complete draw and buffer swap is completed.
 	// This is required by the redraw documentation to
 	// avoid bad draws.
-	windowRedrawNeeded <- window
+	windowRedrawNeeded <- unsafe.Pointer(window)
 	<-windowRedrawDone
 }
 
 //export onNativeWindowDestroyed
 func onNativeWindowDestroyed(activity *C.ANativeActivity, window *C.ANativeWindow) {
-	windowDestroyed <- window
+	handleNativeWindowDestroyed(unsafe.Pointer(window))
+	windowDestroyed <- unsafe.Pointer(window)
 }
 
 //export onInputQueueCreated
@@ -253,15 +263,11 @@ func onLowMemory(activity *C.ANativeActivity) {
 var (
 	inputQueue         = make(chan *C.AInputQueue)
 	inputQueueDone     = make(chan struct{})
-	windowDestroyed    = make(chan *C.ANativeWindow)
-	windowRedrawNeeded = make(chan *C.ANativeWindow)
+	windowDestroyed    = make(chan unsafe.Pointer)
+	windowRedrawNeeded = make(chan unsafe.Pointer)
 	windowRedrawDone   = make(chan struct{})
 	windowConfigChange = make(chan windowConfig)
 )
-
-func init() {
-	theApp.registerGLViewportFilter()
-}
 
 func main(f func(App)) {
 	mainUserFn = f
@@ -280,74 +286,6 @@ func main(f func(App)) {
 }
 
 var mainUserFn func(App)
-
-func mainUI(vm, jniEnv, ctx uintptr) error {
-	workAvailable := theApp.worker.WorkAvailable()
-
-	donec := make(chan struct{})
-	go func() {
-		// close the donec channel in a defer statement
-		// so that we could still be able to return even
-		// if mainUserFn panics.
-		defer close(donec)
-
-		mainUserFn(theApp)
-	}()
-
-	var pixelsPerPt float32
-	var orientation size.Orientation
-
-	for {
-		select {
-		case <-donec:
-			return nil
-		case cfg := <-windowConfigChange:
-			pixelsPerPt = cfg.pixelsPerPt
-			orientation = cfg.orientation
-		case w := <-windowRedrawNeeded:
-			if C.surface == nil {
-				if errStr := C.createEGLSurface(w); errStr != nil {
-					return fmt.Errorf("%s (%s)", C.GoString(errStr), eglGetError())
-				}
-			}
-			theApp.sendLifecycle(lifecycle.StageFocused)
-			widthPx := int(C.ANativeWindow_getWidth(w))
-			heightPx := int(C.ANativeWindow_getHeight(w))
-			theApp.eventsIn <- size.Event{
-				WidthPx:     widthPx,
-				HeightPx:    heightPx,
-				WidthPt:     geom.Pt(float32(widthPx) / pixelsPerPt),
-				HeightPt:    geom.Pt(float32(heightPx) / pixelsPerPt),
-				PixelsPerPt: pixelsPerPt,
-				Orientation: orientation,
-			}
-			theApp.eventsIn <- paint.Event{External: true}
-		case <-windowDestroyed:
-			if C.surface != nil {
-				if errStr := C.destroyEGLSurface(); errStr != nil {
-					return fmt.Errorf("%s (%s)", C.GoString(errStr), eglGetError())
-				}
-			}
-			C.surface = nil
-			theApp.sendLifecycle(lifecycle.StageAlive)
-		case <-workAvailable:
-			theApp.worker.DoWork()
-		case <-theApp.publish:
-			// TODO: compare a generation number to redrawGen for stale paints?
-			if C.surface != nil {
-				// eglSwapBuffers blocks until vsync.
-				if C.eglSwapBuffers(C.display, C.surface) == C.EGL_FALSE {
-					log.Printf("app: failed to swap buffers (%s)", eglGetError())
-				}
-			}
-			select {
-			case windowRedrawDone <- struct{}{}:
-			default:
-			}
-			theApp.publishResult <- PublishResult{}
-		}
-	}
-}
 
 func runInputQueue(vm, jniEnv, ctx uintptr) error {
 	env := (*C.JNIEnv)(unsafe.Pointer(jniEnv)) // not a Go heap pointer
@@ -430,11 +368,8 @@ func processEvent(env *C.JNIEnv, e *C.AInputEvent) {
 }
 
 func processKey(env *C.JNIEnv, e *C.AInputEvent) {
-	deviceID := C.AInputEvent_getDeviceId(e)
-	if deviceID == 0 {
-		// Software keyboard input, leaving for scribe/IME.
-		return
-	}
+	// Note: deviceID == 0 means software keyboard
+	// We now process these events to support soft keyboard input
 
 	k := key.Event{
 		Rune: rune(C.getKeyRune(env, e)),
@@ -452,41 +387,14 @@ func processKey(env *C.JNIEnv, e *C.AInputEvent) {
 	theApp.eventsIn <- k
 }
 
-func eglGetError() string {
-	switch errNum := C.eglGetError(); errNum {
-	case C.EGL_SUCCESS:
-		return "EGL_SUCCESS"
-	case C.EGL_NOT_INITIALIZED:
-		return "EGL_NOT_INITIALIZED"
-	case C.EGL_BAD_ACCESS:
-		return "EGL_BAD_ACCESS"
-	case C.EGL_BAD_ALLOC:
-		return "EGL_BAD_ALLOC"
-	case C.EGL_BAD_ATTRIBUTE:
-		return "EGL_BAD_ATTRIBUTE"
-	case C.EGL_BAD_CONTEXT:
-		return "EGL_BAD_CONTEXT"
-	case C.EGL_BAD_CONFIG:
-		return "EGL_BAD_CONFIG"
-	case C.EGL_BAD_CURRENT_SURFACE:
-		return "EGL_BAD_CURRENT_SURFACE"
-	case C.EGL_BAD_DISPLAY:
-		return "EGL_BAD_DISPLAY"
-	case C.EGL_BAD_SURFACE:
-		return "EGL_BAD_SURFACE"
-	case C.EGL_BAD_MATCH:
-		return "EGL_BAD_MATCH"
-	case C.EGL_BAD_PARAMETER:
-		return "EGL_BAD_PARAMETER"
-	case C.EGL_BAD_NATIVE_PIXMAP:
-		return "EGL_BAD_NATIVE_PIXMAP"
-	case C.EGL_BAD_NATIVE_WINDOW:
-		return "EGL_BAD_NATIVE_WINDOW"
-	case C.EGL_CONTEXT_LOST:
-		return "EGL_CONTEXT_LOST"
-	default:
-		return fmt.Sprintf("Unknown EGL err: %d", errNum)
-	}
+// nativeWindowWidth returns the width of the given native window pointer.
+func nativeWindowWidth(w unsafe.Pointer) int {
+	return int(C.ANativeWindow_getWidth((*C.ANativeWindow)(w)))
+}
+
+// nativeWindowHeight returns the height of the given native window pointer.
+func nativeWindowHeight(w unsafe.Pointer) int {
+	return int(C.ANativeWindow_getHeight((*C.ANativeWindow)(w)))
 }
 
 func convAndroidKeyCode(aKeyCode int32) key.Code {

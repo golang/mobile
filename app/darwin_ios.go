@@ -7,19 +7,16 @@
 package app
 
 /*
-#cgo CFLAGS: -x objective-c -DGL_SILENCE_DEPRECATION -DGLES_SILENCE_DEPRECATION
-#cgo LDFLAGS: -framework Foundation -framework UIKit -framework GLKit -framework OpenGLES -framework QuartzCore
+#cgo CFLAGS: -x objective-c
+#cgo LDFLAGS: -framework Foundation -framework UIKit -framework QuartzCore -framework Metal
 #include <sys/utsname.h>
 #include <stdint.h>
 #include <pthread.h>
 #include <UIKit/UIDevice.h>
-#import <GLKit/GLKit.h>
 
 extern struct utsname sysInfo;
 
 void runApp(void);
-void makeCurrentContext(GLintptr ctx);
-void swapBuffers(GLintptr ctx);
 uint64_t threadID();
 */
 import "C"
@@ -59,6 +56,9 @@ func main(f func(App)) {
 		f(theApp)
 		// TODO(crawshaw): trigger runApp to return
 	}()
+	// Drain the worker/publish channels so app.Publish() never blocks. With the
+	// WebGPU/Metal path there is no GL context loop (see darwin_ios_wgpu.go).
+	go drainWork()
 	C.runApp()
 	panic("unexpected return from app.runApp")
 }
@@ -177,39 +177,3 @@ func lifecycleVisible() { theApp.sendLifecycle(lifecycle.StageVisible) }
 
 //export lifecycleFocused
 func lifecycleFocused() { theApp.sendLifecycle(lifecycle.StageFocused) }
-
-//export startloop
-func startloop(ctx C.GLintptr) {
-	go theApp.loop(ctx)
-}
-
-// loop is the primary drawing loop.
-//
-// After UIKit has captured the initial OS thread for processing UIKit
-// events in runApp, it starts loop on another goroutine. It is locked
-// to an OS thread for its OpenGL context.
-func (a *app) loop(ctx C.GLintptr) {
-	runtime.LockOSThread()
-	C.makeCurrentContext(ctx)
-
-	workAvailable := a.worker.WorkAvailable()
-
-	for {
-		select {
-		case <-workAvailable:
-			a.worker.DoWork()
-		case <-theApp.publish:
-		loop1:
-			for {
-				select {
-				case <-workAvailable:
-					a.worker.DoWork()
-				default:
-					break loop1
-				}
-			}
-			C.swapBuffers(ctx)
-			theApp.publishResult <- PublishResult{}
-		}
-	}
-}

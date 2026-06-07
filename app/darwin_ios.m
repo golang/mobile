@@ -1,6 +1,12 @@
 // Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+//
+// Converted from the upstream OpenGL ES (GLKView) runtime to a Metal /
+// CAMetalLayer runtime so the engine can drive a wgpu (WebGPU) surface.
+// This mirrors the Android WebGPU bridge (android_wgpu.go). The view's
+// backing layer is a CAMetalLayer; its pointer is handed to Go via
+// setMetalLayer, and Go creates the wgpu surface from it.
 
 //go:build darwin && ios
 // +build darwin
@@ -12,11 +18,24 @@
 #include <sys/utsname.h>
 
 #import <UIKit/UIKit.h>
-#import <GLKit/GLKit.h>
+#import <QuartzCore/CAMetalLayer.h>
 
 struct utsname sysInfo;
 
-@interface GoAppAppController : GLKViewController<UIContentContainer, GLKViewDelegate>
+// GoMetalView is a UIView whose backing layer is a CAMetalLayer. Overriding
+// +layerClass is the canonical way to make a UIView render with Metal.
+@interface GoMetalView : UIView
+@end
+
+@implementation GoMetalView
++ (Class)layerClass {
+	return [CAMetalLayer class];
+}
+@end
+
+@interface GoAppAppController : UIViewController
+@property (strong, nonatomic) GoMetalView *metalView;
+- (void)updateDrawableSizeAndNotify;
 @end
 
 @interface GoAppAppDelegate : UIResponder<UIApplicationDelegate>
@@ -34,7 +53,7 @@ struct utsname sysInfo;
 	return YES;
 }
 
-- (void)applicationDidBecomeActive:(UIApplication * )application {
+- (void)applicationDidBecomeActive:(UIApplication *)application {
 	lifecycleFocused();
 }
 
@@ -51,33 +70,20 @@ struct utsname sysInfo;
 }
 @end
 
-@interface GoAppAppController ()
-@property (strong, nonatomic) EAGLContext *context;
-@property (strong, nonatomic) GLKView *glview;
-@end
-
 @implementation GoAppAppController
-- (void)viewWillAppear:(BOOL)animated
-{
-	// TODO: replace by swapping out GLKViewController for a UIVIewController.
-	[super viewWillAppear:animated];
-	self.paused = YES;
+- (void)loadView {
+	self.metalView = [[GoMetalView alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+	self.metalView.multipleTouchEnabled = YES; // TODO expose setting to user.
+	self.metalView.userInteractionEnabled = YES;
+	self.view = self.metalView;
+}
+
+- (CAMetalLayer *)metalLayer {
+	return (CAMetalLayer *)self.metalView.layer;
 }
 
 - (void)viewDidLoad {
 	[super viewDidLoad];
-	self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
-	self.glview = (GLKView*)self.view;
-	self.glview.drawableDepthFormat = GLKViewDrawableDepthFormat24;
-	self.glview.multipleTouchEnabled = true; // TODO expose setting to user.
-	self.glview.context = self.context;
-	self.glview.userInteractionEnabled = YES;
-	self.glview.enableSetNeedsDisplay = YES; // only invoked once
-
-	// Do not use the GLKViewController draw loop.
-	self.paused = YES;
-	self.resumeOnDidBecomeActive = NO;
-	self.preferredFramesPerSecond = 0;
 
 	int scale = 1;
 	if ([[UIScreen mainScreen] respondsToSelector:@selector(displayLinkWithTarget:selector:)]) {
@@ -85,25 +91,42 @@ struct utsname sysInfo;
 	}
 	setScreen(scale);
 
-	CGSize size = [UIScreen mainScreen].bounds.size;
+	CAMetalLayer *layer = [self metalLayer];
+	// Opaque, non-blended composition (matches the Android RGBX-opaque choice).
+	layer.opaque = YES;
+	layer.contentsScale = [UIScreen mainScreen].scale;
+	// pixelFormat defaults to MTLPixelFormatBGRA8Unorm; wgpu negotiates the
+	// surface format against the layer's capabilities.
+
+	[self updateDrawableSizeAndNotify];
+}
+
+- (void)viewDidLayoutSubviews {
+	[super viewDidLayoutSubviews];
+	[self updateDrawableSizeAndNotify];
+}
+
+// updateDrawableSizeAndNotify sizes the CAMetalLayer's drawable to the current
+// view bounds in pixels, hands the layer pointer to Go, and pushes a size event.
+- (void)updateDrawableSizeAndNotify {
+	CAMetalLayer *layer = [self metalLayer];
+	CGFloat scale = [UIScreen mainScreen].scale;
+	CGSize bounds = self.view.bounds.size;
+	layer.drawableSize = CGSizeMake(bounds.width * scale, bounds.height * scale);
+
+	// Hand the CAMetalLayer pointer to Go. Idempotent — Go drains stale events.
+	setMetalLayer((void *)layer);
+
 	UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
-	updateConfig((int)size.width, (int)size.height, orientation);
+	updateConfig((int)bounds.width, (int)bounds.height, orientation);
 }
 
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
 	[coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
 		// TODO(crawshaw): come up with a plan to handle animations.
 	} completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
-		UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
-		updateConfig((int)size.width, (int)size.height, orientation);
+		[self updateDrawableSizeAndNotify];
 	}];
-}
-
-- (void)glkView:(GLKView *)view drawInRect:(CGRect)rect {
-	// Now that we have been asked to do the first draw, disable any
-	// future draw and hand control over to the Go paint.Event cycle.
-	self.glview.enableSetNeedsDisplay = NO;
-	startloop((GLintptr)self.context);
 }
 
 #define TOUCH_TYPE_BEGIN 0 // touch.TypeBegin
@@ -131,7 +154,7 @@ static void sendTouches(int change, NSSet* touches) {
 }
 
 - (void)touchesCanceled:(NSSet*)touches withEvent:(UIEvent*)event {
-    sendTouches(TOUCH_TYPE_END, touches);
+	sendTouches(TOUCH_TYPE_END, touches);
 }
 @end
 
@@ -140,22 +163,6 @@ void runApp(void) {
 	@autoreleasepool {
 		UIApplicationMain(0, argv, nil, NSStringFromClass([GoAppAppDelegate class]));
 	}
-}
-
-void makeCurrentContext(GLintptr context) {
-	EAGLContext* ctx = (EAGLContext*)context;
-	if (![EAGLContext setCurrentContext:ctx]) {
-		// TODO(crawshaw): determine how terrible this is. Exit?
-		NSLog(@"failed to set current context");
-	}
-}
-
-void swapBuffers(GLintptr context) {
-	__block EAGLContext* ctx = (EAGLContext*)context;
-	dispatch_sync(dispatch_get_main_queue(), ^{
-		[EAGLContext setCurrentContext:ctx];
-		[ctx presentRenderbuffer:GL_RENDERBUFFER];
-	});
 }
 
 uint64_t threadID() {

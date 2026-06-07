@@ -3,11 +3,9 @@
 // license that can be found in the LICENSE file.
 
 #ifdef os_android
-// TODO(crawshaw): We could include <android/api-level.h> and
-// condition on __ANDROID_API__ to get GLES3 headers. However
-// we also need to add -lGLESv3 to LDFLAGS, which we cannot do
-// from inside an ifdef.
-#include <GLES2/gl2.h>
+// Use GLES3 for ES 3.0 features like instancing
+// Android API level 18+ (Android 4.3+) supports GLES 3.0
+#include <GLES3/gl3.h>
 #elif os_linux
 #include <GLES3/gl3.h> // install on Ubuntu with: sudo apt-get install libegl1-mesa-dev libgles2-mesa-dev libx11-dev
 #elif os_openbsd
@@ -196,6 +194,11 @@ typedef enum {
 	glfnUniform2uiv,
 	glfnUniform3uiv,
 	glfnUniform4uiv,
+
+	// ES 3.0 instancing functions
+	glfnDrawArraysInstanced,
+	glfnDrawElementsInstanced,
+	glfnVertexAttribDivisor,
 } glfn;
 
 // TODO: generate this type from fn.go.

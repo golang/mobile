@@ -245,7 +245,22 @@ func UnmarshalXML(r io.Reader, withIcon bool, minSdkVersion, targetSdkVersion in
 				return nil, fmt.Errorf("manual declaration of uses-sdk in AndroidManifest.xml not supported")
 			case "manifest":
 				// synthesize additional attributes and nodes for use during encode.
+				// Add compileSdkVersion and compileSdkVersionCodename for Android 12+ compatibility
 				tkn.Attr = append(tkn.Attr,
+					xml.Attr{
+						Name: xml.Name{
+							Space: androidSchema,
+							Local: "compileSdkVersion",
+						},
+						Value: strconv.Itoa(MinSDK),
+					},
+					xml.Attr{
+						Name: xml.Name{
+							Space: androidSchema,
+							Local: "compileSdkVersionCodename",
+						},
+						Value: "12",
+					},
 					xml.Attr{
 						Name: xml.Name{
 							Space: "",
@@ -658,9 +673,29 @@ func UnmarshalXML(r io.Reader, withIcon bool, minSdkVersion, targetSdkVersion in
 
 	var asort func(*Element)
 	asort = func(el *Element) {
-		sort.Sort(byType(el.attrs))
-		sort.Sort(byNamespace(el.attrs))
-		sort.Sort(byName(el.attrs))
+		// Sort attributes by resource ID for Android 12+ compatibility.
+		// Android's package parser requires android namespace attributes to be
+		// sorted by resource ID (stored in bx.Map.rs at the string pool index).
+		sort.Slice(el.attrs, func(i, j int) bool {
+			// First sort by namespace: android namespace (not NoEntry) before no namespace
+			if el.attrs[i].NS != NoEntry && el.attrs[j].NS == NoEntry {
+				return true
+			}
+			if el.attrs[i].NS == NoEntry && el.attrs[j].NS != NoEntry {
+				return false
+			}
+			// For android namespace attributes, sort by resource ID
+			if el.attrs[i].NS != NoEntry && el.attrs[j].NS != NoEntry {
+				// Name is the string pool index, Map.rs[index] is the resource ID
+				idxI := int(el.attrs[i].Name)
+				idxJ := int(el.attrs[j].Name)
+				if idxI < len(bx.Map.rs) && idxJ < len(bx.Map.rs) {
+					return bx.Map.rs[idxI] < bx.Map.rs[idxJ]
+				}
+			}
+			// For non-android or if map not available, sort by name pool index
+			return el.attrs[i].Name < el.attrs[j].Name
+		})
 		for _, child := range el.Children {
 			asort(child)
 		}

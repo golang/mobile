@@ -64,7 +64,8 @@ var manifestTmpl = template.Must(template.New("manifest").Parse(`
 	<application android:label="{{.Name}}" android:debuggable="true">
 	<activity android:name="org.golang.app.GoNativeActivity"
 		android:label="{{.Name}}"
-		android:configChanges="orientation|keyboardHidden">
+		android:configChanges="orientation|keyboardHidden"
+		android:exported="true">
 		<meta-data android:name="android.app.lib_name" android:value="{{.LibName}}" />
 		<intent-filter>
 			<action android:name="android.intent.action.MAIN" />

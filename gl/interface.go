@@ -290,6 +290,25 @@ type Context interface {
 	// http://www.khronos.org/opengles/sdk/docs/man3/html/glDrawElements.xhtml
 	DrawElements(mode Enum, count int, ty Enum, offset int)
 
+	// DrawArraysInstanced renders multiple instances of geometric primitives.
+	// Requires ES 3.0 or higher.
+	//
+	// http://www.khronos.org/opengles/sdk/docs/man3/html/glDrawArraysInstanced.xhtml
+	DrawArraysInstanced(mode Enum, first, count, instanceCount int)
+
+	// DrawElementsInstanced renders multiple instances of primitives from a bound buffer.
+	// Requires ES 3.0 or higher.
+	//
+	// http://www.khronos.org/opengles/sdk/docs/man3/html/glDrawElementsInstanced.xhtml
+	DrawElementsInstanced(mode Enum, count int, ty Enum, offset, instanceCount int)
+
+	// VertexAttribDivisor modifies the rate at which vertex attributes advance
+	// during instanced rendering.
+	// Requires ES 3.0 or higher.
+	//
+	// http://www.khronos.org/opengles/sdk/docs/man3/html/glVertexAttribDivisor.xhtml
+	VertexAttribDivisor(index Attrib, divisor int)
+
 	// TODO(crawshaw): consider DrawElements8 / DrawElements16 / DrawElements32
 
 	// Enable enables various GL capabilities.

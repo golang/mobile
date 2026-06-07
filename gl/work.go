@@ -9,7 +9,7 @@ package gl
 /*
 #cgo ios          LDFLAGS: -framework OpenGLES
 #cgo darwin,!ios  LDFLAGS: -framework OpenGL
-#cgo linux        LDFLAGS: -lGLESv2
+#cgo linux        LDFLAGS: -lGLESv3
 #cgo openbsd      LDFLAGS: -L/usr/X11R6/lib/ -lGLESv2
 
 #cgo android      CFLAGS: -Dos_android

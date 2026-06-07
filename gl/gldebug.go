@@ -1967,6 +1967,53 @@ func (ctx *context) DrawElements(mode Enum, count int, ty Enum, offset int) {
 		blocking: true})
 }
 
+func (ctx *context) DrawArraysInstanced(mode Enum, first, count, instanceCount int) {
+	defer func() {
+		errstr := ctx.errDrain()
+		log.Printf("gl.DrawArraysInstanced(%v, %v, %v, %v) %v", mode, first, count, instanceCount, errstr)
+	}()
+	ctx.enqueueDebug(call{
+		args: fnargs{
+			fn: glfnDrawArraysInstanced,
+			a0: mode.c(),
+			a1: uintptr(first),
+			a2: uintptr(count),
+			a3: uintptr(instanceCount),
+		},
+		blocking: true})
+}
+
+func (ctx *context) DrawElementsInstanced(mode Enum, count int, ty Enum, offset, instanceCount int) {
+	defer func() {
+		errstr := ctx.errDrain()
+		log.Printf("gl.DrawElementsInstanced(%v, %v, %v, %v, %v) %v", mode, count, ty, offset, instanceCount, errstr)
+	}()
+	ctx.enqueueDebug(call{
+		args: fnargs{
+			fn: glfnDrawElementsInstanced,
+			a0: mode.c(),
+			a1: uintptr(count),
+			a2: ty.c(),
+			a3: uintptr(offset),
+			a4: uintptr(instanceCount),
+		},
+		blocking: true})
+}
+
+func (ctx *context) VertexAttribDivisor(index Attrib, divisor int) {
+	defer func() {
+		errstr := ctx.errDrain()
+		log.Printf("gl.VertexAttribDivisor(%v, %v) %v", index, divisor, errstr)
+	}()
+	ctx.enqueueDebug(call{
+		args: fnargs{
+			fn: glfnVertexAttribDivisor,
+			a0: index.c(),
+			a1: uintptr(divisor),
+		},
+		blocking: true})
+}
+
 func (ctx *context) Enable(cap Enum) {
 	defer func() {
 		errstr := ctx.errDrain()

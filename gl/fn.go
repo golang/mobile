@@ -191,6 +191,11 @@ const (
 	glfnUniform2uiv
 	glfnUniform3uiv
 	glfnUniform4uiv
+
+	// ES 3.0 instancing functions
+	glfnDrawArraysInstanced
+	glfnDrawElementsInstanced
+	glfnVertexAttribDivisor
 )
 
 func goString(buf []byte) string {

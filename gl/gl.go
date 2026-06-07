@@ -548,6 +548,41 @@ func (ctx *context) DrawElements(mode Enum, count int, ty Enum, offset int) {
 	})
 }
 
+func (ctx *context) DrawArraysInstanced(mode Enum, first, count, instanceCount int) {
+	ctx.enqueue(call{
+		args: fnargs{
+			fn: glfnDrawArraysInstanced,
+			a0: mode.c(),
+			a1: uintptr(first),
+			a2: uintptr(count),
+			a3: uintptr(instanceCount),
+		},
+	})
+}
+
+func (ctx *context) DrawElementsInstanced(mode Enum, count int, ty Enum, offset, instanceCount int) {
+	ctx.enqueue(call{
+		args: fnargs{
+			fn: glfnDrawElementsInstanced,
+			a0: mode.c(),
+			a1: uintptr(count),
+			a2: ty.c(),
+			a3: uintptr(offset),
+			a4: uintptr(instanceCount),
+		},
+	})
+}
+
+func (ctx *context) VertexAttribDivisor(index Attrib, divisor int) {
+	ctx.enqueue(call{
+		args: fnargs{
+			fn: glfnVertexAttribDivisor,
+			a0: index.c(),
+			a1: uintptr(divisor),
+		},
+	})
+}
+
 func (ctx *context) Enable(cap Enum) {
 	ctx.enqueue(call{
 		args: fnargs{

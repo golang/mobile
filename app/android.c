@@ -49,6 +49,9 @@ static jmethodID find_static_method(JNIEnv *env, jclass clazz, const char *name,
 }
 
 static jmethodID key_rune_method;
+static jmethodID show_soft_keyboard_method;
+static jmethodID hide_soft_keyboard_method;
+static jobject current_activity;
 
 jint JNI_OnLoad(JavaVM* vm, void* reserved) {
 	JNIEnv* env;
@@ -77,6 +80,9 @@ void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_
 		current_class = (*env)->GetObjectClass(env, activity->clazz);
 		current_class = (*env)->NewGlobalRef(env, current_class);
 		key_rune_method = find_static_method(env, current_class, "getRune", "(III)I");
+		show_soft_keyboard_method = find_method(env, current_class, "showSoftKeyboard", "()V");
+		hide_soft_keyboard_method = find_method(env, current_class, "hideSoftKeyboard", "()V");
+		current_activity = (*env)->NewGlobalRef(env, activity->clazz);
 
 		setCurrentContext(activity->vm, (*env)->NewGlobalRef(env, activity->clazz));
 
@@ -121,74 +127,6 @@ void ANativeActivity_onCreate(ANativeActivity *activity, void* savedState, size_
 	onCreate(activity);
 }
 
-// TODO(crawshaw): Test configuration on more devices.
-static const EGLint RGB_888[] = {
-	EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-	EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-	EGL_BLUE_SIZE, 8,
-	EGL_GREEN_SIZE, 8,
-	EGL_RED_SIZE, 8,
-	EGL_DEPTH_SIZE, 16,
-	EGL_CONFIG_CAVEAT, EGL_NONE,
-	EGL_NONE
-};
-
-EGLDisplay display = NULL;
-EGLSurface surface = NULL;
-
-static char* initEGLDisplay() {
-	display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-	if (!eglInitialize(display, 0, 0)) {
-		return "EGL initialize failed";
-	}
-	return NULL;
-}
-
-char* createEGLSurface(ANativeWindow* window) {
-	char* err;
-	EGLint numConfigs, format;
-	EGLConfig config;
-	EGLContext context;
-
-	if (display == 0) {
-		if ((err = initEGLDisplay()) != NULL) {
-			return err;
-		}
-	}
-
-	if (!eglChooseConfig(display, RGB_888, &config, 1, &numConfigs)) {
-		return "EGL choose RGB_888 config failed";
-	}
-	if (numConfigs <= 0) {
-		return "EGL no config found";
-	}
-
-	eglGetConfigAttrib(display, config, EGL_NATIVE_VISUAL_ID, &format);
-	if (ANativeWindow_setBuffersGeometry(window, 0, 0, format) != 0) {
-		return "EGL set buffers geometry failed";
-	}
-
-	surface = eglCreateWindowSurface(display, config, window, NULL);
-	if (surface == EGL_NO_SURFACE) {
-		return "EGL create surface failed";
-	}
-
-	const EGLint contextAttribs[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
-	context = eglCreateContext(display, config, EGL_NO_CONTEXT, contextAttribs);
-
-	if (eglMakeCurrent(display, surface, surface, context) == EGL_FALSE) {
-		return "eglMakeCurrent failed";
-	}
-	return NULL;
-}
-
-char* destroyEGLSurface() {
-	if (!eglDestroySurface(display, surface)) {
-		return "EGL destroy surface failed";
-	}
-	return NULL;
-}
-
 int32_t getKeyRune(JNIEnv* env, AInputEvent* e) {
 	return (int32_t)(*env)->CallStaticIntMethod(
 		env,
@@ -198,4 +136,16 @@ int32_t getKeyRune(JNIEnv* env, AInputEvent* e) {
 		AKeyEvent_getKeyCode(e),
 		AKeyEvent_getMetaState(e)
 	);
+}
+
+void showSoftKeyboard(JNIEnv* env) {
+	if (current_activity != NULL && show_soft_keyboard_method != 0) {
+		(*env)->CallVoidMethod(env, current_activity, show_soft_keyboard_method);
+	}
+}
+
+void hideSoftKeyboard(JNIEnv* env) {
+	if (current_activity != NULL && hide_soft_keyboard_method != 0) {
+		(*env)->CallVoidMethod(env, current_activity, hide_soft_keyboard_method);
+	}
 }
