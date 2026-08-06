@@ -397,10 +397,8 @@ func (g *Generator) cgoType(t types.Type) string {
 		if isBytesSlice(t) {
 			return "nbyteslice"
 		}
-		if p, ok := types.Unalias(t.Elem()).(*types.Pointer); ok {
-			if _, ok := types.Unalias(p.Elem()).(*types.Named); ok {
-				return "nrefnumslice"
-			}
+		if _, ok := refSliceElem(t); ok {
+			return "nrefnumslice"
 		}
 		g.errorf("unsupported slice type: %s", t)
 	case *types.Pointer:
@@ -505,10 +503,8 @@ func (g *Generator) isSupported(t types.Type) bool {
 		if isBytesSlice(t) {
 			return true
 		}
-		if p, ok := types.Unalias(t.Elem()).(*types.Pointer); ok {
-			if n, ok := types.Unalias(p.Elem()).(*types.Named); ok {
-				return g.validPkg(n.Obj().Pkg())
-			}
+		if n, ok := refSliceElem(t); ok {
+			return g.validPkg(n.Obj().Pkg())
 		}
 		return false
 	case *types.Pointer:

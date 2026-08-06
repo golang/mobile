@@ -457,6 +457,54 @@ public class SeqTest extends InstrumentationTestCase {
     assertTrue(nullArger.callWithNull(null));
   }
 
+  public void testStructSlice() {
+    Node a = Testpkg.newNode("A");
+    Node[] nodes = Testpkg.repeatNode(a, 3);
+    assertEquals("want three nodes", 3, nodes.length);
+    for (Node n : nodes) {
+      assertEquals("want the node we passed in", a, n);
+    }
+    assertEquals("want the names of the nodes", "A,A,A", Testpkg.nodeNames(nodes));
+    assertEquals("want no names for an empty slice", "", Testpkg.nodeNames(new Node[0]));
+    assertEquals("want no names for a nil slice", "", Testpkg.nodeNames(null));
+    assertEquals("want a nil element to be reported", "<nil>", Testpkg.nodeNames(new Node[]{null}));
+    assertEquals("want an empty slice back", 0, Testpkg.repeatNode(a, 0).length);
+
+    // Slices long enough to overflow the JNI local reference table if
+    // references were leaked.
+    Node[] many = Testpkg.repeatNode(a, 1000);
+    assertEquals("want a thousand nodes", 1000, many.length);
+    assertEquals("want a thousand names", 2*many.length - 1, Testpkg.nodeNames(many).length());
+  }
+
+  public void testStructSliceCallback() {
+    String names = Testpkg.callNodeSlicer(new NodeSlicer() {
+      @Override public Node[] slice(Node[] nodes) {
+        Node[] res = Arrays.copyOf(nodes, nodes.length + 1);
+        res[nodes.length] = Testpkg.newNode("B");
+        return res;
+      }
+    }, Testpkg.newNode("A"));
+    assertEquals("want the nodes to survive the round trip", "A,A,A,B", names);
+
+    Node a = Testpkg.newNode("A");
+    assertEquals("want a null element to be passed on", "<nil>,A", Testpkg.callNodeSlicer(new NodeSlicer() {
+      @Override public Node[] slice(Node[] nodes) {
+        return new Node[]{null, nodes[0]};
+      }
+    }, a));
+    assertEquals("want an empty array to be passed on", "", Testpkg.callNodeSlicer(new NodeSlicer() {
+      @Override public Node[] slice(Node[] nodes) {
+        return new Node[0];
+      }
+    }, a));
+    assertEquals("want a null array to be passed on", "", Testpkg.callNodeSlicer(new NodeSlicer() {
+      @Override public Node[] slice(Node[] nodes) {
+        return null;
+      }
+    }, a));
+  }
+
   public void testPassByteArray() {
     Testpkg.passByteArray(new B() {
       @Override public void b(byte[] b) {

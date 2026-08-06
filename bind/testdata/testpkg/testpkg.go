@@ -297,6 +297,43 @@ func PassByteArray(b B) {
 	b.B([]byte{1, 2, 3, 4})
 }
 
+// RepeatNode returns a slice with n copies of the node.
+func RepeatNode(n *Node, count int) []*Node {
+	nodes := make([]*Node, count)
+	for i := range nodes {
+		nodes[i] = n
+	}
+	return nodes
+}
+
+// NodeNames joins the names of the nodes, using "<nil>" for nil elements.
+func NodeNames(nodes []*Node) string {
+	var names string
+	for i, n := range nodes {
+		if i > 0 {
+			names += ","
+		}
+		if n == nil {
+			names += "<nil>"
+			continue
+		}
+		names += n.V
+	}
+	return names
+}
+
+// NodeSlicer is implemented by foreign code to test passing slices of
+// structs to and from a foreign implementation.
+type NodeSlicer interface {
+	Slice(nodes []*Node) []*Node
+}
+
+// CallNodeSlicer passes a slice of copies of n to s and returns the names
+// of the nodes it returns.
+func CallNodeSlicer(s NodeSlicer, n *Node) string {
+	return NodeNames(s.Slice(RepeatNode(n, 3)))
+}
+
 func GoroutineCallback(r Receiver) {
 	done := make(chan struct{})
 	go func() {

@@ -167,6 +167,10 @@ Supported types include:
   - Byte slice types. Note that byte slices are passed by reference,
     and support mutation.
 
+  - Slices of pointers to supported struct types, such as []*T. Unlike
+    byte slices, they are passed by value; mutating the slice on one
+    side of the language barrier does not affect the other.
+
   - Any function type all of whose parameters and results have
     supported types. Functions must return either no results,
     one result, or two results where the type of the second is

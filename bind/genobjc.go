@@ -694,11 +694,9 @@ func (g *ObjcGen) genWrite(varName string, t types.Type, mode varMode) {
 			g.Printf("nbyteslice _%s = go_seq_from_objc_bytearray(%s, %d);\n", varName, varName, toCFlag(mode == modeRetained))
 			return
 		}
-		if p, ok := types.Unalias(t.Elem()).(*types.Pointer); ok {
-			if _, ok := types.Unalias(p.Elem()).(*types.Named); ok {
-				g.Printf("nrefnumslice _%s = go_seq_from_objc_refnumarray(%s);\n", varName, varName)
-				return
-			}
+		if _, ok := refSliceElem(t); ok {
+			g.Printf("nrefnumslice _%s = go_seq_from_objc_objectarray(%s);\n", varName, varName)
+			return
 		}
 		g.errorf("unsupported type: %s", t)
 	case *types.Named:
@@ -745,6 +743,13 @@ func (g *ObjcGen) genRefRead(toName, fromName string, t types.Type) {
 	g.Printf("}\n")
 }
 
+// genRefReadArray generates the conversion of a slice of reference numbers to
+// an NSArray of proxies for the type t.
+func (g *ObjcGen) genRefReadArray(toName, fromName string, t types.Type) {
+	ptype := g.refTypeBase(t)
+	g.Printf("NSArray<%s*>* %s = go_seq_to_objc_objectarray(%s, [%s class]);\n", ptype, toName, fromName, ptype)
+}
+
 func (g *ObjcGen) genRead(toName, fromName string, t types.Type, mode varMode) {
 	switch t := types.Unalias(t).(type) {
 	case *types.Basic:
@@ -761,11 +766,9 @@ func (g *ObjcGen) genRead(toName, fromName string, t types.Type, mode varMode) {
 			g.Printf("NSData *%s = go_seq_to_objc_bytearray(%s, %d);\n", toName, fromName, toCFlag(mode == modeRetained))
 			return
 		}
-		if p, ok := types.Unalias(t.Elem()).(*types.Pointer); ok {
-			if _, ok := types.Unalias(p.Elem()).(*types.Named); ok {
-				g.Printf("NSArray *%s = go_seq_to_objc_refnumarray(%s);\n", toName, fromName)
-				return
-			}
+		if n, ok := refSliceElem(t); ok {
+			g.genRefReadArray(toName, fromName, types.NewPointer(n))
+			return
 		}
 		g.errorf("unsupported type: %s", t)
 	case *types.Pointer:
@@ -1043,12 +1046,6 @@ func (g *ObjcGen) genRelease(varName string, t types.Type, mode varMode) {
 			g.Printf("if (![%s isKindOfClass:[NSMutableData class]]) {\n", varName)
 			g.Printf("  free(_%s.ptr);\n", varName)
 			g.Printf("}\n")
-			return
-		}
-		if p, ok := types.Unalias(t.Elem()).(*types.Pointer); ok {
-			if _, ok := types.Unalias(p.Elem()).(*types.Named); ok {
-				g.Printf("free(_%s.ptr);\n", varName)
-			}
 		}
 	}
 }
@@ -1344,19 +1341,15 @@ func (g *ObjcGen) objcType(typ types.Type) string {
 			return "TODO"
 		}
 	case *types.Slice:
-		switch e := typ.Elem().(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8:
-				return "NSData* _Nullable"
-			}
-		case *types.Pointer:
-			switch e.Elem().(type) {
-			case *types.Named:
-				return "NSArray* _Nullable"
-			}
+		elem := g.objcType(typ.Elem())
+		// Special case: NSData seems to be a better option for byte slice.
+		if elem == "byte" {
+			return "NSData* _Nullable"
 		}
-		// TODO(hyangah): support other slice types: NSArray or CFArrayRef.
+		if n, ok := refSliceElem(typ); ok {
+			return "NSArray<" + g.refTypeBase(types.NewPointer(n)) + "*>* _Nullable"
+		}
+		// TODO(hyangah): support other slice types: CFArrayRef.
 		// Investigate the performance implication.
 		g.errorf("unsupported type: %s", typ)
 		return "TODO"

@@ -132,11 +132,6 @@ func (j *javaClassInfo) toJavaType(T types.Type) *java.Type {
 		if isBytesSlice(T) {
 			return &java.Type{Kind: java.Array, Elem: &java.Type{Kind: java.Byte}}
 		}
-		if p, ok := types.Unalias(T.Elem()).(*types.Pointer); ok {
-			if _, ok := types.Unalias(p.Elem()).(*types.Named); ok && isJavaType(p) {
-				return &java.Type{Kind: java.Array, Elem: &java.Type{Kind: java.Object, Class: classNameFor(p)}}
-			}
-		}
 		return nil
 	case *types.Named:
 		if isJavaType(T) {
@@ -642,18 +637,13 @@ func (g *JavaGen) jniType(T types.Type) string {
 			return "TODO"
 		}
 	case *types.Slice:
-		switch e := T.Elem().(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				return "jbyteArray"
-			}
-		case *types.Pointer:
-			switch e.Elem().(type) {
-			case *types.Named:
-				return "jobjectArray"
-			}
+		if isBytesSlice(T) {
+			return "jbyteArray"
 		}
+		if _, ok := refSliceElem(T); ok {
+			return "jobjectArray"
+		}
+		g.errorf("unsupported slice type: %s", T)
 	case *types.Pointer:
 		if _, ok := types.Unalias(T.Elem()).(*types.Named); ok {
 			return g.jniType(T.Elem())
@@ -922,11 +912,9 @@ func (g *JavaGen) genJavaToC(varName string, t types.Type, mode varMode) {
 			g.Printf("nbyteslice _%s = go_seq_from_java_bytearray(env, %s, %d);\n", varName, varName, toCFlag(mode == modeRetained))
 			return
 		}
-		if p, ok := types.Unalias(t.Elem()).(*types.Pointer); ok {
-			if _, ok := types.Unalias(p.Elem()).(*types.Named); ok {
-				g.Printf("nobjectarray _%s = go_seq_from_java_objectarray(env, %s, %d);\n", varName, varName, toCFlag(mode == modeRetained))
-				return
-			}
+		if _, ok := refSliceElem(t); ok {
+			g.Printf("nrefnumslice _%s = go_seq_from_java_objectarray(env, %s);\n", varName, varName)
+			return
 		}
 		g.errorf("unsupported type: %s", t)
 	case *types.Named:
@@ -959,11 +947,9 @@ func (g *JavaGen) genCToJava(toName, fromName string, t types.Type, mode varMode
 			g.Printf("jbyteArray %s = go_seq_to_java_bytearray(env, %s, %d);\n", toName, fromName, toCFlag(mode == modeRetained))
 			return
 		}
-		if p, ok := types.Unalias(t.Elem()).(*types.Pointer); ok {
-			if _, ok := types.Unalias(p.Elem()).(*types.Named); ok {
-				g.Printf("jobjectArray %s = go_seq_to_java_objectarray(env, %s, %d);\n", toName, fromName, toCFlag(mode == modeRetained))
-				return
-			}
+		if n, ok := refSliceElem(t); ok {
+			g.genFromRefnumArray(toName, fromName, t, n.Obj())
+			return
 		}
 		g.errorf("unsupported type: %s", t)
 	case *types.Pointer:
@@ -1002,6 +988,18 @@ func (g *JavaGen) genFromRefnum(toName, fromName string, t types.Type, o *types.
 		g.Printf("proxy_class_%s_%s, proxy_class_%s_%s_cons", p, o.Name(), p, o.Name())
 	}
 	g.Printf(");\n")
+}
+
+// genFromRefnumArray generates the conversion of a slice of reference numbers
+// to a Java array of proxies for the type named by o.
+func (g *JavaGen) genFromRefnumArray(toName, fromName string, t types.Type, o *types.TypeName) {
+	oPkg := o.Pkg()
+	if !g.validPkg(oPkg) {
+		g.errorf("type %s is defined in package %s, which is not bound", t, oPkg)
+		return
+	}
+	p := pkgPrefix(oPkg)
+	g.Printf("jobjectArray %s = go_seq_to_java_objectarray(env, %s, proxy_class_%s_%s, proxy_class_%s_%s_cons);\n", toName, fromName, p, o.Name(), p, o.Name())
 }
 
 func (g *JavaGen) gobindOpts() string {

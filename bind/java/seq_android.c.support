@@ -93,17 +93,24 @@ jbyteArray go_seq_to_java_bytearray(JNIEnv *env, nbyteslice s, int copy) {
 	return res;
 }
 
-jobjectArray go_seq_to_java_objectarray(JNIEnv *env, nrefnumslice arr) {
+// go_seq_to_java_objectarray converts a slice of refnums to an array of
+// proxies of the class proxy_class. The refnums are freed.
+jobjectArray go_seq_to_java_objectarray(JNIEnv *env, nrefnumslice arr, jclass proxy_class, jmethodID proxy_cons) {
 	if (arr.ptr == NULL) {
 		return NULL;
 	}
-	jobjectArray res = (*env)->NewObjectArray(env, arr.len, (*env)->FindClass(env, "java/lang/Object"), NULL);
+	jobjectArray res = (*env)->NewObjectArray(env, arr.len, proxy_class, NULL);
 	if (res == NULL) {
 		LOG_FATAL("NewObjectArray failed");
 	}
-	for (int i = 0; i < arr.len; i++) {
-		(*env)->SetObjectArrayElement(env, res, i, go_seq_from_refnum(env, arr.ptr[i]));
+	for (jsize i = 0; i < arr.len; i++) {
+		jobject o = go_seq_from_refnum(env, arr.ptr[i], proxy_class, proxy_cons);
+		(*env)->SetObjectArrayElement(env, res, i, o);
+		// The array holds the only reference we need; drop the local one to
+		// avoid overflowing the local reference table for large arrays.
+		(*env)->DeleteLocalRef(env, o);
 	}
+	free(arr.ptr);
 	return res;
 }
 
@@ -238,31 +245,27 @@ nbyteslice go_seq_from_java_bytearray(JNIEnv *env, jbyteArray arr, int copy) {
 	return res;
 }
 
+// go_seq_from_java_objectarray converts an array of proxies to a slice of
+// refnums. The returned slice is freed by the Go side.
 nrefnumslice go_seq_from_java_objectarray(JNIEnv *env, jobjectArray arr) {
 	struct nrefnumslice res = {NULL, 0};
 	if (arr == NULL) {
 		return res;
 	}
-
 	jsize len = (*env)->GetArrayLength(env, arr);
-	if (len == 0) {
-		return res;
-	}
-	jint *ptr = (jint *)(*env)->GetPrimitiveArrayCritical(env, arr, NULL);
-	if (ptr == NULL) {
-		LOG_FATAL("GetPrimitiveArrayCritical failed");
-	}
-	void *refnums = (void *)malloc(len * sizeof(jint));
+	// Allocate at least one element so that an empty array is distinguishable
+	// from a null array.
+	int32_t *refnums = (int32_t *)malloc(len == 0 ? 1 : len * sizeof(int32_t));
 	if (refnums == NULL) {
 		LOG_FATAL("malloc failed");
 	}
-	// convert to refnums
-	for (int i = 0; i < len; i++) {
-		refnums[i] = go_seq_to_refnum(env, (*env)->GetObjectArrayElement(env, arr, i));
+	for (jsize i = 0; i < len; i++) {
+		jobject o = (*env)->GetObjectArrayElement(env, arr, i);
+		refnums[i] = go_seq_to_refnum(env, o);
+		(*env)->DeleteLocalRef(env, o);
 	}
 	res.ptr = refnums;
 	res.len = len;
-	(*env)->ReleasePrimitiveArrayCritical(env, arr, ptr, JNI_ABORT);
 	return res;
 }
 

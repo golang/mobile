@@ -115,11 +115,9 @@ func (g *goGen) genWrite(toVar, fromVar string, t types.Type, mode varMode) {
 			g.Printf("%s := fromSlice(%s, %v)\n", toVar, fromVar, mode == modeRetained)
 			return
 		}
-		if p, ok := types.Unalias(t.Elem()).(*types.Pointer); ok {
-			if _, ok := types.Unalias(p.Elem()).(*types.Named); ok {
-				g.Printf("%s := toRefNumSlice(%s)\n", toVar, fromVar)
-				return
-			}
+		if _, ok := refSliceElem(t); ok {
+			g.genToRefNumSlice(toVar, fromVar)
+			return
 		}
 		g.errorf("unsupported type: %s", t)
 	case *types.Pointer:
@@ -150,6 +148,45 @@ func (g *goGen) genToRefNum(toVar, fromVar string) {
 	g.Printf("var %s C.int32_t = _seq.NullRefNum\n", toVar)
 	g.Printf("if %s != nil {\n", fromVar)
 	g.Printf("	%s = C.int32_t(_seq.ToRefNum(%s))\n", toVar, fromVar)
+	g.Printf("}\n")
+}
+
+// genToRefNumSlice generates Go code for converting a slice of pointers to
+// bound types into a slice of refnums, passed on as C memory owned by the
+// receiving foreign code.
+func (g *goGen) genToRefNumSlice(toVar, fromVar string) {
+	g.Printf("var %s_refs []int32\n", toVar)
+	g.Printf("if %s != nil {\n", fromVar)
+	g.Printf("	%s_refs = make([]int32, len(%s))\n", toVar, fromVar)
+	g.Printf("	for i, e := range %s {\n", fromVar)
+	g.Printf("		%s_refs[i] = _seq.NullRefNum\n", toVar)
+	g.Printf("		if e != nil {\n")
+	g.Printf("			%s_refs[i] = _seq.ToRefNum(e)\n", toVar)
+	g.Printf("		}\n")
+	g.Printf("	}\n")
+	g.Printf("}\n")
+	g.Printf("%s := fromRefSlice(%s_refs)\n", toVar, toVar)
+}
+
+// genFromRefNumSlice generates Go code for converting a slice of refnums,
+// held in C memory owned by this side, into a slice of pointers to the bound
+// type n.
+func (g *goGen) genFromRefNumSlice(toVar, fromVar string, n *types.Named) {
+	o := n.Obj()
+	oPkg := o.Pkg()
+	if !g.validPkg(oPkg) {
+		g.errorf("type %s is defined in %s, which is not bound", n, oPkg)
+		return
+	}
+	g.Printf("var %s []*%s%s\n", toVar, g.pkgName(oPkg), o.Name())
+	g.Printf("if %s_refs := toRefSlice(%s); %s_refs != nil {\n", toVar, fromVar, toVar)
+	g.Printf("	%s = make([]*%s%s, len(%s_refs))\n", toVar, g.pkgName(oPkg), o.Name(), toVar)
+	g.Printf("	for i, refnum := range %s_refs {\n", toVar)
+	g.Printf("		// Must be a Go object\n")
+	g.Printf("		if ref := _seq.FromRefNum(refnum); ref != nil {\n")
+	g.Printf("			%s[i] = ref.Get().(*%s%s)\n", toVar, g.pkgName(oPkg), o.Name())
+	g.Printf("		}\n")
+	g.Printf("	}\n")
 	g.Printf("}\n")
 }
 
@@ -399,11 +436,9 @@ func (g *goGen) genRead(toVar, fromVar string, typ types.Type, mode varMode) {
 			g.Printf("%s := toSlice(%s, %v)\n", toVar, fromVar, mode == modeRetained)
 			return
 		}
-		if p, ok := types.Unalias(t.Elem()).(*types.Pointer); ok {
-			if _, ok := types.Unalias(p.Elem()).(*types.Named); ok {
-				g.Printf("%s := fromRefNumSlice(%s)\n", toVar, fromVar)
-				return
-			}
+		if n, ok := refSliceElem(t); ok {
+			g.genFromRefNumSlice(toVar, fromVar, n)
+			return
 		}
 		g.errorf("unsupported type: %s", t)
 	case *types.Pointer:
@@ -496,6 +531,11 @@ func (g *goGen) typeString(typ types.Type) string {
 		default:
 			g.errorf("not yet supported, pointer type %s / %T", t, t)
 		}
+	case *types.Slice:
+		if _, ok := refSliceElem(t); ok {
+			return fmt.Sprintf("[]%s", g.typeString(t.Elem()))
+		}
+		return types.TypeString(typ, types.RelativeTo(pkg))
 	default:
 		return types.TypeString(typ, types.RelativeTo(pkg))
 	}

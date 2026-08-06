@@ -13,6 +13,9 @@
 jclass proxy_class_structs_I;
 jmethodID proxy_class_structs_I_cons;
 static jmethodID mid_I_M;
+jclass proxy_class_structs_Slicer;
+jmethodID proxy_class_structs_Slicer_cons;
+static jmethodID mid_Slicer_Slice;
 jclass proxy_class_structs_S;
 jmethodID proxy_class_structs_S_cons;
 jclass proxy_class_structs_S2;
@@ -38,6 +41,12 @@ Java_structs_Structs__1init(JNIEnv *env, jclass _unused) {
     clazz = (*env)->FindClass(env, "structs/I");
     mid_I_M = (*env)->GetMethodID(env, clazz, "m", "()V");
     
+    clazz = (*env)->FindClass(env, "structs/Structs$proxySlicer");
+    proxy_class_structs_Slicer = (*env)->NewGlobalRef(env, clazz);
+    proxy_class_structs_Slicer_cons = (*env)->GetMethodID(env, clazz, "<init>", "(I)V");
+    clazz = (*env)->FindClass(env, "structs/Slicer");
+    mid_Slicer_Slice = (*env)->GetMethodID(env, clazz, "slice", "([Lstructs/S;)[Lstructs/S;");
+    
 }
 
 JNIEXPORT jobject JNICALL
@@ -58,6 +67,44 @@ Java_structs_Structs_identityWithError(JNIEnv* env, jclass _clazz, jobject s) {
     return _r0;
 }
 
+JNIEXPORT jobjectArray JNICALL
+Java_structs_Structs_repeat(JNIEnv* env, jclass _clazz, jobject s, jlong n) {
+    int32_t _s = go_seq_to_refnum(env, s);
+    nint _n = (nint)n;
+    nrefnumslice r0 = proxystructs__Repeat(_s, _n);
+    jobjectArray _r0 = go_seq_to_java_objectarray(env, r0, proxy_class_structs_S, proxy_class_structs_S_cons);
+    return _r0;
+}
+
+JNIEXPORT jobjectArray JNICALL
+Java_structs_Structs_repeatWithError(JNIEnv* env, jclass _clazz, jobject s, jlong n) {
+    int32_t _s = go_seq_to_refnum(env, s);
+    nint _n = (nint)n;
+    struct proxystructs__RepeatWithError_return res = proxystructs__RepeatWithError(_s, _n);
+    jobjectArray _r0 = go_seq_to_java_objectarray(env, res.r0, proxy_class_structs_S, proxy_class_structs_S_cons);
+    jobject _r1 = go_seq_from_refnum(env, res.r1, proxy_class__error, proxy_class__error_cons);
+    go_seq_maybe_throw_exception(env, _r1);
+    return _r0;
+}
+
+JNIEXPORT jdouble JNICALL
+Java_structs_Structs_sumAll(JNIEnv* env, jclass _clazz, jobjectArray s) {
+    nrefnumslice _s = go_seq_from_java_objectarray(env, s);
+    double r0 = proxystructs__SumAll(_s);
+    jdouble _r0 = (jdouble)r0;
+    return _r0;
+}
+
+JNIEXPORT jdouble JNICALL
+Java_structs_Structs_sumAllWithError(JNIEnv* env, jclass _clazz, jobjectArray s) {
+    nrefnumslice _s = go_seq_from_java_objectarray(env, s);
+    struct proxystructs__SumAllWithError_return res = proxystructs__SumAllWithError(_s);
+    jdouble _r0 = (jdouble)res.r0;
+    jobject _r1 = go_seq_from_refnum(env, res.r1, proxy_class__error, proxy_class__error_cons);
+    go_seq_maybe_throw_exception(env, _r1);
+    return _r0;
+}
+
 JNIEXPORT jint JNICALL
 Java_structs_S__1_1New(JNIEnv *env, jclass clazz) {
     return new_structs_S();
@@ -68,6 +115,26 @@ Java_structs_S_identity(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     struct proxystructs_S_Identity_return res = proxystructs_S_Identity(o);
     jobject _r0 = go_seq_from_refnum(env, res.r0, proxy_class_structs_S, proxy_class_structs_S_cons);
+    jobject _r1 = go_seq_from_refnum(env, res.r1, proxy_class__error, proxy_class__error_cons);
+    go_seq_maybe_throw_exception(env, _r1);
+    return _r0;
+}
+
+JNIEXPORT jobjectArray JNICALL
+Java_structs_S_repeat(JNIEnv* env, jobject __this__, jlong n) {
+    int32_t o = go_seq_to_refnum_go(env, __this__);
+    nint _n = (nint)n;
+    nrefnumslice r0 = proxystructs_S_Repeat(o, _n);
+    jobjectArray _r0 = go_seq_to_java_objectarray(env, r0, proxy_class_structs_S, proxy_class_structs_S_cons);
+    return _r0;
+}
+
+JNIEXPORT jobjectArray JNICALL
+Java_structs_S_repeatWithError(JNIEnv* env, jobject __this__, jlong n) {
+    int32_t o = go_seq_to_refnum_go(env, __this__);
+    nint _n = (nint)n;
+    struct proxystructs_S_RepeatWithError_return res = proxystructs_S_RepeatWithError(o, _n);
+    jobjectArray _r0 = go_seq_to_java_objectarray(env, res.r0, proxy_class_structs_S, proxy_class_structs_S_cons);
     jobject _r1 = go_seq_from_refnum(env, res.r1, proxy_class__error, proxy_class__error_cons);
     go_seq_maybe_throw_exception(env, _r1);
     return _r0;
@@ -142,6 +209,21 @@ Java_structs_Structs_1_m(JNIEnv* env, jobject __this__) {
 }
 
 JNIEXPORT void JNICALL
+Java_structs_Structs_1_setElems(JNIEnv *env, jobject this, jobjectArray v) {
+    int32_t o = go_seq_to_refnum_go(env, this);
+    nrefnumslice _v = go_seq_from_java_objectarray(env, v);
+    proxystructs_Structs_Elems_Set(o, _v);
+}
+
+JNIEXPORT jobjectArray JNICALL
+Java_structs_Structs_1_getElems(JNIEnv *env, jobject this) {
+    int32_t o = go_seq_to_refnum_go(env, this);
+    nrefnumslice r0 = proxystructs_Structs_Elems_Get(o);
+    jobjectArray _r0 = go_seq_to_java_objectarray(env, r0, proxy_class_structs_S, proxy_class_structs_S_cons);
+    return _r0;
+}
+
+JNIEXPORT void JNICALL
 Java_structs_Structs_00024proxyI_m(JNIEnv* env, jobject __this__) {
     int32_t o = go_seq_to_refnum_go(env, __this__);
     proxystructs_I_M(o);
@@ -152,5 +234,24 @@ void cproxystructs_I_M(int32_t refnum) {
     jobject o = go_seq_from_refnum(env, refnum, proxy_class_structs_I, proxy_class_structs_I_cons);
     (*env)->CallVoidMethod(env, o, mid_I_M);
     go_seq_pop_local_frame(env);
+}
+
+JNIEXPORT jobjectArray JNICALL
+Java_structs_Structs_00024proxySlicer_slice(JNIEnv* env, jobject __this__, jobjectArray s) {
+    int32_t o = go_seq_to_refnum_go(env, __this__);
+    nrefnumslice _s = go_seq_from_java_objectarray(env, s);
+    nrefnumslice r0 = proxystructs_Slicer_Slice(o, _s);
+    jobjectArray _r0 = go_seq_to_java_objectarray(env, r0, proxy_class_structs_S, proxy_class_structs_S_cons);
+    return _r0;
+}
+
+nrefnumslice cproxystructs_Slicer_Slice(int32_t refnum, nrefnumslice s) {
+    JNIEnv *env = go_seq_push_local_frame(1);
+    jobject o = go_seq_from_refnum(env, refnum, proxy_class_structs_Slicer, proxy_class_structs_Slicer_cons);
+    jobjectArray _s = go_seq_to_java_objectarray(env, s, proxy_class_structs_S, proxy_class_structs_S_cons);
+    jobjectArray res = (*env)->CallObjectMethod(env, o, mid_Slicer_Slice, _s);
+    nrefnumslice _res = go_seq_from_java_objectarray(env, res);
+    go_seq_pop_local_frame(env);
+    return _res;
 }
 

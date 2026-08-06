@@ -30,8 +30,11 @@ typedef struct nbyteslice {
 	void *ptr;
 	jsize len;
 } nbyteslice;
+// nrefnumslice is a slice of reference numbers, used to pass slices of
+// bound types across the language barrier. The memory pointed to by ptr is
+// always owned by the receiver, which frees it after conversion.
 typedef struct nrefnumslice {
-	void *ptr;
+	int32_t *ptr;
 	jsize len;
 } nrefnumslice;
 typedef jlong nint;
@@ -51,7 +54,7 @@ extern jobject go_seq_get_exception(JNIEnv *env);
 
 extern jbyteArray go_seq_to_java_bytearray(JNIEnv *env, nbyteslice s, int copy);
 extern nbyteslice go_seq_from_java_bytearray(JNIEnv *env, jbyteArray s, int copy);
-extern jobjectArray go_seq_to_java_objectarray(JNIEnv *env, nrefnumslice arr);
+extern jobjectArray go_seq_to_java_objectarray(JNIEnv *env, nrefnumslice arr, jclass proxy_class, jmethodID proxy_cons);
 extern nrefnumslice go_seq_from_java_objectarray(JNIEnv *env, jobjectArray arr);
 extern void go_seq_release_byte_array(JNIEnv *env, jbyteArray arr, jbyte* ptr);
 
