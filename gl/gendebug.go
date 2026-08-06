@@ -1,4 +1,4 @@
-// Copyright 2014 The Go Authors.  All rights reserved.
+// Copyright 2014 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -18,7 +18,6 @@ import (
 	"go/parser"
 	"go/printer"
 	"go/token"
-	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
@@ -835,7 +834,7 @@ func main() {
 		os.Stdout.Write(b)
 		return
 	}
-	if err := ioutil.WriteFile(*outfile, b, 0666); err != nil {
+	if err := os.WriteFile(*outfile, b, 0666); err != nil {
 		die(err)
 	}
 }
@@ -877,7 +876,7 @@ func setEnqueueBlocking(c *ast.CallExpr) {
 	})
 }
 
-const preamble = `// Copyright 2014 The Go Authors.  All rights reserved.
+const preamble = `// Copyright 2014 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 

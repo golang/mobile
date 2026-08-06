@@ -286,14 +286,13 @@ func (g *ObjcWrapper) genCFuncDecl(prefix, name string, f *objc.Func) {
 	case ret != nil && returnsErr:
 		g.Printf("ret_%s", strings.Replace(g.cType(ret), " ", "_", -1))
 	case ret != nil:
-		g.Printf(g.cType(ret))
+		g.Printf("%s", g.cType(ret))
 	case returnsErr:
 		g.Printf("int")
 	default:
 		g.Printf("void")
 	}
-	g.Printf(" ")
-	g.Printf(prefix)
+	g.Printf(" %s", prefix)
 	if f.Static {
 		g.Printf("_s")
 	}
@@ -397,8 +396,7 @@ func (g *ObjcWrapper) genFuncBody(n *objc.Named, f *objc.Func, prefix string) {
 	if ret != nil || errParam != nil {
 		g.Printf("res := ")
 	}
-	g.Printf("C.")
-	g.Printf(prefix)
+	g.Printf("C.%s", prefix)
 	if f.Static {
 		g.Printf("_s")
 	}
@@ -575,7 +573,7 @@ func (g *ObjcWrapper) genInterface(n *objc.Named) {
 		if !g.isFuncSupported(f) {
 			continue
 		}
-		g.Printf(f.GoName)
+		g.Printf("%s", f.GoName)
 		g.genFuncDecl(true, f)
 		g.Printf("\n")
 	}

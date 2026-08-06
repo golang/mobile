@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build (linux && !android) || (darwin && !arm && !arm64) || windows
+//go:build (linux && !android) || (darwin && !ios) || windows
 
 package asset
 

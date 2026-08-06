@@ -1,4 +1,4 @@
-// Copyright 2016 The Go Authors.  All rights reserved.
+// Copyright 2016 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -12,14 +12,14 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"strconv"
 
 	"golang.org/x/mobile/internal/binres"
 )
 
-const tmpl = `// Copyright 2016 The Go Authors.  All rights reserved.
+const tmpl = `// Copyright 2016 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -34,7 +34,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := ioutil.WriteFile("arsc.go", []byte(fmt.Sprintf(tmpl, strconv.Quote(string(arsc)))), 0644); err != nil {
+	if err := os.WriteFile("arsc.go", []byte(fmt.Sprintf(tmpl, strconv.Quote(string(arsc)))), 0644); err != nil {
 		log.Fatal(err)
 	}
 }

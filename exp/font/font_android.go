@@ -4,12 +4,12 @@
 
 package font
 
-import "io/ioutil"
+import "os"
 
 func buildDefault() ([]byte, error) {
-	return ioutil.ReadFile("/system/fonts/DroidSans.ttf")
+	return os.ReadFile("/system/fonts/DroidSans.ttf")
 }
 
 func buildMonospace() ([]byte, error) {
-	return ioutil.ReadFile("/system/fonts/DroidSansMono.ttf")
+	return os.ReadFile("/system/fonts/DroidSansMono.ttf")
 }

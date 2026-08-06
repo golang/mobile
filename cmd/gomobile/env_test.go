@@ -1,4 +1,4 @@
-// Copyright 2019 The Go Authors.  All rights reserved.
+// Copyright 2019 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -6,14 +6,13 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
 )
 
 func TestNdkRoot(t *testing.T) {
-	home, err := ioutil.TempDir("", "gomobile-test-")
+	home, err := os.MkdirTemp("", "gomobile-test-")
 	if err != nil {
 		t.Fatal(err)
 	}

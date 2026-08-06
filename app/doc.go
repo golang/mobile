@@ -85,4 +85,4 @@ response to lifecycle events. Such packages should call:
 
 in an init function inside that package.
 */
-package app // import "golang.org/x/mobile/app"
+package app

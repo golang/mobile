@@ -3,4 +3,4 @@
 // license that can be found in the LICENSE file.
 
 // Package font provides platform independent access to system fonts.
-package font // import "golang.org/x/mobile/exp/font"
+package font

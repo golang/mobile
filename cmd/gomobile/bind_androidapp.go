@@ -1,4 +1,4 @@
-// Copyright 2015 The Go Authors.  All rights reserved.
+// Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -6,9 +6,9 @@ package main
 
 import (
 	"archive/zip"
+	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -72,23 +72,20 @@ func goAndroidBind(gobind string, pkgs []*packages.Package, targets []targetInfo
 	return buildSrcJar(jsrc)
 }
 
-func buildSrcJar(src string) error {
-	var out io.Writer = ioutil.Discard
-	if !buildN {
-		ext := filepath.Ext(buildO)
-		f, err := os.Create(buildO[:len(buildO)-len(ext)] + "-sources.jar")
-		if err != nil {
-			return err
-		}
-		defer func() {
-			if cerr := f.Close(); err == nil {
-				err = cerr
-			}
-		}()
-		out = f
+func buildSrcJar(src string) (retErr error) {
+	if buildN {
+		return writeJar(io.Discard, src)
 	}
 
-	return writeJar(out, src)
+	ext := filepath.Ext(buildO)
+	f, err := os.Create(buildO[:len(buildO)-len(ext)] + "-sources.jar")
+	if err != nil {
+		return err
+	}
+	defer func() {
+		retErr = errors.Join(retErr, f.Close())
+	}()
+	return writeJar(f, src)
 }
 
 // AAR is the format for the binary distribution of an Android Library Project
@@ -109,8 +106,8 @@ func buildSrcJar(src string) error {
 //	aidl (optional, not relevant)
 //
 // javac and jar commands are needed to build classes.jar.
-func buildAAR(srcDir, androidDir string, pkgs []*packages.Package, targets []targetInfo) (err error) {
-	var out io.Writer = ioutil.Discard
+func buildAAR(srcDir, androidDir string, pkgs []*packages.Package, targets []targetInfo) (retErr error) {
+	var out io.Writer = io.Discard
 	if buildO == "" {
 		buildO = pkgs[0].Name + ".aar"
 	}
@@ -123,9 +120,7 @@ func buildAAR(srcDir, androidDir string, pkgs []*packages.Package, targets []tar
 			return err
 		}
 		defer func() {
-			if cerr := f.Close(); err == nil {
-				err = cerr
-			}
+			retErr = errors.Join(retErr, f.Close())
 		}()
 		out = f
 	}
@@ -200,7 +195,7 @@ func buildAAR(srcDir, androidDir string, pkgs []*packages.Package, targets []tar
 					files[name] = pkg.PkgPath
 					w, err := aarwcreate(name)
 					if err != nil {
-						return nil
+						return err
 					}
 					_, err = io.Copy(w, f)
 					return err

@@ -9,7 +9,6 @@ import (
 	"image/color"
 	"image/draw"
 	"image/png"
-	"io/ioutil"
 	"math"
 	"os"
 	"runtime"
@@ -147,7 +146,7 @@ func TestAffineMask(t *testing.T) {
 }
 
 func writeTempPNG(prefix string, m image.Image) (string, error) {
-	f, err := ioutil.TempFile("", prefix+"-")
+	f, err := os.CreateTemp("", prefix+"-")
 	if err != nil {
 		return "", err
 	}

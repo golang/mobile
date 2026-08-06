@@ -6,13 +6,13 @@
 
 package font
 
-import "io/ioutil"
+import "os"
 
 func buildDefault() ([]byte, error) {
 	// Try Noto first, but fall back to Droid as the latter was deprecated
-	noto, nerr := ioutil.ReadFile("/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf")
+	noto, nerr := os.ReadFile("/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf")
 	if nerr != nil {
-		if droid, err := ioutil.ReadFile("/usr/share/fonts/truetype/droid/DroidSans.ttf"); err == nil {
+		if droid, err := os.ReadFile("/usr/share/fonts/truetype/droid/DroidSans.ttf"); err == nil {
 			return droid, nil
 		}
 	}
@@ -21,9 +21,9 @@ func buildDefault() ([]byte, error) {
 
 func buildMonospace() ([]byte, error) {
 	// Try Noto first, but fall back to Droid as the latter was deprecated
-	noto, nerr := ioutil.ReadFile("/usr/share/fonts/truetype/noto/NotoMono-Regular.ttf")
+	noto, nerr := os.ReadFile("/usr/share/fonts/truetype/noto/NotoMono-Regular.ttf")
 	if nerr != nil {
-		if droid, err := ioutil.ReadFile("/usr/share/fonts/truetype/droid/DroidSansMono.ttf"); err == nil {
+		if droid, err := os.ReadFile("/usr/share/fonts/truetype/droid/DroidSansMono.ttf"); err == nil {
 			return droid, nil
 		}
 	}

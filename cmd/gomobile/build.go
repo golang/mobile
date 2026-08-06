@@ -1,4 +1,4 @@
-// Copyright 2015 The Go Authors.  All rights reserved.
+// Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -8,13 +8,11 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"golang.org/x/mobile/internal/sdkpath"
@@ -60,6 +58,9 @@ are copied into the output.
 Flag -iosversion sets the minimal version of the iOS SDK to compile against.
 The default version is 13.0.
 
+Flag -macosversion sets the minimal version of the macOS SDK to compile against.
+By default, no minimum macOS version is set.
+
 Flag -androidapi sets the Android API version to compile against.
 The default and minimum is 16.
 
@@ -71,8 +72,9 @@ output file name depends on the package built.
 
 The -v flag provides verbose output, including the list of packages built.
 
-The build flags -a, -i, -n, -x, -gcflags, -ldflags, -tags, -trimpath, and -work are
-shared with the build command. For documentation, see 'go help build'.
+The build flags -a, -i, -n, -x, -gcflags, -ldflags, -overlay, -tags, -trimpath,
+and -work are shared with the build command. For documentation, see
+'go help build'.
 `,
 }
 
@@ -148,10 +150,8 @@ func runBuildImpl(cmd *command) (*packages.Package, error) {
 		}
 		if pkg.Name != "main" {
 			for _, t := range targets {
-				// Catalyst support requires iOS 13+
-				v, _ := strconv.ParseFloat(buildIOSVersion, 64)
-				if t.platform == "maccatalyst" && v < 13.0 {
-					return nil, errors.New("catalyst requires -iosversion=13 or higher")
+				if err := validateCatalystVersion(t.platform, buildIOSVersion); err != nil {
+					return nil, err
 				}
 				if err := goBuild(pkg.PkgPath, appleEnv[t.String()]); err != nil {
 					return nil, err
@@ -233,30 +233,34 @@ func printcmd(format string, args ...interface{}) {
 
 // "Build flags", used by multiple commands.
 var (
-	buildA          bool        // -a
-	buildI          bool        // -i
-	buildN          bool        // -n
-	buildV          bool        // -v
-	buildX          bool        // -x
-	buildO          string      // -o
-	buildGcflags    string      // -gcflags
-	buildLdflags    string      // -ldflags
-	buildTarget     string      // -target
-	buildTrimpath   bool        // -trimpath
-	buildWork       bool        // -work
-	buildBundleID   string      // -bundleid
-	buildIOSVersion string      // -iosversion
-	buildAndroidAPI int         // -androidapi
-	buildTags       stringsFlag // -tags
+	buildA            bool        // -a
+	buildI            bool        // -i
+	buildN            bool        // -n
+	buildV            bool        // -v
+	buildX            bool        // -x
+	buildO            string      // -o
+	buildGcflags      string      // -gcflags
+	buildLdflags      string      // -ldflags
+	buildOverlay      string      // -overlay
+	buildTarget       string      // -target
+	buildTrimpath     bool        // -trimpath
+	buildWork         bool        // -work
+	buildBundleID     string      // -bundleid
+	buildIOSVersion   string      // -iosversion
+	buildMacOSVersion string      // -macosversion
+	buildAndroidAPI   int         // -androidapi
+	buildTags         stringsFlag // -tags
 )
 
 func addBuildFlags(cmd *command) {
 	cmd.flag.StringVar(&buildO, "o", "", "")
 	cmd.flag.StringVar(&buildGcflags, "gcflags", "", "")
 	cmd.flag.StringVar(&buildLdflags, "ldflags", "", "")
+	cmd.flag.StringVar(&buildOverlay, "overlay", "", "")
 	cmd.flag.StringVar(&buildTarget, "target", "android", "")
 	cmd.flag.StringVar(&buildBundleID, "bundleid", "", "")
 	cmd.flag.StringVar(&buildIOSVersion, "iosversion", "13.0", "")
+	cmd.flag.StringVar(&buildMacOSVersion, "macosversion", "", "")
 	cmd.flag.IntVar(&buildAndroidAPI, "androidapi", minAndroidAPI, "")
 
 	cmd.flag.BoolVar(&buildA, "a", false, "")
@@ -318,11 +322,17 @@ func goCmdAt(at string, subcmd string, srcs []string, env []string, args ...stri
 	if buildX {
 		cmd.Args = append(cmd.Args, "-x")
 	}
+	if buildA {
+		cmd.Args = append(cmd.Args, "-a")
+	}
 	if buildGcflags != "" {
 		cmd.Args = append(cmd.Args, "-gcflags", buildGcflags)
 	}
 	if buildLdflags != "" {
 		cmd.Args = append(cmd.Args, "-ldflags", buildLdflags)
+	}
+	if buildOverlay != "" {
+		cmd.Args = append(cmd.Args, "-overlay", buildOverlay)
 	}
 	if buildTrimpath {
 		cmd.Args = append(cmd.Args, "-trimpath")

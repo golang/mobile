@@ -107,7 +107,7 @@ const (
 	Double
 )
 
-// Import returns  descriptors for a list of references to
+// Import returns descriptors for a list of references to
 // ObjC protocols and classes.
 //
 // The type information is parsed from the output of clang -cc1

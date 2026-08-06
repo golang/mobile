@@ -1,4 +1,4 @@
-// Copyright 2015 The Go Authors.  All rights reserved.
+// Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -63,7 +62,7 @@ func runInit(cmd *command) error {
 		tmpdir = filepath.Join(gomobilepath, "work")
 	} else {
 		var err error
-		tmpdir, err = ioutil.TempDir(gomobilepath, "work-")
+		tmpdir, err = os.MkdirTemp(gomobilepath, "work-")
 		if err != nil {
 			return err
 		}
@@ -153,7 +152,7 @@ func installOpenAL(gomobilepath string) error {
 		alTmpDir = filepath.Join(gomobilepath, "work")
 	} else {
 		var err error
-		alTmpDir, err = ioutil.TempDir(gomobilepath, "openal-release-")
+		alTmpDir, err = os.MkdirTemp(gomobilepath, "openal-release-")
 		if err != nil {
 			return err
 		}
@@ -233,7 +232,7 @@ func symlink(src, dst string) error {
 }
 
 func doCopyAll(dst, src string) error {
-	return filepath.Walk(src, func(path string, info os.FileInfo, errin error) (err error) {
+	return filepath.Walk(src, func(path string, info os.FileInfo, errin error) (retErr error) {
 		if errin != nil {
 			return errin
 		}
@@ -255,9 +254,7 @@ func doCopyAll(dst, src string) error {
 			return err
 		}
 		defer func() {
-			if errc := out.Close(); err == nil {
-				err = errc
-			}
+			retErr = errors.Join(retErr, out.Close())
 		}()
 		_, err = io.Copy(out, in)
 		return err

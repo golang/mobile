@@ -1,4 +1,4 @@
-// Copyright 2015 The Go Authors.  All rights reserved.
+// Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -112,6 +112,9 @@ are copied into the output.
 Flag -iosversion sets the minimal version of the iOS SDK to compile against.
 The default version is 13.0.
 
+Flag -macosversion sets the minimal version of the macOS SDK to compile against.
+By default, no minimum macOS version is set.
+
 Flag -androidapi sets the Android API version to compile against.
 The default and minimum is 16.
 
@@ -167,4 +170,4 @@ Usage:
 
 Version prints versions of the gomobile binary and tools
 */
-package main // import "golang.org/x/mobile/cmd/gomobile"
+package main

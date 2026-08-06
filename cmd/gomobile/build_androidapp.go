@@ -1,4 +1,4 @@
-// Copyright 2015 The Go Authors.  All rights reserved.
+// Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -13,7 +13,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path"
@@ -24,7 +23,7 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
-func goAndroidBuild(pkg *packages.Package, targets []targetInfo) (map[string]bool, error) {
+func goAndroidBuild(pkg *packages.Package, targets []targetInfo) (_ map[string]bool, retErr error) {
 	ndkRoot, err := ndkRoot(targets...)
 	if err != nil {
 		return nil, err
@@ -37,7 +36,7 @@ func goAndroidBuild(pkg *packages.Package, targets []targetInfo) (map[string]boo
 	dir := filepath.Dir(pkg.GoFiles[0])
 
 	manifestPath := filepath.Join(dir, "AndroidManifest.xml")
-	manifestData, err := ioutil.ReadFile(manifestPath)
+	manifestData, err := os.ReadFile(manifestPath)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return nil, err
@@ -113,9 +112,7 @@ func goAndroidBuild(pkg *packages.Package, targets []targetInfo) (map[string]boo
 			return nil, err
 		}
 		defer func() {
-			if cerr := f.Close(); err == nil {
-				err = cerr
-			}
+			retErr = errors.Join(retErr, f.Close())
 		}()
 		out = f
 	}
@@ -129,7 +126,7 @@ func goAndroidBuild(pkg *packages.Package, targets []targetInfo) (map[string]boo
 			fmt.Fprintf(os.Stderr, "apk: %s\n", name)
 		}
 		if buildN {
-			return ioutil.Discard, nil
+			return io.Discard, nil
 		}
 		return apkw.Create(name)
 	}

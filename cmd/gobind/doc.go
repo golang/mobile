@@ -1,4 +1,4 @@
-// Copyright 2014 The Go Authors.  All rights reserved.
+// Copyright 2014 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -249,4 +249,4 @@ Examples can be found in http://golang.org/x/mobile/example.
 
 Design doc: http://golang.org/s/gobind
 */
-package main // import "golang.org/x/mobile/cmd/gobind"
+package main

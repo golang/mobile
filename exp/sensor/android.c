@@ -61,7 +61,7 @@ int GoAndroid_readQueue(int n, int32_t* types, int64_t* timestamps, float* vecto
   // Try n times read from the event queue.
   // If anytime timeout occurs, don't retry to read and immediately return.
   // Consume the event queue entirely between polls.
-  while (i < n && (id = ALooper_pollAll(GO_ANDROID_READ_TIMEOUT_MS, NULL, &events, NULL)) >= 0) {
+  while (i < n && (id = ALooper_pollOnce(GO_ANDROID_READ_TIMEOUT_MS, NULL, &events, NULL)) >= 0) {
     if (id != GO_ANDROID_SENSOR_LOOPER_ID) {
       continue;
     }

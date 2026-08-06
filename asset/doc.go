@@ -14,4 +14,4 @@
 //
 // For consistency when debugging on a desktop, assets are read from a
 // directory named assets under the current working directory.
-package asset // import "golang.org/x/mobile/asset"
+package asset

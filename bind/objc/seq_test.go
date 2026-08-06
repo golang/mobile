@@ -8,7 +8,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -43,7 +42,7 @@ func TestMain(m *testing.M) {
 }
 
 func testMain(m *testing.M) int {
-	binDir, err := ioutil.TempDir("", "bind-objc-test-")
+	binDir, err := os.MkdirTemp("", "bind-objc-test-")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -108,7 +107,7 @@ func runTest(t *testing.T, pkgNames []string, prefix, testfile, framework string
 		t.Skip("command xcodebuild not found, skipping")
 	}
 
-	tmpdir, err := ioutil.TempDir("", "bind-objc-seq-test-")
+	tmpdir, err := os.MkdirTemp("", "bind-objc-seq-test-")
 	if err != nil {
 		t.Fatalf("failed to prepare temp dir: %v", err)
 	}
@@ -200,7 +199,7 @@ func createProject(dir, testfile, framework string) error {
 		{"xcodetest/AppDelegate.m", appdelegatem},
 	}
 	for _, f := range files {
-		if err := ioutil.WriteFile(filepath.Join(dir, f.path), []byte(f.content), 0700); err != nil {
+		if err := os.WriteFile(filepath.Join(dir, f.path), []byte(f.content), 0700); err != nil {
 			return err
 		}
 	}

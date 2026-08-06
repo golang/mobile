@@ -1,3 +1,7 @@
+// Copyright 2014 The Go Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package bind
 
 import (
@@ -11,7 +15,6 @@ import (
 	"go/token"
 	"go/types"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -34,6 +37,7 @@ var updateFlag = flag.Bool("update", false, "Update the golden files.")
 
 var tests = []string{
 	"", // The universe package with the error type.
+	"testdata/aliases.go",
 	"testdata/basictypes.go",
 	"testdata/structs.go",
 	"testdata/interfaces.go",
@@ -121,7 +125,7 @@ func diff(a, b string) string {
 }
 
 func writeTempFile(t *testing.T, name string, contents []byte) string {
-	f, err := ioutil.TempFile("", name)
+	f, err := os.CreateTemp("", name)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -215,14 +219,14 @@ func genObjcPackages(t *testing.T, dir string, cg *ObjcWrapper) {
 		pkgFile := filepath.Join(pkgDir, "package.go")
 		cg.Buf.Reset()
 		cg.GenPackage(i)
-		if err := ioutil.WriteFile(pkgFile, cg.Buf.Bytes(), 0600); err != nil {
+		if err := os.WriteFile(pkgFile, cg.Buf.Bytes(), 0600); err != nil {
 			t.Fatal(err)
 		}
 	}
 	cg.Buf.Reset()
 	cg.GenInterfaces()
 	clsFile := filepath.Join(pkgBase, "interfaces.go")
-	if err := ioutil.WriteFile(clsFile, cg.Buf.Bytes(), 0600); err != nil {
+	if err := os.WriteFile(clsFile, cg.Buf.Bytes(), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -254,7 +258,7 @@ func genJavaPackages(t *testing.T, dir string, cg *ClassGen) {
 		pkgFile := filepath.Join(pkgDir, "package.go")
 		cg.Buf.Reset()
 		cg.GenPackage(i)
-		if err := ioutil.WriteFile(pkgFile, cg.Buf.Bytes(), 0600); err != nil {
+		if err := os.WriteFile(pkgFile, cg.Buf.Bytes(), 0600); err != nil {
 			t.Fatal(err)
 		}
 		io.Copy(buf, cg.Buf)
@@ -262,7 +266,7 @@ func genJavaPackages(t *testing.T, dir string, cg *ClassGen) {
 	cg.Buf.Reset()
 	cg.GenInterfaces()
 	clsFile := filepath.Join(pkgBase, "interfaces.go")
-	if err := ioutil.WriteFile(clsFile, cg.Buf.Bytes(), 0600); err != nil {
+	if err := os.WriteFile(clsFile, cg.Buf.Bytes(), 0600); err != nil {
 		t.Fatal(err)
 	}
 	io.Copy(buf, cg.Buf)
@@ -302,7 +306,7 @@ func TestGenJava(t *testing.T) {
 			}
 			tmpGopath := ""
 			if len(classes) > 0 {
-				tmpGopath, err = ioutil.TempDir(os.TempDir(), "gomobile-bind-test-")
+				tmpGopath, err = os.MkdirTemp(os.TempDir(), "gomobile-bind-test-")
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -419,7 +423,7 @@ func TestGenGoJavaWrappers(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		tmpGopath, err := ioutil.TempDir(os.TempDir(), "gomobile-bind-test-")
+		tmpGopath, err := os.MkdirTemp(os.TempDir(), "gomobile-bind-test-")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -449,7 +453,7 @@ func TestGenGoObjcWrappers(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		tmpGopath, err := ioutil.TempDir(os.TempDir(), "gomobile-bind-test-")
+		tmpGopath, err := os.MkdirTemp(os.TempDir(), "gomobile-bind-test-")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -495,7 +499,7 @@ func testGenGo(t *testing.T, filename string, buf *bytes.Buffer, pkg *types.Pack
 	}
 	golden += ".golden"
 
-	goldenContents, err := ioutil.ReadFile(golden)
+	goldenContents, err := os.ReadFile(golden)
 	if err != nil {
 		t.Fatalf("failed to read golden file: %v", err)
 	}
@@ -663,6 +667,40 @@ func TestCustomPrefix(t *testing.T) {
 					t.Errorf("Update failed: %s", err)
 				}
 			}
+		}
+	}
+}
+
+func TestObjcPropertyName(t *testing.T) {
+	testCases := []struct {
+		in, getter, setter string
+	}{
+		// Normal cases pass through unchanged.
+		{"Name", "name", "setName"},
+		{"PublicKeyDER", "publicKeyDER", "setPublicKeyDER"},
+		{"Foo", "foo", "setFoo"},
+		// Acronym prefix is lowercased except for the trailing capital,
+		// matching Cocoa naming convention. The setter must agree with
+		// the property name (OSName -> osName -> setOsName).
+		{"OSName", "osName", "setOsName"},
+		{"OSDevice", "osDevice", "setOsDevice"},
+		// Reserved-word collisions get suffixed with an underscore by
+		// objcNameReplacer, and the setter must match (ID -> id_ ->
+		// setId_).
+		{"ID", "id_", "setId_"},
+		{"In", "in_", "setIn_"},
+		{"Init", "init_", "setInit_"},
+		// Degenerate empty input (should never happen for an exported
+		// field, but be defensive).
+		{"", "", "set"},
+	}
+
+	for _, tc := range testCases {
+		if got := objcGetterName(tc.in); got != tc.getter {
+			t.Errorf("objcGetterName(%q) = %q; want %q", tc.in, got, tc.getter)
+		}
+		if got := objcSetterName(tc.in); got != tc.setter {
+			t.Errorf("objcSetterName(%q) = %q; want %q", tc.in, got, tc.setter)
 		}
 	}
 }

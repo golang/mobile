@@ -24,9 +24,11 @@ and the [bind](https://golang.org/x/mobile/example/bind) example apps.
 
 --
 
-Contributions to Go are appreciated. See https://golang.org/doc/contribute.html.
+Contributions to Go are appreciated. See https://go.dev/doc/contribute.
 
-* Bugs can be filed at the [Go issue tracker](https://golang.org/issue/new?title=x/mobile:+).
+The git repository is https://go.googlesource.com/mobile.
+
+* Bugs can be filed at the [Go issue tracker](https://go.dev/issue/new?title=x/mobile:+).
 * Feature requests should preliminary be discussed on
 [golang-nuts](https://groups.google.com/forum/#!forum/golang-nuts)
 mailing list.

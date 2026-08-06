@@ -366,7 +366,7 @@ func (g *Generator) errorf(format string, args ...interface{}) {
 // cgoType returns the name of a Cgo type suitable for converting a value of
 // the given type.
 func (g *Generator) cgoType(t types.Type) string {
-	switch t := t.(type) {
+	switch t := types.Unalias(t).(type) {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.Bool, types.UntypedBool:
@@ -394,24 +394,17 @@ func (g *Generator) cgoType(t types.Type) string {
 			g.errorf("unsupported basic type: %s", t)
 		}
 	case *types.Slice:
-		switch e := t.Elem().(type) {
-		case *types.Basic:
-			switch e.Kind() {
-			case types.Uint8: // Byte.
-				return "nbyteslice"
-			default:
-				g.errorf("unsupported slice type: %s", t)
-			}
-		case *types.Pointer:
-			switch e.Elem().(type) {
-			case *types.Named:
+		if isBytesSlice(t) {
+			return "nbyteslice"
+		}
+		if p, ok := types.Unalias(t.Elem()).(*types.Pointer); ok {
+			if _, ok := types.Unalias(p.Elem()).(*types.Named); ok {
 				return "nrefnumslice"
 			}
-		default:
-			g.errorf("unsupported slice type: %s", t)
 		}
+		g.errorf("unsupported slice type: %s", t)
 	case *types.Pointer:
-		if _, ok := t.Elem().(*types.Named); ok {
+		if _, ok := types.Unalias(t.Elem()).(*types.Named); ok {
 			return g.cgoType(t.Elem())
 		}
 		g.errorf("unsupported pointer to type: %s", t)
@@ -493,7 +486,7 @@ func (g *Generator) isSupported(t types.Type) bool {
 	if isErrorType(t) || isWrapperType(t) {
 		return true
 	}
-	switch t := t.(type) {
+	switch t := types.Unalias(t).(type) {
 	case *types.Basic:
 		switch t.Kind() {
 		case types.Bool, types.UntypedBool,
@@ -509,17 +502,17 @@ func (g *Generator) isSupported(t types.Type) bool {
 		}
 		return false
 	case *types.Slice:
-		switch e := t.Elem().(type) {
-		case *types.Basic:
-			return e.Kind() == types.Uint8
-		case *types.Pointer:
-			switch f := e.Elem().(type) {
-			case *types.Named:
-				return g.validPkg(f.Obj().Pkg())
+		if isBytesSlice(t) {
+			return true
+		}
+		if p, ok := types.Unalias(t.Elem()).(*types.Pointer); ok {
+			if n, ok := types.Unalias(p.Elem()).(*types.Named); ok {
+				return g.validPkg(n.Obj().Pkg())
 			}
 		}
+		return false
 	case *types.Pointer:
-		switch t := t.Elem().(type) {
+		switch t := types.Unalias(t.Elem()).(type) {
 		case *types.Named:
 			return g.validPkg(t.Obj().Pkg())
 		}
