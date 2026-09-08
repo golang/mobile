@@ -334,8 +334,8 @@ func (s Source) QueueBuffers(buffer ...Buffer) {
 	alSourceQueueBuffers(s, buffer)
 }
 
-// UnqueueBuffers removes the specified buffers from the buffer queue.
-func (s Source) UnqueueBuffers(buffer ...Buffer) {
+// UnqueueBuffers removes completed buffers from the buffer queue.
+func (s Source) UnqueueBuffers(buffer []Buffer) {
 	alSourceUnqueueBuffers(s, buffer)
 }
 
