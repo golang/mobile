@@ -16,9 +16,15 @@
 @class StructsStructs;
 @protocol StructsI;
 @class StructsI;
+@protocol StructsSlicer;
+@class StructsSlicer;
 
 @protocol StructsI <NSObject>
 - (void)m;
+@end
+
+@protocol StructsSlicer <NSObject>
+- (NSArray<StructsS*>* _Nullable)slice:(NSArray<StructsS*>* _Nullable)s;
 @end
 
 @interface StructsS : NSObject <goSeqRefInterface> {
@@ -30,6 +36,8 @@
 @property (nonatomic) double x;
 @property (nonatomic) double y;
 - (StructsS* _Nullable)identity:(NSError* _Nullable* _Nullable)error;
+- (NSArray<StructsS*>* _Nullable)repeat:(long)n;
+- (NSArray<StructsS*>* _Nullable)repeatWithError:(long)n error:(NSError* _Nullable* _Nullable)error;
 - (double)sum;
 @end
 
@@ -52,6 +60,7 @@
 
 - (nonnull instancetype)initWithRef:(_Nonnull id)ref;
 - (nonnull instancetype)init;
+@property (nonatomic) NSArray<StructsS*>* _Nullable elems;
 - (void)m;
 @end
 
@@ -59,7 +68,17 @@ FOUNDATION_EXPORT StructsS* _Nullable StructsIdentity(StructsS* _Nullable s);
 
 FOUNDATION_EXPORT StructsS* _Nullable StructsIdentityWithError(StructsS* _Nullable s, NSError* _Nullable* _Nullable error);
 
+FOUNDATION_EXPORT NSArray<StructsS*>* _Nullable StructsRepeat(StructsS* _Nullable s, long n);
+
+FOUNDATION_EXPORT NSArray<StructsS*>* _Nullable StructsRepeatWithError(StructsS* _Nullable s, long n, NSError* _Nullable* _Nullable error);
+
+FOUNDATION_EXPORT double StructsSumAll(NSArray<StructsS*>* _Nullable s);
+
+FOUNDATION_EXPORT BOOL StructsSumAllWithError(NSArray<StructsS*>* _Nullable s, double* _Nullable ret0_, NSError* _Nullable* _Nullable error);
+
 @class StructsI;
+
+@class StructsSlicer;
 
 @interface StructsI : NSObject <goSeqRefInterface, StructsI> {
 }
@@ -67,6 +86,18 @@ FOUNDATION_EXPORT StructsS* _Nullable StructsIdentityWithError(StructsS* _Nullab
 
 - (nonnull instancetype)initWithRef:(_Nonnull id)ref;
 - (void)m;
+@end
+
+/**
+ * Slicer is implemented by both Go and foreign code, exercising
+slices of structs in both directions.
+ */
+@interface StructsSlicer : NSObject <goSeqRefInterface, StructsSlicer> {
+}
+@property(strong, readonly) _Nonnull id _ref;
+
+- (nonnull instancetype)initWithRef:(_Nonnull id)ref;
+- (NSArray<StructsS*>* _Nullable)slice:(NSArray<StructsS*>* _Nullable)s;
 @end
 
 #endif

@@ -10,4 +10,6 @@
 #include <objc/objc.h>
 void cproxystructs_I_M(int32_t refnum);
 
+nrefnumslice cproxystructs_Slicer_Slice(int32_t refnum, nrefnumslice s);
+
 #endif
