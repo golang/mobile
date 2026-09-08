@@ -433,6 +433,16 @@ func ndkRoot(targets ...targetInfo) (string, error) {
 	return ndkRoot, nil
 }
 
+// Necessary to filter out warnings about missing extensions.
+func getAbsolutePath(output []byte) (path string) {
+	for _, line := range strings.Split(string(output), "\n") {
+		if strings.HasPrefix(line, "/") {
+			return line
+		}
+	}
+	return ""
+}
+
 func envClang(sdkName string) (clang, cflags string, err error) {
 	if buildN {
 		return sdkName + "-clang", "-isysroot " + sdkName, nil
@@ -445,7 +455,7 @@ func envClang(sdkName string) (clang, cflags string, err error) {
 		}
 		return "", "", fmt.Errorf("xcrun --find: %v\n%s", err, out)
 	}
-	clang = strings.TrimSpace(string(out))
+	clang = getAbsolutePath(out)
 
 	cmd = exec.Command("xcrun", "--sdk", sdkName, "--show-sdk-path")
 	out, err = cmd.Output()
@@ -455,7 +465,7 @@ func envClang(sdkName string) (clang, cflags string, err error) {
 		}
 		return "", "", fmt.Errorf("xcrun --show-sdk-path: %v\n%s", err, out)
 	}
-	sdk := strings.TrimSpace(string(out))
+	sdk := getAbsolutePath(out)
 	return clang, "-isysroot " + sdk, nil
 }
 
