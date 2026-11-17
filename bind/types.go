@@ -176,3 +176,15 @@ func isBytesSlice(t *types.Slice) bool {
 	e, ok := types.Unalias(t.Elem()).(*types.Basic)
 	return ok && e.Kind() == types.Byte
 }
+
+// refSliceElem returns the named type N and true if t is a slice of
+// pointers to a named type, such as []*N. Such slices are passed across
+// the language barrier as slices of reference numbers.
+func refSliceElem(t *types.Slice) (*types.Named, bool) {
+	p, ok := types.Unalias(t.Elem()).(*types.Pointer)
+	if !ok {
+		return nil, false
+	}
+	n, ok := types.Unalias(p.Elem()).(*types.Named)
+	return n, ok
+}

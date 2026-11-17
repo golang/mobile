@@ -73,6 +73,39 @@ func fromSlice(s []byte, cpy bool) C.nbyteslice {
 	return C.nbyteslice{ptr: ptr, len: n}
 }
 
+// fromRefSlice converts a slice of refnums to a nrefnumslice. The returned
+// nrefnumslice points to C memory freed by go_seq_to_objc_objectarray. A nil
+// slice is converted to a nil pointer, an empty slice is not.
+func fromRefSlice(refs []int32) C.nrefnumslice {
+	if refs == nil {
+		return C.nrefnumslice{}
+	}
+	// Allocate at least one element so that an empty slice is distinguishable
+	// from a nil slice.
+	sz := C.size_t(len(refs)) * C.size_t(unsafe.Sizeof(C.int32_t(0)))
+	if sz == 0 {
+		sz = 1
+	}
+	ptr := (*C.int32_t)(C.malloc(sz))
+	if ptr == nil {
+		panic("fromRefSlice: malloc failed")
+	}
+	copy(unsafe.Slice((*int32)(unsafe.Pointer(ptr)), len(refs)), refs)
+	return C.nrefnumslice{ptr: ptr, len: C.int(len(refs))}
+}
+
+// toRefSlice takes a nrefnumslice created by go_seq_from_objc_objectarray
+// and returns its refnums as a Go slice. The C memory is freed.
+func toRefSlice(s C.nrefnumslice) []int32 {
+	if s.ptr == nil {
+		return nil
+	}
+	refs := make([]int32, s.len)
+	copy(refs, unsafe.Slice((*int32)(unsafe.Pointer(s.ptr)), s.len))
+	C.free(unsafe.Pointer(s.ptr))
+	return refs
+}
+
 // toSlice takes a nbyteslice and returns a byte slice with the data. If cpy is
 // set, the slice contains a copy of the data. If not, the generated Go code
 // calls releaseByteSlice after use.

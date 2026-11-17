@@ -80,6 +80,36 @@
 	return _ret0_;
 }
 
+- (NSArray<StructsS*>* _Nullable)repeat:(long)n {
+	int32_t refnum = go_seq_go_to_refnum(self._ref);
+	nint _n = (nint)n;
+	nrefnumslice r0 = proxystructs_S_Repeat(refnum, _n);
+	NSArray<StructsS*>* _ret0_ = go_seq_to_objc_objectarray(r0, [StructsS class]);
+	return _ret0_;
+}
+
+- (NSArray<StructsS*>* _Nullable)repeatWithError:(long)n error:(NSError* _Nullable* _Nullable)error {
+	int32_t refnum = go_seq_go_to_refnum(self._ref);
+	nint _n = (nint)n;
+	struct proxystructs_S_RepeatWithError_return res = proxystructs_S_RepeatWithError(refnum, _n);
+	NSArray<StructsS*>* _ret0_ = go_seq_to_objc_objectarray(res.r0, [StructsS class]);
+	Universeerror* _error = nil;
+	GoSeqRef* _error_ref = go_seq_from_refnum(res.r1);
+	if (_error_ref != NULL) {
+		_error = _error_ref.obj;
+		if (_error == nil) {
+			_error = [[Universeerror alloc] initWithRef:_error_ref];
+		}
+	}
+	if (_error != nil && error != nil) {
+		*error = _error;
+	}
+	if (_error != nil) {
+		return nil;
+	}
+	return _ret0_;
+}
+
 - (double)sum {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	double r0 = proxystructs_S_Sum(refnum);
@@ -141,6 +171,19 @@
 	return self;
 }
 
+- (NSArray<StructsS*>* _Nullable)elems {
+	int32_t refnum = go_seq_go_to_refnum(self._ref);
+	nrefnumslice r0 = proxystructs_Structs_Elems_Get(refnum);
+	NSArray<StructsS*>* _r0 = go_seq_to_objc_objectarray(r0, [StructsS class]);
+	return _r0;
+}
+
+- (void)setElems:(NSArray<StructsS*>* _Nullable)v {
+	int32_t refnum = go_seq_go_to_refnum(self._ref);
+	nrefnumslice _v = go_seq_from_objc_objectarray(v);
+	proxystructs_Structs_Elems_Set(refnum, _v);
+}
+
 - (void)m {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	proxystructs_Structs_M(refnum);
@@ -161,6 +204,26 @@
 - (void)m {
 	int32_t refnum = go_seq_go_to_refnum(self._ref);
 	proxystructs_I_M(refnum);
+}
+
+@end
+
+
+@implementation StructsSlicer {
+}
+
+- (nonnull instancetype)initWithRef:(id)ref {
+	self = [super init];
+	if (self) { __ref = ref; }
+	return self;
+}
+
+- (NSArray<StructsS*>* _Nullable)slice:(NSArray<StructsS*>* _Nullable)s {
+	int32_t refnum = go_seq_go_to_refnum(self._ref);
+	nrefnumslice _s = go_seq_from_objc_objectarray(s);
+	nrefnumslice r0 = proxystructs_Slicer_Slice(refnum, _s);
+	NSArray<StructsS*>* _ret0_ = go_seq_to_objc_objectarray(r0, [StructsS class]);
+	return _ret0_;
 }
 
 @end
@@ -221,10 +284,89 @@ StructsS* _Nullable StructsIdentityWithError(StructsS* _Nullable s, NSError* _Nu
 	return _ret0_;
 }
 
+NSArray<StructsS*>* _Nullable StructsRepeat(StructsS* _Nullable s, long n) {
+	int32_t _s;
+	if ([s conformsToProtocol:@protocol(goSeqRefInterface)]) {
+		id<goSeqRefInterface> s_proxy = (id<goSeqRefInterface>)(s);
+		_s = go_seq_go_to_refnum(s_proxy._ref);
+	} else {
+		_s = go_seq_to_refnum(s);
+	}
+	nint _n = (nint)n;
+	nrefnumslice r0 = proxystructs__Repeat(_s, _n);
+	NSArray<StructsS*>* _ret0_ = go_seq_to_objc_objectarray(r0, [StructsS class]);
+	return _ret0_;
+}
+
+NSArray<StructsS*>* _Nullable StructsRepeatWithError(StructsS* _Nullable s, long n, NSError* _Nullable* _Nullable error) {
+	int32_t _s;
+	if ([s conformsToProtocol:@protocol(goSeqRefInterface)]) {
+		id<goSeqRefInterface> s_proxy = (id<goSeqRefInterface>)(s);
+		_s = go_seq_go_to_refnum(s_proxy._ref);
+	} else {
+		_s = go_seq_to_refnum(s);
+	}
+	nint _n = (nint)n;
+	struct proxystructs__RepeatWithError_return res = proxystructs__RepeatWithError(_s, _n);
+	NSArray<StructsS*>* _ret0_ = go_seq_to_objc_objectarray(res.r0, [StructsS class]);
+	Universeerror* _error = nil;
+	GoSeqRef* _error_ref = go_seq_from_refnum(res.r1);
+	if (_error_ref != NULL) {
+		_error = _error_ref.obj;
+		if (_error == nil) {
+			_error = [[Universeerror alloc] initWithRef:_error_ref];
+		}
+	}
+	if (_error != nil && error != nil) {
+		*error = _error;
+	}
+	if (_error != nil) {
+		return nil;
+	}
+	return _ret0_;
+}
+
+double StructsSumAll(NSArray<StructsS*>* _Nullable s) {
+	nrefnumslice _s = go_seq_from_objc_objectarray(s);
+	double r0 = proxystructs__SumAll(_s);
+	double _ret0_ = (double)r0;
+	return _ret0_;
+}
+
+BOOL StructsSumAllWithError(NSArray<StructsS*>* _Nullable s, double* _Nullable ret0_, NSError* _Nullable* _Nullable error) {
+	nrefnumslice _s = go_seq_from_objc_objectarray(s);
+	struct proxystructs__SumAllWithError_return res = proxystructs__SumAllWithError(_s);
+	double _ret0_ = (double)res.r0;
+	Universeerror* _error = nil;
+	GoSeqRef* _error_ref = go_seq_from_refnum(res.r1);
+	if (_error_ref != NULL) {
+		_error = _error_ref.obj;
+		if (_error == nil) {
+			_error = [[Universeerror alloc] initWithRef:_error_ref];
+		}
+	}
+	*ret0_ = _ret0_;
+	if (_error != nil && error != nil) {
+		*error = _error;
+	}
+	return (_error == nil);
+}
+
 void cproxystructs_I_M(int32_t refnum) {
 	@autoreleasepool {
 		StructsI* o = go_seq_objc_from_refnum(refnum);
 		[o m];
+	}
+}
+
+nrefnumslice cproxystructs_Slicer_Slice(int32_t refnum, nrefnumslice s) {
+	@autoreleasepool {
+		StructsSlicer* o = go_seq_objc_from_refnum(refnum);
+		NSArray<StructsS*>* _s = go_seq_to_objc_objectarray(s, [StructsS class]);
+		NSArray<StructsS*>* _Nullable ret0_;
+		ret0_ = [o slice:_s];
+		nrefnumslice _ret0_ = go_seq_from_objc_objectarray(ret0_);
+		return _ret0_;
 	}
 }
 

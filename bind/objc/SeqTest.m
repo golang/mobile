@@ -115,6 +115,33 @@ static int numI = 0;
 }
 @end
 
+// Objective-C implementation of testpkg.NodeSlicer. The result of slice:
+// depends on mode, to cover the ways an array can be returned to Go.
+@interface NodeSlicer: NSObject <TestpkgNodeSlicer> {
+}
+@property int32_t mode;
+
+@end
+
+@implementation NodeSlicer {
+}
+@synthesize mode;
+
+- (NSArray<TestpkgNode *> *)slice:(NSArray<TestpkgNode *> *)nodes {
+	switch (self.mode) {
+	case 1:
+		return @[[NSNull null], nodes[0]];
+	case 2:
+		return @[];
+	case 3:
+		return NULL;
+	}
+	NSMutableArray<TestpkgNode *> *res = [nodes mutableCopy];
+	[res addObject:TestpkgNewNode(@"B")];
+	return res;
+}
+@end
+
 @interface tests : XCTestCase
 
 @end
@@ -213,6 +240,37 @@ static int numI = 0;
 	NSString *got = [[NSString alloc] initWithData:gotData encoding:NSUTF8StringEncoding];
 	NSString *want = [a stringByAppendingString:b];
 	XCTAssertEqualObjects(got, want, @"want %@\nTestpkgBytesAppend(%@, %@) = %@", want, a, b, got);
+}
+
+- (void)testStructSlice {
+	TestpkgNode *a = TestpkgNewNode(@"A");
+	NSArray<TestpkgNode *> *nodes = TestpkgRepeatNode(a, 3);
+	XCTAssertEqual(nodes.count, 3, @"TestpkgRepeatNode(a, 3).count = %lu; want 3", (unsigned long)nodes.count);
+	for (TestpkgNode *n in nodes) {
+		XCTAssertEqualObjects(n, a, @"want the node passed to TestpkgRepeatNode back");
+	}
+	NSString *got = TestpkgNodeNames(nodes);
+	XCTAssertEqualObjects(got, @"A,A,A", @"TestpkgNodeNames(nodes) = %@; want A,A,A", got);
+	got = TestpkgNodeNames(@[]);
+	XCTAssertEqualObjects(got, @"", @"TestpkgNodeNames(@[]) = %@; want the empty string", got);
+	got = TestpkgNodeNames(NULL);
+	XCTAssertEqualObjects(got, @"", @"TestpkgNodeNames(NULL) = %@; want the empty string", got);
+	got = TestpkgNodeNames(@[[NSNull null]]);
+	XCTAssertEqualObjects(got, @"<nil>", @"TestpkgNodeNames(@[NSNull]) = %@; want <nil>", got);
+	XCTAssertEqual(TestpkgRepeatNode(a, 0).count, 0, @"want an empty slice back");
+	NSArray<TestpkgNode *> *many = TestpkgRepeatNode(a, 1000);
+	XCTAssertEqual(many.count, 1000, @"TestpkgRepeatNode(a, 1000).count = %lu; want 1000", (unsigned long)many.count);
+	XCTAssertEqual(TestpkgNodeNames(many).length, 2*many.count-1, @"want a name for every node");
+}
+
+- (void)testStructSliceCallback {
+	NSArray<NSString *> *want = @[@"A,A,A,B", @"<nil>,A", @"", @""];
+	for (int32_t mode = 0; mode < want.count; mode++) {
+		NodeSlicer *slicer = [[NodeSlicer alloc] init];
+		slicer.mode = mode;
+		NSString *got = TestpkgCallNodeSlicer(slicer, TestpkgNewNode(@"A"));
+		XCTAssertEqualObjects(got, want[mode], @"TestpkgCallNodeSlicer(mode %d) = %@; want %@", mode, got, want[mode]);
+	}
 }
 
 - (void)testInterface {

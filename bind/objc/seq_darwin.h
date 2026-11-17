@@ -34,6 +34,13 @@ typedef struct nbyteslice {
 	void *ptr;
 	int len;
 } nbyteslice;
+// nrefnumslice is a slice of reference numbers, used to pass slices of
+// bound types across the language barrier. The memory pointed to by ptr is
+// always owned by the receiver, which frees it after conversion.
+typedef struct nrefnumslice {
+	int32_t *ptr;
+	int len;
+} nrefnumslice;
 typedef int nint;
 
 extern void init_seq();
@@ -55,9 +62,11 @@ extern GoSeqRef *go_seq_from_refnum(int32_t refnum);
 extern id go_seq_objc_from_refnum(int32_t refnum);
 
 extern nbyteslice go_seq_from_objc_bytearray(NSData *data, int copy);
+extern nrefnumslice go_seq_from_objc_objectarray(NSArray *arr);
 extern nstring go_seq_from_objc_string(NSString *s);
 
 extern NSData *go_seq_to_objc_bytearray(nbyteslice, int copy);
+extern NSArray *go_seq_to_objc_objectarray(nrefnumslice arr, Class proxy_class);
 extern NSString *go_seq_to_objc_string(nstring str);
 
 #endif // __GO_SEQ_DARWIN_HDR__

@@ -136,6 +136,30 @@ NSData *go_seq_to_objc_bytearray(nbyteslice s, int copy) {
   return [NSData dataWithBytesNoCopy:s.ptr length:s.len freeWhenDone:freeWhenDone];
 }
 
+// go_seq_to_objc_objectarray converts a slice of refnums to an array of
+// proxies of the class proxy_class. Nil elements are represented by NSNull.
+// The refnums are freed.
+NSArray *go_seq_to_objc_objectarray(nrefnumslice arr, Class proxy_class) {
+  if (arr.ptr == NULL) {
+    return NULL;
+  }
+  NSMutableArray *res = [NSMutableArray arrayWithCapacity:arr.len];
+  for (int i = 0; i < arr.len; i++) {
+    GoSeqRef *ref = go_seq_from_refnum(arr.ptr[i]);
+    if (ref == nil) {
+      [res addObject:[NSNull null]];
+      continue;
+    }
+    id obj = ref.obj;
+    if (obj == nil) {
+      obj = [[proxy_class alloc] initWithRef:ref];
+    }
+    [res addObject:obj];
+  }
+  free(arr.ptr);
+  return res;
+}
+
 NSString *go_seq_to_objc_string(nstring str) {
   if (str.len == 0) {  // empty string.
     return @"";
@@ -203,6 +227,36 @@ nbyteslice go_seq_from_objc_bytearray(NSData *data, int copy) {
   }
   res.ptr = ptr;
   res.len = sz;
+  return res;
+}
+
+// go_seq_from_objc_objectarray converts an array of proxies to a slice of
+// refnums. The returned slice is freed by the Go side.
+nrefnumslice go_seq_from_objc_objectarray(NSArray *arr) {
+  struct nrefnumslice res = {NULL, 0};
+  if (arr == nil) {
+    return res;
+  }
+  int len = arr.count;
+  // Allocate at least one element so that an empty array is distinguishable
+  // from a nil array.
+  int32_t *refnums = (int32_t *)malloc(len == 0 ? 1 : len * sizeof(int32_t));
+  if (refnums == NULL) {
+    LOG_FATAL(@"malloc failed");
+  }
+  for (int i = 0; i < len; i++) {
+    id obj = arr[i];
+    if ([obj isKindOfClass:[NSNull class]]) {
+      refnums[i] = go_seq_to_refnum(nil);
+    } else if ([obj conformsToProtocol:@protocol(goSeqRefInterface)]) {
+      id<goSeqRefInterface> obj_proxy = (id<goSeqRefInterface>)obj;
+      refnums[i] = go_seq_go_to_refnum(obj_proxy._ref);
+    } else {
+      refnums[i] = go_seq_to_refnum(obj);
+    }
+  }
+  res.ptr = refnums;
+  res.len = len;
   return res;
 }
 

@@ -14,6 +14,11 @@ extern jmethodID proxy_class_structs_I_cons;
 
 void cproxystructs_I_M(int32_t refnum);
 
+extern jclass proxy_class_structs_Slicer;
+extern jmethodID proxy_class_structs_Slicer_cons;
+
+nrefnumslice cproxystructs_Slicer_Slice(int32_t refnum, nrefnumslice s);
+
 extern jclass proxy_class_structs_S;
 extern jmethodID proxy_class_structs_S_cons;
 extern jclass proxy_class_structs_S2;
